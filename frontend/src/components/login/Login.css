@@ -1,0 +1,41 @@
+/* src/components/login/Login.css */
+
+.login-container {
+    background-color: #f8f9fa;
+  }
+  
+  .login-row {
+    width: 900px;
+  }
+  
+  .login-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #343a40;
+  }
+  
+  .login-image {
+    width: 355px;
+    height: 314px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  .login-box {
+    border-radius: 8px;
+  }
+  
+  .login-title {
+    color: #343a40;
+  }
+  
+  .forgot-password {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .forgot-password:hover {
+    text-decoration: underline;
+  }
+  
