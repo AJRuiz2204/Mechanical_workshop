@@ -10,9 +10,7 @@ const ForgotPassword = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Email:", email);
-    alert(
-      "Se han enviado las instrucciones de restablecimiento de contraseña."
-    );
+    alert("Se han enviado las instrucciones de restablecimiento de contraseña.");
   };
 
   return (

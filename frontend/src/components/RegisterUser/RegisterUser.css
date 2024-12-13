@@ -1,0 +1,38 @@
+.register-user-card {
+    width: 500px;
+  }
+  
+  .register-user-card h2 {
+    color: #343a40;
+  }
+  
+  .register-user-card .btn-primary {
+    background-color: #007bff;
+    border: none;
+  }
+  
+  .register-user-card .btn-primary:hover {
+    background-color: #0056b3;
+  }
+  
+  .register-user-card .btn-secondary {
+    background-color: #6c757d;
+    border: none;
+  }
+  
+  .register-user-card .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+  
+  .register-user-card a {
+    color: #007bff;
+  }
+  
+  .register-user-card a:hover {
+    text-decoration: underline;
+  }
+  
+  .input-group .btn {
+    margin-left: 5px;
+  }
+  

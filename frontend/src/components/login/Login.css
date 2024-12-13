@@ -36,3 +36,12 @@
     text-decoration: underline;
   }
   
+  .register-user-link {
+    color: #28a745;
+    text-decoration: none;
+  }
+  
+  .register-user-link:hover {
+    text-decoration: underline;
+  }
+  

@@ -3,7 +3,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./Login.css";
-import loginImage from "../../images/login-image.jpg";
+import loginImage from "../../images/login-image.jpg"; // Asegúrate de que la ruta es correcta
 
 const Login = () => {
   return (
@@ -42,6 +42,13 @@ const Login = () => {
               FORGOT PASSWORD?
             </Link>
           </div>
+          <div className="text-center mt-2">
+            <span className="text-muted">New User? </span>
+            <Link to="/register-user" className="register-user-link">
+              Register here
+            </Link>
+          </div>
+          <Link to="/home">Home</Link>
         </div>
       </div>
     </div>
