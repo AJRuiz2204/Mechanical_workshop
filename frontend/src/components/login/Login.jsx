@@ -1,17 +1,19 @@
 /* eslint-disable no-unused-vars */
 // src/components/login/Login.jsx
-import React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './Login.css';
-import loginImage from '../../images/login-image.jpg'; // Asegúrate de que la ruta es correcta
+import React from "react";
+import { Link } from "react-router-dom";
+import "./Login.css";
+import loginImage from "../../images/login-image.jpg";
 
 const Login = () => {
   return (
     <div className="login-container d-flex justify-content-center align-items-center vh-100">
       <div className="row login-row shadow-lg">
-        <div className="col-md-5 login-image-container">
+        {/* Columna para la imagen */}
+        <div className="col-md-5 d-flex justify-content-center align-items-center login-image-container">
           <img src={loginImage} alt="Login" className="login-image img-fluid" />
         </div>
+        {/* Columna para el formulario de login */}
         <div className="col-md-7 login-box p-5 bg-white">
           <h2 className="login-title text-center mb-4">WELCOME!</h2>
           <form className="login-form">
@@ -36,9 +38,9 @@ const Login = () => {
             </button>
           </form>
           <div className="text-center mt-3">
-            <a href="#" className="forgot-password">
+            <Link to="/forgot-password" className="forgot-password-link">
               FORGOT PASSWORD?
-            </a>
+            </Link>
           </div>
         </div>
       </div>

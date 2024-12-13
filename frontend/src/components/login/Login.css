@@ -9,9 +9,6 @@
   }
   
   .login-image-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     background-color: #343a40;
   }
   
@@ -30,12 +27,12 @@
     color: #343a40;
   }
   
-  .forgot-password {
+  .forgot-password-link {
     color: #007bff;
     text-decoration: none;
   }
   
-  .forgot-password:hover {
+  .forgot-password-link:hover {
     text-decoration: underline;
   }
   
