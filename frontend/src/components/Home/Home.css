@@ -3,124 +3,83 @@
 .home-container {
   display: flex;
   height: 100vh;
-  overflow: hidden;
-  position: relative;
 }
 
-/* Botón de menú (hamburguesa) para dispositivos móviles */
-.menu-toggle {
-  display: none; /* Oculto por defecto */
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  font-size: 20px;
-  cursor: pointer;
-  z-index: 1001;
-  border-radius: 4px;
-  
-}
-
-/* Mostrar el botón de menú en pantallas pequeñas */
-@media (max-width: 768px) {
-  .menu-toggle {
-    display: block;
-  }
-}
-
-/* Contenedor del menú lateral */
-.side-menu-container {
+.side-menu {
   width: 250px;
   background-color: #f1f1f1;
   border-right: 1px solid #ddd;
-  transition: transform 0.3s ease-in-out;
-}
-
-/* Cuando el menú está cerrado en dispositivos móviles */
-.side-menu-container.open {
-  transform: translateX(-250px);
-}
-
-/* Mostrar el menú lateral siempre abierto en pantallas grandes */
-@media (min-width: 769px) {
-  .side-menu-container {
-    transform: translateX(0);
-  }
-}
-
-/* Menú lateral */
-.side-menu {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh; /* Ocupa el 100% del alto de la vista */
 }
 
-/* Elementos del menú */
 .side-menu-item {
   padding: 15px 20px;
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 16px;
+  height: 50px; /* Altura fija para cada item */
+  display: flex;
+  align-items: center;
 }
 
-/* Hover en los elementos del menú */
 .side-menu-item:hover {
   background-color: #e6e6e6;
 }
 
-/* Elemento activo del menú */
 .side-menu-item.active {
   background-color: #007bff;
   color: white;
 }
 
-/* Área de contenido */
 .content-area {
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
 }
 
-/* Overlay cuando el menú está abierto en móviles */
-.overlay {
-  display: none; /* Oculto por defecto */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999; /* Justo debajo del menú */
+/* Estilos específicos para el contenido */
+.tab-content {
+  text-align: center;
 }
 
-/* Mostrar el overlay cuando el menú está abierto en móviles */
-.side-menu-container.open ~ .overlay {
-  display: block;
+.tab-content h2 {
+  margin-bottom: 20px;
 }
 
-/* Ajustes para dispositivos móviles */
-@media (max-width: 768px) {
-  .home-container {
-    flex-direction: column;
-  }
-
-  .side-menu-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    z-index: 1000;
-  }
-
-  .content-area {
-    padding: 60px 20px 20px 20px; /* Espacio para el botón de menú */
-  }
+.tab-content p {
+  margin-bottom: 20px;
 }
 
-/* Opcional: Ajustar espacio entre botones en el input-group */
-.input-group .btn {
-  margin-left: 5px;
+
+/* Diagnostic Sub-Tabs */
+.diagnostic-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.diagnostic-tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s ease;
+}
+
+.diagnostic-tab:hover {
+  background-color: #e6e6e6;
+}
+
+.diagnostic-tab.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.diagnostic-content {
+  padding: 20px;
+  border: 1px solid #ddd;
+  background-color: #fff;
 }
