@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
+import { addUserWorkshop } from "../../services/userWorkshopService"; // Importar el servicio
 
 const RegisterUser = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [profile, setProfile] = useState("Administrador");
-  const [role, setRole] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   // Función para generar una contraseña aleatoria segura
@@ -26,24 +27,34 @@ const RegisterUser = () => {
     setPassword(generatedPassword);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Email:", email);
-    console.log("Name:", name);
-    console.log("Last Name:", lastName);
-    console.log("Password:", password);
-    console.log("Profile:", profile);
-    console.log("Role:", role);
-    // Simulamos una confirmación
-    alert("Usuario registrado exitosamente.");
-    // Limpiar el formulario
-    setEmail("");
-    setName("");
-    setLastName("");
-    setPassword("");
-    setProfile("Administrador");
-    setRole("");
-    setShowPassword(false); // Resetear la visibilidad de la contraseña
+
+    // Crear el objeto con los datos del usuario del taller
+    const userData = {
+      email,
+      name,
+      lastName,
+      username,
+      password,
+      profile // "Administrador" o "Técnico de Mecánica", el backend hará el mapeo a "admin"/"technician"
+    };
+
+    try {
+      await addUserWorkshop(userData);
+      alert("Usuario del taller registrado exitosamente.");
+
+      // Limpiar el formulario
+      setEmail("");
+      setName("");
+      setLastName("");
+      setUsername("");
+      setPassword("");
+      setProfile("Administrador");
+      setShowPassword(false);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
   };
 
   return (
@@ -61,7 +72,7 @@ const RegisterUser = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
+              placeholder="Enter user email address"
               required
             />
           </div>
@@ -75,7 +86,7 @@ const RegisterUser = () => {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your first name"
+              placeholder="Enter user first name"
               required
             />
           </div>
@@ -89,7 +100,21 @@ const RegisterUser = () => {
               id="lastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Enter your last name"
+              placeholder="Enter user last name"
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="username" className="form-label">
+              USERNAME
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter username"
               required
             />
           </div>
@@ -99,7 +124,7 @@ const RegisterUser = () => {
             </label>
             <div className="input-group">
               <input
-                type={showPassword ? "text" : "password"} // Cambiar tipo basado en el estado
+                type={showPassword ? "text" : "password"}
                 className="form-control"
                 id="password"
                 value={password}
@@ -117,10 +142,8 @@ const RegisterUser = () => {
               <button
                 type="button"
                 className="btn btn-outline-secondary"
-                onClick={() => setShowPassword(!showPassword)} // Toggle de visibilidad
-                aria-label={
-                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                } // Mejora de accesibilidad
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
