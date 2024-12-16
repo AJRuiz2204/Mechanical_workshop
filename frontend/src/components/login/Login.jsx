@@ -1,27 +1,43 @@
 /* eslint-disable no-unused-vars */
 // src/components/login/Login.jsx
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
-import loginImage from "../../images/login-image.jpg"; // Asegúrate de que la ruta es correcta
+import loginImage from "../../images/login-image.jpg";
+import { loginUser } from "../../services/userAuthService";
 
 const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await loginUser(username, password);
+      navigate("/home");
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
   return (
     <div className="login-container d-flex justify-content-center align-items-center vh-100">
       <div className="row login-row shadow-lg">
-        {/* Columna para la imagen */}
         <div className="col-md-5 d-flex justify-content-center align-items-center login-image-container">
           <img src={loginImage} alt="Login" className="login-image img-fluid" />
         </div>
-        {/* Columna para el formulario de login */}
         <div className="col-md-7 login-box p-5 bg-white">
           <h2 className="login-title text-center mb-4">WELCOME!</h2>
-          <form className="login-form">
+          <form className="login-form" onSubmit={handleSubmit}>
             <div className="mb-3">
               <input
                 type="text"
                 placeholder="USER NAME"
                 className="form-control login-input"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
@@ -30,6 +46,8 @@ const Login = () => {
                 type="password"
                 placeholder="PASSWORD"
                 className="form-control login-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
