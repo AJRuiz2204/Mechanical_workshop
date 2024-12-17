@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "EW1vDY1QLltaX+DhHwzUTorunAClAFoQDvFJbS2QqmJ4WS/ucDpABwoinxQzcu4ImypBmyKKEOr6HTZw6Zfpzg==",
+  "dgSpecHash": "3L21AEqfdeOpdsB0t+CQfyIEjNwyT2k4MfeFG90QS8YuFyjDPaw1ZN7wFpud+8NbvcHmHvcVQrAOeSe4e30VCA==",
   "success": true,
-  "projectFilePath": "/home/ajruiz2204/proyectos/Proyecto_taller/backend2/Mechanical_workshop/Mechanical_workshop.csproj",
+  "projectFilePath": "/home/ajruiz2204/proyectos/Proyecto_taller/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
   "expectedPackageFiles": [
     "/home/ajruiz2204/.nuget/packages/automapper/12.0.1/automapper.12.0.1.nupkg.sha512",
     "/home/ajruiz2204/.nuget/packages/automapper.extensions.microsoft.dependencyinjection/12.0.1/automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

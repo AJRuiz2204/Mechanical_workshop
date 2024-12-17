@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/ajruiz2204/proyectos/Proyecto_taller/backend2/Mechanical_workshop/Mechanical_workshop.csproj": {}
+    "/home/ajruiz2204/proyectos/Proyecto_taller/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj": {}
   },
   "projects": {
-    "/home/ajruiz2204/proyectos/Proyecto_taller/backend2/Mechanical_workshop/Mechanical_workshop.csproj": {
+    "/home/ajruiz2204/proyectos/Proyecto_taller/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/ajruiz2204/proyectos/Proyecto_taller/backend2/Mechanical_workshop/Mechanical_workshop.csproj",
+        "projectUniqueName": "/home/ajruiz2204/proyectos/Proyecto_taller/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
         "projectName": "Mechanical_workshop",
-        "projectPath": "/home/ajruiz2204/proyectos/Proyecto_taller/backend2/Mechanical_workshop/Mechanical_workshop.csproj",
+        "projectPath": "/home/ajruiz2204/proyectos/Proyecto_taller/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
         "packagesPath": "/home/ajruiz2204/.nuget/packages/",
-        "outputPath": "/home/ajruiz2204/proyectos/Proyecto_taller/backend2/Mechanical_workshop/obj/",
+        "outputPath": "/home/ajruiz2204/proyectos/Proyecto_taller/Backendv2/Mechanical_workshop/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/ajruiz2204/.nuget/NuGet/NuGet.Config"

@@ -17,6 +17,8 @@ namespace Mechanical_workshop.Profiles
 
             // Mapeo de UserUpdateDto a User
             CreateMap<UserUpdateDto, User>();
+            
         }
+        
     }
 }
