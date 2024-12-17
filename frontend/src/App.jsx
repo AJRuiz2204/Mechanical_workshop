@@ -6,6 +6,9 @@ import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RegisterUser from "./components/RegisterUser/RegisterUser";
 import Home from "./components/Home/index";
+import VehicleReception from "./components/Home/VehicleReception/VehicleReception";
+import ChangePassword from "./components/ForgotPassword/ChangePassword";
+
 
 const App = () => {
   return (
@@ -14,7 +17,9 @@ const App = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register-user" element={<RegisterUser />} />
       <Route path="/home" element={<Home />} />
-      <Route path="*" element={<h2 className="text-center mt-5">404 - Page Not Found</h2>} />
+      <Route path="/Login" element={<Login />} />
+      <Route path="/vehicle-reception" element={<VehicleReception />} />
+      <Route path="/change-password" element={<ChangePassword />} />
     </Routes>
   );
 };

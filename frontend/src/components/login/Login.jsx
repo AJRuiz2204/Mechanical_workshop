@@ -1,24 +1,27 @@
 /* eslint-disable no-unused-vars */
-// src/components/login/Login.jsx
+// Frontend: src/components/login/Login.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import loginImage from "../../images/login-image.jpg";
-import { loginUser } from "../../services/userAuthService";
+import { loginUser } from "../../services/UserLoginServices";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    const credentials = { Username: username, Password: password };
     try {
-      await loginUser(username, password);
-      navigate("/home");
+      const userInfo = await loginUser(credentials);
+      // Guarda la información del usuario si es necesario
+      localStorage.setItem('user', JSON.stringify(userInfo));
+      navigate("/Home");
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      setError(err.message || "Error al iniciar sesión.");
     }
   };
 
@@ -51,6 +54,7 @@ const Login = () => {
                 required
               />
             </div>
+            {error && <div className="text-danger mb-3">{error}</div>}
             <button type="submit" className="btn btn-primary w-100 login-button">
               LOGIN
             </button>
@@ -66,7 +70,6 @@ const Login = () => {
               Register here
             </Link>
           </div>
-          <Link to="/home">Home</Link>
         </div>
       </div>
     </div>

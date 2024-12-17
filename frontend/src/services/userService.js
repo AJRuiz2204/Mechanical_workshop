@@ -1,18 +1,20 @@
-// userService.js
+/* eslint-disable no-useless-catch */
+// Frontend: src/services/userService.js
 export const addUser = async (userData) => {
-    const response = await fetch("/api/user", {
+  try {
+    const response = await fetch("/api/Users", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(userData)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
     });
-  
+
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Error al crear el usuario");
+      const error = await response.json();
+      throw new Error(error.Message || "Error al crear el usuario.");
     }
-  
-    return response.json();
-  };
-  
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};

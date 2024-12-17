@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
-// src/components/RegisterUser/RegisterUser.jsx
+// Frontend: src/components/RegisterUser/RegisterUser.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
-import { addUserWorkshop } from "../../services/userWorkshopService"; // Importar el servicio
+import { addUser } from "../../services/userService"; // Importar la función correcta
 
 const RegisterUser = () => {
   const [email, setEmail] = useState("");
@@ -30,19 +30,19 @@ const RegisterUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Crear el objeto con los datos del usuario del taller
+    // Crear el objeto con los datos del usuario
     const userData = {
       email,
       name,
       lastName,
       username,
       password,
-      profile // "Administrador" o "Técnico de Mecánica", el backend hará el mapeo a "admin"/"technician"
+      profile, // "Administrador" o "Técnico de Mecánica"
     };
 
     try {
-      await addUserWorkshop(userData);
-      alert("Usuario del taller registrado exitosamente.");
+      await addUser(userData); // Llamar a la función addUser
+      alert("Usuario registrado exitosamente.");
 
       // Limpiar el formulario
       setEmail("");
@@ -143,7 +143,6 @@ const RegisterUser = () => {
                 type="button"
                 className="btn btn-outline-secondary"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
