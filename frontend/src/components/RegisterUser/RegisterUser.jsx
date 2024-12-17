@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
-import { addUser } from "../../services/userService"; // Importar la función correcta
+import { addUser } from "../../services/userService"; // Import the correct function
 
 const RegisterUser = () => {
   const [email, setEmail] = useState("");
@@ -11,10 +11,10 @@ const RegisterUser = () => {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [profile, setProfile] = useState("Administrador");
+  const [profile, setProfile] = useState("Administrator");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Función para generar una contraseña aleatoria segura
+  // Function to generate a secure random password
   const generatePassword = () => {
     const chars =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
@@ -30,27 +30,27 @@ const RegisterUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Crear el objeto con los datos del usuario
+    // Create the user data object
     const userData = {
       email,
       name,
       lastName,
       username,
       password,
-      profile, // "Administrador" o "Técnico de Mecánica"
+      profile, // "Administrator" or "Mechanical Technician"
     };
 
     try {
-      await addUser(userData); // Llamar a la función addUser
-      alert("Usuario registrado exitosamente.");
+      await addUser(userData); // Call the addUser function
+      alert("User registered successfully.");
 
-      // Limpiar el formulario
+      // Clear the form
       setEmail("");
       setName("");
       setLastName("");
       setUsername("");
       setPassword("");
-      setProfile("Administrador");
+      setProfile("Administrator");
       setShowPassword(false);
     } catch (err) {
       alert(`Error: ${err.message}`);
@@ -86,7 +86,7 @@ const RegisterUser = () => {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter user first name"
+              placeholder="Enter user's first name"
               required
             />
           </div>
@@ -100,7 +100,7 @@ const RegisterUser = () => {
               id="lastName"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Enter user last name"
+              placeholder="Enter user's last name"
               required
             />
           </div>
@@ -148,8 +148,7 @@ const RegisterUser = () => {
               </button>
             </div>
             <div className="form-text">
-              La contraseña debe tener al menos 12 caracteres, incluyendo
-              mayúsculas, minúsculas, números y símbolos.
+              The password must be at least 12 characters long, including uppercase letters, lowercase letters, numbers, and symbols.
             </div>
           </div>
           <div className="mb-3">
@@ -162,8 +161,8 @@ const RegisterUser = () => {
               value={profile}
               onChange={(e) => setProfile(e.target.value)}
             >
-              <option value="Administrador">Administrador</option>
-              <option value="Técnico de Mecánica">Técnico de Mecánica</option>
+              <option value="Administrator">Administrator</option>
+              <option value="Mechanical Technician">Mechanical Technician</option>
             </select>
           </div>
           <div className="d-grid gap-2">

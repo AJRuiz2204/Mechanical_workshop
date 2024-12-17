@@ -154,7 +154,7 @@ Check the lubrication system after replacement.`}
             <div className="text-end">
               <div>Subtotal: $200.00</div>
               <div>Tax: $3.60</div>
-              <div>Total: $203.60</div>
+              <h5>Total: $203.60</h5>
             </div>
           </Col>
         </Row>

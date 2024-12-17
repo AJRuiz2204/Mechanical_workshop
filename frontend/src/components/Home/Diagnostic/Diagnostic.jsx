@@ -5,7 +5,7 @@ import { Form, Button, Row, Col } from "react-bootstrap";
 import "./Diagnostic.css";
 
 const Diagnostic = () => {
-  // Datos de ejemplo para el vehículo
+  // Example data for the vehicle
   const vehicle = {
     vin: "1HGCM82633A123456",
     make: "Honda",
@@ -15,14 +15,14 @@ const Diagnostic = () => {
     owner: "Jane Doe",
   };
 
-  // Lista de técnicos disponibles de ejemplo
+  // Example list of available technicians
   const technicians = ["Mario Aguirre", "Jane Doe", "John Smith"];
 
   return (
     <div className="p-4 border rounded">
       <h3>DIAGNOSTIC</h3>
 
-      {/* Información del Vehículo */}
+      {/* Vehicle Information */}
       <h5>Vehicle Information</h5>
       <Row className="mb-3">
         <Col md={2}>
@@ -63,7 +63,7 @@ const Diagnostic = () => {
         </Col>
       </Row>
 
-      {/* Información del Diagnóstico */}
+      {/* Diagnostic Information */}
       <h5>Diagnostic Information</h5>
       <Row className="mb-3">
         <Col md={6}>
@@ -89,7 +89,7 @@ const Diagnostic = () => {
         </Col>
       </Row>
 
-      {/* Botones */}
+      {/* Buttons */}
       <Row>
         <Col>
           <Button variant="secondary" className="me-2" disabled>

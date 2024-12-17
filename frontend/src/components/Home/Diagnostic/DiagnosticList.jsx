@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React from 'react';
-import { Table, Form, Button } from 'react-bootstrap';
+import React from "react";
+import { Table, Form, Button } from "react-bootstrap";
 
 const DiagnosticList = () => {
   return (
@@ -10,7 +10,10 @@ const DiagnosticList = () => {
       {/* Search Bar */}
       <Form.Group controlId="search" className="mb-3">
         <Form.Label>Search</Form.Label>
-        <Form.Control type="text" placeholder="Search by VIN, Owner, Technician, or Status" />
+        <Form.Control
+          type="text"
+          placeholder="Search by VIN, Owner, Technician, or Status"
+        />
       </Form.Group>
 
       {/* Diagnostic Table */}

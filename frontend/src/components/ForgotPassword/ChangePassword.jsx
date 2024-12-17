@@ -13,7 +13,7 @@ const ChangePassword = () => {
   const navigate = useNavigate();
   const { email } = location.state || {};
 
-  // Generar una contraseña aleatoria segura
+  // Generate a secure random password
   const generatePassword = () => {
     const chars =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
@@ -28,17 +28,15 @@ const ChangePassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
-      await changePassword(email, newPassword); // Llama al servicio
-      alert("Contraseña cambiada exitosamente.");
+      await changePassword(email, newPassword); // Calls the service
+      alert("Password changed successfully.");
       navigate("/");
     } catch (err) {
-      setError(err.message || "Error al cambiar la contraseña.");
+      setError(err.message || "Error changing the password.");
     }
   };
-  
-  
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
@@ -75,13 +73,13 @@ const ChangePassword = () => {
               </button>
             </div>
             <div className="form-text">
-              La contraseña debe tener al menos 12 caracteres, incluyendo
-              mayúsculas, minúsculas, números y símbolos.
+              The password must be at least 12 characters long, including
+              uppercase, lowercase, numbers, and symbols.
             </div>
           </div>
           {error && <div className="text-danger mb-3">{error}</div>}
           {success && (
-            <div className="text-success mb-3">¡Contraseña cambiada exitosamente!</div>
+            <div className="text-success mb-3">Password changed successfully!</div>
           )}
           <div className="d-grid gap-2">
             <button type="submit" className="btn btn-primary">

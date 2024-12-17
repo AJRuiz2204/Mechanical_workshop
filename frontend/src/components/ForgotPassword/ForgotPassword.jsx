@@ -11,9 +11,9 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Para mostrar el modal
-  const [verificationCode, setVerificationCode] = useState(""); // Código ingresado por el usuario
-  const [generatedCode, setGeneratedCode] = useState(""); // Código generado
+  const [showModal, setShowModal] = useState(false); // To show the modal
+  const [verificationCode, setVerificationCode] = useState(""); // Code entered by the user
+  const [generatedCode, setGeneratedCode] = useState(""); // Generated code
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,32 +22,32 @@ const ForgotPassword = () => {
     setSuccess(false);
 
     try {
-      // Solicitar el código al backend
+      // Request the code from the backend
       const code = await forgotPassword(email);
 
-      console.log("Código recibido en el frontend:", code);
-      setGeneratedCode(code); // Guardar el código para la verificación
+      console.log("Code received in frontend:", code);
+      setGeneratedCode(code); // Save the code for verification
 
-      // Enviar el código usando EmailJS
+      // Send the code using EmailJS
       await sendEmailWithCode(email, code);
 
       setSuccess(true);
-      setShowModal(true); // Mostrar el modal para ingresar el código
+      setShowModal(true); // Show the modal to enter the code
     } catch (err) {
-      setError(err.message || "Error al enviar el código.");
+      setError(err.message || "Error sending the code.");
     }
   };
 
   const handleVerifyCode = async () => {
     try {
-      // Verificar el código ingresado por el usuario
+      // Verify the code entered by the user
       await verifyCode(email, verificationCode);
-      alert("Código verificado correctamente.");
+      alert("Code verified successfully.");
 
-      // Redirigir al componente ChangePassword
+      // Redirect to the ChangePassword component
       navigate("/change-password", { state: { email } });
     } catch (err) {
-      setError("Código incorrecto o expirado.");
+      setError("Incorrect or expired code.");
     }
   };
 
@@ -73,7 +73,7 @@ const ForgotPassword = () => {
           {error && <div className="text-danger mb-3">{error}</div>}
           {success && (
             <div className="text-success mb-3">
-              ¡Código enviado correctamente!
+              Code sent successfully!
             </div>
           )}
           <div className="d-grid gap-2">
@@ -89,7 +89,7 @@ const ForgotPassword = () => {
         </div>
       </div>
 
-      {/* Modal para ingresar el código de verificación */}
+      {/* Modal to enter the verification code */}
       {showModal && (
         <div className="modal d-block" tabIndex="-1">
           <div className="modal-dialog">
@@ -104,8 +104,8 @@ const ForgotPassword = () => {
               </div>
               <div className="modal-body">
                 <p>
-                  Por favor, ingresa el código de verificación que se envió a tu
-                  correo electrónico.
+                  Please enter the verification code that was sent to your
+                  email address.
                 </p>
                 <input
                   type="text"

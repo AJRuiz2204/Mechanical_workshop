@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
 import { Button, Modal, Form, Row, Col } from 'react-bootstrap';
+import "./ShopReports.css"; // Ensure to create this file for styles
 
 const ShopReports = () => {
   const [showSalesModal, setShowSalesModal] = useState(false);
@@ -23,7 +24,7 @@ const ShopReports = () => {
         <Col md={4}>
           <div className="border p-3 rounded">
             <h5>SALES REPORT</h5>
-            <p>Includes all detail records and summary of the sales total</p>
+            <p>Includes all detailed records and summary of the total sales</p>
             <p>
               <strong>Present Ranges:</strong> today, last week, last month
             </p>

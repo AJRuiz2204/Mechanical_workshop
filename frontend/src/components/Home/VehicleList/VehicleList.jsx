@@ -2,10 +2,10 @@
 // src/components/VehicleList/VehicleList.jsx
 import React from "react";
 import { Table, Button, Form } from "react-bootstrap";
-import "./VehicleList.css"; // Asegúrate de crear este archivo para estilos
+import "./VehicleList.css"; // Ensure to create this file for styles
 
 const VehicleList = () => {
-  // Datos de ejemplo para la tabla de vehículos
+  // Example data for the vehicle table
   const exampleVehicles = [
     {
       vin: "JH4KA3151KC019450",
@@ -63,9 +63,9 @@ const VehicleList = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <Form.Control
           type="text"
-          placeholder="Buscar por VIN"
+          placeholder="Search by VIN"
           className="me-3"
-          disabled // Deshabilitado ya que no hay lógica de búsqueda
+          disabled // Disabled since there is no search logic
         />
         <Button variant="primary" disabled>
           Add Customer

@@ -17,11 +17,11 @@ const Login = () => {
     const credentials = { Username: username, Password: password };
     try {
       const userInfo = await loginUser(credentials);
-      // Guarda la información del usuario si es necesario
+      // Save user information if necessary
       localStorage.setItem('user', JSON.stringify(userInfo));
       navigate("/Home");
     } catch (err) {
-      setError(err.message || "Error al iniciar sesión.");
+      setError(err.message || "Error logging in.");
     }
   };
 

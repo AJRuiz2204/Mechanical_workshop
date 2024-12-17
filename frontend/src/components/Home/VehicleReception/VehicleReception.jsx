@@ -66,7 +66,7 @@ const VehicleReception = () => {
     e.preventDefault();
     try {
       await createUserWorkshop(userWorkshop);
-      alert("Cliente y vehículos creados correctamente.");
+      alert("Client and vehicles created successfully.");
       setUserWorkshop({
         email: "",
         name: "",
@@ -99,13 +99,13 @@ const VehicleReception = () => {
   return (
     <Container className="p-4 border rounded bg-light">
       <Form onSubmit={handleSubmit}>
-        <h3 className="mb-4">Recepción de Clientes y Vehículos</h3>
+        <h3 className="mb-4">Client and Vehicle Reception</h3>
 
-        {/* Datos del Cliente */}
+        {/* Client Data */}
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Nombre</Form.Label>
+              <Form.Label>First Name</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.name}
@@ -116,7 +116,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Apellido</Form.Label>
+              <Form.Label>Last Name</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.lastName}
@@ -130,7 +130,7 @@ const VehicleReception = () => {
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Correo Electrónico</Form.Label>
+              <Form.Label>Email Address</Form.Label>
               <Form.Control
                 type="email"
                 value={userWorkshop.email}
@@ -141,7 +141,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Número Primario</Form.Label>
+              <Form.Label>Primary Number</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.primaryNumber}
@@ -152,7 +152,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Número Secundario</Form.Label>
+              <Form.Label>Secondary Number</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.secondaryNumber}
@@ -162,11 +162,11 @@ const VehicleReception = () => {
           </Col>
         </Row>
 
-        {/* Datos de la Dirección */}
+        {/* Address Data */}
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Dirección</Form.Label>
+              <Form.Label>Address</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.address}
@@ -177,7 +177,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Ciudad</Form.Label>
+              <Form.Label>City</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.city}
@@ -188,7 +188,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Estado</Form.Label>
+              <Form.Label>State</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.state}
@@ -199,7 +199,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Código Postal</Form.Label>
+              <Form.Label>Zip Code</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.zip}
@@ -210,8 +210,8 @@ const VehicleReception = () => {
           </Col>
         </Row>
 
-        {/* Datos del Vehículo */}
-        <h4 className="mt-4 mb-3">Datos del Vehículo</h4>
+        {/* Vehicle Data */}
+        <h4 className="mt-4 mb-3">Vehicle Information</h4>
         {userWorkshop.vehicles.map((vehicle, index) => (
           <div key={index} className="border rounded p-3 mb-3 bg-white">
             <Row>
@@ -228,7 +228,7 @@ const VehicleReception = () => {
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Marca</Form.Label>
+                  <Form.Label>Make</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.make}
@@ -239,7 +239,7 @@ const VehicleReception = () => {
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Modelo</Form.Label>
+                  <Form.Label>Model</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.model}
@@ -250,14 +250,14 @@ const VehicleReception = () => {
               </Col>
               <Col md={3}>
                 <Button variant="danger" className="mt-4" onClick={() => deleteVehicle(index)}>
-                  Eliminar
+                  Delete
                 </Button>
               </Col>
             </Row>
             <Row>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Año</Form.Label>
+                  <Form.Label>Year</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.year}
@@ -268,7 +268,7 @@ const VehicleReception = () => {
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Motor</Form.Label>
+                  <Form.Label>Engine</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.engine}
@@ -279,7 +279,7 @@ const VehicleReception = () => {
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Placa</Form.Label>
+                  <Form.Label>Plate</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.plate}
@@ -290,7 +290,7 @@ const VehicleReception = () => {
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Estado</Form.Label>
+                  <Form.Label>State</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.vehicleState}
@@ -304,14 +304,14 @@ const VehicleReception = () => {
         ))}
 
         <Button variant="primary" onClick={addVehicle} className="mb-3">
-          Agregar Vehículo
+          Add Vehicle
         </Button>
 
         <div className="d-flex justify-content-end">
           <Button type="submit" variant="success" className="me-2">
-            Guardar
+            Save
           </Button>
-          <Button variant="secondary">Cancelar</Button>
+          <Button variant="secondary">Cancel</Button>
         </div>
       </Form>
     </Container>
