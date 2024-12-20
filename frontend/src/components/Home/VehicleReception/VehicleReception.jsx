@@ -24,7 +24,7 @@ const VehicleReception = () => {
         year: "",
         engine: "",
         plate: "",
-        vehicleState: "",
+        vehicleState: "", // Representa el campo "State"
       },
     ],
   });
@@ -64,8 +64,20 @@ const VehicleReception = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Map vehicleState to State before sending
+    const updatedVehicles = userWorkshop.vehicles.map((vehicle) => ({
+      ...vehicle,
+      State: vehicle.vehicleState,
+    }));
+
+    const payload = {
+      ...userWorkshop,
+      vehicles: updatedVehicles,
+    };
+
     try {
-      await createUserWorkshop(userWorkshop);
+      await createUserWorkshop(payload);
       alert("Client and vehicles created successfully.");
       setUserWorkshop({
         email: "",

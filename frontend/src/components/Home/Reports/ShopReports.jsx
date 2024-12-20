@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
 import { Button, Modal, Form, Row, Col } from 'react-bootstrap';
-import "./ShopReports.css"; // Ensure to create this file for styles
 
 const ShopReports = () => {
   const [showSalesModal, setShowSalesModal] = useState(false);

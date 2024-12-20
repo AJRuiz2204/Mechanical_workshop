@@ -30,7 +30,7 @@ const ChangePassword = () => {
     e.preventDefault();
 
     try {
-      await changePassword(email, newPassword); // Calls the service
+      await changePassword(email, newPassword);
       alert("Password changed successfully.");
       navigate("/");
     } catch (err) {
