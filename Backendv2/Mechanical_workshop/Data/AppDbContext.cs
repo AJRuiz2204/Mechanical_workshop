@@ -10,6 +10,7 @@ namespace Mechanical_workshop.Data
         {
         }
 
+
         public DbSet<User> Users { get; set; }
         public DbSet<UserWorkshop> UserWorkshops { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
@@ -22,6 +23,14 @@ namespace Mechanical_workshop.Data
         {
             // Configuraciones adicionales si es necesario
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UserWorkshop>()
+                .HasMany(uw => uw.Vehicles)
+                .WithOne(v => v.UserWorkshop)
+                .HasForeignKey(v => v.UserWorkshopId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
         }
     }
 }

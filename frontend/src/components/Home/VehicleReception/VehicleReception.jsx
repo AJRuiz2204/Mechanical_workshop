@@ -29,6 +29,9 @@ const VehicleReception = () => {
     ],
   });
 
+  // Estado para controlar el envío
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleInputChange = (field, value) => {
     setUserWorkshop({ ...userWorkshop, [field]: value });
   };
@@ -64,6 +67,11 @@ const VehicleReception = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Si ya está enviándose, evitamos múltiples envíos
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
 
     // Map vehicleState to State before sending
     const updatedVehicles = userWorkshop.vehicles.map((vehicle) => ({
@@ -105,6 +113,8 @@ const VehicleReception = () => {
       });
     } catch (error) {
       alert(`Error: ${error.message}`);
+    } finally {
+      setIsSubmitting(false); // Permite nuevos envíos
     }
   };
 

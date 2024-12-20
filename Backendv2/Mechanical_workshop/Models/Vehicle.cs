@@ -1,4 +1,3 @@
-// Models/Vehicle.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -45,4 +44,3 @@ namespace Mechanical_workshop.Models
         public UserWorkshop? UserWorkshop { get; set; }
     }
 }
-

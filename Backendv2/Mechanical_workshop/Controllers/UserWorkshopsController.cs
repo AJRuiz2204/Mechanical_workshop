@@ -27,16 +27,7 @@ namespace Mechanical_workshop.Controllers
 
             foreach (var vehicleDto in userWorkshopDto.Vehicles)
             {
-                userWorkshop.Vehicles.Add(new Vehicle
-                {
-                    Vin = vehicleDto.Vin,
-                    Make = vehicleDto.Make,
-                    Model = vehicleDto.Model,
-                    Year = vehicleDto.Year,
-                    Engine = vehicleDto.Engine,
-                    Plate = vehicleDto.Plate,
-                    State = vehicleDto.State
-                });
+                userWorkshop.Vehicles.Add(_mapper.Map<Vehicle>(vehicleDto));
             }
 
             _context.UserWorkshops.Add(userWorkshop);

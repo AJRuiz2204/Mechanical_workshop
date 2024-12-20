@@ -1,8 +1,6 @@
-// Program.cs
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
-using AutoMapper;
-using Mechanical_workshop.Profiles; // Asegúrate de que las rutas sean correctas
+using Mechanical_workshop.Profiles; // Ruta ajustada para incluir perfiles de AutoMapper
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,17 +16,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Ajusta a tu frontend
+        policy.WithOrigins("http://localhost:5173") // Ajusta la URL al frontend
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-
-
-
 // Registrar AutoMapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(typeof(UserWorkshopProfile).Assembly);
 
 // Registrar Controladores con Vistas y APIs
 builder.Services.AddControllersWithViews();
@@ -55,12 +50,7 @@ app.UseAuthorization();
 // Mapear controladores basados en atributos
 app.MapControllers();
 
-// Aplicar middleware
-app.UseRouting();
-app.UseCors("AllowFrontend");
-app.UseAuthorization();
-
-// Definir la ruta por defecto para los controladores MVC (si tienes vistas)
+// Definir la ruta por defecto para los controladores MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

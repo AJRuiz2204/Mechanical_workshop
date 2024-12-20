@@ -8,10 +8,16 @@ namespace Mechanical_workshop.Profiles
     {
         public UserWorkshopProfile()
         {
-            CreateMap<UserWorkshop, UserWorkshopReadDto>();
-            CreateMap<UserWorkshopCreateDto, UserWorkshop>();
-            CreateMap<VehicleDto, Vehicle>();
-            CreateMap<Vehicle, VehicleDto>();
+            // Mapeo entre UserWorkshop y UserWorkshopReadDto
+            CreateMap<UserWorkshop, UserWorkshopReadDto>()
+                .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles));
+
+            // Mapeo entre UserWorkshopCreateDto y UserWorkshop
+            CreateMap<UserWorkshopCreateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore()); // Las relaciones se manejarán manualmente
+
+            // Mapeo entre Vehicle y VehicleDto
+            CreateMap<Vehicle, VehicleDto>().ReverseMap();
         }
     }
 }
