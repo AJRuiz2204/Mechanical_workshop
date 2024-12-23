@@ -8,7 +8,7 @@ import RegisterUser from "./components/RegisterUser/RegisterUser";
 import Home from "./components/Home/index";
 import VehicleReception from "./components/Home/VehicleReception/VehicleReception";
 import ChangePassword from "./components/ForgotPassword/ChangePassword";
-
+import VehicleList from "./components/Home/VehicleList/VehicleList";
 
 const App = () => {
   return (
@@ -20,6 +20,9 @@ const App = () => {
       <Route path="/Login" element={<Login />} />
       <Route path="/vehicle-reception" element={<VehicleReception />} />
       <Route path="/change-password" element={<ChangePassword />} />
+      <Route path="/vehicle-list" element={<VehicleList />} />
+      <Route path="/create" element={<VehicleReception />} />
+      <Route path="/edit/:vin" element={<VehicleReception />} />
     </Routes>
   );
 };

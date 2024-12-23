@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
-using Mechanical_workshop.Profiles; // Ruta ajustada para incluir perfiles de AutoMapper
+using Mechanical_workshop.Profiles;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,10 +29,19 @@ builder.Services.AddAutoMapper(typeof(UserWorkshopProfile).Assembly);
 // Registrar Controladores con Vistas y APIs
 builder.Services.AddControllersWithViews();
 
+// Agregar Swagger para documentación de API (opcional pero recomendado)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 // Configuración del pipeline de solicitud HTTP
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();

@@ -1,15 +1,11 @@
-// Models/UserWorkshop.cs
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System;
 using System.Collections.Generic;
 
-namespace Mechanical_workshop.Models
+namespace Mechanical_workshop.Dtos
 {
-    public class UserWorkshop
+    public class UserWorkshopUpdateDto
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Required]
         public int Id { get; set; }
 
         [Required]
@@ -24,6 +20,14 @@ namespace Mechanical_workshop.Models
         [Required]
         [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string Password { get; set; } = string.Empty;
 
         [Required]
         [StringLength(50)]
@@ -62,6 +66,6 @@ namespace Mechanical_workshop.Models
         public bool NoTax { get; set; } = false;
 
         // Relación con Vehicles
-        public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+        public List<VehicleDto> Vehicles { get; set; } = new();
     }
 }

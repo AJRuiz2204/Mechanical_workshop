@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mechanical_workshop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241217011059_InitialCreate")]
+    [Migration("20241221065652_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -235,11 +235,6 @@ namespace Mechanical_workshop.Migrations
                     b.Property<bool>("NoTax")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
                     b.Property<string>("PrimaryNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -265,11 +260,6 @@ namespace Mechanical_workshop.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Zip")
                         .IsRequired()
