@@ -59,16 +59,16 @@ namespace Mechanical_workshop.Controllers
             return Ok(_mapper.Map<DiagnosticReadDto>(diagnostic));
         }
 
-        // GET: api/Diagnostics
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnostics()
         {
-            var diagnostics = await _context.Diagnostics
-                .Include(d => d.Vehicle)
-                .ToListAsync();
+            var diagnostics = await _context.Diagnostics.ToListAsync();
 
             return Ok(_mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics));
         }
+
+
+
     }
 
 }

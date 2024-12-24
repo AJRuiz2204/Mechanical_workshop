@@ -24,24 +24,23 @@ export const createDiagnostic = async (diagnosticData) => {
   }
 };
 
-// src/services/DiagnosticService.js
-
-// Carga la lista de diagnósticos
+// Cargar la lista de diagnósticos
 export const getDiagnostics = async () => {
   try {
-    const response = await fetch("/api/Diagnostics");
+    const response = await fetch("/api/Diagnostics"); // GET
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al obtener la lista de diagnósticos.");
+        throw new Error("Error al obtener diagnósticos.");
       }
     }
-    return await response.json(); // Devuelve un array de DiagnosticReadDto
+    return await response.json(); // array de DiagnosticReadDto
   } catch (error) {
     console.error("Error en getDiagnostics:", error);
     throw error;
   }
 };
+
 

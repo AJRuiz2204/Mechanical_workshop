@@ -10,12 +10,12 @@ const DiagnosticList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Cargar la lista de diagnósticos al iniciar
+  // Cargar diagnósticos al iniciar
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getDiagnostics(); // Llamamos al servicio
+        const data = await getDiagnostics();
         setDiagnostics(data);
         setFilteredDiagnostics(data);
       } catch (error) {
@@ -24,35 +24,22 @@ const DiagnosticList = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
-  // Filtrar diagnósticos en tiempo real (VIN, Owner, Technician, Status)
+  // Búsqueda local (por assignedTechnician, reasonForVisit, etc.)
   useEffect(() => {
     if (!searchTerm.trim()) {
-      // Si no hay búsqueda, mostramos todos
       setFilteredDiagnostics(diagnostics);
     } else {
       const lowerTerm = searchTerm.toLowerCase();
-      const filtered = diagnostics.filter((diag) => {
-        // diag.Vehicle.Vin, diag.Vehicle.UserWorkshop.Name, diag.AssignedTechnician, diag.DiagnosticStatus
-        // Asegúrate de que tu DTO contenga dichos campos
-        const vin = diag.vehicle?.vin?.toLowerCase() || "";
-        const ownerName = diag.vehicle?.userWorkshop
-          ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}`.toLowerCase()
-          : "";
-        const technician = diag.assignedTechnician?.toLowerCase() || "";
-        const status = diag.diagnosticStatus?.toLowerCase() || ""; // si lo tienes
-
-        return (
-          vin.includes(lowerTerm) ||
-          ownerName.includes(lowerTerm) ||
-          technician.includes(lowerTerm) ||
-          status.includes(lowerTerm)
-        );
+      const result = diagnostics.filter((d) => {
+        const technician = d.assignedTechnician.toLowerCase();
+        const reason = d.reasonForVisit.toLowerCase();
+        // O filtrar por VehicleId convertido a string si quieres
+        return technician.includes(lowerTerm) || reason.includes(lowerTerm);
       });
-      setFilteredDiagnostics(filtered);
+      setFilteredDiagnostics(result);
     }
   }, [searchTerm, diagnostics]);
 
@@ -60,9 +47,9 @@ const DiagnosticList = () => {
     <Container className="p-4 border rounded">
       <h3>DIAGNOSTIC LIST</h3>
 
-      {/* Search Bar */}
+      {/* Search */}
       <Form.Group controlId="search" className="mb-3">
-        <Form.Label>Search by VIN, Owner, Technician, or Status</Form.Label>
+        <Form.Label>Search by Technician or Reason</Form.Label>
         <Form.Control
           type="text"
           placeholder="Enter search term..."
@@ -71,7 +58,7 @@ const DiagnosticList = () => {
         />
       </Form.Group>
 
-      {/* Diagnostic Table */}
+      {/* Table */}
       {loading ? (
         <div>Loading...</div>
       ) : filteredDiagnostics.length === 0 ? (
@@ -81,8 +68,10 @@ const DiagnosticList = () => {
           <thead>
             <tr>
               <th></th>
-              <th>VIN / Owner / Make / Model / Technician</th>
-              <th>Status</th>
+              <th>VehicleId</th>
+              <th>Técnico</th>
+              <th>Razón</th>
+              <th>Fecha Creación</th>
             </tr>
           </thead>
           <tbody>
@@ -91,32 +80,10 @@ const DiagnosticList = () => {
                 <td>
                   <Form.Check type="checkbox" />
                 </td>
-                <td>
-                  {/* Muestra la info esencial: VIN, Owner, Make, Model, Technician */}
-                  {diag.vehicle
-                    ? `${diag.vehicle.vin}, ${
-                        diag.vehicle.userWorkshop
-                          ? diag.vehicle.userWorkshop.name
-                          : "Unknown"
-                      }, ${diag.vehicle.make}, ${diag.vehicle.model}, ${
-                        diag.assignedTechnician
-                      }`
-                    : "No Vehicle Info"}
-                </td>
-                <td>
-                  {/* Botón del estado, ejemplo: "In Progress", "Pending", etc. */}
-                  {/* diag.diagnosticStatus puede ser: "Pending", "InProgress", "Completed"... */}
-                  {diag.diagnosticStatus === "InProgress" ? (
-                    <Button variant="primary">In Progress</Button>
-                  ) : diag.diagnosticStatus === "Pending" ? (
-                    <Button variant="secondary">Pending</Button>
-                  ) : diag.diagnosticStatus === "Completed" ? (
-                    <Button variant="success">Completed</Button>
-                  ) : (
-                    // Si no tienes un campo de estado, puedes dejarlo en blanco o "Not Specified"
-                    <Button variant="warning">Not Specified</Button>
-                  )}
-                </td>
+                <td>{diag.vehicleId}</td>
+                <td>{diag.assignedTechnician}</td>
+                <td>{diag.reasonForVisit}</td>
+                <td>{new Date(diag.createdAt).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
