@@ -1,14 +1,21 @@
 /* eslint-disable no-unused-vars */
 // src/components/VehicleList/VehicleList.jsx
+
 import React, { useEffect, useState } from "react";
-import { Table, Button, Form, Container, Spinner, Alert } from "react-bootstrap";
+import {
+  Table,
+  Button,
+  Form,
+  Container,
+  Spinner,
+  Alert,
+} from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import {
   getAllVehicles,
   searchVehicles,
-  // Eliminamos la importación de deleteUserWorkshop si ya no la usas para esta vista
-  deleteVehicle, // <-- IMPORTANTE: Función para eliminar el vehículo
+  deleteVehicle,
 } from "../../../services/UserWorkshopService";
-import { useNavigate } from "react-router-dom";
 import "./VehicleList.css"; // Asegúrate de crear este archivo para estilos
 
 const VehicleList = () => {
@@ -19,7 +26,7 @@ const VehicleList = () => {
   const [searchMessage, setSearchMessage] = useState("");
   const navigate = useNavigate();
 
-  // 1. Carga todos los vehículos al montar el componente
+  // 1. Cargar todos los vehículos al iniciar
   const fetchAllVehicles = async () => {
     try {
       const data = await getAllVehicles();
@@ -35,46 +42,15 @@ const VehicleList = () => {
     fetchAllVehicles();
   }, []);
 
-  // 2. Manejar la eliminación de un vehículo
-  const handleDelete = async (vin) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar el vehículo con VIN: ${vin}?`)) {
-      try {
-        await deleteVehicle(vin); 
-        // Actualiza el estado local para que desaparezca el vehículo de la lista
-        setVehicles(vehicles.filter((veh) => veh.vin !== vin));
-        alert("Vehículo eliminado exitosamente.");
-      } catch (error) {
-        alert(`Error al eliminar: ${error.message}`);
-      }
-    }
-  };
-
-  // 3. Manejar la edición de un vehículo
-  const handleEdit = (vin) => {
-    // Ajusta la ruta para editar tu vehículo por VIN o por ID
-    navigate(`/edit/${vin}`);
-  };
-
-  // 4. Manejar la recepción al diagnóstico
-  const handleReception = (vin) => {
-    navigate(`/diagnostic/${vin}`);
-  };
-
-  // 5. Manejar la adición de un nuevo cliente
-  const handleAddCustomer = () => {
-    navigate("/vehicle-reception");
-  };
-
-  // 6. Manejar el campo de búsqueda (VIN o nombre del cliente)
+  // 2. Búsqueda en tiempo real
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // 7. Implementar búsqueda en tiempo real con debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchTerm.trim() === "") {
-        // Campo vacío => recargar todos los vehículos
+      if (!searchTerm.trim()) {
+        // Si está vacío, recargamos todos los vehículos
         fetchAllVehicles();
         setSearchMessage("");
         return;
@@ -85,6 +61,7 @@ const VehicleList = () => {
         try {
           const results = await searchVehicles(searchTerm);
           if (results.message) {
+            // Si el backend devuelve un objeto { message: "..."}
             setVehicles([]);
             setSearchMessage(results.message);
           } else {
@@ -100,15 +77,51 @@ const VehicleList = () => {
       };
 
       performSearch();
-    }, 300); // Esperamos 300ms después de dejar de escribir
+    }, 300);
+
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
+
+  // 3. Navegar a la vista "Crear Cliente"
+  const handleAddCustomer = () => {
+    navigate("/vehicle-reception");
+  };
+
+  // 4. Recepcionar Diagnóstico: navega a /diagnostic/:id
+  const handleReception = (id) => {
+    navigate(`/diagnostic/${id}`);
+  };
+
+  // 5. Editar Vehículo
+  // Ajusta la ruta si tu vista de edición es /edit/:id u otra
+  const handleEdit = (id) => {
+    navigate(`/edit/${id}`);
+  };
+
+  // 6. Eliminar Vehículo
+  // Llama a la función deleteVehicle (usando VIN o ID, según tu backend)
+  const handleDelete = async (vin) => {
+    if (
+      window.confirm(
+        `¿Estás seguro de que deseas eliminar el vehículo con VIN: ${vin}?`
+      )
+    ) {
+      try {
+        await deleteVehicle(vin);
+        // Filtra la lista local para eliminarlo de la tabla
+        setVehicles(vehicles.filter((vehicle) => vehicle.vin !== vin));
+        alert("Vehículo eliminado exitosamente.");
+      } catch (error) {
+        alert(`Error al eliminar: ${error.message}`);
+      }
+    }
+  };
 
   return (
     <Container className="p-4 border rounded mt-4 bg-light">
       <h3>LISTA DE VEHÍCULOS</h3>
-
       <div className="d-flex justify-content-between align-items-center mb-3">
+        {/* Campo de Búsqueda */}
         <Form.Control
           type="text"
           placeholder="Buscar por VIN o Nombre del Cliente"
@@ -154,27 +167,30 @@ const VehicleList = () => {
                 </tr>
               </thead>
               <tbody>
-                {vehicles.map((vehicle, index) => (
-                  <tr key={index}>
+                {vehicles.map((vehicle) => (
+                  <tr key={vehicle.id}>
                     <td>{vehicle.vin}</td>
                     <td>{vehicle.make}</td>
                     <td>{vehicle.model}</td>
-                    <td>{vehicle.ownerName}</td>
+                    <td>{vehicle.ownerName || "Desconocido"}</td>
                     <td>
+                      {/* Botón para Editar */}
                       <Button
                         variant="warning"
                         className="me-2"
-                        onClick={() => handleEdit(vehicle.vin)}
+                        onClick={() => handleEdit(vehicle.id)}
                       >
                         Editar
                       </Button>
+
                       <Button
                         variant="info"
-                        className="me-2"
-                        onClick={() => handleReception(vehicle.vin)}
+                        onClick={() => navigate(`/diagnostic/${vehicle.id}`)}
                       >
                         Recepcionar Diagnóstico
                       </Button>
+
+                      {/* Botón para Eliminar */}
                       <Button
                         variant="danger"
                         onClick={() => handleDelete(vehicle.vin)}
@@ -187,7 +203,9 @@ const VehicleList = () => {
               </tbody>
             </Table>
           ) : (
-            <p>No se encontraron vehículos. Intenta con otro término de búsqueda.</p>
+            <p>
+              No se encontraron vehículos. Intenta con otro término de búsqueda.
+            </p>
           )}
         </>
       )}

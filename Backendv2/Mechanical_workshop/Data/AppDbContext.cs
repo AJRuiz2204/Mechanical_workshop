@@ -30,6 +30,13 @@ namespace Mechanical_workshop.Data
                 .HasForeignKey(v => v.UserWorkshopId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Diagnostic>()
+                .HasOne(d => d.Vehicle)
+                .WithMany() // o .WithMany(x => x.Diagnostics) si hay poner una lista de Diagnostics en Vehicle
+                .HasForeignKey(d => d.VehicleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
 
         }
     }

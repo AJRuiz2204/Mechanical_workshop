@@ -154,3 +154,24 @@ export const deleteVehicle = async (vin) => {
     throw error;
   }
 };
+
+
+export const getVehicleById = async (id) => {
+  try {
+    const response = await fetch(`/api/UserWorkshops/vehicle/${id}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      if (errorData && errorData.message) {
+        throw new Error(errorData.message);
+      } else {
+        throw new Error("Error al obtener el vehículo por ID.");
+      }
+    }
+    return await response.json(); 
+  } catch (error) {
+    console.error("Error en getVehicleById:", error);
+    throw error;
+  }
+};
+
+

@@ -1,4 +1,3 @@
-// Models/Diagnostic.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,23 +6,27 @@ namespace Mechanical_workshop.Models
     public class Diagnostic
     {
         [Key]
-        public int ID { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
 
-        // Foreign Keys
-        [ForeignKey("Vehicle")]
-        public int VehicleID { get; set; }
+        // Relación con Vehicle
+        [Required]
+        public int VehicleId { get; set; }
+        public Vehicle? Vehicle { get; set; }
 
-        [ForeignKey("AssignedTechnician")]
-        public int AssignedTechnicianID { get; set; }
+        // Opcional si deseas guardar también el UserWorkshopId (a nivel de Diagnóstico)
+        // [Required]
+        // public int UserWorkshopId { get; set; }
+        // public UserWorkshop? UserWorkshop { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string AssignedTechnician { get; set; } = string.Empty;
 
         [Required]
         [StringLength(500)]
-        public string Reason { get; set; } = string.Empty;
+        public string ReasonForVisit { get; set; } = string.Empty;
 
-        public DateTime? CreatedDate { get; set; } = DateTime.UtcNow;
-
-        // Propiedades de navegación
-        public Vehicle Vehicle { get; set; } = null!;
-        public User AssignedTechnician { get; set; } = null!;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

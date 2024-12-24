@@ -9,6 +9,7 @@ import Home from "./components/Home/index";
 import VehicleReception from "./components/Home/VehicleReception/VehicleReception";
 import ChangePassword from "./components/ForgotPassword/ChangePassword";
 import VehicleList from "./components/Home/VehicleList/VehicleList";
+import Diagnostic from "./components/Home/Diagnostic/Diagnostic";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
       <Route path="/vehicle-list" element={<VehicleList />} />
       <Route path="/create" element={<VehicleReception />} />
       <Route path="/edit/:vin" element={<VehicleReception />} />
+      <Route path="/diagnostic/:id" element={<Diagnostic />} />
     </Routes>
   );
 };

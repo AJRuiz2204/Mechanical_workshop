@@ -216,26 +216,35 @@ namespace Mechanical_workshop.Controllers
                         uw => uw.Vehicles,
                         (uw, v) => new
                         {
-                            Workshop = uw,
-                            Vehicle = v
+                            Id = v.Id,
+                            Vin = v.Vin,
+                            v.Make,
+                            v.Model,
+                            v.Engine,
+                            v.Plate,
+                            v.State,
+                            OwnerName = $"{uw.Name} {uw.LastName}"
                         }
                     )
-                    .Select(wv => new VehicleSearchDto
-                    {
-                        Vin = wv.Vehicle.Vin,
-                        Make = wv.Vehicle.Make,
-                        Model = wv.Vehicle.Model,
-                        OwnerName = $"{wv.Workshop.Name} {wv.Workshop.LastName}"
-                    })
                     .ToListAsync();
 
-                return Ok(vehicles);
+                var result = vehicles.Select(v => new VehicleSearchDto
+                {
+                    Id = v.Id,
+                    Vin = v.Vin,
+                    Make = v.Make,
+                    Model = v.Model,
+                    OwnerName = v.OwnerName
+                }).ToList();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = $"Error al obtener la lista de vehículos: {ex.Message}" });
             }
         }
+
 
         [HttpDelete("vehicle/{vin}")]
         public async Task<IActionResult> DeleteVehicleByVin(string vin)
@@ -260,6 +269,27 @@ namespace Mechanical_workshop.Controllers
                 });
             }
         }
+
+
+
+
+        [HttpGet("vehicle/{id}")]
+        public async Task<ActionResult<VehicleReadDto>> GetVehicleById(int id)
+        {
+            var vehicle = await _context.Vehicles
+                .Include(v => v.UserWorkshop)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vehicle == null)
+            {
+                return NotFound(new { message = $"No se encontró el vehículo con ID {id}." });
+            }
+
+            var vehicleReadDto = _mapper.Map<VehicleReadDto>(vehicle);
+            return Ok(vehicleReadDto);
+        }
+
+
 
 
     }

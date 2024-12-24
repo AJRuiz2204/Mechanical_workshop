@@ -25,6 +25,9 @@ builder.Services.AddCors(options =>
 
 // Registrar AutoMapper
 builder.Services.AddAutoMapper(typeof(UserWorkshopProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(DiagnosticProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly, typeof(DiagnosticProfile).Assembly);
+
 
 // Registrar Controladores con Vistas y APIs
 builder.Services.AddControllersWithViews();
