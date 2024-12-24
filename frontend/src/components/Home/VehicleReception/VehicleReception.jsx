@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+// src/components/VehicleReception/VehicleReception.jsx
 import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Spinner } from "react-bootstrap";
 import {
@@ -9,6 +10,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 const VehicleReception = () => {
+  // State to manage workshop data
   const [userWorkshop, setUserWorkshop] = useState({
     email: "",
     name: "",
@@ -29,21 +31,25 @@ const VehicleReception = () => {
         year: "",
         engine: "",
         plate: "",
-        state: "", // Cambié "vehicleState" a "state" para consistencia
+        state: "", // Changed from "vehicleState" to "state" for consistency
       },
     ],
   });
 
+  // State to handle submission and loading
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { id } = useParams(); // Para obtener el ID si se está editando
 
+  const navigate = useNavigate();
+  const { id } = useParams(); // If there's an ID, we are editing an existing record
+
+  // If editing (when 'id' exists), fetch the existing data
   useEffect(() => {
     if (id) {
       setLoading(true);
       getUserWorkshopById(id)
         .then((data) => {
+          // Populate the state with the data fetched
           setUserWorkshop({
             email: data.email,
             name: data.name,
@@ -72,16 +78,19 @@ const VehicleReception = () => {
     }
   }, [id]);
 
+  // Handle changes in the main fields of the workshop
   const handleInputChange = (field, value) => {
     setUserWorkshop({ ...userWorkshop, [field]: value });
   };
 
+  // Handle changes in the vehicle array
   const handleVehicleChange = (index, field, value) => {
     const updatedVehicles = [...userWorkshop.vehicles];
     updatedVehicles[index][field] = value;
     setUserWorkshop({ ...userWorkshop, vehicles: updatedVehicles });
   };
 
+  // Add a new vehicle to the array
   const addVehicle = () => {
     setUserWorkshop({
       ...userWorkshop,
@@ -100,15 +109,17 @@ const VehicleReception = () => {
     });
   };
 
+  // Remove a vehicle from the array
   const deleteVehicle = (index) => {
     const updatedVehicles = userWorkshop.vehicles.filter((_, i) => i !== index);
     setUserWorkshop({ ...userWorkshop, vehicles: updatedVehicles });
   };
 
+  // Handle form submission to create or update a workshop
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Evitar múltiples envíos
+    // Prevent multiple submissions
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -139,13 +150,15 @@ const VehicleReception = () => {
 
     try {
       if (id) {
+        // Update existing workshop
         await updateUserWorkshop(id, payload);
-        alert("Taller actualizado exitosamente.");
+        alert("Workshop successfully updated.");
       } else {
+        // Create a new workshop
         await createUserWorkshop(payload);
-        alert("Taller creado exitosamente.");
+        alert("Workshop successfully created.");
       }
-      navigate("/home"); // Volver a la lista
+      navigate("/home"); // Return to the main screen
     } catch (error) {
       alert(`Error: ${error.message}`);
     } finally {
@@ -153,6 +166,7 @@ const VehicleReception = () => {
     }
   };
 
+  // If data is being loaded, show a spinner
   if (loading) {
     return (
       <Container
@@ -168,14 +182,14 @@ const VehicleReception = () => {
     <Container className="p-4 border rounded mt-4 bg-light">
       <Form onSubmit={handleSubmit}>
         <h3 className="mb-4">
-          {id ? "Editar Taller Mecánico" : "Registrar Taller Mecánico"}
+          {id ? "Edit Workshop" : "Register Workshop"}
         </h3>
 
-        {/* Datos del Taller */}
+        {/* Workshop's main data */}
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Nombre</Form.Label>
+              <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.name}
@@ -186,7 +200,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Apellido</Form.Label>
+              <Form.Label>Last Name</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.lastName}
@@ -200,7 +214,7 @@ const VehicleReception = () => {
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Correo Electrónico</Form.Label>
+              <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
                 value={userWorkshop.email}
@@ -211,26 +225,22 @@ const VehicleReception = () => {
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Número Primario</Form.Label>
+              <Form.Label>Primary Number</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.primaryNumber}
-                onChange={(e) =>
-                  handleInputChange("primaryNumber", e.target.value)
-                }
+                onChange={(e) => handleInputChange("primaryNumber", e.target.value)}
                 required
               />
             </Form.Group>
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Número Secundario</Form.Label>
+              <Form.Label>Secondary Number</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.secondaryNumber}
-                onChange={(e) =>
-                  handleInputChange("secondaryNumber", e.target.value)
-                }
+                onChange={(e) => handleInputChange("secondaryNumber", e.target.value)}
               />
             </Form.Group>
           </Col>
@@ -239,7 +249,7 @@ const VehicleReception = () => {
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Dirección</Form.Label>
+              <Form.Label>Address</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.address}
@@ -250,7 +260,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Ciudad</Form.Label>
+              <Form.Label>City</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.city}
@@ -261,7 +271,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Estado</Form.Label>
+              <Form.Label>State</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.state}
@@ -272,7 +282,7 @@ const VehicleReception = () => {
           </Col>
           <Col md={2}>
             <Form.Group>
-              <Form.Label>Código Postal</Form.Label>
+              <Form.Label>Zip Code</Form.Label>
               <Form.Control
                 type="text"
                 value={userWorkshop.zip}
@@ -283,47 +293,41 @@ const VehicleReception = () => {
           </Col>
         </Row>
 
-        {/* Información del Vehículo */}
-        <h4 className="mt-4 mb-3">Información del Vehículo</h4>
+        {/* Vehicles information */}
+        <h4 className="mt-4 mb-3">Vehicle Information</h4>
         {userWorkshop.vehicles.map((vehicle, index) => (
           <div key={index} className="border rounded p-3 mb-3 bg-white">
             <Row>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>VIN (17 caracteres)</Form.Label>
+                  <Form.Label>VIN (17 chars)</Form.Label>
                   <Form.Control
                     type="text"
-                    maxLength={17} // Esto evita que se escriba más de 17
+                    maxLength={17} // Avoid more than 17 chars
                     value={vehicle.vin}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "vin", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "vin", e.target.value)}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Marca</Form.Label>
+                  <Form.Label>Make</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.make}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "make", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "make", e.target.value)}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Modelo</Form.Label>
+                  <Form.Label>Model</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.model}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "model", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "model", e.target.value)}
                     required
                   />
                 </Form.Group>
@@ -335,7 +339,7 @@ const VehicleReception = () => {
                     className="mt-4"
                     onClick={() => deleteVehicle(index)}
                   >
-                    Eliminar
+                    Delete
                   </Button>
                 )}
               </Col>
@@ -343,52 +347,44 @@ const VehicleReception = () => {
             <Row className="mt-2">
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Año</Form.Label>
+                  <Form.Label>Year</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.year}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "year", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "year", e.target.value)}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Motor</Form.Label>
+                  <Form.Label>Engine</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.engine}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "engine", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "engine", e.target.value)}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Placa</Form.Label>
+                  <Form.Label>Plate</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.plate}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "plate", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "plate", e.target.value)}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label>Estado</Form.Label>
+                  <Form.Label>State</Form.Label>
                   <Form.Control
                     type="text"
                     value={vehicle.state}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "state", e.target.value)
-                    }
+                    onChange={(e) => handleVehicleChange(index, "state", e.target.value)}
                     required
                   />
                 </Form.Group>
@@ -398,7 +394,7 @@ const VehicleReception = () => {
         ))}
 
         <Button variant="primary" onClick={addVehicle} className="mb-3">
-          Agregar Vehículo
+          Add Vehicle
         </Button>
 
         <div className="d-flex justify-content-end">
@@ -408,10 +404,10 @@ const VehicleReception = () => {
             className="me-2"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Guardando..." : "Guardar"}
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
           <Button variant="secondary" onClick={() => navigate("/")}>
-            Cancelar
+            Cancel
           </Button>
         </div>
       </Form>
