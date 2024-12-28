@@ -10,6 +10,9 @@ import VehicleReception from "./components/Home/VehicleReception/VehicleReceptio
 import ChangePassword from "./components/ForgotPassword/ChangePassword";
 import VehicleList from "./components/Home/VehicleList/VehicleList";
 import Diagnostic from "./components/Home/Diagnostic/Diagnostic";
+import TechnicianDiagnostic from "./components/Home/Diagnostic/TechnicianDiagnostic";
+import DiagnosticList from "./components/Home/Diagnostic/DiagnosticList";
+import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDiagnosticEdit";
 
 const App = () => {
   return (
@@ -25,6 +28,29 @@ const App = () => {
       <Route path="/create" element={<VehicleReception />} />
       <Route path="/edit/:vin" element={<VehicleReception />} />
       <Route path="/diagnostic/:id" element={<Diagnostic />} />
+      <Route
+        path="/technicianDiagnostic/:id"
+        element={<TechnicianDiagnostic />}
+      />
+      <Route
+        path="/technicianDiagnostic/edit/:techDiagId"
+        element={<TechnicianDiagnosticEdit />}
+      />
+      <Route path="/diagnostic/create/:vehicleId" element={<Diagnostic />} />
+
+      <Route path="/diagnostic-list" element={<DiagnosticList />} />
+
+      <Route
+        path="/technicianDiagnostic/create/:diagnosticId"
+        element={<TechnicianDiagnostic />}
+      />
+
+      <Route
+        path="/technicianDiagnostic/edit/:techDiagId"
+        element={<TechnicianDiagnostic />}
+      />
+
+      <Route path="/diagnostic-list" element={<DiagnosticList />} />
     </Routes>
   );
 };

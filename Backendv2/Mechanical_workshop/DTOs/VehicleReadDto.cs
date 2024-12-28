@@ -1,12 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Mechanical_workshop.Dtos
 {
-
     public class VehicleReadDto
     {
         public int Id { get; set; }
-
         public string Vin { get; set; } = string.Empty;
         public string Make { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
@@ -15,13 +11,10 @@ namespace Mechanical_workshop.Dtos
         public string Plate { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;
 
-        // FK para saber a qué taller pertenece
-        public int UserWorkshopId { get; set; }
+        // NUEVO: Status
+        public string Status { get; set; } = "Visto";
 
-        // Detalles del dueño (taller)
+        public int UserWorkshopId { get; set; }
         public UserWorkshopReadDto? UserWorkshop { get; set; }
     }
-
-    
-   
 }

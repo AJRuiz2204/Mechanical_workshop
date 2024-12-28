@@ -1,0 +1,24 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class TechnicianDiagnostic
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        public int DiagnosticId { get; set; }
+        public Diagnostic? Diagnostic { get; set; }
+
+        // Nuevos campos
+        [Required]
+        public int Mileage { get; set; }
+
+        [Required]
+        [StringLength(1000)]
+        public string ExtendedDiagnostic { get; set; } = string.Empty;
+    }
+}

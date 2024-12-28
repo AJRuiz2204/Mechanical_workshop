@@ -1,17 +1,15 @@
 using AutoMapper;
-using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
 
-namespace Mechanical_workshop.Profiles
+public class VehicleProfile : Profile
 {
-    public class VehicleProfile : Profile
+    public VehicleProfile()
     {
-        public VehicleProfile()
-        {
-            CreateMap<Vehicle, VehicleReadDto>()
-                .ForMember(dest => dest.UserWorkshop, opt => opt.MapFrom(src => src.UserWorkshop));
+        // De Vehicle -> VehicleReadDto
+        CreateMap<Vehicle, VehicleReadDto>();
 
-            CreateMap<UserWorkshop, UserWorkshopReadDto>();
-        }
+        // De VehicleDto -> Vehicle
+        CreateMap<VehicleDto, Vehicle>();
     }
 }

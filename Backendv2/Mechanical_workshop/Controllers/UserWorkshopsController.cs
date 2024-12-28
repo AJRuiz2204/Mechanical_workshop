@@ -49,7 +49,6 @@ namespace Mechanical_workshop.Controllers
         {
             try
             {
-                // Lógica existente
                 var userWorkshop = _mapper.Map<UserWorkshop>(userWorkshopDto);
 
                 foreach (var vehicleDto in userWorkshopDto.Vehicles)
@@ -58,14 +57,13 @@ namespace Mechanical_workshop.Controllers
                 }
 
                 _context.UserWorkshops.Add(userWorkshop);
-                await _context.SaveChangesAsync();  // <-- Aquí se lanza la excepción si algo falla en la BD
+                await _context.SaveChangesAsync();
 
                 var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
                 return CreatedAtAction(nameof(GetUserWorkshop), new { id = userWorkshop.Id }, readDto);
             }
             catch (Exception ex)
             {
-                // Capturamos cualquier excepción (por ejemplo, DB, validación, etc.)
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     message = $"Error al crear el taller: {ex.Message}"
@@ -75,7 +73,7 @@ namespace Mechanical_workshop.Controllers
 
 
 
-        // PUT: api/UserWorkshops/{id}
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUserWorkshop(int id, UserWorkshopUpdateDto userWorkshopUpdateDto)
         {
@@ -93,26 +91,28 @@ namespace Mechanical_workshop.Controllers
                 return NotFound();
             }
 
-            // Mapeo de campos principales
+            // Mapeo de campos principales (UserWorkshop)
             _mapper.Map(userWorkshopUpdateDto, userWorkshop);
 
             // Manejo de vehículos
-            // Eliminar vehículos que ya no existen
+            // 1) Eliminar vehículos que ya no estén
             var vehiclesToRemove = userWorkshop.Vehicles
                 .Where(v => !userWorkshopUpdateDto.Vehicles.Any(dto => dto.Vin == v.Vin))
                 .ToList();
-
             foreach (var vehicle in vehiclesToRemove)
             {
                 _context.Vehicles.Remove(vehicle);
             }
 
-            // Agregar o actualizar vehículos
+            // 2) Agregar o actualizar vehículos
             foreach (var vehicleDto in userWorkshopUpdateDto.Vehicles)
             {
-                var existingVehicle = userWorkshop.Vehicles.FirstOrDefault(v => v.Vin == vehicleDto.Vin);
+                var existingVehicle = userWorkshop.Vehicles
+                    .FirstOrDefault(v => v.Vin == vehicleDto.Vin);
+
                 if (existingVehicle != null)
                 {
+                    // Actualiza los campos del vehículo, incluyendo Status
                     _mapper.Map(vehicleDto, existingVehicle);
                 }
                 else
@@ -129,13 +129,9 @@ namespace Mechanical_workshop.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!UserWorkshopExists(id))
-                {
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
@@ -223,6 +219,7 @@ namespace Mechanical_workshop.Controllers
                             v.Engine,
                             v.Plate,
                             v.State,
+                            v.Status,
                             OwnerName = $"{uw.Name} {uw.LastName}"
                         }
                     )
@@ -234,7 +231,8 @@ namespace Mechanical_workshop.Controllers
                     Vin = v.Vin,
                     Make = v.Make,
                     Model = v.Model,
-                    OwnerName = v.OwnerName
+                    OwnerName = v.OwnerName,
+                    Status = v.Status
                 }).ToList();
 
                 return Ok(result);
@@ -289,6 +287,20 @@ namespace Mechanical_workshop.Controllers
             return Ok(vehicleReadDto);
         }
 
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateVehicleStatus(int id, [FromBody] string newStatus)
+        {
+            var vehicle = await _context.Vehicles.FindAsync(id);
+            if (vehicle == null)
+            {
+                return NotFound(new { message = "Vehículo no encontrado." });
+            }
+
+            vehicle.Status = newStatus;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
 
 
 

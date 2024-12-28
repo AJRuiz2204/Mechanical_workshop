@@ -1,93 +1,144 @@
 /* eslint-disable no-unused-vars */
 // src/components/Diagnostic/DiagnosticList.jsx
+
 import React, { useEffect, useState } from "react";
-import { Table, Form, Button, Container } from "react-bootstrap";
+import { Table, Button, Container, Alert, Spinner } from "react-bootstrap";
 import { getDiagnostics } from "../../../services/DiagnosticService";
+import { useNavigate } from "react-router-dom";
+import { deleteTechnicianDiagnostic } from "../../../services/TechnicianDiagnosticService";
 
 const DiagnosticList = () => {
+  const navigate = useNavigate();
   const [diagnostics, setDiagnostics] = useState([]);
-  const [filteredDiagnostics, setFilteredDiagnostics] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Cargar diagnósticos al iniciar
+  // Función para obtener la lista de diagnósticos
+  const fetchDiagnostics = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getDiagnostics();
+      setDiagnostics(data);
+    } catch (error) {
+      setError(error.message || "Error al obtener la lista de diagnósticos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getDiagnostics();
-        setDiagnostics(data);
-        setFilteredDiagnostics(data);
-      } catch (error) {
-        alert(`Error: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchDiagnostics();
   }, []);
 
-  // Búsqueda local (por assignedTechnician, reasonForVisit, etc.)
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredDiagnostics(diagnostics);
-    } else {
-      const lowerTerm = searchTerm.toLowerCase();
-      const result = diagnostics.filter((d) => {
-        const technician = d.assignedTechnician.toLowerCase();
-        const reason = d.reasonForVisit.toLowerCase();
-        // O filtrar por VehicleId convertido a string si quieres
-        return technician.includes(lowerTerm) || reason.includes(lowerTerm);
-      });
-      setFilteredDiagnostics(result);
+  // Función para manejar la eliminación de un TechnicianDiagnostic
+  const handleDeleteTechDiag = async (techDiagId) => {
+    const confirmDelete = window.confirm(
+      "¿Seguro que deseas eliminar este Diagnóstico Técnico?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteTechnicianDiagnostic(techDiagId);
+      alert("Diagnóstico Técnico eliminado con éxito.");
+      // Actualizar el estado local
+      setDiagnostics((prevDiagnostics) =>
+        prevDiagnostics.map((diag) =>
+          diag.techDiagnosticId === techDiagId
+            ? { ...diag, techDiagnosticId: null }
+            : diag
+        )
+      );
+    } catch (error) {
+      alert(
+        "Error al eliminar el Diagnóstico Técnico: " + (error.message || error)
+      );
     }
-  }, [searchTerm, diagnostics]);
+  };
 
   return (
     <Container className="p-4 border rounded">
-      <h3>DIAGNOSTIC LIST</h3>
+      <h3>Lista de Diagnósticos</h3>
 
-      {/* Search */}
-      <Form.Group controlId="search" className="mb-3">
-        <Form.Label>Search by Technician or Reason</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Enter search term..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </Form.Group>
+      {/* Mostrar mensajes de error si existen */}
+      {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* Table */}
+      {/* Mostrar indicador de carga */}
       {loading ? (
-        <div>Loading...</div>
-      ) : filteredDiagnostics.length === 0 ? (
-        <div>No se encontraron diagnósticos.</div>
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </Spinner>
+        </div>
       ) : (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th></th>
-              <th>VehicleId</th>
-              <th>Técnico</th>
-              <th>Razón</th>
-              <th>Fecha Creación</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredDiagnostics.map((diag) => (
-              <tr key={diag.id}>
-                <td>
-                  <Form.Check type="checkbox" />
-                </td>
-                <td>{diag.vehicleId}</td>
-                <td>{diag.assignedTechnician}</td>
-                <td>{diag.reasonForVisit}</td>
-                <td>{new Date(diag.createdAt).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <>
+          {diagnostics.length === 0 ? (
+            <Alert variant="info">No hay diagnósticos registrados.</Alert>
+          ) : (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Vehicle ID</th>
+                  <th>VIN</th>
+                  <th>Marca</th>
+                  <th>Modelo</th>
+                  <th>Motivo de la Visita</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {diagnostics.map((diag) => (
+                  <tr key={diag.id}>
+                    <td>{diag.id}</td>
+                    <td>{diag.vehicleId}</td>
+                    <td>{diag.vehicle?.vin || "N/A"}</td>
+                    <td>{diag.vehicle?.make || "N/A"}</td>
+                    <td>{diag.vehicle?.model || "N/A"}</td>
+                    <td>{diag.reasonForVisit}</td>
+                    <td>
+                      {diag.techDiagnosticId ? (
+                        <>
+                          <Button
+                            variant="warning"
+                            size="sm"
+                            className="me-2"
+                            onClick={() =>
+                              navigate(
+                                `/technicianDiagnostic/edit/${diag.techDiagnosticId}`
+                              )
+                            }
+                          >
+                            Editar Diagnóstico Técnico
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() =>
+                              handleDeleteTechDiag(diag.techDiagnosticId)
+                            }
+                          >
+                            Eliminar Diagnóstico Técnico
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/technicianDiagnostic/create/${diag.id}`)
+                          }
+                        >
+                          Crear Diagnóstico Técnico
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </>
       )}
     </Container>
   );

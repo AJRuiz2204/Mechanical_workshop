@@ -27,6 +27,8 @@ namespace Mechanical_workshop.Models
         [StringLength(500)]
         public string ReasonForVisit { get; set; } = string.Empty;
 
+        public ICollection<TechnicianDiagnostic>? TechnicianDiagnostics { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

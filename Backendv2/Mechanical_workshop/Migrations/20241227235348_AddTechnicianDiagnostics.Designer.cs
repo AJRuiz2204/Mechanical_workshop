@@ -4,6 +4,7 @@ using Mechanical_workshop.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mechanical_workshop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241227235348_AddTechnicianDiagnostics")]
+    partial class AddTechnicianDiagnostics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -396,7 +399,7 @@ namespace Mechanical_workshop.Migrations
             modelBuilder.Entity("Mechanical_workshop.Models.TechnicianDiagnostic", b =>
                 {
                     b.HasOne("Mechanical_workshop.Models.Diagnostic", "Diagnostic")
-                        .WithMany("TechnicianDiagnostics")
+                        .WithMany()
                         .HasForeignKey("DiagnosticId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -413,11 +416,6 @@ namespace Mechanical_workshop.Migrations
                         .IsRequired();
 
                     b.Navigation("UserWorkshop");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.Diagnostic", b =>
-                {
-                    b.Navigation("TechnicianDiagnostics");
                 });
 
             modelBuilder.Entity("Mechanical_workshop.Models.UserWorkshop", b =>

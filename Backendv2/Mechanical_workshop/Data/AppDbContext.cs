@@ -18,6 +18,8 @@ namespace Mechanical_workshop.Data
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<Estimate> Estimates { get; set; }
         public DbSet<Diagnostic> Diagnostics { get; set; }
+        public DbSet<TechnicianDiagnostic> TechnicianDiagnostics { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,8 +38,11 @@ namespace Mechanical_workshop.Data
                 .HasForeignKey(d => d.VehicleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-
+            // Configurar relaciones si es necesario
+            modelBuilder.Entity<Diagnostic>()
+                .HasMany(d => d.TechnicianDiagnostics)
+                .WithOne(td => td.Diagnostic)
+                .HasForeignKey(td => td.DiagnosticId);
         }
     }
 }

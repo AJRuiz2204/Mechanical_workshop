@@ -1,178 +1,169 @@
 /* eslint-disable no-unused-vars */
 // src/components/Diagnostic/Diagnostic.jsx
+
 import React, { useState, useEffect } from "react";
-import { Form, Button, Row, Col, Container, Alert } from "react-bootstrap";
+import { Form, Button, Container, Row, Col, Alert, Spinner } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
-import { getVehicleById } from "../../../services/VehicleService"; // Adjust the path as needed
-import { createDiagnostic } from "../../../services/DiagnosticService"; // Adjust the path as needed
+import { createDiagnostic } from "../../../services/DiagnosticService";
+import { getVehicleById } from "../../../services/VehicleService";
+import "./Diagnostic.css";
 
 const Diagnostic = () => {
-  // 'id' comes from the route: /diagnostic/:id
-  const { id } = useParams();
   const navigate = useNavigate();
+  const { vehicleId } = useParams();
 
-  // Local state for the vehicle details
-  const [vehicle, setVehicle] = useState({
-    id: 0,
-    vin: "",
-    make: "",
-    model: "",
-    engine: "",
-    plate: "",
-    state: "",
-    userWorkshopId: 0,
-    // userWorkshop can contain information like { name, lastName, etc. }
-    userWorkshop: null,
+  // Estado para el vehículo
+  const [vehicle, setVehicle] = useState(null);
+
+  // Estado para el formulario
+  const [formData, setFormData] = useState({
+    reasonForVisit: "",
   });
 
-  // Local state for diagnostic form
-  const [assignedTechnician, setAssignedTechnician] = useState("");
-  const [reasonForVisit, setReasonForVisit] = useState("");
-
-  // Example list of technicians
-  const [technicians, setTechnicians] = useState(["Mario Aguirre", "Jane Doe", "John Smith"]);
-
-  // Local state for error/success messages
+  // Estado para mensajes de error y éxito
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch vehicle information upon mounting the component
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setErrorMessage("");
-        setSuccessMessage("");
+  // Estado de carga
+  const [loading, setLoading] = useState(true);
 
-        const data = await getVehicleById(id);
-        // 'data' is a VehicleReadDto: { id, vin, make, model, ..., userWorkshopId, userWorkshop }
+  // Obtener información del vehículo al montar el componente
+  useEffect(() => {
+    const fetchVehicle = async () => {
+      try {
+        const data = await getVehicleById(vehicleId);
         setVehicle(data);
       } catch (error) {
-        setErrorMessage(error.message);
+        setErrorMessage("Error al obtener la información del vehículo: " + error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [id]);
+    fetchVehicle();
+  }, [vehicleId]);
 
-  // Handle form submission to create a new diagnostic
+  // Manejar cambios en el formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  // Manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Basic validations
-    if (!assignedTechnician.trim()) {
-      setErrorMessage("You must assign a technician.");
-      return;
-    }
-    if (!reasonForVisit.trim()) {
-      setErrorMessage("The reason for visit is required.");
+    // Validación del formulario
+    if (!formData.reasonForVisit.trim()) {
+      setErrorMessage("El motivo de la visita es obligatorio.");
       return;
     }
 
-    // Payload for creating a diagnostic
-    const payload = {
-      vehicleId: vehicle.id, // Must match an existing vehicle in the database
-      assignedTechnician,
-      reasonForVisit,
+    // Payload para crear el diagnóstico
+    const diagnosticData = {
+      vehicleId: parseInt(vehicleId, 10),
+      reasonForVisit: formData.reasonForVisit.trim(),
     };
 
     try {
-      await createDiagnostic(payload);
-      setSuccessMessage("Diagnostic has been successfully registered.");
-      // Optionally navigate somewhere or clear fields
-      // navigate("/diagnostics-list");
+      await createDiagnostic(diagnosticData);
+      setSuccessMessage("Diagnóstico creado con éxito.");
+      // Redirigir a la lista de diagnósticos después de crear
+      navigate("/diagnostic-list");
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage("Error al crear el diagnóstico: " + error.message);
     }
   };
 
+  if (loading) {
+    return (
+      <Container className="p-4 border rounded">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </Spinner>
+        </div>
+      </Container>
+    );
+  }
+
+  if (!vehicle) {
+    return (
+      <Container className="p-4 border rounded">
+        <Alert variant="danger">No se pudo cargar la información del vehículo.</Alert>
+        <Button variant="secondary" onClick={() => navigate("/diagnostic-list")}>
+          Volver a la Lista de Diagnósticos
+        </Button>
+      </Container>
+    );
+  }
+
   return (
     <Container className="p-4 border rounded bg-light">
-      <h3>Diagnostics Module</h3>
+      <h3>Crear Diagnóstico</h3>
 
-      {/* Display error or success messages */}
+      {/* Mostrar mensajes de error o éxito */}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      {/* Vehicle Information (read-only fields) */}
-      <h5>Vehicle Information</h5>
+      {/* Información del Vehículo (read-only) */}
+      <h5>Información del Vehículo</h5>
       <Row className="mb-3">
-        <Col md={2}>
-          <Form.Group>
+        <Col md={4}>
+          <Form.Group controlId="vin">
             <Form.Label>VIN</Form.Label>
             <Form.Control type="text" value={vehicle.vin} readOnly />
           </Form.Group>
         </Col>
-        <Col md={2}>
-          <Form.Group>
-            <Form.Label>Make</Form.Label>
+        <Col md={4}>
+          <Form.Group controlId="make">
+            <Form.Label>Marca</Form.Label>
             <Form.Control type="text" value={vehicle.make} readOnly />
           </Form.Group>
         </Col>
-        <Col md={2}>
-          <Form.Group>
-            <Form.Label>Model</Form.Label>
+        <Col md={4}>
+          <Form.Group controlId="model">
+            <Form.Label>Modelo</Form.Label>
             <Form.Control type="text" value={vehicle.model} readOnly />
           </Form.Group>
         </Col>
-        <Col md={2}>
-          <Form.Group>
-            <Form.Label>Engine</Form.Label>
+      </Row>
+      <Row className="mb-3">
+        <Col md={4}>
+          <Form.Group controlId="engine">
+            <Form.Label>Motor</Form.Label>
             <Form.Control type="text" value={vehicle.engine} readOnly />
           </Form.Group>
         </Col>
-        <Col md={2}>
-          <Form.Group>
-            <Form.Label>Plate</Form.Label>
+        <Col md={4}>
+          <Form.Group controlId="plate">
+            <Form.Label>Placa</Form.Label>
             <Form.Control type="text" value={vehicle.plate} readOnly />
           </Form.Group>
         </Col>
-        <Col md={2}>
-          <Form.Group>
-            <Form.Label>Owner (UserWorkshop)</Form.Label>
-            {vehicle.userWorkshop ? (
-              <Form.Control
-                type="text"
-                value={`${vehicle.userWorkshop.name} ${vehicle.userWorkshop.lastName}`}
-                readOnly
-              />
-            ) : (
-              <Form.Control type="text" value="Unknown" readOnly />
-            )}
+        <Col md={4}>
+          <Form.Group controlId="status">
+            <Form.Label>Status</Form.Label>
+            <Form.Control type="text" value={vehicle.status} readOnly />
           </Form.Group>
         </Col>
       </Row>
 
-      {/* Diagnostic Form */}
+      {/* Formulario de Diagnóstico */}
       <Form onSubmit={handleSubmit}>
-        <h5>Diagnostic Information</h5>
         <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Assign Technician</Form.Label>
-              <Form.Select
-                value={assignedTechnician}
-                onChange={(e) => setAssignedTechnician(e.target.value)}
-                required
-              >
-                <option value="">-- Select --</option>
-                {technicians.map((tech) => (
-                  <option key={tech} value={tech}>
-                    {tech}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Reason for Visit</Form.Label>
+          <Col md={12}>
+            <Form.Group controlId="reasonForVisit">
+              <Form.Label>Motivo de la Visita</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                value={reasonForVisit}
-                onChange={(e) => setReasonForVisit(e.target.value)}
+                name="reasonForVisit"
+                placeholder="Ingrese el motivo de la visita"
+                value={formData.reasonForVisit}
+                onChange={handleChange}
                 required
               />
             </Form.Group>
@@ -180,11 +171,11 @@ const Diagnostic = () => {
         </Row>
 
         <div className="d-flex justify-content-end">
-          <Button variant="secondary" className="me-2" onClick={() => navigate("/vehicle-list")}>
-            Cancel
+          <Button variant="secondary" className="me-2" onClick={() => navigate("/diagnostic-list")}>
+            Cancelar
           </Button>
           <Button variant="success" type="submit">
-            Save Diagnostic
+            Guardar Diagnóstico
           </Button>
         </div>
       </Form>

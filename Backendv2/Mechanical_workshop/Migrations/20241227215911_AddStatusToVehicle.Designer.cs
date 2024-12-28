@@ -4,6 +4,7 @@ using Mechanical_workshop.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mechanical_workshop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241227215911_AddStatusToVehicle")]
+    partial class AddStatusToVehicle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,32 +147,6 @@ namespace Mechanical_workshop.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Reports");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.TechnicianDiagnostic", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DiagnosticId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ExtendedDiagnostic")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
-                    b.Property<int>("Mileage")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DiagnosticId");
-
-                    b.ToTable("TechnicianDiagnostics");
                 });
 
             modelBuilder.Entity("Mechanical_workshop.Models.User", b =>
@@ -393,17 +370,6 @@ namespace Mechanical_workshop.Migrations
                     b.Navigation("Vehicle");
                 });
 
-            modelBuilder.Entity("Mechanical_workshop.Models.TechnicianDiagnostic", b =>
-                {
-                    b.HasOne("Mechanical_workshop.Models.Diagnostic", "Diagnostic")
-                        .WithMany("TechnicianDiagnostics")
-                        .HasForeignKey("DiagnosticId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Diagnostic");
-                });
-
             modelBuilder.Entity("Mechanical_workshop.Models.Vehicle", b =>
                 {
                     b.HasOne("Mechanical_workshop.Models.UserWorkshop", "UserWorkshop")
@@ -413,11 +379,6 @@ namespace Mechanical_workshop.Migrations
                         .IsRequired();
 
                     b.Navigation("UserWorkshop");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.Diagnostic", b =>
-                {
-                    b.Navigation("TechnicianDiagnostics");
                 });
 
             modelBuilder.Entity("Mechanical_workshop.Models.UserWorkshop", b =>

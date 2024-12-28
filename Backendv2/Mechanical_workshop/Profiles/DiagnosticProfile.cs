@@ -8,13 +8,12 @@ namespace Mechanical_workshop.Profiles
     {
         public DiagnosticProfile()
         {
-            // Mapeo al crear
-            CreateMap<DiagnosticCreateDto, Diagnostic>();
+            // Vehicle -> VehicleReadDto
+            CreateMap<Vehicle, VehicleReadDto>();
 
-            // Mapeo al leer
-            CreateMap<Diagnostic, DiagnosticReadDto>();
-
-            
+            // Diagnostic -> DiagnosticReadDto
+            CreateMap<Diagnostic, DiagnosticReadDto>()
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle));
         }
     }
-}
+}   

@@ -1,3 +1,4 @@
+// Controllers/DiagnosticsController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
@@ -24,31 +25,39 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<DiagnosticReadDto>> CreateDiagnostic(DiagnosticCreateDto diagnosticCreateDto)
         {
-            var vehicle = await _context.Vehicles
-                .Include(v => v.UserWorkshop)
-                .FirstOrDefaultAsync(v => v.Id == diagnosticCreateDto.VehicleId);
-
-            if (vehicle == null)
-            {
-                return NotFound(new { message = "El vehículo especificado no existe." });
-            }
-
+            // Mapear DTO a entidad
             var diagnostic = _mapper.Map<Diagnostic>(diagnosticCreateDto);
-            diagnostic.CreatedAt = DateTime.UtcNow;
 
+            // Agregar a la base de datos
             _context.Diagnostics.Add(diagnostic);
             await _context.SaveChangesAsync();
 
-            var readDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
-            return Ok(readDto);
+            // Mapear entidad a ReadDto
+            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
+
+            return CreatedAtAction(nameof(GetDiagnostic), new { id = diagnostic.Id }, diagnosticReadDto);
         }
 
-        // GET: api/Diagnostics/{id}
+        // GET: api/Diagnostics
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnostics()
+        {
+            var diagnostics = await _context.Diagnostics
+                .Include(d => d.Vehicle)
+                .Include(d => d.TechnicianDiagnostics)
+                .ToListAsync();
+
+            var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+            return Ok(diagnosticReadDtos);
+        }
+
+        // GET: api/Diagnostics/5
         [HttpGet("{id}")]
         public async Task<ActionResult<DiagnosticReadDto>> GetDiagnostic(int id)
         {
             var diagnostic = await _context.Diagnostics
                 .Include(d => d.Vehicle)
+                .Include(d => d.TechnicianDiagnostics)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (diagnostic == null)
@@ -56,19 +65,54 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = "No se encontró el diagnóstico." });
             }
 
-            return Ok(_mapper.Map<DiagnosticReadDto>(diagnostic));
+            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
+            return Ok(diagnosticReadDto);
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnostics()
+        // PUT: api/Diagnostics/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDiagnostic(int id, DiagnosticCreateDto diagnosticUpdateDto)
         {
-            var diagnostics = await _context.Diagnostics.ToListAsync();
+            if (id <= 0)
+            {
+                return BadRequest(new { message = "ID inválido." });
+            }
 
-            return Ok(_mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics));
+            var diagnostic = await _context.Diagnostics.FindAsync(id);
+            if (diagnostic == null)
+            {
+                return NotFound(new { message = "No se encontró el diagnóstico a actualizar." });
+            }
+
+            // Mapear las actualizaciones desde el DTO
+            _mapper.Map(diagnosticUpdateDto, diagnostic);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Error al actualizar el diagnóstico." });
+            }
+
+            return NoContent();
         }
 
+        // DELETE: api/Diagnostics/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDiagnostic(int id)
+        {
+            var diagnostic = await _context.Diagnostics.FindAsync(id);
+            if (diagnostic == null)
+            {
+                return NotFound(new { message = "No se encontró el diagnóstico a eliminar." });
+            }
 
+            _context.Diagnostics.Remove(diagnostic);
+            await _context.SaveChangesAsync();
 
+            return NoContent();
+        }
     }
-
 }

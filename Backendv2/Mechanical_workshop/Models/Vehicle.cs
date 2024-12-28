@@ -37,6 +37,10 @@ namespace Mechanical_workshop.Models
         [StringLength(50)]
         public string State { get; set; } = string.Empty;
 
+        [Required]
+        [StringLength(50)]
+        public string Status { get; set; } = "Visto";
+
         // Foreign Key
         public int UserWorkshopId { get; set; }
 
