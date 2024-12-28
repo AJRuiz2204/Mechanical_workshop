@@ -4,6 +4,7 @@ using Mechanical_workshop.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mechanical_workshop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241228202728_CreateEstimate")]
+    partial class CreateEstimate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,18 +64,13 @@ namespace Mechanical_workshop.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<string>("CustomerNote")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("ExtendedDiagnostic")
+                    b.Property<string>("Note")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<decimal>("Subtotal")
                         .HasColumnType("decimal(65,30)");
@@ -91,133 +89,7 @@ namespace Mechanical_workshop.Migrations
 
                     b.HasKey("ID");
 
-                    b.HasIndex("UserWorkshopID");
-
-                    b.HasIndex("VehicleID");
-
                     b.ToTable("Estimates");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.EstimateFlatFee", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("EstimateID")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("ExtendedPrice")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<decimal>("FlatFeePrice")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<bool>("Taxable")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("EstimateID");
-
-                    b.ToTable("EstimateFlatFees");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.EstimateLabor", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("Duration")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EstimateID")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("ExtendedPrice")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<decimal>("LaborRate")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<bool>("Taxable")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("EstimateID");
-
-                    b.ToTable("EstimateLabors");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.EstimatePart", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("EstimateID")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("ExtendedPrice")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<decimal>("ListPrice")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<decimal>("NetPrice")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("PartNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Taxable")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("EstimateID");
-
-                    b.ToTable("EstimateParts");
                 });
 
             modelBuilder.Entity("Mechanical_workshop.Models.Invoice", b =>
@@ -501,58 +373,6 @@ namespace Mechanical_workshop.Migrations
                     b.Navigation("Vehicle");
                 });
 
-            modelBuilder.Entity("Mechanical_workshop.Models.Estimate", b =>
-                {
-                    b.HasOne("Mechanical_workshop.Models.UserWorkshop", "UserWorkshop")
-                        .WithMany()
-                        .HasForeignKey("UserWorkshopID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Mechanical_workshop.Models.Vehicle", "Vehicle")
-                        .WithMany()
-                        .HasForeignKey("VehicleID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("UserWorkshop");
-
-                    b.Navigation("Vehicle");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.EstimateFlatFee", b =>
-                {
-                    b.HasOne("Mechanical_workshop.Models.Estimate", "Estimate")
-                        .WithMany("FlatFees")
-                        .HasForeignKey("EstimateID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Estimate");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.EstimateLabor", b =>
-                {
-                    b.HasOne("Mechanical_workshop.Models.Estimate", "Estimate")
-                        .WithMany("Labors")
-                        .HasForeignKey("EstimateID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Estimate");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.EstimatePart", b =>
-                {
-                    b.HasOne("Mechanical_workshop.Models.Estimate", "Estimate")
-                        .WithMany("Parts")
-                        .HasForeignKey("EstimateID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Estimate");
-                });
-
             modelBuilder.Entity("Mechanical_workshop.Models.Invoice", b =>
                 {
                     b.HasOne("Mechanical_workshop.Models.User", "User")
@@ -597,15 +417,6 @@ namespace Mechanical_workshop.Migrations
             modelBuilder.Entity("Mechanical_workshop.Models.Diagnostic", b =>
                 {
                     b.Navigation("TechnicianDiagnostics");
-                });
-
-            modelBuilder.Entity("Mechanical_workshop.Models.Estimate", b =>
-                {
-                    b.Navigation("FlatFees");
-
-                    b.Navigation("Labors");
-
-                    b.Navigation("Parts");
                 });
 
             modelBuilder.Entity("Mechanical_workshop.Models.UserWorkshop", b =>

@@ -28,6 +28,7 @@ builder.Services.AddAutoMapper(typeof(UserWorkshopProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(DiagnosticProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly, typeof(DiagnosticProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EntityProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(EstimatesProfile).Assembly);
 
 
 

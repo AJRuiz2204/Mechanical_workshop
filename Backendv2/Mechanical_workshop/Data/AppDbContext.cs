@@ -19,6 +19,9 @@ namespace Mechanical_workshop.Data
         public DbSet<Estimate> Estimates { get; set; }
         public DbSet<Diagnostic> Diagnostics { get; set; }
         public DbSet<TechnicianDiagnostic> TechnicianDiagnostics { get; set; }
+        public DbSet<EstimatePart> EstimateParts { get; set; }
+        public DbSet<EstimateLabor> EstimateLabors { get; set; }
+        public DbSet<EstimateFlatFee> EstimateFlatFees { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -43,6 +46,7 @@ namespace Mechanical_workshop.Data
                 .HasMany(d => d.TechnicianDiagnostics)
                 .WithOne(td => td.Diagnostic)
                 .HasForeignKey(td => td.DiagnosticId);
+                
         }
     }
 }
