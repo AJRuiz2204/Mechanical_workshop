@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mechanical_workshop.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241228055650_ConfigureDiagnosticMapping")]
-    partial class ConfigureDiagnosticMapping
+    [Migration("20241228185216_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

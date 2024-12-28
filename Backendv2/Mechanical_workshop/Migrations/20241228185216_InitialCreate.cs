@@ -120,6 +120,8 @@ namespace Mechanical_workshop.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     State = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     UserWorkshopId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -138,26 +140,21 @@ namespace Mechanical_workshop.Migrations
                 name: "Diagnostics",
                 columns: table => new
                 {
-                    ID = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    VehicleID = table.Column<int>(type: "int", nullable: false),
-                    AssignedTechnicianID = table.Column<int>(type: "int", nullable: false),
-                    Reason = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                    VehicleId = table.Column<int>(type: "int", nullable: false),
+                    AssignedTechnician = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                    ReasonForVisit = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Diagnostics", x => x.ID);
+                    table.PrimaryKey("PK_Diagnostics", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Diagnostics_Users_AssignedTechnicianID",
-                        column: x => x.AssignedTechnicianID,
-                        principalTable: "Users",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Diagnostics_Vehicles_VehicleID",
-                        column: x => x.VehicleID,
+                        name: "FK_Diagnostics_Vehicles_VehicleId",
+                        column: x => x.VehicleId,
                         principalTable: "Vehicles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -219,15 +216,33 @@ namespace Mechanical_workshop.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Diagnostics_AssignedTechnicianID",
-                table: "Diagnostics",
-                column: "AssignedTechnicianID");
+            migrationBuilder.CreateTable(
+                name: "TechnicianDiagnostics",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    DiagnosticId = table.Column<int>(type: "int", nullable: false),
+                    Mileage = table.Column<int>(type: "int", nullable: false),
+                    ExtendedDiagnostic = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TechnicianDiagnostics", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TechnicianDiagnostics_Diagnostics_DiagnosticId",
+                        column: x => x.DiagnosticId,
+                        principalTable: "Diagnostics",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Diagnostics_VehicleID",
+                name: "IX_Diagnostics_VehicleId",
                 table: "Diagnostics",
-                column: "VehicleID");
+                column: "VehicleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Estimates_VehicleID",
@@ -245,6 +260,11 @@ namespace Mechanical_workshop.Migrations
                 column: "VehicleID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TechnicianDiagnostics_DiagnosticId",
+                table: "TechnicianDiagnostics",
+                column: "DiagnosticId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Vehicles_UserWorkshopId",
                 table: "Vehicles",
                 column: "UserWorkshopId");
@@ -253,9 +273,6 @@ namespace Mechanical_workshop.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Diagnostics");
-
             migrationBuilder.DropTable(
                 name: "Estimates");
 
@@ -266,7 +283,13 @@ namespace Mechanical_workshop.Migrations
                 name: "Reports");
 
             migrationBuilder.DropTable(
+                name: "TechnicianDiagnostics");
+
+            migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Diagnostics");
 
             migrationBuilder.DropTable(
                 name: "Vehicles");

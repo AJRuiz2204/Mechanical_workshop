@@ -10,7 +10,7 @@ import "./Diagnostic.css";
 
 const Diagnostic = () => {
   const navigate = useNavigate();
-  const { vehicleId } = useParams();
+  const { id } = useParams(); // Asegúrate de que tu ruta sea /diagnostic/:id
 
   // Estado para el vehículo
   const [vehicle, setVehicle] = useState(null);
@@ -18,6 +18,7 @@ const Diagnostic = () => {
   // Estado para el formulario
   const [formData, setFormData] = useState({
     reasonForVisit: "",
+    assignedTechnician: "", // Agregado para incluir el técnico asignado
   });
 
   // Estado para mensajes de error y éxito
@@ -31,7 +32,12 @@ const Diagnostic = () => {
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
-        const data = await getVehicleById(vehicleId);
+        if (!id) {
+          setErrorMessage("No vehicle ID provided.");
+          setLoading(false);
+          return;
+        }
+        const data = await getVehicleById(id);
         setVehicle(data);
       } catch (error) {
         setErrorMessage("Error al obtener la información del vehículo: " + error.message);
@@ -41,7 +47,7 @@ const Diagnostic = () => {
     };
 
     fetchVehicle();
-  }, [vehicleId]);
+  }, [id]);
 
   // Manejar cambios en el formulario
   const handleChange = (e) => {
@@ -56,6 +62,10 @@ const Diagnostic = () => {
     setSuccessMessage("");
 
     // Validación del formulario
+    if (!formData.assignedTechnician.trim()) {
+      setErrorMessage("Debes asignar un técnico.");
+      return;
+    }
     if (!formData.reasonForVisit.trim()) {
       setErrorMessage("El motivo de la visita es obligatorio.");
       return;
@@ -63,7 +73,8 @@ const Diagnostic = () => {
 
     // Payload para crear el diagnóstico
     const diagnosticData = {
-      vehicleId: parseInt(vehicleId, 10),
+      vehicleId: parseInt(id, 10),
+      assignedTechnician: formData.assignedTechnician.trim(),
       reasonForVisit: formData.reasonForVisit.trim(),
     };
 
@@ -154,7 +165,24 @@ const Diagnostic = () => {
       {/* Formulario de Diagnóstico */}
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
-          <Col md={12}>
+          <Col md={6}>
+            <Form.Group controlId="assignedTechnician">
+              <Form.Label>Asignar Técnico</Form.Label>
+              <Form.Select
+                name="assignedTechnician"
+                value={formData.assignedTechnician}
+                onChange={handleChange}
+                required
+              >
+                <option value="">-- Seleccionar --</option>
+                {/* Puedes poblar esta lista dinámicamente si es necesario */}
+                <option value="Mario Aguirre">Mario Aguirre</option>
+                <option value="Jane Doe">Jane Doe</option>
+                <option value="John Smith">John Smith</option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
             <Form.Group controlId="reasonForVisit">
               <Form.Label>Motivo de la Visita</Form.Label>
               <Form.Control
@@ -171,7 +199,11 @@ const Diagnostic = () => {
         </Row>
 
         <div className="d-flex justify-content-end">
-          <Button variant="secondary" className="me-2" onClick={() => navigate("/diagnostic-list")}>
+          <Button
+            variant="secondary"
+            className="me-2"
+            onClick={() => navigate("/diagnostic-list")}
+          >
             Cancelar
           </Button>
           <Button variant="success" type="submit">
