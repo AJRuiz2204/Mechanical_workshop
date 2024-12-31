@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-// src/components/Diagnostic/Diagnostic.jsx
+// Frontend: src/components/Diagnostic/Diagnostic.jsx
 
 import React, { useState, useEffect } from "react";
 import { Form, Button, Container, Row, Col, Alert, Spinner } from "react-bootstrap";
@@ -10,25 +10,25 @@ import "./Diagnostic.css";
 
 const Diagnostic = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Asegúrate de que tu ruta sea /diagnostic/:id
+  const { id } = useParams(); // Ensure your route is /diagnostic/:id
 
-  // Estado para el vehículo
+  // State for the vehicle
   const [vehicle, setVehicle] = useState(null);
 
-  // Estado para el formulario
+  // Form state
   const [formData, setFormData] = useState({
     reasonForVisit: "",
-    assignedTechnician: "", // Agregado para incluir el técnico asignado
+    assignedTechnician: "", // Added to include the assigned technician
   });
 
-  // Estado para mensajes de error y éxito
+  // State for error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Estado de carga
+  // Loading state
   const [loading, setLoading] = useState(true);
 
-  // Obtener información del vehículo al montar el componente
+  // Fetch vehicle information when the component mounts
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
@@ -40,7 +40,7 @@ const Diagnostic = () => {
         const data = await getVehicleById(id);
         setVehicle(data);
       } catch (error) {
-        setErrorMessage("Error al obtener la información del vehículo: " + error.message);
+        setErrorMessage("Error fetching vehicle information: " + error.message);
       } finally {
         setLoading(false);
       }
@@ -49,29 +49,29 @@ const Diagnostic = () => {
     fetchVehicle();
   }, [id]);
 
-  // Manejar cambios en el formulario
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Manejar el envío del formulario
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Validación del formulario
+    // Form validation
     if (!formData.assignedTechnician.trim()) {
-      setErrorMessage("Debes asignar un técnico.");
+      setErrorMessage("You must assign a technician.");
       return;
     }
     if (!formData.reasonForVisit.trim()) {
-      setErrorMessage("El motivo de la visita es obligatorio.");
+      setErrorMessage("Reason for visit is required.");
       return;
     }
 
-    // Payload para crear el diagnóstico
+    // Payload to create the diagnostic
     const diagnosticData = {
       vehicleId: parseInt(id, 10),
       assignedTechnician: formData.assignedTechnician.trim(),
@@ -80,11 +80,11 @@ const Diagnostic = () => {
 
     try {
       await createDiagnostic(diagnosticData);
-      setSuccessMessage("Diagnóstico creado con éxito.");
-      // Redirigir a la lista de diagnósticos después de crear
+      setSuccessMessage("Diagnostic created successfully.");
+      // Redirect to the diagnostics list after creation
       navigate("/diagnostic-list");
     } catch (error) {
-      setErrorMessage("Error al crear el diagnóstico: " + error.message);
+      setErrorMessage("Error creating diagnostic: " + error.message);
     }
   };
 
@@ -93,7 +93,7 @@ const Diagnostic = () => {
       <Container className="p-4 border rounded">
         <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
           <Spinner animation="border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">Loading...</span>
           </Spinner>
         </div>
       </Container>
@@ -103,9 +103,9 @@ const Diagnostic = () => {
   if (!vehicle) {
     return (
       <Container className="p-4 border rounded">
-        <Alert variant="danger">No se pudo cargar la información del vehículo.</Alert>
+        <Alert variant="danger">Unable to load vehicle information.</Alert>
         <Button variant="secondary" onClick={() => navigate("/diagnostic-list")}>
-          Volver a la Lista de Diagnósticos
+          Back to Diagnostics List
         </Button>
       </Container>
     );
@@ -113,14 +113,14 @@ const Diagnostic = () => {
 
   return (
     <Container className="p-4 border rounded bg-light">
-      <h3>Crear Diagnóstico</h3>
+      <h3>Create Diagnostic</h3>
 
-      {/* Mostrar mensajes de error o éxito */}
+      {/* Display error or success messages */}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      {/* Información del Vehículo (read-only) */}
-      <h5>Información del Vehículo</h5>
+      {/* Vehicle Information (read-only) */}
+      <h5>Vehicle Information</h5>
       <Row className="mb-3">
         <Col md={4}>
           <Form.Group controlId="vin">
@@ -130,13 +130,13 @@ const Diagnostic = () => {
         </Col>
         <Col md={4}>
           <Form.Group controlId="make">
-            <Form.Label>Marca</Form.Label>
+            <Form.Label>Make</Form.Label>
             <Form.Control type="text" value={vehicle.make} readOnly />
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group controlId="model">
-            <Form.Label>Modelo</Form.Label>
+            <Form.Label>Model</Form.Label>
             <Form.Control type="text" value={vehicle.model} readOnly />
           </Form.Group>
         </Col>
@@ -144,13 +144,13 @@ const Diagnostic = () => {
       <Row className="mb-3">
         <Col md={4}>
           <Form.Group controlId="engine">
-            <Form.Label>Motor</Form.Label>
+            <Form.Label>Engine</Form.Label>
             <Form.Control type="text" value={vehicle.engine} readOnly />
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group controlId="plate">
-            <Form.Label>Placa</Form.Label>
+            <Form.Label>Plate</Form.Label>
             <Form.Control type="text" value={vehicle.plate} readOnly />
           </Form.Group>
         </Col>
@@ -162,20 +162,20 @@ const Diagnostic = () => {
         </Col>
       </Row>
 
-      {/* Formulario de Diagnóstico */}
+      {/* Diagnostic Form */}
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group controlId="assignedTechnician">
-              <Form.Label>Asignar Técnico</Form.Label>
+              <Form.Label>Assign Technician</Form.Label>
               <Form.Select
                 name="assignedTechnician"
                 value={formData.assignedTechnician}
                 onChange={handleChange}
                 required
               >
-                <option value="">-- Seleccionar --</option>
-                {/* Puedes poblar esta lista dinámicamente si es necesario */}
+                <option value="">-- Select --</option>
+                {/* You can populate this list dynamically if necessary */}
                 <option value="Mario Aguirre">Mario Aguirre</option>
                 <option value="Jane Doe">Jane Doe</option>
                 <option value="John Smith">John Smith</option>
@@ -184,12 +184,12 @@ const Diagnostic = () => {
           </Col>
           <Col md={6}>
             <Form.Group controlId="reasonForVisit">
-              <Form.Label>Motivo de la Visita</Form.Label>
+              <Form.Label>Reason for Visit</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 name="reasonForVisit"
-                placeholder="Ingrese el motivo de la visita"
+                placeholder="Enter the reason for the visit"
                 value={formData.reasonForVisit}
                 onChange={handleChange}
                 required
@@ -204,10 +204,10 @@ const Diagnostic = () => {
             className="me-2"
             onClick={() => navigate("/diagnostic-list")}
           >
-            Cancelar
+            Cancel
           </Button>
           <Button variant="success" type="submit">
-            Guardar Diagnóstico
+            Save Diagnostic
           </Button>
         </div>
       </Form>

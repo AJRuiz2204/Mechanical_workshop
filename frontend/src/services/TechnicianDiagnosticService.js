@@ -1,6 +1,6 @@
 // src/services/TechnicianDiagnosticService.js
 
-// Crear TechnicianDiagnostic
+// Create TechnicianDiagnostic
 export const createTechnicianDiagnostic = async (techDiagData) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics`, {
@@ -13,17 +13,17 @@ export const createTechnicianDiagnostic = async (techDiagData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al crear el diagnóstico técnico.");
+        throw new Error("Error creating the technician diagnostic.");
       }
     }
     return await response.json(); // TechnicianDiagnosticReadDto
   } catch (error) {
-    console.error("Error en createTechnicianDiagnostic:", error);
+    console.error("Error in createTechnicianDiagnostic:", error);
     throw error;
   }
 };
 
-// Obtener TechnicianDiagnostic por ID
+// Get TechnicianDiagnostic by ID
 export const getTechnicianDiagnostic = async (id) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics/${id}`);
@@ -32,17 +32,17 @@ export const getTechnicianDiagnostic = async (id) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al obtener el diagnóstico técnico.");
+        throw new Error("Error fetching the technician diagnostic.");
       }
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en getTechnicianDiagnostic:", error);
+    console.error("Error in getTechnicianDiagnostic:", error);
     throw error;
   }
 };
 
-// Actualizar TechnicianDiagnostic
+// Update TechnicianDiagnostic
 export const updateTechnicianDiagnostic = async (id, techDiagData) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics/${id}`, {
@@ -55,17 +55,17 @@ export const updateTechnicianDiagnostic = async (id, techDiagData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al actualizar el diagnóstico técnico.");
+        throw new Error("Error updating the technician diagnostic.");
       }
     }
     return;
   } catch (error) {
-    console.error("Error en updateTechnicianDiagnostic:", error);
+    console.error("Error in updateTechnicianDiagnostic:", error);
     throw error;
   }
 };
 
-// Eliminar TechnicianDiagnostic
+// Delete TechnicianDiagnostic
 export const deleteTechnicianDiagnostic = async (id) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics/${id}`, {
@@ -76,12 +76,12 @@ export const deleteTechnicianDiagnostic = async (id) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al eliminar el diagnóstico técnico.");
+        throw new Error("Error deleting the technician diagnostic.");
       }
     }
     return;
   } catch (error) {
-    console.error("Error en deleteTechnicianDiagnostic:", error);
+    console.error("Error in deleteTechnicianDiagnostic:", error);
     throw error;
   }
 };

@@ -11,10 +11,10 @@ export const loginUser = async (credentials) => {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData || "Error al iniciar sesión.");
+      throw new Error(errorData || "Error logging in.");
     }
     const data = await response.json();
-    return data; // Retorna la información del usuario
+    return data; // Returns user information
   } catch (error) {
     throw error;
   }
@@ -32,15 +32,15 @@ export const forgotPassword = async (email) => {
       const errorData = await response.json();
       throw new Error(
         errorData.Message ||
-          "Error al solicitar restablecimiento de contraseña."
+          "Error requesting password reset."
       );
     }
 
     const data = await response.json();
-    console.log("Código recibido del backend:", data.code); // Asegúrate de usar 'code' en minúsculas
-    return data.code; // Retorna el código
+    console.log("Code received from backend:", data.code); // Ensure to use 'code' in lowercase
+    return data.code; // Returns the code
   } catch (error) {
-    console.error("Error en forgotPassword:", error);
+    console.error("Error in forgotPassword:", error);
     throw error;
   }
 };
@@ -48,24 +48,24 @@ export const forgotPassword = async (email) => {
 export const sendEmailWithCode = async (email, code) => {
   const templateParams = {
     to_email: email,
-    verification_code: code.toString(), // Convertir a string si no lo es
+    verification_code: code.toString(), // Convert to string if it's not
   };
 
-  console.log("Parámetros enviados a EmailJS:", templateParams); // Log para verificar
+  console.log("Parameters sent to EmailJS:", templateParams); // Log to verify
 
   try {
     const result = await emailjs.send(
-      "service_9tqk6il", // Tu Service ID
-      "template_9uo1y37", // Tu Template ID
+      "service_9tqk6il", // Your Service ID
+      "template_9uo1y37", // Your Template ID
       templateParams,
-      "FKbbn9NFIEk2ZxxX7" // Tu Public Key
+      "FKbbn9NFIEk2ZxxX7" // Your Public Key
     );
 
-    console.log("Email enviado correctamente:", result);
+    console.log("Email sent successfully:", result);
     return result;
   } catch (error) {
-    console.error("Error al enviar el correo electrónico:", error);
-    throw new Error("Error al enviar el correo electrónico.");
+    console.error("Error sending the email:", error);
+    throw new Error("Error sending the email.");
   }
 };
 
@@ -80,21 +80,21 @@ export const verifyCode = async (email, code) => {
     let data;
     const contentType = response.headers.get("Content-Type");
 
-    // Verifica si la respuesta es JSON o texto plano
+    // Check if the response is JSON or plain text
     if (contentType && contentType.includes("application/json")) {
       data = await response.json();
     } else {
-      data = await response.text(); // Maneja texto plano
+      data = await response.text(); // Handle plain text
     }
 
     if (!response.ok) {
-      throw new Error(data.Message || "Código inválido o expirado.");
+      throw new Error(data.Message || "Invalid or expired code.");
     }
 
-    console.log("Código verificado correctamente:", data);
-    return data; // Retorna el mensaje o JSON del backend
+    console.log("Code verified successfully:", data);
+    return data; // Returns the message or JSON from the backend
   } catch (error) {
-    console.error("Error en verifyCode:", error);
+    console.error("Error in verifyCode:", error);
     throw error;
   }
 };
@@ -109,15 +109,15 @@ export const changePassword = async (email, newPassword) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.Message || "Error al cambiar la contraseña.");
+      throw new Error(errorData.Message || "Error changing the password.");
     }
 
     const data = await response.json();
-    console.log("Contraseña cambiada correctamente:", data.Message);
-    console.log("Usuario afectado:", data.User);
-    return data; // Retorna la respuesta del backend
+    console.log("Password changed successfully:", data.Message);
+    console.log("Affected user:", data.User);
+    return data; // Returns the backend response
   } catch (error) {
-    console.error("Error en changePassword:", error);
+    console.error("Error in changePassword:", error);
     throw error;
   }
 };

@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-// src/components/VehicleList/VehicleList.jsx
+// Frontend: src/components/VehicleList/VehicleList.jsx
 
 import React, { useEffect, useState } from "react";
 import {
@@ -16,7 +16,7 @@ import {
   searchVehicles,
   deleteVehicle,
 } from "../../../services/UserWorkshopService";
-import "./VehicleList.css"; // Asegúrate de crear este archivo para estilos
+import "./VehicleList.css";
 
 const VehicleList = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -26,7 +26,7 @@ const VehicleList = () => {
   const [searchMessage, setSearchMessage] = useState("");
   const navigate = useNavigate();
 
-  // 1. Cargar todos los vehículos al iniciar
+  // 1. Load all vehicles on initialization
   const fetchAllVehicles = async () => {
     try {
       const data = await getAllVehicles();
@@ -42,7 +42,7 @@ const VehicleList = () => {
     fetchAllVehicles();
   }, []);
 
-  // 2. Búsqueda en tiempo real
+  // 2. Real-time search
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -50,7 +50,7 @@ const VehicleList = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (!searchTerm.trim()) {
-        // Si está vacío, recargamos todos los vehículos
+        // If empty, reload all vehicles
         fetchAllVehicles();
         setSearchMessage("");
         return;
@@ -61,7 +61,7 @@ const VehicleList = () => {
         try {
           const results = await searchVehicles(searchTerm);
           if (results.message) {
-            // Si el backend devuelve un objeto { message: "..."}
+            // If the backend returns an object { message: "..." }
             setVehicles([]);
             setSearchMessage(results.message);
           } else {
@@ -70,7 +70,7 @@ const VehicleList = () => {
           }
         } catch (error) {
           setVehicles([]);
-          setSearchMessage("Error al realizar la búsqueda.");
+          setSearchMessage("Error performing the search.");
         } finally {
           setLoadingSearch(false);
         }
@@ -82,55 +82,55 @@ const VehicleList = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  // 3. Navegar a la vista "Crear Cliente"
+  // 3. Navigate to the "Add Customer" view
   const handleAddCustomer = () => {
     navigate("/vehicle-reception");
   };
 
-  // 4. Recepcionar Diagnóstico: navega a /diagnostic/:id
+  // 4. Receive Diagnostic: navigate to /diagnostic/:id
   const handleReception = (id) => {
     navigate(`/diagnostic/${id}`);
   };
 
-  // 5. Editar Vehículo
-  // Ajusta la ruta si tu vista de edición es /edit/:id u otra
+  // 5. Edit Vehicle
+  // Adjust the route if your edit view is /edit/:id or another
   const handleEdit = (id) => {
     navigate(`/edit/${id}`);
   };
 
-  // 6. Eliminar Vehículo
-  // Llama a la función deleteVehicle (usando VIN o ID, según tu backend)
+  // 6. Delete Vehicle
+  // Call the deleteVehicle function (using VIN or ID, depending on your backend)
   const handleDelete = async (vin) => {
     if (
       window.confirm(
-        `¿Estás seguro de que deseas eliminar el vehículo con VIN: ${vin}?`
+        `Are you sure you want to delete the vehicle with VIN: ${vin}?`
       )
     ) {
       try {
         await deleteVehicle(vin);
-        // Filtra la lista local para eliminarlo de la tabla
+        // Filter the local list to remove it from the table
         setVehicles(vehicles.filter((vehicle) => vehicle.vin !== vin));
-        alert("Vehículo eliminado exitosamente.");
+        alert("Vehicle successfully deleted.");
       } catch (error) {
-        alert(`Error al eliminar: ${error.message}`);
+        alert(`Error deleting: ${error.message}`);
       }
     }
   };
 
   return (
     <Container className="p-4 border rounded mt-4 bg-light">
-      <h3>LISTA DE VEHÍCULOS</h3>
+      <h3>VEHICLE LIST</h3>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        {/* Campo de Búsqueda */}
+        {/* Search Field */}
         <Form.Control
           type="text"
-          placeholder="Buscar por VIN o Nombre del Cliente"
+          placeholder="Search by VIN or Customer Name"
           value={searchTerm}
           onChange={handleSearchChange}
           className="me-3"
         />
         <Button variant="primary" onClick={handleAddCustomer}>
-          Agregar Cliente
+          Add Customer
         </Button>
       </div>
 
@@ -144,7 +144,7 @@ const VehicleList = () => {
         <Alert variant="warning" className="mb-3">
           {searchMessage}{" "}
           <Button variant="link" onClick={handleAddCustomer}>
-            Agregar Nuevo Cliente
+            Add New Customer
           </Button>
         </Alert>
       )}
@@ -160,10 +160,10 @@ const VehicleList = () => {
               <thead>
                 <tr>
                   <th>VIN</th>
-                  <th>Marca</th>
-                  <th>Modelo</th>
-                  <th>Propietario</th>
-                  <th>Acciones</th>
+                  <th>Make</th>
+                  <th>Model</th>
+                  <th>Owner</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,30 +172,30 @@ const VehicleList = () => {
                     <td>{vehicle.vin}</td>
                     <td>{vehicle.make}</td>
                     <td>{vehicle.model}</td>
-                    <td>{vehicle.ownerName || "Desconocido"}</td>
+                    <td>{vehicle.ownerName || "Unknown"}</td>
                     <td>
-                      {/* Botón para Editar */}
+                      {/* Edit Button */}
                       <Button
                         variant="warning"
                         className="me-2"
                         onClick={() => handleEdit(vehicle.id)}
                       >
-                        Editar
+                        Edit
                       </Button>
 
                       <Button
                         variant="info"
                         onClick={() => navigate(`/diagnostic/${vehicle.id}`)}
                       >
-                        Recepcionar Diagnóstico
+                        Receive Diagnostic
                       </Button>
 
-                      {/* Botón para Eliminar */}
+                      {/* Delete Button */}
                       <Button
                         variant="danger"
                         onClick={() => handleDelete(vehicle.vin)}
                       >
-                        Eliminar
+                        Delete
                       </Button>
                     </td>
                   </tr>
@@ -204,7 +204,7 @@ const VehicleList = () => {
             </Table>
           ) : (
             <p>
-              No se encontraron vehículos. Intenta con otro término de búsqueda.
+              No vehicles found. Try another search term.
             </p>
           )}
         </>

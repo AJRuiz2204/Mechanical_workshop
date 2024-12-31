@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
-// src/components/Diagnostic/TechnicianDiagnostic.jsx
-
+// Frontend: src/components/Diagnostic/TechnicianDiagnostic.jsx
 import React, { useEffect, useState } from "react";
 import { Form, Button, Container, Row, Col, Alert, Spinner } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
@@ -10,28 +9,28 @@ import "./Diagnostic.css";
 
 const TechnicianDiagnostic = () => {
   const navigate = useNavigate();
-  const { diagnosticId, techDiagId } = useParams(); // Rutas: create/:diagnosticId y edit/:techDiagId
+  const { diagnosticId, techDiagId } = useParams(); // Routes: create/:diagnosticId and edit/:techDiagId
 
-  // Determinar el modo: creación o edición
+  // Determine the mode: creation or editing
   const isEditMode = Boolean(techDiagId);
 
-  // Estado para el diagnóstico relacionado
+  // State for the related diagnostic
   const [diagnostic, setDiagnostic] = useState(null);
 
-  // Estado para el formulario
+  // Form state
   const [formData, setFormData] = useState({
     mileage: "",
     extendedDiagnostic: "",
   });
 
-  // Estado para mensajes de error y éxito
+  // State for error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Estado de carga
+  // Loading state
   const [loading, setLoading] = useState(true);
 
-  // Obtener información del diagnóstico al montar el componente
+  // Fetch diagnostic information when the component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,22 +38,22 @@ const TechnicianDiagnostic = () => {
         setSuccessMessage("");
 
         if (isEditMode) {
-          // Modo edición: Obtener TechnicianDiagnostic
+          // Edit mode: Get TechnicianDiagnostic
           const techDiag = await getTechnicianDiagnostic(techDiagId);
           setFormData({
             mileage: techDiag.mileage,
             extendedDiagnostic: techDiag.extendedDiagnostic,
           });
-          // Obtener el diagnóstico relacionado
+          // Get the related diagnostic
           const diag = await getDiagnosticById(techDiag.diagnosticId);
           setDiagnostic(diag);
         } else {
-          // Modo creación: Obtener el diagnóstico relacionado
+          // Creation mode: Get the related diagnostic
           const diag = await getDiagnosticById(diagnosticId);
           setDiagnostic(diag);
         }
       } catch (error) {
-        setErrorMessage(error.message || "Error al cargar los datos.");
+        setErrorMessage(error.message || "Error loading data.");
       } finally {
         setLoading(false);
       }
@@ -63,37 +62,37 @@ const TechnicianDiagnostic = () => {
     fetchData();
   }, [diagnosticId, techDiagId, isEditMode]);
 
-  // Manejar cambios en el formulario
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Manejar el envío del formulario
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Validaciones básicas
+    // Basic validations
     if (!formData.mileage) {
-      setErrorMessage("El kilometraje es obligatorio.");
+      setErrorMessage("Mileage is required.");
       return;
     }
 
     if (!formData.extendedDiagnostic.trim()) {
-      setErrorMessage("El diagnóstico extendido es obligatorio.");
+      setErrorMessage("Extended diagnostic is required.");
       return;
     }
 
-    // Convertir mileage a número
+    // Convert mileage to number
     const mileageNumber = parseInt(formData.mileage, 10);
     if (isNaN(mileageNumber)) {
-      setErrorMessage("El kilometraje debe ser un número válido.");
+      setErrorMessage("Mileage must be a valid number.");
       return;
     }
 
-    // Payload para TechnicianDiagnostic
+    // Payload for TechnicianDiagnostic
     const techDiagData = {
       mileage: mileageNumber,
       extendedDiagnostic: formData.extendedDiagnostic.trim(),
@@ -101,22 +100,22 @@ const TechnicianDiagnostic = () => {
 
     try {
       if (isEditMode) {
-        // Modo edición: Actualizar el TechnicianDiagnostic existente
+        // Edit mode: Update the existing TechnicianDiagnostic
         await updateTechnicianDiagnostic(techDiagId, techDiagData);
-        setSuccessMessage("Diagnóstico Técnico actualizado con éxito.");
+        setSuccessMessage("Technician Diagnostic updated successfully.");
       } else {
-        // Modo creación: Crear un nuevo TechnicianDiagnostic
+        // Creation mode: Create a new TechnicianDiagnostic
         const payload = {
           diagnosticId: diagnostic.id,
           ...techDiagData,
         };
         await createTechnicianDiagnostic(payload);
-        setSuccessMessage("Diagnóstico Técnico creado con éxito.");
+        setSuccessMessage("Technician Diagnostic created successfully.");
       }
-      // Redirigir a la lista de diagnósticos después de guardar
+      // Redirect to the diagnostics list after saving
       navigate("/diagnostic-list");
     } catch (error) {
-      setErrorMessage("Error al guardar el Diagnóstico Técnico: " + error.message);
+      setErrorMessage("Error saving the Technician Diagnostic: " + error.message);
     }
   };
 
@@ -125,7 +124,7 @@ const TechnicianDiagnostic = () => {
       <Container className="p-4 border rounded">
         <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
           <Spinner animation="border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">Loading...</span>
           </Spinner>
         </div>
       </Container>
@@ -135,9 +134,9 @@ const TechnicianDiagnostic = () => {
   if (!diagnostic) {
     return (
       <Container className="p-4 border rounded">
-        <Alert variant="danger">No se pudo cargar la información del diagnóstico.</Alert>
+        <Alert variant="danger">Could not load diagnostic information.</Alert>
         <Button variant="secondary" onClick={() => navigate("/diagnostic-list")}>
-          Volver a la Lista de Diagnósticos
+          Back to Diagnostics List
         </Button>
       </Container>
     );
@@ -145,14 +144,14 @@ const TechnicianDiagnostic = () => {
 
   return (
     <Container className="p-4 border rounded bg-light">
-      <h3>{isEditMode ? "Editar Diagnóstico Técnico" : "Asignar Diagnóstico Técnico"}</h3>
+      <h3>{isEditMode ? "Edit Technician Diagnostic" : "Assign Technician Diagnostic"}</h3>
 
-      {/* Mostrar mensajes de error o éxito */}
+      {/* Display error or success messages */}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      {/* Información del Vehículo (read-only) */}
-      <h5>Información del Vehículo</h5>
+      {/* Vehicle Information (read-only) */}
+      <h5>Vehicle Information</h5>
       <Row className="mb-3">
         <Col md={3}>
           <Form.Group controlId="vin">
@@ -162,19 +161,19 @@ const TechnicianDiagnostic = () => {
         </Col>
         <Col md={3}>
           <Form.Group controlId="make">
-            <Form.Label>Marca</Form.Label>
+            <Form.Label>Make</Form.Label>
             <Form.Control type="text" value={diagnostic.vehicle?.make || "N/A"} readOnly />
           </Form.Group>
         </Col>
         <Col md={3}>
           <Form.Group controlId="model">
-            <Form.Label>Modelo</Form.Label>
+            <Form.Label>Model</Form.Label>
             <Form.Control type="text" value={diagnostic.vehicle?.model || "N/A"} readOnly />
           </Form.Group>
         </Col>
         <Col md={3}>
           <Form.Group controlId="plate">
-            <Form.Label>Placa</Form.Label>
+            <Form.Label>Plate</Form.Label>
             <Form.Control type="text" value={diagnostic.vehicle?.plate || "N/A"} readOnly />
           </Form.Group>
         </Col>
@@ -182,7 +181,7 @@ const TechnicianDiagnostic = () => {
       <Row className="mb-3">
         <Col md={3}>
           <Form.Group controlId="engine">
-            <Form.Label>Motor</Form.Label>
+            <Form.Label>Engine</Form.Label>
             <Form.Control type="text" value={diagnostic.vehicle?.engine || "N/A"} readOnly />
           </Form.Group>
         </Col>
@@ -194,7 +193,7 @@ const TechnicianDiagnostic = () => {
         </Col>
         <Col md={6}>
           <Form.Group controlId="reasonForVisit">
-            <Form.Label>Motivo de la Visita</Form.Label>
+            <Form.Label>Reason for Visit</Form.Label>
             <Form.Control
               as="textarea"
               rows={2}
@@ -205,16 +204,16 @@ const TechnicianDiagnostic = () => {
         </Col>
       </Row>
 
-      {/* Formulario de TechnicianDiagnostic */}
+      {/* Technician Diagnostic Form */}
       <Form onSubmit={handleSubmit}>
-        <h5>Información del Diagnóstico Técnico</h5>
+        <h5>Technician Diagnostic Information</h5>
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group controlId="mileage">
-              <Form.Label>Kilometraje del Vehículo</Form.Label>
+              <Form.Label>Vehicle Mileage</Form.Label>
               <Form.Control
                 type="number"
-                placeholder="Ingrese el kilometraje"
+                placeholder="Enter mileage"
                 name="mileage"
                 value={formData.mileage}
                 onChange={handleChange}
@@ -224,11 +223,11 @@ const TechnicianDiagnostic = () => {
           </Col>
           <Col md={6}>
             <Form.Group controlId="extendedDiagnostic">
-              <Form.Label>Diagnóstico Extendido</Form.Label>
+              <Form.Label>Extended Diagnostic</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                placeholder="Problemas reportados, pruebas realizadas, recomendaciones..."
+                placeholder="Reported issues, tests performed, recommendations..."
                 name="extendedDiagnostic"
                 value={formData.extendedDiagnostic}
                 onChange={handleChange}
@@ -238,12 +237,13 @@ const TechnicianDiagnostic = () => {
           </Col>
         </Row>
 
+        {/* Buttons */}
         <div className="d-flex justify-content-end">
           <Button variant="secondary" className="me-2" onClick={() => navigate("/diagnostic-list")}>
-            Cancelar
+            Cancel
           </Button>
           <Button variant="success" type="submit">
-            {isEditMode ? "Guardar Cambios" : "Guardar Diagnóstico Técnico"}
+            {isEditMode ? "Save Changes" : "Save Technician Diagnostic"}
           </Button>
         </div>
       </Form>

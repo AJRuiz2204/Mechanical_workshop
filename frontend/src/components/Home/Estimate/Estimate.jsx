@@ -1,17 +1,17 @@
 /* eslint-disable no-unused-vars */
-// src/components/Estimate/Estimate.jsx
+// Frontend: src/components/Estimate/Estimate.jsx
 
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Table, Row, Col, Modal, InputGroup, FormControl, Alert } from 'react-bootstrap';
 import { createEstimate, getAllVehicles, getVehicleById } from '../../../services/EstimateService';
 
 const Estimate = () => {
-  // Estados para manejar modales
+  // States to handle modals
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
 
-  // Estados para nuevos ítems
+  // States for new items
   const [newPart, setNewPart] = useState({
     description: '',
     partNumber: '',
@@ -19,7 +19,7 @@ const Estimate = () => {
     netPrice: 0.0,
     listPrice: 0.0,
     extendedPrice: 0.0,
-    taxable: true, // Valor fijo
+    taxable: true, // Fixed value
   });
 
   const [newLabor, setNewLabor] = useState({
@@ -27,17 +27,17 @@ const Estimate = () => {
     duration: 0,
     laborRate: 140.0,
     extendedPrice: 0.0,
-    taxable: true, // Valor fijo
+    taxable: true, // Fixed value
   });
 
   const [newFlatFee, setNewFlatFee] = useState({
     description: '',
     flatFeePrice: 0.0,
     extendedPrice: 0.0,
-    taxable: true, // Valor fijo
+    taxable: true, // Fixed value
   });
 
-  // Estados para Estimate
+  // States for Estimate
   const [parts, setParts] = useState([]);
   const [labors, setLabors] = useState([]);
   const [flatFees, setFlatFees] = useState([]);
@@ -47,17 +47,17 @@ const Estimate = () => {
   const [tax, setTax] = useState(0.0);
   const [total, setTotal] = useState(0.0);
 
-  // Estados para vehículos
+  // States for vehicles
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [owner, setOwner] = useState(null);
 
-  // Estados para manejo de errores
+  // States for error handling
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Funciones para manejar apertura y cierre de modales
+  // Functions to handle opening and closing modals
   const handleShowPartModal = () => setShowPartModal(true);
   const handleClosePartModal = () => {
     setShowPartModal(false);
@@ -95,7 +95,7 @@ const Estimate = () => {
     });
   };
 
-  // Funciones para agregar nuevos ítems
+  // Functions to add new items
   const addPart = () => {
     if (!newPart.description || !newPart.partNumber) {
       setError('Please fill out all part fields.');
@@ -132,7 +132,7 @@ const Estimate = () => {
     setError(null);
   };
 
-  // Función para eliminar ítems
+  // Function to remove items
   const removeItem = (type, index) => {
     let updatedParts = [...parts];
     let updatedLabors = [...labors];
@@ -152,13 +152,13 @@ const Estimate = () => {
     calculateTotals(updatedParts, updatedLabors, updatedFlatFees);
   };
 
-  // Función para calcular subtotal, tax y total
+  // Function to calculate subtotal, tax, and total
   const calculateTotals = (currentParts, currentLabors, currentFlatFees) => {
     const newSubtotal = currentParts.reduce((acc, part) => acc + parseFloat(part.extendedPrice), 0) +
                         currentLabors.reduce((acc, labor) => acc + parseFloat(labor.extendedPrice), 0) +
                         currentFlatFees.reduce((acc, fee) => acc + parseFloat(fee.extendedPrice), 0);
 
-    const newTax = newSubtotal * 0.018; // Ejemplo: 1.8% de impuesto
+    const newTax = newSubtotal * 0.018; // Example: 1.8% tax
 
     const newTotal = newSubtotal + newTax;
 
@@ -167,7 +167,7 @@ const Estimate = () => {
     setTotal(newTotal);
   };
 
-  // Función para manejar la selección de un vehículo
+  // Function to handle vehicle selection
   const handleVehicleChange = async (e) => {
     const vehicleId = e.target.value;
     setSelectedVehicleId(vehicleId);
@@ -181,25 +181,25 @@ const Estimate = () => {
     try {
       const vehicleData = await getVehicleById(vehicleId);
       setSelectedVehicle(vehicleData);
-      setOwner(vehicleData.userWorkshop); // Asegúrate de que la propiedad es correcta
+      setOwner(vehicleData.userWorkshop); // Ensure the property is correct
     } catch (error) {
-      setError('Error al obtener los detalles del vehículo: ' + error.message);
+      setError('Error fetching vehicle details: ' + error.message);
     }
   };
 
-  // Función para manejar el guardado del Estimate
+  // Function to handle saving the Estimate
   const handleSave = async () => {
     if (!selectedVehicleId) {
-      setError('Por favor, selecciona un vehículo.');
+      setError('Please select a vehicle.');
       return;
     }
 
     if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
-      setError('Agrega al menos un ítem al Estimate.');
+      setError('Add at least one item to the Estimate.');
       return;
     }
 
-    // Construir el payload según EstimateCreateDto
+    // Build the payload according to EstimateCreateDto
     const estimateData = {
       VehicleID: parseInt(selectedVehicleId),
       CustomerNote: customerNote,
@@ -233,10 +233,10 @@ const Estimate = () => {
 
     try {
       const createdEstimate = await createEstimate(estimateData);
-      setSuccess(`Estimate creado exitosamente con ID: ${createdEstimate.ID}`);
+      setSuccess(`Estimate created successfully with ID: ${createdEstimate.ID}`);
       setError(null);
-      // Opcional: Redirigir o limpiar el formulario
-      // Por ejemplo, limpiar todos los campos:
+      // Optional: Redirect or clear the form
+      // For example, clear all fields:
       setParts([]);
       setLabors([]);
       setFlatFees([]);
@@ -249,19 +249,19 @@ const Estimate = () => {
       setSelectedVehicle(null);
       setOwner(null);
     } catch (error) {
-      setError('Error al crear el Estimate: ' + error.message);
+      setError('Error creating the Estimate: ' + error.message);
       setSuccess(null);
     }
   };
 
-  // useEffect para cargar la lista de vehículos al montar el componente
+  // useEffect to load the list of vehicles when the component mounts
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         const vehicleList = await getAllVehicles();
         setVehicles(vehicleList);
       } catch (error) {
-        setError('Error al cargar la lista de vehículos: ' + error.message);
+        setError('Error loading the vehicle list: ' + error.message);
       }
     };
 
@@ -272,11 +272,11 @@ const Estimate = () => {
     <div className="p-4 border rounded">
       <h3>ESTIMATE</h3>
 
-      {/* Mensajes de Error y Éxito */}
+      {/* Error and Success Messages */}
       {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
       {success && <Alert variant="success" onClose={() => setSuccess(null)} dismissible>{success}</Alert>}
 
-      {/* Selección de Vehículo */}
+      {/* Vehicle Selection */}
       <div className="mb-3">
         <Form.Group controlId="selectVehicle">
           <Form.Label>Select Vehicle (VIN)</Form.Label>
@@ -310,7 +310,7 @@ const Estimate = () => {
               <div>
                 <strong>Email:</strong> {owner.email}
               </div>
-              {/* Agrega más información del propietario si es necesario */}
+              {/* Add more owner information if necessary */}
             </Col>
           </Row>
         </div>
@@ -348,7 +348,7 @@ const Estimate = () => {
               <td>${parseFloat(part.netPrice).toFixed(2)}</td>
               <td>${parseFloat(part.listPrice).toFixed(2)}</td>
               <td>${parseFloat(part.extendedPrice).toFixed(2)}</td>
-              <td>✔</td> {/* Valor fijo */}
+              <td>✔</td> {/* Fixed value */}
               <td>
                 <Button variant="danger" size="sm" onClick={() => removeItem('PART', index)}>&times;</Button>
               </td>
@@ -363,7 +363,7 @@ const Estimate = () => {
               <td>${parseFloat(labor.laborRate).toFixed(2)}</td>
               <td>${(labor.duration * labor.laborRate).toFixed(2)}</td>
               <td>${parseFloat(labor.extendedPrice).toFixed(2)}</td>
-              <td>✔</td> {/* Valor fijo */}
+              <td>✔</td> {/* Fixed value */}
               <td>
                 <Button variant="danger" size="sm" onClick={() => removeItem('LABOR', index)}>&times;</Button>
               </td>
@@ -378,7 +378,7 @@ const Estimate = () => {
               <td></td>
               <td>${parseFloat(fee.flatFeePrice).toFixed(2)}</td>
               <td>${parseFloat(fee.extendedPrice).toFixed(2)}</td>
-              <td>✔</td> {/* Valor fijo */}
+              <td>✔</td> {/* Fixed value */}
               <td>
                 <Button variant="danger" size="sm" onClick={() => removeItem('FLATFEE', index)}>&times;</Button>
               </td>
@@ -427,14 +427,14 @@ const Estimate = () => {
       {/* Action Buttons */}
       <div className="text-end">
         <Button variant="secondary" className="me-2" onClick={() => {
-          // Opcional: Redirigir o limpiar el formulario
+          // Optional: Redirect or clear the form
         }}>Cancel</Button>
         <Button variant="success" onClick={handleSave}>Save</Button>
       </div>
 
-      {/* Modales para agregar ítems */}
+      {/* Modals to add items */}
       
-      {/* Modal para agregar Part */}
+      {/* Modal to add Part */}
       <Modal show={showPartModal} onHide={handleClosePartModal}>
         <Modal.Header closeButton>
           <Modal.Title>Add Part</Modal.Title>
@@ -510,7 +510,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable está fijo */}
+            {/* Taxable is fixed */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -523,7 +523,7 @@ const Estimate = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Modal para agregar Labor */}
+      {/* Modal to add Labor */}
       <Modal show={showLaborModal} onHide={handleCloseLaborModal}>
         <Modal.Header closeButton>
           <Modal.Title>Add Labor</Modal.Title>
@@ -580,7 +580,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable está fijo */}
+            {/* Taxable is fixed */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -593,7 +593,7 @@ const Estimate = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Modal para agregar Flat Fee */}
+      {/* Modal to add Flat Fee */}
       <Modal show={showFlatFeeModal} onHide={handleCloseFlatFeeModal}>
         <Modal.Header closeButton>
           <Modal.Title>Add Flat Fee</Modal.Title>
@@ -638,7 +638,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable está fijo */}
+            {/* Taxable is fixed */}
           </Form>
         </Modal.Body>
         <Modal.Footer>

@@ -10,7 +10,7 @@ export const addUser = async (userData) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.Message || "Error al crear el usuario.");
+      throw new Error(error.Message || "Error creating the user.");
     }
 
     return await response.json();

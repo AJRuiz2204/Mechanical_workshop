@@ -1,4 +1,4 @@
-// Backend: Controllers/UsersController.cs
+// Controllers/UsersController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
@@ -27,21 +27,21 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> CreateUser(UserCreateDto userCreateDto)
         {
-            // Validar si el username o email ya existen
+            // Validate if the username or email already exists
             if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
             {
-                return BadRequest(new { Message = "El nombre de usuario ya existe." });
+                return BadRequest(new { Message = "Username already exists." });
             }
 
             if (await _context.Users.AnyAsync(u => u.Email == userCreateDto.Email))
             {
-                return BadRequest(new { Message = "El correo electrónico ya existe." });
+                return BadRequest(new { Message = "Email already exists." });
             }
 
-            // Mapear el DTO al modelo User
+            // Map the DTO to the User model
             var user = _mapper.Map<User>(userCreateDto);
 
-            // Guardar el usuario en la base de datos
+            // Save the user to the database
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
@@ -55,12 +55,12 @@ namespace Mechanical_workshop.Controllers
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
             if (user == null)
-                return Unauthorized("Usuario no encontrado.");
+                return Unauthorized("User not found.");
 
             if (user.Password != userLoginDto.Password)
-                return Unauthorized("Contraseña incorrecta.");
+                return Unauthorized("Incorrect password.");
 
-            // Aquí podrías devolver información del usuario sin el token JWT
+            // Here you could return user information without the JWT token
             var userInfo = new
             {
                 user.ID,
@@ -79,24 +79,24 @@ namespace Mechanical_workshop.Controllers
         public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
         {
             if (!IsValidEmail(forgotPasswordDto.Email))
-                return BadRequest(new { Message = "Formato de correo inválido." });
+                return BadRequest(new { Message = "Invalid email format." });
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDto.Email);
             if (user == null)
-                return BadRequest(new { Message = "Email no encontrado." });
+                return BadRequest(new { Message = "Email not found." });
 
-            // Generar un código de verificación
+            // Generate a verification code
             var code = new Random().Next(100000, 999999).ToString();
             user.ResetCode = code;
             user.ResetCodeExpiry = DateTime.Now.AddMinutes(5);
 
-            // Guardar el código en la base de datos
+            // Save the code to the database
             await _context.SaveChangesAsync();
 
-            // Log del código generado en la consola del servidor
-            Console.WriteLine($"Código generado para {user.Email}: {code}");
+            // Log the generated code in the server console
+            Console.WriteLine($"Generated code for {user.Email}: {code}");
 
-            // Retornar el código generado
+            // Return the generated code
             return Ok(new { Code = code });
         }
 
@@ -119,10 +119,10 @@ namespace Mechanical_workshop.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == verifyCodeDto.Email);
             if (user == null || user.ResetCode != verifyCodeDto.Code || user.ResetCodeExpiry < DateTime.Now)
             {
-                return BadRequest(new { Message = "Código inválido o expirado." }); // JSON
+                return BadRequest(new { Message = "Invalid or expired code." }); // JSON
             }
 
-            return Ok(new { Message = "Código verificado correctamente." }); // JSON
+            return Ok(new { Message = "Code verified successfully." }); // JSON
         }
 
 
@@ -133,20 +133,20 @@ namespace Mechanical_workshop.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == changePasswordDto.Email);
             if (user == null)
             {
-                return BadRequest(new { Message = "Email no encontrado." });
+                return BadRequest(new { Message = "Email not found." });
             }
 
-            // Actualiza la contraseña
+            // Update the password
             user.Password = changePasswordDto.NewPassword;
             user.ResetCode = string.Empty;
             user.ResetCodeExpiry = null;
 
             await _context.SaveChangesAsync();
 
-            // Devuelve una respuesta en JSON con información del usuario
+            // Return a JSON response with user information
             return Ok(new
             {
-                Message = "Contraseña cambiada correctamente.",
+                Message = "Password changed successfully.",
                 User = new
                 {
                     user.Email,

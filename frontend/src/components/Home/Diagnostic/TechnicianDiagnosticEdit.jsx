@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-// src/components/Home/Diagnostic/TechnicianDiagnosticEdit.jsx
+// Frontend: src/components/Home/Diagnostic/TechnicianDiagnosticEdit.jsx
 import React, { useEffect, useState } from "react";
 import { Form, Button, Container, Row, Col } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
@@ -8,7 +8,7 @@ import "./Diagnostic.css";
 
 const TechnicianDiagnosticEdit = () => {
   const navigate = useNavigate();
-  const { techDiagId } = useParams(); // Ruta: /technicianDiagnostic/edit/:techDiagId
+  const { techDiagId } = useParams(); // Route: /technicianDiagnostic/edit/:techDiagId
 
   const [techDiag, setTechDiag] = useState({
     id: 0,
@@ -36,7 +36,7 @@ const TechnicianDiagnosticEdit = () => {
         const data = await getTechnicianDiagnostic(techDiagId);
         setTechDiag(data);
       } catch (error) {
-        alert("Error al obtener el Diagnóstico Técnico: " + error.message);
+        alert("Error fetching the Technician Diagnostic: " + error.message);
       } finally {
         setLoading(false);
       }
@@ -61,34 +61,34 @@ const TechnicianDiagnosticEdit = () => {
         extendedDiagnostic: techDiag.extendedDiagnostic,
       };
       await updateTechnicianDiagnostic(techDiag.id, payload);
-      alert("Diagnóstico Técnico actualizado con éxito.");
+      alert("Technician Diagnostic updated successfully.");
       navigate("/diagnostic-list");
     } catch (error) {
-      alert("Error al actualizar el Diagnóstico Técnico: " + error.message);
+      alert("Error updating the Technician Diagnostic: " + error.message);
     }
   };
 
   if (loading) {
-    return <Container className="p-4 border rounded">Cargando...</Container>;
+    return <Container className="p-4 border rounded">Loading...</Container>;
   }
 
   return (
     <Container className="p-4 border rounded">
-      <h3>Editar Diagnóstico Técnico</h3>
+      <h3>Edit Technician Diagnostic</h3>
       <Form onSubmit={handleSubmit}>
-        {/* Información del Diagnóstico */}
+        {/* Diagnostic Information */}
         <Form.Group className="mb-3">
-          <Form.Label>ID Diagnostic</Form.Label>
+          <Form.Label>Diagnostic ID</Form.Label>
           <Form.Control type="text" value={techDiag.diagnosticId} readOnly />
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Motivo de la Visita</Form.Label>
+          <Form.Label>Reason for Visit</Form.Label>
           <Form.Control type="text" value={techDiag.reasonForVisit} readOnly />
         </Form.Group>
 
-        {/* Información del Vehículo */}
-        <h5>Información del Vehículo</h5>
+        {/* Vehicle Information */}
+        <h5>Vehicle Information</h5>
         <Row className="mb-3">
           <Col md={3}>
             <Form.Group>
@@ -98,19 +98,19 @@ const TechnicianDiagnosticEdit = () => {
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Marca</Form.Label>
+              <Form.Label>Make</Form.Label>
               <Form.Control type="text" value={techDiag.vehicle?.make || ""} readOnly />
             </Form.Group>
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Modelo</Form.Label>
+              <Form.Label>Model</Form.Label>
               <Form.Control type="text" value={techDiag.vehicle?.model || ""} readOnly />
             </Form.Group>
           </Col>
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Placa</Form.Label>
+              <Form.Label>Plate</Form.Label>
               <Form.Control type="text" value={techDiag.vehicle?.plate || ""} readOnly />
             </Form.Group>
           </Col>
@@ -118,7 +118,7 @@ const TechnicianDiagnosticEdit = () => {
         <Row className="mb-3">
           <Col md={3}>
             <Form.Group>
-              <Form.Label>Motor</Form.Label>
+              <Form.Label>Engine</Form.Label>
               <Form.Control type="text" value={techDiag.vehicle?.engine || ""} readOnly />
             </Form.Group>
           </Col>
@@ -130,9 +130,9 @@ const TechnicianDiagnosticEdit = () => {
           </Col>
         </Row>
 
-        {/* Campos Editables */}
+        {/* Editable Fields */}
         <Form.Group className="mb-3">
-          <Form.Label>Kilometraje</Form.Label>
+          <Form.Label>Mileage</Form.Label>
           <Form.Control
             type="number"
             name="mileage"
@@ -143,7 +143,7 @@ const TechnicianDiagnosticEdit = () => {
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Diagnóstico Extendido</Form.Label>
+          <Form.Label>Extended Diagnostic</Form.Label>
           <Form.Control
             as="textarea"
             rows={6}
@@ -154,7 +154,7 @@ const TechnicianDiagnosticEdit = () => {
           />
         </Form.Group>
 
-        {/* Botones */}
+        {/* Buttons */}
         <Row>
           <Col>
             <Button
@@ -162,10 +162,10 @@ const TechnicianDiagnosticEdit = () => {
               className="me-2"
               onClick={() => navigate("/diagnostic-list")}
             >
-              Cancelar
+              Cancel
             </Button>
             <Button variant="success" type="submit">
-              Guardar Cambios
+              Save Changes
             </Button>
           </Col>
         </Row>

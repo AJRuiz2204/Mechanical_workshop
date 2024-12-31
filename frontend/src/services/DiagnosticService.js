@@ -1,6 +1,6 @@
 // src/services/DiagnosticService.js
 
-// Crear Diagnostic
+// Create Diagnostic
 export const createDiagnostic = async (diagnosticData) => {
   try {
     const response = await fetch(`/api/Diagnostics`, {
@@ -14,18 +14,18 @@ export const createDiagnostic = async (diagnosticData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al crear el diagnóstico.");
+        throw new Error("Error creating the diagnostic.");
       }
     }
 
     return await response.json(); // DiagnosticReadDto
   } catch (error) {
-    console.error("Error en createDiagnostic:", error);
+    console.error("Error in createDiagnostic:", error);
     throw error;
   }
 };
 
-// Obtener todos los Diagnostics
+// Get All Diagnostics
 export const getDiagnostics = async () => {
   try {
     const response = await fetch(`/api/Diagnostics`);
@@ -34,17 +34,17 @@ export const getDiagnostics = async () => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al obtener la lista de diagnósticos.");
+        throw new Error("Error fetching the list of diagnostics.");
       }
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en getDiagnostics:", error);
+    console.error("Error in getDiagnostics:", error);
     throw error;
   }
 };
 
-// Obtener Diagnostic por ID
+// Get Diagnostic by ID
 export const getDiagnosticById = async (id) => {
   try {
     const response = await fetch(`/api/Diagnostics/${id}`);
@@ -53,17 +53,17 @@ export const getDiagnosticById = async (id) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al obtener el diagnóstico por ID.");
+        throw new Error("Error fetching the diagnostic by ID.");
       }
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en getDiagnosticById:", error);
+    console.error("Error in getDiagnosticById:", error);
     throw error;
   }
 };
 
-// Actualizar Diagnostic
+// Update Diagnostic
 export const updateDiagnostic = async (id, diagnosticData) => {
   try {
     const response = await fetch(`/api/Diagnostics/${id}`, {
@@ -77,17 +77,17 @@ export const updateDiagnostic = async (id, diagnosticData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al actualizar el diagnóstico.");
+        throw new Error("Error updating the diagnostic.");
       }
     }
     return;
   } catch (error) {
-    console.error("Error en updateDiagnostic:", error);
+    console.error("Error in updateDiagnostic:", error);
     throw error;
   }
 };
 
-// Eliminar Diagnostic
+// Delete Diagnostic
 export const deleteDiagnostic = async (id) => {
   try {
     const response = await fetch(`/api/Diagnostics/${id}`, {
@@ -99,12 +99,12 @@ export const deleteDiagnostic = async (id) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al eliminar el diagnóstico.");
+        throw new Error("Error deleting the diagnostic.");
       }
     }
     return;
   } catch (error) {
-    console.error("Error en deleteDiagnostic:", error);
+    console.error("Error in deleteDiagnostic:", error);
     throw error;
   }
 };

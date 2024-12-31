@@ -1,9 +1,15 @@
+// Controllers/UserWorkshopsController.cs
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 using AutoMapper;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -44,6 +50,7 @@ namespace Mechanical_workshop.Controllers
             return Ok(_mapper.Map<UserWorkshopReadDto>(userWorkshop));
         }
 
+        // POST: api/UserWorkshops
         [HttpPost]
         public async Task<ActionResult<UserWorkshopReadDto>> CreateUserWorkshop(UserWorkshopCreateDto userWorkshopDto)
         {
@@ -66,14 +73,12 @@ namespace Mechanical_workshop.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
-                    message = $"Error al crear el taller: {ex.Message}"
+                    message = $"Error creating the workshop: {ex.Message}"
                 });
             }
         }
 
-
-
-
+        // PUT: api/UserWorkshops/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUserWorkshop(int id, UserWorkshopUpdateDto userWorkshopUpdateDto)
         {
@@ -91,11 +96,11 @@ namespace Mechanical_workshop.Controllers
                 return NotFound();
             }
 
-            // Mapeo de campos principales (UserWorkshop)
+            // Map main fields (UserWorkshop)
             _mapper.Map(userWorkshopUpdateDto, userWorkshop);
 
-            // Manejo de vehículos
-            // 1) Eliminar vehículos que ya no estén
+            // Handle vehicles
+            // 1) Remove vehicles that are no longer present
             var vehiclesToRemove = userWorkshop.Vehicles
                 .Where(v => !userWorkshopUpdateDto.Vehicles.Any(dto => dto.Vin == v.Vin))
                 .ToList();
@@ -104,7 +109,7 @@ namespace Mechanical_workshop.Controllers
                 _context.Vehicles.Remove(vehicle);
             }
 
-            // 2) Agregar o actualizar vehículos
+            // 2) Add or update vehicles
             foreach (var vehicleDto in userWorkshopUpdateDto.Vehicles)
             {
                 var existingVehicle = userWorkshop.Vehicles
@@ -112,7 +117,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (existingVehicle != null)
                 {
-                    // Actualiza los campos del vehículo, incluyendo Status
+                    // Update vehicle fields, including Status
                     _mapper.Map(vehicleDto, existingVehicle);
                 }
                 else
@@ -159,16 +164,16 @@ namespace Mechanical_workshop.Controllers
         }
 
         /// <summary>
-        /// Busca vehículos por número VIN o nombre del cliente en tiempo real.
+        /// Searches for vehicles by VIN number or client name in real-time.
         /// </summary>
-        /// <param name="searchTerm">Término de búsqueda (VIN o nombre del cliente)</param>
-        /// <returns>Lista de VehicleSearchDto que coinciden con el término de búsqueda</returns>
+        /// <param name="searchTerm">Search term (VIN or client name)</param>
+        /// <returns>List of VehicleSearchDto that match the search term</returns>
         [HttpGet("searchVehicles")]
         public async Task<ActionResult<List<VehicleSearchDto>>> SearchVehicles([FromQuery] string searchTerm)
         {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                return BadRequest("El término de búsqueda no puede estar vacío.");
+                return BadRequest("Search term cannot be empty.");
             }
 
             var searchTermLower = searchTerm.ToLower();
@@ -191,16 +196,16 @@ namespace Mechanical_workshop.Controllers
 
             if (vehicles.Count == 0)
             {
-                return Ok(new { message = "No se encontraron vehículos que coincidan con la búsqueda." });
+                return Ok(new { message = "No vehicles matching the search were found." });
             }
 
             return Ok(vehicles);
         }
 
         /// <summary>
-        /// Obtiene la lista completa de vehículos.
+        /// Retrieves the complete list of vehicles.
         /// </summary>
-        /// <returns>Lista de VehicleSearchDto</returns>
+        /// <returns>List of VehicleSearchDto</returns>
         [HttpGet("vehicles")]
         public async Task<ActionResult<List<VehicleSearchDto>>> GetAllVehicles()
         {
@@ -239,11 +244,11 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = $"Error al obtener la lista de vehículos: {ex.Message}" });
+                return BadRequest(new { message = $"Error retrieving the vehicle list: {ex.Message}" });
             }
         }
 
-
+        // DELETE: api/UserWorkshops/vehicle/{vin}
         [HttpDelete("vehicle/{vin}")]
         public async Task<IActionResult> DeleteVehicleByVin(string vin)
         {
@@ -252,7 +257,7 @@ namespace Mechanical_workshop.Controllers
                 var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Vin == vin);
                 if (vehicle == null)
                 {
-                    return NotFound(new { message = $"No se encontró el vehículo con VIN '{vin}'." });
+                    return NotFound(new { message = $"Vehicle with VIN '{vin}' not found." });
                 }
 
                 _context.Vehicles.Remove(vehicle);
@@ -263,14 +268,12 @@ namespace Mechanical_workshop.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
-                    message = $"Error al eliminar el vehículo: {ex.Message}"
+                    message = $"Error deleting the vehicle: {ex.Message}"
                 });
             }
         }
 
-
-
-
+        // GET: api/UserWorkshops/vehicle/{id}
         [HttpGet("vehicle/{id}")]
         public async Task<ActionResult<VehicleReadDto>> GetVehicleById(int id)
         {
@@ -280,20 +283,21 @@ namespace Mechanical_workshop.Controllers
 
             if (vehicle == null)
             {
-                return NotFound(new { message = $"No se encontró el vehículo con ID {id}." });
+                return NotFound(new { message = $"Vehicle with ID {id} not found." });
             }
 
             var vehicleReadDto = _mapper.Map<VehicleReadDto>(vehicle);
             return Ok(vehicleReadDto);
         }
 
+        // PUT: api/UserWorkshops/{id}/status
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateVehicleStatus(int id, [FromBody] string newStatus)
         {
             var vehicle = await _context.Vehicles.FindAsync(id);
             if (vehicle == null)
             {
-                return NotFound(new { message = "Vehículo no encontrado." });
+                return NotFound(new { message = "Vehicle not found." });
             }
 
             vehicle.Status = newStatus;
@@ -301,8 +305,5 @@ namespace Mechanical_workshop.Controllers
 
             return NoContent();
         }
-
-
-
     }
 }

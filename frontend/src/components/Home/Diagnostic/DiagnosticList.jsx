@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-// src/components/Diagnostic/DiagnosticList.jsx
+// Frontend: src/components/Diagnostic/DiagnosticList.jsx
 
 import React, { useEffect, useState } from "react";
 import { Table, Button, Container, Alert, Spinner } from "react-bootstrap";
@@ -13,7 +13,7 @@ const DiagnosticList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Función para obtener la lista de diagnósticos
+  // Function to get the list of diagnostics
   const fetchDiagnostics = async () => {
     try {
       setLoading(true);
@@ -21,7 +21,7 @@ const DiagnosticList = () => {
       const data = await getDiagnostics();
       setDiagnostics(data);
     } catch (error) {
-      setError(error.message || "Error al obtener la lista de diagnósticos.");
+      setError(error.message || "Error fetching the diagnostics list.");
     } finally {
       setLoading(false);
     }
@@ -31,17 +31,17 @@ const DiagnosticList = () => {
     fetchDiagnostics();
   }, []);
 
-  // Función para manejar la eliminación de un TechnicianDiagnostic
+  // Function to handle deletion of a TechnicianDiagnostic
   const handleDeleteTechDiag = async (techDiagId) => {
     const confirmDelete = window.confirm(
-      "¿Seguro que deseas eliminar este Diagnóstico Técnico?"
+      "Are you sure you want to delete this Technician Diagnostic?"
     );
     if (!confirmDelete) return;
 
     try {
       await deleteTechnicianDiagnostic(techDiagId);
-      alert("Diagnóstico Técnico eliminado con éxito.");
-      // Actualizar el estado local
+      alert("Technician Diagnostic successfully deleted.");
+      // Update local state
       setDiagnostics((prevDiagnostics) =>
         prevDiagnostics.map((diag) =>
           diag.techDiagnosticId === techDiagId
@@ -51,29 +51,29 @@ const DiagnosticList = () => {
       );
     } catch (error) {
       alert(
-        "Error al eliminar el Diagnóstico Técnico: " + (error.message || error)
+        "Error deleting the Technician Diagnostic: " + (error.message || error)
       );
     }
   };
 
   return (
     <Container className="p-4 border rounded">
-      <h3>Lista de Diagnósticos</h3>
+      <h3>Diagnostic List</h3>
 
-      {/* Mostrar mensajes de error si existen */}
+      {/* Show error messages if any */}
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* Mostrar indicador de carga */}
+      {/* Show loading indicator */}
       {loading ? (
         <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
           <Spinner animation="border" role="status">
-            <span className="visually-hidden">Cargando...</span>
+            <span className="visually-hidden">Loading...</span>
           </Spinner>
         </div>
       ) : (
         <>
           {diagnostics.length === 0 ? (
-            <Alert variant="info">No hay diagnósticos registrados.</Alert>
+            <Alert variant="info">There are no registered diagnostics.</Alert>
           ) : (
             <Table striped bordered hover responsive>
               <thead>
@@ -81,10 +81,10 @@ const DiagnosticList = () => {
                   <th>ID</th>
                   <th>Vehicle ID</th>
                   <th>VIN</th>
-                  <th>Marca</th>
-                  <th>Modelo</th>
-                  <th>Motivo de la Visita</th>
-                  <th>Acciones</th>
+                  <th>Make</th>
+                  <th>Model</th>
+                  <th>Reason for Visit</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,7 +109,7 @@ const DiagnosticList = () => {
                               )
                             }
                           >
-                            Editar Diagnóstico Técnico
+                            Edit Technician Diagnostic
                           </Button>
                           <Button
                             variant="danger"
@@ -118,7 +118,7 @@ const DiagnosticList = () => {
                               handleDeleteTechDiag(diag.techDiagnosticId)
                             }
                           >
-                            Eliminar Diagnóstico Técnico
+                            Delete Technician Diagnostic
                           </Button>
                         </>
                       ) : (
@@ -129,7 +129,7 @@ const DiagnosticList = () => {
                             navigate(`/technicianDiagnostic/create/${diag.id}`)
                           }
                         >
-                          Crear Diagnóstico Técnico
+                          Create Technician Diagnostic
                         </Button>
                       )}
                     </td>

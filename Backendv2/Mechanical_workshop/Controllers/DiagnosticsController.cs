@@ -25,14 +25,14 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<DiagnosticReadDto>> CreateDiagnostic(DiagnosticCreateDto diagnosticCreateDto)
         {
-            // Mapear DTO a entidad
+            // Map DTO to entity
             var diagnostic = _mapper.Map<Diagnostic>(diagnosticCreateDto);
 
-            // Agregar a la base de datos
+            // Add to database
             _context.Diagnostics.Add(diagnostic);
             await _context.SaveChangesAsync();
 
-            // Mapear entidad a ReadDto
+            // Map entity to ReadDto
             var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
 
             return CreatedAtAction(nameof(GetDiagnostic), new { id = diagnostic.Id }, diagnosticReadDto);
@@ -62,7 +62,7 @@ namespace Mechanical_workshop.Controllers
 
             if (diagnostic == null)
             {
-                return NotFound(new { message = "No se encontró el diagnóstico." });
+                return NotFound(new { message = "Diagnostic not found." });
             }
 
             var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
@@ -75,16 +75,16 @@ namespace Mechanical_workshop.Controllers
         {
             if (id <= 0)
             {
-                return BadRequest(new { message = "ID inválido." });
+                return BadRequest(new { message = "Invalid ID." });
             }
 
             var diagnostic = await _context.Diagnostics.FindAsync(id);
             if (diagnostic == null)
             {
-                return NotFound(new { message = "No se encontró el diagnóstico a actualizar." });
+                return NotFound(new { message = "Diagnostic to update not found." });
             }
 
-            // Mapear las actualizaciones desde el DTO
+            // Map updates from DTO
             _mapper.Map(diagnosticUpdateDto, diagnostic);
 
             try
@@ -93,7 +93,7 @@ namespace Mechanical_workshop.Controllers
             }
             catch (DbUpdateException)
             {
-                return StatusCode(500, new { message = "Error al actualizar el diagnóstico." });
+                return StatusCode(500, new { message = "Error updating the diagnostic." });
             }
 
             return NoContent();
@@ -106,7 +106,7 @@ namespace Mechanical_workshop.Controllers
             var diagnostic = await _context.Diagnostics.FindAsync(id);
             if (diagnostic == null)
             {
-                return NotFound(new { message = "No se encontró el diagnóstico a eliminar." });
+                return NotFound(new { message = "Diagnostic to delete not found." });
             }
 
             _context.Diagnostics.Remove(diagnostic);

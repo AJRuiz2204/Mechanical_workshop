@@ -1,14 +1,14 @@
-// src/services/UserWorkshopService.js
+// Frontend: src/services/UserWorkshopService.js
 
 export const getUserWorkshops = async () => {
   try {
     const response = await fetch("/api/UserWorkshops");
     if (!response.ok) {
-      throw new Error("Error al obtener los talleres mecánicos.");
+      throw new Error("Error fetching the mechanical workshops.");
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en getUserWorkshops:", error);
+    console.error("Error in getUserWorkshops:", error);
     throw error;
   }
 };
@@ -17,14 +17,15 @@ export const getUserWorkshopById = async (id) => {
   try {
     const response = await fetch(`/api/UserWorkshops/${id}`);
     if (!response.ok) {
-      throw new Error("Error al obtener el taller mecánico.");
+      throw new Error("Error fetching the mechanical workshop.");
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en getUserWorkshopById:", error);
+    console.error("Error in getUserWorkshopById:", error);
     throw error;
   }
 };
+
 export const createUserWorkshop = async (userWorkshopData) => {
   try {
     const response = await fetch("/api/UserWorkshops", {
@@ -38,13 +39,13 @@ export const createUserWorkshop = async (userWorkshopData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al crear el taller mecánico.");
+        throw new Error("Error creating the mechanical workshop.");
       }
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error en createUserWorkshop:", error);
+    console.error("Error in createUserWorkshop:", error);
     throw error;
   }
 };
@@ -60,13 +61,13 @@ export const updateUserWorkshop = async (id, userWorkshopData) => {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.Message || "Error al actualizar el taller mecánico."
+        errorData.Message || "Error updating the mechanical workshop."
       );
     }
 
     return;
   } catch (error) {
-    console.error("Error en updateUserWorkshop:", error);
+    console.error("Error in updateUserWorkshop:", error);
     throw error;
   }
 };
@@ -78,17 +79,17 @@ export const deleteUserWorkshop = async (id) => {
     });
 
     if (!response.ok) {
-      throw new Error("Error al eliminar el taller mecánico.");
+      throw new Error("Error deleting the mechanical workshop.");
     }
 
     return;
   } catch (error) {
-    console.error("Error en deleteUserWorkshop:", error);
+    console.error("Error in deleteUserWorkshop:", error);
     throw error;
   }
 };
 
-// **Nueva función para buscar vehículos**
+// **New function to search vehicles**
 export const searchVehicles = async (searchTerm) => {
   try {
     const response = await fetch(
@@ -98,11 +99,11 @@ export const searchVehicles = async (searchTerm) => {
     );
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Error al buscar vehículos.");
+      throw new Error(errorData.message || "Error searching for vehicles.");
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en searchVehicles:", error);
+    console.error("Error in searchVehicles:", error);
     throw error;
   }
 };
@@ -111,20 +112,20 @@ export const getAllVehicles = async () => {
   try {
     const response = await fetch("/api/UserWorkshops/vehicles");
     if (!response.ok) {
-      // Intentar leer el error como JSON:
+      // Attempt to read the error as JSON:
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        // Si no fue posible leer como JSON, fallback a un error genérico
+        // If unable to read as JSON, fallback to a generic error
         throw new Error(
-          `Error al obtener la lista de vehículos. Código HTTP: ${response.status}`
+          `Error fetching the list of vehicles. HTTP Code: ${response.status}`
         );
       }
     }
     return await response.json();
   } catch (error) {
-    console.error("Error en getAllVehicles:", error);
+    console.error("Error in getAllVehicles:", error);
     throw error;
   }
 };
@@ -138,23 +139,22 @@ export const deleteVehicle = async (vin) => {
     });
 
     if (!response.ok) {
-      // Si el servidor devolvió un error, intentamos parsear el body como JSON
+      // If the server returned an error, attempt to parse the body as JSON
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al eliminar el vehículo.");
+        throw new Error("Error deleting the vehicle.");
       }
     }
 
-    // Si todo va bien (204 No Content), no necesitamos retornar nada.
+    // If everything is fine (204 No Content), no need to return anything.
     return;
   } catch (error) {
-    console.error("Error en deleteVehicle:", error);
+    console.error("Error in deleteVehicle:", error);
     throw error;
   }
 };
-
 
 export const getVehicleById = async (id) => {
   try {
@@ -164,14 +164,12 @@ export const getVehicleById = async (id) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error("Error al obtener el vehículo por ID.");
+        throw new Error("Error fetching the vehicle by ID.");
       }
     }
     return await response.json(); 
   } catch (error) {
-    console.error("Error en getVehicleById:", error);
+    console.error("Error in getVehicleById:", error);
     throw error;
   }
 };
-
-

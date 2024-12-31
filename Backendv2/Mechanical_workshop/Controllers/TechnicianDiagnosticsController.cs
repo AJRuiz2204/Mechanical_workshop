@@ -1,3 +1,5 @@
+// Controllers/TechnicianDiagnosticsController.cs
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
@@ -24,24 +26,24 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<TechnicianDiagnosticReadDto>> CreateTechnicianDiagnostic(TechnicianDiagnosticCreateDto dto)
         {
-            // Verificar que el Diagnostic exista
+            // Verify that the Diagnostic exists
             var diagnostic = await _context.Diagnostics
                 .Include(d => d.Vehicle)
                 .FirstOrDefaultAsync(d => d.Id == dto.DiagnosticId);
 
             if (diagnostic == null)
-                return NotFound(new { message = "No se encontró el diagnóstico (Diagnostic) especificado." });
+                return NotFound(new { message = "The specified Diagnostic was not found." });
 
-            // Mapear
+            // Map
             var entity = _mapper.Map<TechnicianDiagnostic>(dto);
 
-            // Opcional: hacer validaciones adicionales
-            // Por ejemplo, si mileage < 0, etc.
+            // Optional: perform additional validations
+            // For example, if mileage < 0, etc.
 
             _context.TechnicianDiagnostics.Add(entity);
             await _context.SaveChangesAsync();
 
-            // Retornar un readDto con ReasonForVisit y VehicleId
+            // Return a readDto with ReasonForVisit and VehicleId
             var readDto = await _context.TechnicianDiagnostics
                 .Include(t => t.Diagnostic)
                 .Where(t => t.Id == entity.Id)
@@ -68,7 +70,7 @@ namespace Mechanical_workshop.Controllers
 
             if (td == null)
             {
-                return NotFound(new { message = "No se encontró el TechDiagnostic con ese ID." });
+                return NotFound(new { message = "Technician Diagnostic with that ID was not found." });
             }
 
             var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(td);
@@ -82,9 +84,9 @@ namespace Mechanical_workshop.Controllers
         {
             var existingTd = await _context.TechnicianDiagnostics.FindAsync(id);
             if (existingTd == null)
-                return NotFound(new { message = "No se encontró el TechDiagnostic a actualizar." });
+                return NotFound(new { message = "Technician Diagnostic to update was not found." });
 
-            // Actualizamos datos
+            // Update data
             existingTd.Mileage = dto.Mileage;
             existingTd.ExtendedDiagnostic = dto.ExtendedDiagnostic;
 
@@ -103,7 +105,7 @@ namespace Mechanical_workshop.Controllers
 
             if (techDiag == null)
             {
-                return NotFound(new { message = "No existe un TechnicianDiagnostic para ese DiagnosticId." });
+                return NotFound(new { message = "There is no TechnicianDiagnostic for that DiagnosticId." });
             }
 
             var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(techDiag);
@@ -117,7 +119,7 @@ namespace Mechanical_workshop.Controllers
             var td = await _context.TechnicianDiagnostics.FindAsync(id);
             if (td == null)
             {
-                return NotFound(new { message = "No se encontró el TechDiagnostic a eliminar." });
+                return NotFound(new { message = "Technician Diagnostic to delete was not found." });
             }
 
             _context.TechnicianDiagnostics.Remove(td);
