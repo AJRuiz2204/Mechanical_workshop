@@ -1,5 +1,10 @@
-// Frontend: src/services/UserWorkshopService.js
+// src/services/UserWorkshopService.js
 
+// FUNCIONES PARA USERWORKSHOPS (TALLERES MECÁNICOS)
+
+/**
+ * Obtiene la lista de todos los talleres mecánicos.
+ */
 export const getUserWorkshops = async () => {
   try {
     const response = await fetch("/api/UserWorkshops");
@@ -13,6 +18,10 @@ export const getUserWorkshops = async () => {
   }
 };
 
+/**
+ * Obtiene un taller mecánico por su ID.
+ * @param {number} id - ID del UserWorkshop a consultar
+ */
 export const getUserWorkshopById = async (id) => {
   try {
     const response = await fetch(`/api/UserWorkshops/${id}`);
@@ -26,6 +35,10 @@ export const getUserWorkshopById = async (id) => {
   }
 };
 
+/**
+ * Crea un nuevo taller mecánico (UserWorkshop).
+ * @param {Object} userWorkshopData - Objeto con la información del taller y vehículos asociados
+ */
 export const createUserWorkshop = async (userWorkshopData) => {
   try {
     const response = await fetch("/api/UserWorkshops", {
@@ -50,6 +63,11 @@ export const createUserWorkshop = async (userWorkshopData) => {
   }
 };
 
+/**
+ * Actualiza un taller mecánico existente.
+ * @param {number} id - ID del taller a actualizar
+ * @param {Object} userWorkshopData - Objeto con la nueva información del taller
+ */
 export const updateUserWorkshop = async (id, userWorkshopData) => {
   try {
     const response = await fetch(`/api/UserWorkshops/${id}`, {
@@ -59,12 +77,15 @@ export const updateUserWorkshop = async (id, userWorkshopData) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.Message || "Error updating the mechanical workshop."
-      );
+      const errorData = await response.json().catch(() => null);
+      if (errorData && errorData.message) {
+        throw new Error(errorData.message);
+      } else {
+        throw new Error("Error updating the mechanical workshop.");
+      }
     }
 
+    // Si todo salió bien, no hay contenido que retornar
     return;
   } catch (error) {
     console.error("Error in updateUserWorkshop:", error);
@@ -72,6 +93,10 @@ export const updateUserWorkshop = async (id, userWorkshopData) => {
   }
 };
 
+/**
+ * Elimina un taller mecánico por su ID.
+ * @param {number} id - ID del taller a eliminar
+ */
 export const deleteUserWorkshop = async (id) => {
   try {
     const response = await fetch(`/api/UserWorkshops/${id}`, {
@@ -82,6 +107,7 @@ export const deleteUserWorkshop = async (id) => {
       throw new Error("Error deleting the mechanical workshop.");
     }
 
+    // Si todo salió bien, no hay contenido que retornar
     return;
   } catch (error) {
     console.error("Error in deleteUserWorkshop:", error);
@@ -89,18 +115,26 @@ export const deleteUserWorkshop = async (id) => {
   }
 };
 
-// **New function to search vehicles**
+// FUNCIONES PARA GESTIONAR VEHÍCULOS DENTRO DEL TALLER
+
+/**
+ * Busca vehículos según un término de búsqueda (VIN, nombre de cliente, etc.).
+ * @param {string} searchTerm - Término de búsqueda
+ */
 export const searchVehicles = async (searchTerm) => {
   try {
-    const response = await fetch(
-      `/api/UserWorkshops/searchVehicles?searchTerm=${encodeURIComponent(
-        searchTerm
-      )}`
-    );
+    const encodedTerm = encodeURIComponent(searchTerm);
+    const response = await fetch(`/api/UserWorkshops/searchVehicles?searchTerm=${encodedTerm}`);
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Error searching for vehicles.");
+      const errorData = await response.json().catch(() => null);
+      if (errorData && errorData.message) {
+        throw new Error(errorData.message);
+      } else {
+        throw new Error("Error searching for vehicles.");
+      }
     }
+
     return await response.json();
   } catch (error) {
     console.error("Error in searchVehicles:", error);
@@ -108,16 +142,19 @@ export const searchVehicles = async (searchTerm) => {
   }
 };
 
+/**
+ * Obtiene todos los vehículos registrados.
+ */
 export const getAllVehicles = async () => {
   try {
     const response = await fetch("/api/UserWorkshops/vehicles");
     if (!response.ok) {
-      // Attempt to read the error as JSON:
+      // Intentar leer el cuerpo de la respuesta como JSON
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        // If unable to read as JSON, fallback to a generic error
+        // Si no se pudo parsear, arrojar error genérico
         throw new Error(
           `Error fetching the list of vehicles. HTTP Code: ${response.status}`
         );
@@ -130,8 +167,10 @@ export const getAllVehicles = async () => {
   }
 };
 
-// src/services/UserWorkshopService.js
-
+/**
+ * Elimina un vehículo por su VIN.
+ * @param {string} vin - VIN del vehículo a eliminar
+ */
 export const deleteVehicle = async (vin) => {
   try {
     const response = await fetch(`/api/UserWorkshops/vehicle/${vin}`, {
@@ -139,7 +178,7 @@ export const deleteVehicle = async (vin) => {
     });
 
     if (!response.ok) {
-      // If the server returned an error, attempt to parse the body as JSON
+      // Intentar parsear un error en JSON
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
@@ -148,7 +187,7 @@ export const deleteVehicle = async (vin) => {
       }
     }
 
-    // If everything is fine (204 No Content), no need to return anything.
+    // 204 No Content -> no se retorna nada
     return;
   } catch (error) {
     console.error("Error in deleteVehicle:", error);
@@ -156,6 +195,10 @@ export const deleteVehicle = async (vin) => {
   }
 };
 
+/**
+ * Obtiene la información de un vehículo por ID (o VIN, dependiendo de tu backend).
+ * @param {number|string} id - El ID o VIN del vehículo
+ */
 export const getVehicleById = async (id) => {
   try {
     const response = await fetch(`/api/UserWorkshops/vehicle/${id}`);
@@ -167,7 +210,7 @@ export const getVehicleById = async (id) => {
         throw new Error("Error fetching the vehicle by ID.");
       }
     }
-    return await response.json(); 
+    return await response.json();
   } catch (error) {
     console.error("Error in getVehicleById:", error);
     throw error;

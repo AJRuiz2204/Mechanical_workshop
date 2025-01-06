@@ -50,14 +50,6 @@ const Home = () => {
         </div>
         <div
           className={`side-menu-item ${
-            activeTab === "vehicle-reception" ? "active" : ""
-          }`}
-          onClick={() => handleTabClick("vehicle-reception")}
-        >
-          VEHICLE RECEPTION
-        </div>
-        <div
-          className={`side-menu-item ${
             activeTab === "vehicle-list" ? "active" : ""
           }`}
           onClick={() => handleTabClick("vehicle-list")}
@@ -115,45 +107,9 @@ const Home = () => {
       </div>
 
       <div className="content-area">
-        {activeTab === "home" && <VehicleList />}
-        {activeTab === "vehicle-reception" && <VehicleReception />}
+        {activeTab === "home"}
         {activeTab === "vehicle-list" && <VehicleList />}
-        {activeTab === "diagnostic" && (
-          <div>
-            <div className="diagnostic-tabs">
-              <div
-                className={`diagnostic-tab ${
-                  diagnosticSubTab === "list" ? "active" : ""
-                }`}
-                onClick={() => handleDiagnosticSubTabClick("list")}
-              >
-                Diagnostic List
-              </div>
-              <div
-                className={`diagnostic-tab ${
-                  diagnosticSubTab === "vehicle" ? "active" : ""
-                }`}
-                onClick={() => handleDiagnosticSubTabClick("vehicle")}
-              >
-                Diagnostic Vehicle
-              </div>
-              <div
-                className={`diagnostic-tab ${
-                  diagnosticSubTab === "technical" ? "active" : ""
-                }`}
-                onClick={() => handleDiagnosticSubTabClick("technical")}
-              >
-                Technical Diagnostic
-              </div>
-            </div>
-
-            <div className="diagnostic-content">
-              {diagnosticSubTab === "list" && <DiagnosticList />}
-              {diagnosticSubTab === "vehicle" && <Diagnostic />}
-              {diagnosticSubTab === "technical" && <TechnicianDiagnostic />}
-            </div>
-          </div>
-        )}
+        {activeTab === "diagnostic" && <DiagnosticList />}
         {activeTab === "estimates" && <Estimate />}
         {activeTab === "invoice" && <Invoice />}
         {activeTab === "invoice-history" && <div><EstimateList /></div>}

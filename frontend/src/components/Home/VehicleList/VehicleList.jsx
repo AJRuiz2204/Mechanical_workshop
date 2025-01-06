@@ -1,6 +1,5 @@
+// src/components/VehicleList/VehicleList.jsx
 /* eslint-disable no-unused-vars */
-// Frontend: src/components/VehicleList/VehicleList.jsx
-
 import React, { useEffect, useState } from "react";
 import {
   Table,
@@ -9,13 +8,14 @@ import {
   Container,
   Spinner,
   Alert,
+  Modal
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import {
   getAllVehicles,
   searchVehicles,
   deleteVehicle,
 } from "../../../services/UserWorkshopService";
+import VehicleReception from "../VehicleReception/VehicleReception";
 import "./VehicleList.css";
 
 const VehicleList = () => {
@@ -24,9 +24,11 @@ const VehicleList = () => {
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [searchMessage, setSearchMessage] = useState("");
-  const navigate = useNavigate();
 
-  // 1. Load all vehicles on initialization
+  // Estado para controlar el modal:
+  const [showReceptionModal, setShowReceptionModal] = useState(false);
+
+  // 1. Cargar todos los vehículos al inicio
   const fetchAllVehicles = async () => {
     try {
       const data = await getAllVehicles();
@@ -42,7 +44,7 @@ const VehicleList = () => {
     fetchAllVehicles();
   }, []);
 
-  // 2. Real-time search
+  // 2. Búsqueda en tiempo real (con debounce)
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -50,7 +52,7 @@ const VehicleList = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (!searchTerm.trim()) {
-        // If empty, reload all vehicles
+        // Si está vacío, recargar todos
         fetchAllVehicles();
         setSearchMessage("");
         return;
@@ -61,7 +63,7 @@ const VehicleList = () => {
         try {
           const results = await searchVehicles(searchTerm);
           if (results.message) {
-            // If the backend returns an object { message: "..." }
+            // Si el backend retorna un objeto { message: "..." }
             setVehicles([]);
             setSearchMessage(results.message);
           } else {
@@ -82,24 +84,32 @@ const VehicleList = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  // 3. Navigate to the "Add Customer" view
+  // (A) En lugar de navegar, abrimos el modal
   const handleAddCustomer = () => {
-    navigate("/vehicle-reception");
+    setShowReceptionModal(true);
   };
 
-  // 4. Receive Diagnostic: navigate to /diagnostic/:id
+  // (B) Después de guardar o cerrar en “VehicleReception”, refrescamos la lista
+  const closeReceptionModal = (shouldRefresh = false) => {
+    setShowReceptionModal(false);
+    if (shouldRefresh) {
+      fetchAllVehicles();
+    }
+  };
+
+  // Recibir diagnóstico (mantenemos la navegación si tu app lo requiere)
   const handleReception = (id) => {
-    navigate(`/diagnostic/${id}`);
+    // navigate(`/diagnostic/${id}`) -- O alguna acción
+    alert(`Aquí irías a /diagnostic/${id} si lo deseas`);
   };
 
-  // 5. Edit Vehicle
-  // Adjust the route if your edit view is /edit/:id or another
+  // Editar vehículo (mantenemos la navegación o podrías abrir otro modal)
   const handleEdit = (id) => {
-    navigate(`/edit/${id}`);
+    // navigate(`/edit/${id}`)
+    alert(`Aquí abrirías la vista para editar el ID ${id}`);
   };
 
-  // 6. Delete Vehicle
-  // Call the deleteVehicle function (using VIN or ID, depending on your backend)
+  // Eliminar vehículo
   const handleDelete = async (vin) => {
     if (
       window.confirm(
@@ -108,7 +118,7 @@ const VehicleList = () => {
     ) {
       try {
         await deleteVehicle(vin);
-        // Filter the local list to remove it from the table
+        // Filtrar la lista local
         setVehicles(vehicles.filter((vehicle) => vehicle.vin !== vin));
         alert("Vehicle successfully deleted.");
       } catch (error) {
@@ -120,6 +130,7 @@ const VehicleList = () => {
   return (
     <Container className="p-4 border rounded mt-4 bg-light">
       <h3>VEHICLE LIST</h3>
+
       <div className="d-flex justify-content-between align-items-center mb-3">
         {/* Search Field */}
         <Form.Control
@@ -174,7 +185,6 @@ const VehicleList = () => {
                     <td>{vehicle.model}</td>
                     <td>{vehicle.ownerName || "Unknown"}</td>
                     <td>
-                      {/* Edit Button */}
                       <Button
                         variant="warning"
                         className="me-2"
@@ -185,12 +195,12 @@ const VehicleList = () => {
 
                       <Button
                         variant="info"
-                        onClick={() => navigate(`/diagnostic/${vehicle.id}`)}
+                        className="me-2"
+                        onClick={() => handleReception(vehicle.id)}
                       >
                         Receive Diagnostic
                       </Button>
 
-                      {/* Delete Button */}
                       <Button
                         variant="danger"
                         onClick={() => handleDelete(vehicle.vin)}
@@ -203,12 +213,30 @@ const VehicleList = () => {
               </tbody>
             </Table>
           ) : (
-            <p>
-              No vehicles found. Try another search term.
-            </p>
+            <p>No vehicles found. Try another search term.</p>
           )}
         </>
       )}
+
+      {/* Modal que contiene el formulario de VehicleReception */}
+      <Modal
+        show={showReceptionModal}
+        onHide={() => closeReceptionModal(false)}
+        size="lg" // o "xl" si necesitas más espacio
+        backdrop="static"
+        keyboard={false}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Register Workshop / Vehicle</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <VehicleReception
+            // Enviamos dos props:
+            onClose={() => closeReceptionModal(false)}
+            afterSubmit={() => closeReceptionModal(true)}
+          />
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 };
