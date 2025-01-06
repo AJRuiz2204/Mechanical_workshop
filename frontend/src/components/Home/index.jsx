@@ -10,6 +10,7 @@ import TechnicianDiagnostic from "./Diagnostic/TechnicianDiagnostic";
 import Estimate from "./Estimate/Estimate";
 import Invoice from "./Invoice/Invoice";
 import ShopReports from "./Reports/ShopReports";
+import EstimateList from './Estimate/EstimateList';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -155,7 +156,7 @@ const Home = () => {
         )}
         {activeTab === "estimates" && <Estimate />}
         {activeTab === "invoice" && <Invoice />}
-        {activeTab === "invoice-history" && <div>Invoice History Content</div>}
+        {activeTab === "invoice-history" && <div><EstimateList /></div>}
         {activeTab === "accounts-receivable" && (
           <div>Accounts Receivable Content</div>
         )}

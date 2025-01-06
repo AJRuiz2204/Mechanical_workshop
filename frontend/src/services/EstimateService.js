@@ -1,16 +1,16 @@
 // src/services/EstimateService.js
 
 const API_URL = '/api/Estimates';
-const VEHICLE_API_URL = '/api/UserWorkshops/vehicles'; // Make sure this route is correct
-const GET_VEHICLE_BY_ID_URL = (id) => `/api/UserWorkshops/vehicle/${id}`; // Make sure this route is correct
+const VEHICLE_API_URL = '/api/UserWorkshops/vehicles';
+const GET_VEHICLE_BY_ID_URL = (id) => `/api/UserWorkshops/vehicle/${id}`;
 
 export const getEstimates = async () => {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch('/api/Estimates');
     if (!response.ok) {
       throw new Error('Error fetching the Estimates.');
     }
-    return await response.json();
+    return await response.json(); // Esto retorna un array de EstimateFullDto
   } catch (error) {
     console.error('Error in getEstimates:', error);
     throw error;
@@ -79,15 +79,14 @@ export const updateEstimate = async (id, estimateData) => {
 
 export const deleteEstimate = async (id) => {
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`/api/Estimates/${id}`, {
       method: 'DELETE',
     });
 
     if (!response.ok) {
       throw new Error('Error deleting the Estimate.');
     }
-
-    return;
+    return; // Eliminado con éxito
   } catch (error) {
     console.error('Error in deleteEstimate:', error);
     throw error;
@@ -120,3 +119,8 @@ export const getVehicleById = async (id) => {
     throw error;
   }
 };
+
+
+
+
+

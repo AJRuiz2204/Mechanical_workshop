@@ -13,6 +13,8 @@ import Diagnostic from "./components/Home/Diagnostic/Diagnostic";
 import TechnicianDiagnostic from "./components/Home/Diagnostic/TechnicianDiagnostic";
 import DiagnosticList from "./components/Home/Diagnostic/DiagnosticList";
 import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDiagnosticEdit";
+import EstimateList from "./components/Home/Estimate/EstimateList";
+import Estimate from "./components/Home/Estimate/Estimate";
 
 const App = () => {
   return (
@@ -28,29 +30,17 @@ const App = () => {
       <Route path="/create" element={<VehicleReception />} />
       <Route path="/edit/:vin" element={<VehicleReception />} />
       <Route path="/diagnostic/:id" element={<Diagnostic />} />
-      <Route
-        path="/technicianDiagnostic/:id"
-        element={<TechnicianDiagnostic />}
-      />
-      <Route
-        path="/technicianDiagnostic/edit/:techDiagId"
-        element={<TechnicianDiagnosticEdit />}
-      />
+      <Route path="/technicianDiagnostic/:id" element={<TechnicianDiagnostic />}/>
+      <Route path="/technicianDiagnostic/edit/:techDiagId"element={<TechnicianDiagnosticEdit />}/>
       <Route path="/diagnostic/create/:vehicleId" element={<Diagnostic />} />
-
       <Route path="/diagnostic-list" element={<DiagnosticList />} />
-
-      <Route
-        path="/technicianDiagnostic/create/:diagnosticId"
-        element={<TechnicianDiagnostic />}
-      />
-
-      <Route
-        path="/technicianDiagnostic/edit/:techDiagId"
-        element={<TechnicianDiagnostic />}
-      />
-
+      <Route path="/technicianDiagnostic/create/:diagnosticId" element={<TechnicianDiagnostic />}/>
+      <Route path="/technicianDiagnostic/edit/:techDiagId" element={<TechnicianDiagnostic />}/>
       <Route path="/diagnostic-list" element={<DiagnosticList />} />
+      <Route path="/estimate-list" element={<EstimateList />} />
+      <Route path="/estimate/create" element={<Estimate />} />
+      <Route path="/estimate/edit/:id" element={<Estimate />} />
+      <Route path="/estimate/:id" element={<Estimate />} />
     </Routes>
   );
 };

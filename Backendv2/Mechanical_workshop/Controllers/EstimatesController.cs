@@ -41,6 +41,7 @@ namespace Mechanical_workshop.Controllers
             return Ok(estimateDtos);
         }
 
+
         // GET: api/Estimates/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<EstimateFullDto>> GetEstimate(int id)
@@ -292,6 +293,7 @@ namespace Mechanical_workshop.Controllers
 
             return NoContent();
         }
+
 
         private bool EstimateExists(int id)
         {
