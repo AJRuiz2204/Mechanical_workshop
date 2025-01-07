@@ -10,7 +10,8 @@ namespace Mechanical_workshop.Profiles
         {
             // Mapeo entre UserWorkshop y UserWorkshopReadDto
             CreateMap<UserWorkshop, UserWorkshopReadDto>()
-                .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles));
+                .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles))
+                .ForMember(dest => dest.NoTax, opt => opt.MapFrom(src => src.NoTax));
 
             // Mapeo entre UserWorkshopCreateDto y UserWorkshop
             CreateMap<UserWorkshopCreateDto, UserWorkshop>()

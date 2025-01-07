@@ -1,9 +1,23 @@
 /* eslint-disable no-unused-vars */
 // Frontend: src/components/Estimate/Estimate.jsx
 
-import React, { useState, useEffect } from 'react';
-import { Form, Button, Table, Row, Col, Modal, InputGroup, FormControl, Alert } from 'react-bootstrap';
-import { createEstimate, getAllVehicles, getVehicleById } from '../../../services/EstimateService';
+import React, { useState, useEffect } from "react";
+import {
+  Form,
+  Button,
+  Table,
+  Row,
+  Col,
+  Modal,
+  InputGroup,
+  FormControl,
+  Alert,
+} from "react-bootstrap";
+import {
+  createEstimate,
+  getAllVehicles,
+  getVehicleById,
+} from "../../../services/EstimateService";
 
 const Estimate = () => {
   // States to handle modals
@@ -13,17 +27,17 @@ const Estimate = () => {
 
   // States for new items
   const [newPart, setNewPart] = useState({
-    description: '',
-    partNumber: '',
+    description: "",
+    partNumber: "",
     quantity: 1,
     netPrice: 0.0,
     listPrice: 0.0,
     extendedPrice: 0.0,
-    taxable: true, // Fixed value
+    taxable: true, // Fixed value (per item)
   });
 
   const [newLabor, setNewLabor] = useState({
-    description: '',
+    description: "",
     duration: 0,
     laborRate: 140.0,
     extendedPrice: 0.0,
@@ -31,7 +45,7 @@ const Estimate = () => {
   });
 
   const [newFlatFee, setNewFlatFee] = useState({
-    description: '',
+    description: "",
     flatFeePrice: 0.0,
     extendedPrice: 0.0,
     taxable: true, // Fixed value
@@ -41,8 +55,8 @@ const Estimate = () => {
   const [parts, setParts] = useState([]);
   const [labors, setLabors] = useState([]);
   const [flatFees, setFlatFees] = useState([]);
-  const [customerNote, setCustomerNote] = useState('');
-  const [extendedDiagnostic, setExtendedDiagnostic] = useState('');
+  const [customerNote, setCustomerNote] = useState("");
+  const [extendedDiagnostic, setExtendedDiagnostic] = useState("");
   const [subtotal, setSubtotal] = useState(0.0);
   const [tax, setTax] = useState(0.0);
   const [total, setTotal] = useState(0.0);
@@ -53,17 +67,20 @@ const Estimate = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [owner, setOwner] = useState(null);
 
+  // Nuevo estado para noTax
+  const [noTax, setNoTax] = useState(false);
+
   // States for error handling
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Functions to handle opening and closing modals
+  // Modals: mostrar/ocultar
   const handleShowPartModal = () => setShowPartModal(true);
   const handleClosePartModal = () => {
     setShowPartModal(false);
     setNewPart({
-      description: '',
-      partNumber: '',
+      description: "",
+      partNumber: "",
       quantity: 1,
       netPrice: 0.0,
       listPrice: 0.0,
@@ -76,7 +93,7 @@ const Estimate = () => {
   const handleCloseLaborModal = () => {
     setShowLaborModal(false);
     setNewLabor({
-      description: '',
+      description: "",
       duration: 0,
       laborRate: 140.0,
       extendedPrice: 0.0,
@@ -88,63 +105,66 @@ const Estimate = () => {
   const handleCloseFlatFeeModal = () => {
     setShowFlatFeeModal(false);
     setNewFlatFee({
-      description: '',
+      description: "",
       flatFeePrice: 0.0,
       extendedPrice: 0.0,
       taxable: true,
     });
   };
 
-  // Functions to add new items
+  // Agregar items
   const addPart = () => {
     if (!newPart.description || !newPart.partNumber) {
-      setError('Please fill out all part fields.');
+      setError("Please fill out all part fields.");
       return;
     }
 
-    setParts([...parts, { ...newPart }]);
-    calculateTotals([...parts, { ...newPart }], labors, flatFees);
+    const updatedParts = [...parts, { ...newPart }];
+    setParts(updatedParts);
+    calculateTotals(updatedParts, labors, flatFees);
     handleClosePartModal();
     setError(null);
   };
 
   const addLabor = () => {
     if (!newLabor.description || newLabor.duration <= 0) {
-      setError('Please fill out all labor fields correctly.');
+      setError("Please fill out all labor fields correctly.");
       return;
     }
 
-    setLabors([...labors, { ...newLabor }]);
-    calculateTotals(parts, [...labors, { ...newLabor }], flatFees);
+    const updatedLabors = [...labors, { ...newLabor }];
+    setLabors(updatedLabors);
+    calculateTotals(parts, updatedLabors, flatFees);
     handleCloseLaborModal();
     setError(null);
   };
 
   const addFlatFee = () => {
     if (!newFlatFee.description || newFlatFee.flatFeePrice <= 0) {
-      setError('Please fill out all flat fee fields correctly.');
+      setError("Please fill out all flat fee fields correctly.");
       return;
     }
 
-    setFlatFees([...flatFees, { ...newFlatFee }]);
-    calculateTotals(parts, labors, [...flatFees, { ...newFlatFee }]);
+    const updatedFlatFees = [...flatFees, { ...newFlatFee }];
+    setFlatFees(updatedFlatFees);
+    calculateTotals(parts, labors, updatedFlatFees);
     handleCloseFlatFeeModal();
     setError(null);
   };
 
-  // Function to remove items
+  // Eliminar items
   const removeItem = (type, index) => {
     let updatedParts = [...parts];
     let updatedLabors = [...labors];
     let updatedFlatFees = [...flatFees];
 
-    if (type === 'PART') {
+    if (type === "PART") {
       updatedParts.splice(index, 1);
       setParts(updatedParts);
-    } else if (type === 'LABOR') {
+    } else if (type === "LABOR") {
       updatedLabors.splice(index, 1);
       setLabors(updatedLabors);
-    } else if (type === 'FLATFEE') {
+    } else if (type === "FLATFEE") {
       updatedFlatFees.splice(index, 1);
       setFlatFees(updatedFlatFees);
     }
@@ -152,13 +172,27 @@ const Estimate = () => {
     calculateTotals(updatedParts, updatedLabors, updatedFlatFees);
   };
 
-  // Function to calculate subtotal, tax, and total
+  // Calcular subtotal, impuesto y total
   const calculateTotals = (currentParts, currentLabors, currentFlatFees) => {
-    const newSubtotal = currentParts.reduce((acc, part) => acc + parseFloat(part.extendedPrice), 0) +
-                        currentLabors.reduce((acc, labor) => acc + parseFloat(labor.extendedPrice), 0) +
-                        currentFlatFees.reduce((acc, fee) => acc + parseFloat(fee.extendedPrice), 0);
+    const newSubtotal =
+      currentParts.reduce(
+        (acc, part) => acc + parseFloat(part.extendedPrice),
+        0
+      ) +
+      currentLabors.reduce(
+        (acc, labor) => acc + parseFloat(labor.extendedPrice),
+        0
+      ) +
+      currentFlatFees.reduce(
+        (acc, fee) => acc + parseFloat(fee.extendedPrice),
+        0
+      );
 
-    const newTax = newSubtotal * 0.018; // Example: 1.8% tax
+    let newTax = 0;
+    // Si noTax es true => tax = 0
+    if (!noTax) {
+      newTax = newSubtotal * 0.018; // Ejemplo: 1.8%
+    }
 
     const newTotal = newSubtotal + newTax;
 
@@ -167,7 +201,7 @@ const Estimate = () => {
     setTotal(newTotal);
   };
 
-  // Function to handle vehicle selection
+  // Maneja el cambio de vehículo seleccionado
   const handleVehicleChange = async (e) => {
     const vehicleId = e.target.value;
     setSelectedVehicleId(vehicleId);
@@ -175,31 +209,32 @@ const Estimate = () => {
     if (vehicleId === "") {
       setSelectedVehicle(null);
       setOwner(null);
+      setNoTax(false);
       return;
     }
 
     try {
       const vehicleData = await getVehicleById(vehicleId);
       setSelectedVehicle(vehicleData);
-      setOwner(vehicleData.userWorkshop); // Ensure the property is correct
+      setOwner(vehicleData.userWorkshop);
+      setNoTax(vehicleData.userWorkshop.noTax);
     } catch (error) {
-      setError('Error fetching vehicle details: ' + error.message);
+      setError("Error fetching vehicle details: " + error.message);
     }
   };
 
-  // Function to handle saving the Estimate
+  // Guardar Estimate
   const handleSave = async () => {
     if (!selectedVehicleId) {
-      setError('Please select a vehicle.');
+      setError("Please select a vehicle.");
       return;
     }
 
     if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
-      setError('Add at least one item to the Estimate.');
+      setError("Add at least one item to the Estimate.");
       return;
     }
 
-    // Build the payload according to EstimateCreateDto
     const estimateData = {
       VehicleID: parseInt(selectedVehicleId),
       CustomerNote: customerNote,
@@ -207,7 +242,7 @@ const Estimate = () => {
       Subtotal: subtotal,
       Tax: tax,
       Total: total,
-      Parts: parts.map(part => ({
+      Parts: parts.map((part) => ({
         description: part.description,
         partNumber: part.partNumber,
         quantity: part.quantity,
@@ -216,14 +251,14 @@ const Estimate = () => {
         extendedPrice: part.extendedPrice,
         taxable: part.taxable,
       })),
-      Labors: labors.map(labor => ({
+      Labors: labors.map((labor) => ({
         description: labor.description,
         duration: labor.duration,
         laborRate: labor.laborRate,
         extendedPrice: labor.extendedPrice,
         taxable: labor.taxable,
       })),
-      FlatFees: flatFees.map(fee => ({
+      FlatFees: flatFees.map((fee) => ({
         description: fee.description,
         flatFeePrice: fee.flatFeePrice,
         extendedPrice: fee.extendedPrice,
@@ -233,35 +268,38 @@ const Estimate = () => {
 
     try {
       const createdEstimate = await createEstimate(estimateData);
-      setSuccess(`Estimate created successfully with ID: ${createdEstimate.ID}`);
+      setSuccess(
+        `Estimate created successfully with ID: ${createdEstimate.ID}`
+      );
       setError(null);
-      // Optional: Redirect or clear the form
-      // For example, clear all fields:
+
+      // Limpiar
       setParts([]);
       setLabors([]);
       setFlatFees([]);
-      setCustomerNote('');
-      setExtendedDiagnostic('');
+      setCustomerNote("");
+      setExtendedDiagnostic("");
       setSubtotal(0.0);
       setTax(0.0);
       setTotal(0.0);
       setSelectedVehicleId(null);
       setSelectedVehicle(null);
       setOwner(null);
+      setNoTax(false);
     } catch (error) {
-      setError('Error creating the Estimate: ' + error.message);
+      setError("Error creating the Estimate: " + error.message);
       setSuccess(null);
     }
   };
 
-  // useEffect to load the list of vehicles when the component mounts
+  // Cargar la lista de vehículos al montar
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         const vehicleList = await getAllVehicles();
         setVehicles(vehicleList);
       } catch (error) {
-        setError('Error loading the vehicle list: ' + error.message);
+        setError("Error loading the vehicle list: " + error.message);
       }
     };
 
@@ -273,16 +311,28 @@ const Estimate = () => {
       <h3>ESTIMATE</h3>
 
       {/* Error and Success Messages */}
-      {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
-      {success && <Alert variant="success" onClose={() => setSuccess(null)} dismissible>{success}</Alert>}
+      {error && (
+        <Alert variant="danger" onClose={() => setError(null)} dismissible>
+          {error}
+        </Alert>
+      )}
+      {success && (
+        <Alert variant="success" onClose={() => setSuccess(null)} dismissible>
+          {success}
+        </Alert>
+      )}
 
       {/* Vehicle Selection */}
       <div className="mb-3">
         <Form.Group controlId="selectVehicle">
           <Form.Label>Select Vehicle (VIN)</Form.Label>
-          <Form.Control as="select" value={selectedVehicleId || ""} onChange={handleVehicleChange}>
+          <Form.Control
+            as="select"
+            value={selectedVehicleId || ""}
+            onChange={handleVehicleChange}
+          >
             <option value="">-- Select a VIN --</option>
-            {vehicles.map(vehicle => (
+            {vehicles.map((vehicle) => (
               <option key={vehicle.id} value={vehicle.id}>
                 {vehicle.vin}
               </option>
@@ -297,20 +347,46 @@ const Estimate = () => {
           <Row>
             <Col md={8}>
               <div>
-                <span role="img" aria-label="vehicle">🚗</span> {`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model} (${selectedVehicle.engine})`}
+                <span role="img" aria-label="vehicle">
+                  🚗
+                </span>{" "}
+                {`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model} (${selectedVehicle.engine})`}
               </div>
               <div>
-                <strong>Plate:</strong> {selectedVehicle.plate} | <strong>State:</strong> {selectedVehicle.state} | <strong>Status:</strong> {selectedVehicle.status}
+                <strong>Plate:</strong> {selectedVehicle.plate} |{" "}
+                <strong>State:</strong> {selectedVehicle.state} |{" "}
+                <strong>Status:</strong> {selectedVehicle.status}
               </div>
             </Col>
             <Col md={4}>
               <div>
-                <span role="img" aria-label="customer">👤</span> {`${owner.name} ${owner.lastName}`}
+                <span role="img" aria-label="customer">
+                  👤
+                </span>{" "}
+                {`${owner.name} ${owner.lastName}`}
               </div>
               <div>
                 <strong>Email:</strong> {owner.email}
               </div>
-              {/* Add more owner information if necessary */}
+              <div className="mt-2">
+                <strong>Tax:</strong>{" "}
+                {owner.noTax ? (
+                  <span style={{ color: "red", fontWeight: "bold" }}>
+                    No Tax
+                  </span>
+                ) : (
+                  <span style={{ color: "green", fontWeight: "bold" }}>
+                    Taxable
+                  </span>
+                )}
+              </div>
+              {owner.noTax && (
+                <div className="mt-2">
+                  <Alert variant="info" className="p-1">
+                    <strong>No Tax:</strong> This workshop is tax-exempt.
+                  </Alert>
+                </div>
+              )}
             </Col>
           </Row>
         </div>
@@ -318,9 +394,29 @@ const Estimate = () => {
 
       {/* Add Item Buttons */}
       <div className="mb-3">
-        <Button variant="primary" onClick={handleShowPartModal} className="me-2">Add Part</Button>
-        <Button variant="primary" onClick={handleShowLaborModal} className="me-2">Add Labor</Button>
-        <Button variant="primary" onClick={handleShowFlatFeeModal}>Add Flat Fee</Button>
+        <Button
+          variant="primary"
+          onClick={handleShowPartModal}
+          className="me-2"
+          disabled={!selectedVehicleId}
+        >
+          Add Part
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleShowLaborModal}
+          className="me-2"
+          disabled={!selectedVehicleId}
+        >
+          Add Labor
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleShowFlatFeeModal}
+          disabled={!selectedVehicleId}
+        >
+          Add Flat Fee
+        </Button>
       </div>
 
       {/* Estimate Table */}
@@ -348,9 +444,15 @@ const Estimate = () => {
               <td>${parseFloat(part.netPrice).toFixed(2)}</td>
               <td>${parseFloat(part.listPrice).toFixed(2)}</td>
               <td>${parseFloat(part.extendedPrice).toFixed(2)}</td>
-              <td>✔</td> {/* Fixed value */}
+              <td>✔</td>
               <td>
-                <Button variant="danger" size="sm" onClick={() => removeItem('PART', index)}>&times;</Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => removeItem("PART", index)}
+                >
+                  &times;
+                </Button>
               </td>
             </tr>
           ))}
@@ -363,9 +465,15 @@ const Estimate = () => {
               <td>${parseFloat(labor.laborRate).toFixed(2)}</td>
               <td>${(labor.duration * labor.laborRate).toFixed(2)}</td>
               <td>${parseFloat(labor.extendedPrice).toFixed(2)}</td>
-              <td>✔</td> {/* Fixed value */}
+              <td>✔</td>
               <td>
-                <Button variant="danger" size="sm" onClick={() => removeItem('LABOR', index)}>&times;</Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => removeItem("LABOR", index)}
+                >
+                  &times;
+                </Button>
               </td>
             </tr>
           ))}
@@ -378,16 +486,22 @@ const Estimate = () => {
               <td></td>
               <td>${parseFloat(fee.flatFeePrice).toFixed(2)}</td>
               <td>${parseFloat(fee.extendedPrice).toFixed(2)}</td>
-              <td>✔</td> {/* Fixed value */}
+              <td>✔</td>
               <td>
-                <Button variant="danger" size="sm" onClick={() => removeItem('FLATFEE', index)}>&times;</Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => removeItem("FLATFEE", index)}
+                >
+                  &times;
+                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
 
-      {/* Extended Diagnostic Information */}
+      {/* Extended Diagnostic Info */}
       <Form.Group controlId="extended-diagnostic" className="mb-3">
         <Form.Label>Extended Diagnostic</Form.Label>
         <Form.Control
@@ -398,7 +512,7 @@ const Estimate = () => {
         />
       </Form.Group>
 
-      {/* Customer Note Section */}
+      {/* Customer Note */}
       <Form.Group controlId="customer-note" className="mb-3">
         <Form.Label>Customer Note</Form.Label>
         <Form.Control
@@ -426,14 +540,17 @@ const Estimate = () => {
 
       {/* Action Buttons */}
       <div className="text-end">
-        <Button variant="secondary" className="me-2" onClick={() => {
-          // Optional: Redirect or clear the form
-        }}>Cancel</Button>
-        <Button variant="success" onClick={handleSave}>Save</Button>
+        <Button variant="secondary" className="me-2">
+          Cancel
+        </Button>
+        <Button variant="success" onClick={handleSave}>
+          Save
+        </Button>
       </div>
 
-      {/* Modals to add items */}
-      
+      {/* =============== MODALS =============== */}
+
+      {/* Modal to add Part */}
       {/* Modal to add Part */}
       <Modal show={showPartModal} onHide={handleClosePartModal}>
         <Modal.Header closeButton>
@@ -446,28 +563,44 @@ const Estimate = () => {
               <Form.Control
                 type="text"
                 value={newPart.description}
-                onChange={(e) => setNewPart({ ...newPart, description: e.target.value })}
+                onChange={(e) =>
+                  setNewPart({ ...newPart, description: e.target.value })
+                }
                 placeholder="Enter part description"
               />
             </Form.Group>
+
             <Form.Group controlId="partNumber" className="mb-3">
               <Form.Label>Part Number</Form.Label>
               <Form.Control
                 type="text"
                 value={newPart.partNumber}
-                onChange={(e) => setNewPart({ ...newPart, partNumber: e.target.value })}
+                onChange={(e) =>
+                  setNewPart({ ...newPart, partNumber: e.target.value })
+                }
                 placeholder="Enter part number"
               />
             </Form.Group>
+
             <Form.Group controlId="partQuantity" className="mb-3">
               <Form.Label>Quantity</Form.Label>
               <Form.Control
                 type="number"
                 min="1"
                 value={newPart.quantity}
-                onChange={(e) => setNewPart({ ...newPart, quantity: parseInt(e.target.value) || 1 })}
+                onChange={(e) => {
+                  const quantity = parseInt(e.target.value) || 1;
+                  // Recalcular extendedPrice basado en listPrice
+                  const newExtended = newPart.listPrice * quantity;
+                  setNewPart({
+                    ...newPart,
+                    quantity,
+                    extendedPrice: newExtended,
+                  });
+                }}
               />
             </Form.Group>
+
             <Form.Group controlId="partNetPrice" className="mb-3">
               <Form.Label>Net Price</Form.Label>
               <InputGroup>
@@ -479,11 +612,16 @@ const Estimate = () => {
                   value={newPart.netPrice}
                   onChange={(e) => {
                     const netPrice = parseFloat(e.target.value) || 0.0;
-                    setNewPart({ ...newPart, netPrice, extendedPrice: netPrice * newPart.quantity });
+                    // NO afecta el extendedPrice
+                    setNewPart({
+                      ...newPart,
+                      netPrice,
+                    });
                   }}
                 />
               </InputGroup>
             </Form.Group>
+
             <Form.Group controlId="partListPrice" className="mb-3">
               <Form.Label>List Price</Form.Label>
               <InputGroup>
@@ -493,10 +631,20 @@ const Estimate = () => {
                   min="0"
                   step="0.01"
                   value={newPart.listPrice}
-                  onChange={(e) => setNewPart({ ...newPart, listPrice: parseFloat(e.target.value) || 0.0 })}
+                  onChange={(e) => {
+                    const listPrice = parseFloat(e.target.value) || 0.0;
+                    // Recalcular extendedPrice basado en listPrice
+                    const newExtended = listPrice * newPart.quantity;
+                    setNewPart({
+                      ...newPart,
+                      listPrice,
+                      extendedPrice: newExtended,
+                    });
+                  }}
                 />
               </InputGroup>
             </Form.Group>
+
             <Form.Group controlId="partExtendedPrice" className="mb-3">
               <Form.Label>Extended Price</Form.Label>
               <InputGroup>
@@ -510,7 +658,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable is fixed */}
+            {/* Taxable is fixed per part, but globally we might ignore it if noTax */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -535,7 +683,9 @@ const Estimate = () => {
               <Form.Control
                 type="text"
                 value={newLabor.description}
-                onChange={(e) => setNewLabor({ ...newLabor, description: e.target.value })}
+                onChange={(e) =>
+                  setNewLabor({ ...newLabor, description: e.target.value })
+                }
                 placeholder="Enter labor description"
               />
             </Form.Group>
@@ -547,7 +697,11 @@ const Estimate = () => {
                 value={newLabor.duration}
                 onChange={(e) => {
                   const duration = parseInt(e.target.value) || 0;
-                  setNewLabor({ ...newLabor, duration, extendedPrice: duration * newLabor.laborRate });
+                  setNewLabor({
+                    ...newLabor,
+                    duration,
+                    extendedPrice: duration * newLabor.laborRate,
+                  });
                 }}
               />
             </Form.Group>
@@ -562,7 +716,11 @@ const Estimate = () => {
                   value={newLabor.laborRate}
                   onChange={(e) => {
                     const rate = parseFloat(e.target.value) || 0.0;
-                    setNewLabor({ ...newLabor, laborRate: rate, extendedPrice: newLabor.duration * rate });
+                    setNewLabor({
+                      ...newLabor,
+                      laborRate: rate,
+                      extendedPrice: newLabor.duration * rate,
+                    });
                   }}
                 />
               </InputGroup>
@@ -580,7 +738,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable is fixed */}
+            {/* Taxable es fijo por labor, pero se ignora si noTax */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -605,7 +763,9 @@ const Estimate = () => {
               <Form.Control
                 type="text"
                 value={newFlatFee.description}
-                onChange={(e) => setNewFlatFee({ ...newFlatFee, description: e.target.value })}
+                onChange={(e) =>
+                  setNewFlatFee({ ...newFlatFee, description: e.target.value })
+                }
                 placeholder="Enter flat fee description"
               />
             </Form.Group>
@@ -620,7 +780,11 @@ const Estimate = () => {
                   value={newFlatFee.flatFeePrice}
                   onChange={(e) => {
                     const price = parseFloat(e.target.value) || 0.0;
-                    setNewFlatFee({ ...newFlatFee, flatFeePrice: price, extendedPrice: price });
+                    setNewFlatFee({
+                      ...newFlatFee,
+                      flatFeePrice: price,
+                      extendedPrice: price,
+                    });
                   }}
                 />
               </InputGroup>
@@ -638,7 +802,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable is fixed */}
+            {/* Taxable es fijo, pero se ignora globalmente si noTax */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
