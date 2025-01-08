@@ -2971,19 +2971,19 @@
     ]
   },
   "packageFolders": {
-    "/home/sanchez01/.nuget/packages/": {}
+    "/home/ajruiz2204/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
+      "projectUniqueName": "/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
       "projectName": "Mechanical_workshop",
-      "projectPath": "/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
-      "packagesPath": "/home/sanchez01/.nuget/packages/",
-      "outputPath": "/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/obj/",
+      "projectPath": "/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Mechanical_workshop.csproj",
+      "packagesPath": "/home/ajruiz2204/.nuget/packages/",
+      "outputPath": "/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/sanchez01/.nuget/NuGet/NuGet.Config"
+        "/home/ajruiz2204/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"

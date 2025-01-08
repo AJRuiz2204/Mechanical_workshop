@@ -9,39 +9,39 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Mechanical_workshop
 build_property.RootNamespace = Mechanical_workshop
-build_property.ProjectDir = /home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/
+build_property.ProjectDir = /home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop
+build_property.MSBuildProjectDirectory = /home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop
 build_property._RazorSourceGeneratorDebug = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Home/Index.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9JbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Home/Privacy.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvSG9tZS9Qcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Shared/Error.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL0Vycm9yLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Shared/_ValidationScriptsPartial.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/_ViewImports.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/_ViewStart.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/sanchez01/projects/ruiz/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Shared/_Layout.cshtml]
+[/home/ajruiz2204/proyectos/Mechanical_workshop/Backendv2/Mechanical_workshop/Views/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = b-rwze6qtdxb
