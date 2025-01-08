@@ -8,7 +8,7 @@ import {
   Container,
   Spinner,
   Alert,
-  Modal
+  Modal,
 } from "react-bootstrap";
 import {
   getAllVehicles,
@@ -17,8 +17,10 @@ import {
 } from "../../../services/UserWorkshopService";
 import VehicleReception from "../VehicleReception/VehicleReception";
 import "./VehicleList.css";
+import { useNavigate } from "react-router-dom";
 
 const VehicleList = () => {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingVehicles, setLoadingVehicles] = useState(true);
@@ -99,14 +101,12 @@ const VehicleList = () => {
 
   // Recibir diagnóstico (mantenemos la navegación si tu app lo requiere)
   const handleReception = (id) => {
-    // navigate(`/diagnostic/${id}`) -- O alguna acción
-    alert(`Aquí irías a /diagnostic/${id} si lo deseas`);
+    navigate(`/diagnostic/${id}`)
   };
 
   // Editar vehículo (mantenemos la navegación o podrías abrir otro modal)
   const handleEdit = (id) => {
-    // navigate(`/edit/${id}`)
-    alert(`Aquí abrirías la vista para editar el ID ${id}`);
+    navigate(`/edit/${id}`)
   };
 
   // Eliminar vehículo
@@ -222,7 +222,7 @@ const VehicleList = () => {
       <Modal
         show={showReceptionModal}
         onHide={() => closeReceptionModal(false)}
-        size="lg" // o "xl" si necesitas más espacio
+        size="xl"
         backdrop="static"
         keyboard={false}
       >

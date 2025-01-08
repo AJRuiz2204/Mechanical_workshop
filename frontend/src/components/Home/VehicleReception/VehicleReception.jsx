@@ -17,13 +17,14 @@ import {
   getUserWorkshopById,
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const VehicleReception = ({
   onClose, // función para cerrar modal
   afterSubmit, // función opcional para refrescar datos en el padre
   editingId, // si deseas editar un registro en particular
 }) => {
+  const navigate = useNavigate();
   const [userWorkshop, setUserWorkshop] = useState({
     email: "",
     name: "",
