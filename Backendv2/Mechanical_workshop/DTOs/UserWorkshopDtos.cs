@@ -66,6 +66,8 @@ namespace Mechanical_workshop.Dtos
         public string Name { get; set; } = string.Empty;
         [Required]
         public string Username { get; set; } = string.Empty;
+        public bool NoTax { get; set; }
+
         [Required]
         public List<VehicleDto> Vehicles { get; set; } = new();
     }
