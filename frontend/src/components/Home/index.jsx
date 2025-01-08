@@ -1,42 +1,13 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./Home.css";
-import VehicleReception from "./VehicleReception/VehicleReception";
-import VehicleList from "./VehicleList/VehicleList";
-import Diagnostic from "./Diagnostic/Diagnostic";
-import DiagnosticList from "./Diagnostic/DiagnosticList";
-import TechnicianDiagnostic from "./Diagnostic/TechnicianDiagnostic";
-import Estimate from "./Estimate/Estimate";
-import Invoice from "./Invoice/Invoice";
-import ShopReports from "./Reports/ShopReports";
 import EstimateList from './Estimate/EstimateList';
 
 const Home = () => {
-  const [activeTab, setActiveTab] = useState("home");
-  const [diagnosticSubTab, setDiagnosticSubTab] = useState("list");
-  const location = useLocation();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Actualiza el tab activo basado en la ruta actual
-    if (location.pathname === "/vehicle-reception") {
-      setActiveTab("vehicle-reception");
-    } else if (location.pathname === "/vehicle-list") {
-      setActiveTab("vehicle-list");
-    } else if (location.pathname === "/home") {
-      setActiveTab("home");
-    } else {
-      // Otros casos para diferentes rutas que puedas tener
-      setActiveTab("home");
-    }
-  }, [location]); // Recalcular cuando cambie la ruta
-
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleDiagnosticSubTabClick = (subTab) => {
-    setDiagnosticSubTab(subTab);
+  const handleTabClick = (route) => {
+    navigate(route);
   };
 
   return (

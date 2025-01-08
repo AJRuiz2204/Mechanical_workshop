@@ -1,11 +1,8 @@
-/* eslint-disable no-unused-vars */
-// src/App.jsx
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RegisterUser from "./components/RegisterUser/RegisterUser";
-import Home from "./components/Home/index";
 import VehicleReception from "./components/Home/VehicleReception/VehicleReception";
 import ChangePassword from "./components/ForgotPassword/ChangePassword";
 import VehicleList from "./components/Home/VehicleList/VehicleList";
@@ -15,11 +12,14 @@ import DiagnosticList from "./components/Home/Diagnostic/DiagnosticList";
 import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDiagnosticEdit";
 import EstimateList from "./components/Home/Estimate/EstimateList";
 import Estimate from "./components/Home/Estimate/Estimate";
+import MainLayout from "./components/Layout/MainLayout"; // Importa el layout
 
 const App = () => {
   return (
     <Routes>
+      {/* Rutas sin sidebar */}
       <Route path="/" element={<Login />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register-user" element={<RegisterUser />} />
       <Route path="/home" element={<Home />} />
