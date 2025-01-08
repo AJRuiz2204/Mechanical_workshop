@@ -19,7 +19,7 @@ const Login = () => {
       const userInfo = await loginUser(credentials);
       // Save user information if necessary
       localStorage.setItem('user', JSON.stringify(userInfo));
-      navigate("/Home");
+      navigate("/vehicle-list");
     } catch (err) {
       setError(err.message || "Error logging in.");
     }

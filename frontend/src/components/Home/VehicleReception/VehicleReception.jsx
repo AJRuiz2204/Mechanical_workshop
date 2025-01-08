@@ -329,7 +329,7 @@ const VehicleReception = () => {
         await createUserWorkshop(payload);
         alert("Workshop successfully created.");
       }
-      navigate("/home"); // Return to the main screen
+      navigate("/vehicle-list"); // Return to the main screen
     } catch (error) {
       alert(`Error: ${error.message}`);
     } finally {
@@ -650,7 +650,7 @@ const VehicleReception = () => {
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
-          <Button variant="secondary" onClick={() => navigate("/home")}>
+          <Button variant="secondary" onClick={() => navigate("/vehicle-list")}>
             Cancel
           </Button>
         </div>
