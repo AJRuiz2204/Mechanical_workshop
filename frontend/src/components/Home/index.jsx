@@ -74,27 +74,11 @@ const Home = () => {
         </div>
         <div
           className={`side-menu-item ${
-            activeTab === "invoice" ? "active" : ""
-          }`}
-          onClick={() => handleTabClick("invoice")}
-        >
-          INVOICE
-        </div>
-        <div
-          className={`side-menu-item ${
             activeTab === "invoice-history" ? "active" : ""
           }`}
           onClick={() => handleTabClick("invoice-history")}
         >
           INVOICE HISTORY
-        </div>
-        <div
-          className={`side-menu-item ${
-            activeTab === "accounts-receivable" ? "active" : ""
-          }`}
-          onClick={() => handleTabClick("accounts-receivable")}
-        >
-          ACCOUNTS RECEIVABLE
         </div>
         <div
           className={`side-menu-item ${
@@ -113,9 +97,6 @@ const Home = () => {
         {activeTab === "estimates" && <Estimate />}
         {activeTab === "invoice" && <Invoice />}
         {activeTab === "invoice-history" && <div><EstimateList /></div>}
-        {activeTab === "accounts-receivable" && (
-          <div>Accounts Receivable Content</div>
-        )}
         {activeTab === "reports" && <ShopReports />}
       </div>
     </div>

@@ -61,6 +61,11 @@ namespace Mechanical_workshop.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<string>("AuthorizationStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<string>("CustomerNote")
                         .IsRequired()
                         .HasMaxLength(500)

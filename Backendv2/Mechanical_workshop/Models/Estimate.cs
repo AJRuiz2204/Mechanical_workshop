@@ -43,6 +43,10 @@ namespace Mechanical_workshop.Models
         [Range(0, double.MaxValue)]
         public decimal Total { get; set; }
 
+        [Required]
+        [StringLength(20)]
+        public string AuthorizationStatus { get; set; } = "InReview";
+
         // Propiedad de navegación a Vehicle
         [ForeignKey("VehicleID")]
         public virtual Vehicle Vehicle { get; set; } = null!;

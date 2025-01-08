@@ -37,10 +37,10 @@ namespace Mechanical_workshop.Controllers
                 .Include(e => e.FlatFees)
                 .ToListAsync();
 
+            // Mapeamos a DTOs incluyendo el AuthorizationStatus
             var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
             return Ok(estimateDtos);
         }
-
 
         // GET: api/Estimates/{id}
         [HttpGet("{id}")]
@@ -67,22 +67,27 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<EstimateFullDto>> CreateEstimate(EstimateCreateDto estimateCreateDto)
         {
-            // Validate that the VehicleID exists
+            // Validar que exista el vehículo
             var vehicle = await _context.Vehicles
-                                        .Include(v => v.UserWorkshop)
-                                        .FirstOrDefaultAsync(v => v.Id == estimateCreateDto.VehicleID);
+                .Include(v => v.UserWorkshop)
+                .FirstOrDefaultAsync(v => v.Id == estimateCreateDto.VehicleID);
 
             if (vehicle == null)
             {
                 return BadRequest(new { message = "Invalid Vehicle ID." });
             }
 
-            // Create the Estimate
+            // Crear el Estimate a partir del DTO
             var estimate = _mapper.Map<Estimate>(estimateCreateDto);
             estimate.VehicleID = vehicle.Id;
             estimate.UserWorkshopID = vehicle.UserWorkshopId;
 
-            // Add Parts
+            // Opcional: establecer un AuthorizationStatus por defecto
+            // o usar el valor que venga en el CreateDto (si existe la propiedad).
+            // Por ejemplo:
+            // estimate.AuthorizationStatus = "InReview";
+
+            // Agregar Parts
             foreach (var partDto in estimateCreateDto.Parts)
             {
                 var part = _mapper.Map<EstimatePart>(partDto);
@@ -90,7 +95,7 @@ namespace Mechanical_workshop.Controllers
                 estimate.Parts.Add(part);
             }
 
-            // Add Labors
+            // Agregar Labors
             foreach (var laborDto in estimateCreateDto.Labors)
             {
                 var labor = _mapper.Map<EstimateLabor>(laborDto);
@@ -98,7 +103,7 @@ namespace Mechanical_workshop.Controllers
                 estimate.Labors.Add(labor);
             }
 
-            // Add Flat Fees
+            // Agregar Flat Fees
             foreach (var flatFeeDto in estimateCreateDto.FlatFees)
             {
                 var flatFee = _mapper.Map<EstimateFlatFee>(flatFeeDto);
@@ -109,7 +114,7 @@ namespace Mechanical_workshop.Controllers
             _context.Estimates.Add(estimate);
             await _context.SaveChangesAsync();
 
-            // Retrieve the created Estimate with all relationships
+            // Recuperar el Estimate creado, con todas las relaciones, para mapear a FullDto
             var createdEstimate = await _context.Estimates
                 .Include(e => e.Vehicle)
                     .ThenInclude(v => v.UserWorkshop)
@@ -143,38 +148,39 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = $"Estimate with ID {id} not found." });
             }
 
-            // Update main fields of the Estimate
+            // Actualizar campos principales
             estimate.Date = estimateFullDto.Date;
             estimate.CustomerNote = estimateFullDto.CustomerNote;
             estimate.ExtendedDiagnostic = estimateFullDto.ExtendedDiagnostic;
             estimate.Subtotal = estimateFullDto.Subtotal;
             estimate.Tax = estimateFullDto.Tax;
             estimate.Total = estimateFullDto.Total;
+            // NUEVO: actualizar el AuthorizationStatus
+            estimate.AuthorizationStatus = estimateFullDto.AuthorizationStatus;
 
             // Handle Parts
-            // 1. Remove parts that no longer exist
+            // 1. Eliminar las partes que ya no estén en el DTO
             var partsToRemove = estimate.Parts
                 .Where(p => !estimateFullDto.Parts.Any(dto => dto.ID == p.ID))
                 .ToList();
-
             foreach (var part in partsToRemove)
             {
                 _context.EstimateParts.Remove(part);
             }
 
-            // 2. Add or update parts
+            // 2. Agregar o actualizar partes
             foreach (var partDto in estimateFullDto.Parts)
             {
                 if (partDto.ID == 0)
                 {
-                    // New part
+                    // Parte nueva
                     var newPart = _mapper.Map<EstimatePart>(partDto);
                     newPart.EstimateID = estimate.ID;
                     estimate.Parts.Add(newPart);
                 }
                 else
                 {
-                    // Existing part, update
+                    // Parte existente, actualizar
                     var existingPart = estimate.Parts.FirstOrDefault(p => p.ID == partDto.ID);
                     if (existingPart != null)
                     {
@@ -184,29 +190,26 @@ namespace Mechanical_workshop.Controllers
             }
 
             // Handle Labors
-            // 1. Remove labors that no longer exist
+            // 1. Eliminar labors que no estén en el DTO
             var laborsToRemove = estimate.Labors
                 .Where(l => !estimateFullDto.Labors.Any(dto => dto.ID == l.ID))
                 .ToList();
-
             foreach (var labor in laborsToRemove)
             {
                 _context.EstimateLabors.Remove(labor);
             }
 
-            // 2. Add or update labors
+            // 2. Agregar o actualizar labors
             foreach (var laborDto in estimateFullDto.Labors)
             {
                 if (laborDto.ID == 0)
                 {
-                    // New labor
                     var newLabor = _mapper.Map<EstimateLabor>(laborDto);
                     newLabor.EstimateID = estimate.ID;
                     estimate.Labors.Add(newLabor);
                 }
                 else
                 {
-                    // Existing labor, update
                     var existingLabor = estimate.Labors.FirstOrDefault(l => l.ID == laborDto.ID);
                     if (existingLabor != null)
                     {
@@ -216,29 +219,26 @@ namespace Mechanical_workshop.Controllers
             }
 
             // Handle Flat Fees
-            // 1. Remove flat fees that no longer exist
+            // 1. Eliminar las que no estén en el DTO
             var flatFeesToRemove = estimate.FlatFees
                 .Where(f => !estimateFullDto.FlatFees.Any(dto => dto.ID == f.ID))
                 .ToList();
-
             foreach (var fee in flatFeesToRemove)
             {
                 _context.EstimateFlatFees.Remove(fee);
             }
 
-            // 2. Add or update flat fees
+            // 2. Agregar o actualizar flat fees
             foreach (var flatFeeDto in estimateFullDto.FlatFees)
             {
                 if (flatFeeDto.ID == 0)
                 {
-                    // New flat fee
                     var newFlatFee = _mapper.Map<EstimateFlatFee>(flatFeeDto);
                     newFlatFee.EstimateID = estimate.ID;
                     estimate.FlatFees.Add(newFlatFee);
                 }
                 else
                 {
-                    // Existing flat fee, update
                     var existingFlatFee = estimate.FlatFees.FirstOrDefault(f => f.ID == flatFeeDto.ID);
                     if (existingFlatFee != null)
                     {
@@ -247,7 +247,7 @@ namespace Mechanical_workshop.Controllers
                 }
             }
 
-            // Validate and save changes
+            // Guardar cambios
             try
             {
                 await _context.SaveChangesAsync();
@@ -282,18 +282,17 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = $"Estimate with ID {id} not found." });
             }
 
-            // Remove related items
+            // Eliminar items relacionados
             _context.EstimateParts.RemoveRange(estimate.Parts);
             _context.EstimateLabors.RemoveRange(estimate.Labors);
             _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
 
-            // Remove the Estimate
+            // Eliminar el Estimate
             _context.Estimates.Remove(estimate);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
-
 
         private bool EstimateExists(int id)
         {

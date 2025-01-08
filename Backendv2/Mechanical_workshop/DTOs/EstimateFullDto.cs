@@ -22,6 +22,9 @@ namespace Mechanical_workshop.Dtos
 
         public decimal Total { get; set; }
 
+        // NUEVO: Estado de Autorización (InReview, Authorized, Denied, etc.)
+        public string AuthorizationStatus { get; set; } = "InReview";
+
         // Información del Vehículo
         public VehicleReadDto Vehicle { get; set; } = null!;
 

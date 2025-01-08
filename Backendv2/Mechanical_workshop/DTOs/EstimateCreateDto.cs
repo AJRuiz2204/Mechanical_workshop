@@ -25,6 +25,7 @@ namespace Mechanical_workshop.Dtos
 
         [Range(0, double.MaxValue)]
         public decimal Total { get; set; }
+        public string AuthorizationStatus { get; set; } = "InReview";
 
         // Lista de Partes
         public List<EstimatePartCreateDto> Parts { get; set; } = new List<EstimatePartCreateDto>();

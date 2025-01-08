@@ -20,12 +20,12 @@ import {
 } from "../../../services/EstimateService";
 
 const Estimate = () => {
-  // States to handle modals
+  // 1. Estados para manejar los modales
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
 
-  // States for new items
+  // 2. Estados para nuevos ítems (Parts, Labor, FlatFee)
   const [newPart, setNewPart] = useState({
     description: "",
     partNumber: "",
@@ -33,25 +33,23 @@ const Estimate = () => {
     netPrice: 0.0,
     listPrice: 0.0,
     extendedPrice: 0.0,
-    taxable: true, // Fixed value (per item)
+    taxable: true, // Fijo por ítem; se ignora globalmente si noTax
   });
-
   const [newLabor, setNewLabor] = useState({
     description: "",
     duration: 0,
     laborRate: 140.0,
     extendedPrice: 0.0,
-    taxable: true, // Fixed value
+    taxable: true,
   });
-
   const [newFlatFee, setNewFlatFee] = useState({
     description: "",
     flatFeePrice: 0.0,
     extendedPrice: 0.0,
-    taxable: true, // Fixed value
+    taxable: true,
   });
 
-  // States for Estimate
+  // 3. Estados para el Estimate general
   const [parts, setParts] = useState([]);
   const [labors, setLabors] = useState([]);
   const [flatFees, setFlatFees] = useState([]);
@@ -61,20 +59,25 @@ const Estimate = () => {
   const [tax, setTax] = useState(0.0);
   const [total, setTotal] = useState(0.0);
 
-  // States for vehicles
+  // 4. Nuevo estado para `authorizationStatus`
+  const [authorizationStatus, setAuthorizationStatus] = useState("InReview");
+
+  // 5. Estados para vehículos
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [owner, setOwner] = useState(null);
 
-  // Nuevo estado para noTax
+  // 6. Nuevo estado para noTax (si el taller está exento de impuestos)
   const [noTax, setNoTax] = useState(false);
 
-  // States for error handling
+  // 7. Estados para manejo de errores y éxito
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Modals: mostrar/ocultar
+  /********************************************************************
+   *                    MANEJO DE MODALES                             *
+   *******************************************************************/
   const handleShowPartModal = () => setShowPartModal(true);
   const handleClosePartModal = () => {
     setShowPartModal(false);
@@ -112,13 +115,14 @@ const Estimate = () => {
     });
   };
 
-  // Agregar items
+  /********************************************************************
+   *                    AGREGAR PART / LABOR / FLATFEE                *
+   *******************************************************************/
   const addPart = () => {
     if (!newPart.description || !newPart.partNumber) {
       setError("Please fill out all part fields.");
       return;
     }
-
     const updatedParts = [...parts, { ...newPart }];
     setParts(updatedParts);
     calculateTotals(updatedParts, labors, flatFees);
@@ -131,7 +135,6 @@ const Estimate = () => {
       setError("Please fill out all labor fields correctly.");
       return;
     }
-
     const updatedLabors = [...labors, { ...newLabor }];
     setLabors(updatedLabors);
     calculateTotals(parts, updatedLabors, flatFees);
@@ -144,7 +147,6 @@ const Estimate = () => {
       setError("Please fill out all flat fee fields correctly.");
       return;
     }
-
     const updatedFlatFees = [...flatFees, { ...newFlatFee }];
     setFlatFees(updatedFlatFees);
     calculateTotals(parts, labors, updatedFlatFees);
@@ -152,7 +154,9 @@ const Estimate = () => {
     setError(null);
   };
 
-  // Eliminar items
+  /********************************************************************
+   *                    ELIMINAR PART / LABOR / FLATFEE               *
+   *******************************************************************/
   const removeItem = (type, index) => {
     let updatedParts = [...parts];
     let updatedLabors = [...labors];
@@ -168,11 +172,12 @@ const Estimate = () => {
       updatedFlatFees.splice(index, 1);
       setFlatFees(updatedFlatFees);
     }
-
     calculateTotals(updatedParts, updatedLabors, updatedFlatFees);
   };
 
-  // Calcular subtotal, impuesto y total
+  /********************************************************************
+   *                  CALCULAR SUBTOTAL, TAX Y TOTAL                  *
+   *******************************************************************/
   const calculateTotals = (currentParts, currentLabors, currentFlatFees) => {
     const newSubtotal =
       currentParts.reduce(
@@ -189,11 +194,9 @@ const Estimate = () => {
       );
 
     let newTax = 0;
-    // Si noTax es true => tax = 0
     if (!noTax) {
       newTax = newSubtotal * 0.018; // Ejemplo: 1.8%
     }
-
     const newTotal = newSubtotal + newTax;
 
     setSubtotal(newSubtotal);
@@ -201,7 +204,9 @@ const Estimate = () => {
     setTotal(newTotal);
   };
 
-  // Maneja el cambio de vehículo seleccionado
+  /********************************************************************
+   *                MANEJO DE VEHÍCULO SELECCIONADO                   *
+   *******************************************************************/
   const handleVehicleChange = async (e) => {
     const vehicleId = e.target.value;
     setSelectedVehicleId(vehicleId);
@@ -212,7 +217,6 @@ const Estimate = () => {
       setNoTax(false);
       return;
     }
-
     try {
       const vehicleData = await getVehicleById(vehicleId);
       setSelectedVehicle(vehicleData);
@@ -223,13 +227,14 @@ const Estimate = () => {
     }
   };
 
-  // Guardar Estimate
+  /********************************************************************
+   *                  GUARDAR (POST) EL ESTIMATE                      *
+   *******************************************************************/
   const handleSave = async () => {
     if (!selectedVehicleId) {
       setError("Please select a vehicle.");
       return;
     }
-
     if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
       setError("Add at least one item to the Estimate.");
       return;
@@ -242,6 +247,9 @@ const Estimate = () => {
       Subtotal: subtotal,
       Tax: tax,
       Total: total,
+      // NUEVO: enviar AuthorizationStatus al backend
+      AuthorizationStatus: authorizationStatus,
+
       Parts: parts.map((part) => ({
         description: part.description,
         partNumber: part.partNumber,
@@ -273,7 +281,7 @@ const Estimate = () => {
       );
       setError(null);
 
-      // Limpiar
+      // Limpiar formulario
       setParts([]);
       setLabors([]);
       setFlatFees([]);
@@ -286,13 +294,17 @@ const Estimate = () => {
       setSelectedVehicle(null);
       setOwner(null);
       setNoTax(false);
+      // Dejar en "InReview" por defecto (o en el que consideres)
+      setAuthorizationStatus("InReview");
     } catch (error) {
       setError("Error creating the Estimate: " + error.message);
       setSuccess(null);
     }
   };
 
-  // Cargar la lista de vehículos al montar
+  /********************************************************************
+   *             CARGAR LISTA DE VEHÍCULOS AL MONTAR                   *
+   *******************************************************************/
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
@@ -302,10 +314,12 @@ const Estimate = () => {
         setError("Error loading the vehicle list: " + error.message);
       }
     };
-
     fetchVehicles();
   }, []);
 
+  /********************************************************************
+   *                       RENDER DEL COMPONENTE                      *
+   *******************************************************************/
   return (
     <div className="p-4 border rounded">
       <h3>ESTIMATE</h3>
@@ -524,6 +538,19 @@ const Estimate = () => {
         />
       </Form.Group>
 
+      {/* Authorization Status */}
+      <Form.Group controlId="authorization-status" className="mb-3">
+        <Form.Label>Authorization Status</Form.Label>
+        <Form.Select
+          value={authorizationStatus}
+          onChange={(e) => setAuthorizationStatus(e.target.value)}
+        >
+          <option value="InReview">In Review</option>
+          <option value="Authorized">Authorized</option>
+          <option value="Denied">Denied</option>
+        </Form.Select>
+      </Form.Group>
+
       {/* Totals Section */}
       <div className="mb-3">
         <Row>
@@ -550,7 +577,6 @@ const Estimate = () => {
 
       {/* =============== MODALS =============== */}
 
-      {/* Modal to add Part */}
       {/* Modal to add Part */}
       <Modal show={showPartModal} onHide={handleClosePartModal}>
         <Modal.Header closeButton>
@@ -590,7 +616,6 @@ const Estimate = () => {
                 value={newPart.quantity}
                 onChange={(e) => {
                   const quantity = parseInt(e.target.value) || 1;
-                  // Recalcular extendedPrice basado en listPrice
                   const newExtended = newPart.listPrice * quantity;
                   setNewPart({
                     ...newPart,
@@ -612,7 +637,6 @@ const Estimate = () => {
                   value={newPart.netPrice}
                   onChange={(e) => {
                     const netPrice = parseFloat(e.target.value) || 0.0;
-                    // NO afecta el extendedPrice
                     setNewPart({
                       ...newPart,
                       netPrice,
@@ -633,7 +657,6 @@ const Estimate = () => {
                   value={newPart.listPrice}
                   onChange={(e) => {
                     const listPrice = parseFloat(e.target.value) || 0.0;
-                    // Recalcular extendedPrice basado en listPrice
                     const newExtended = listPrice * newPart.quantity;
                     setNewPart({
                       ...newPart,
