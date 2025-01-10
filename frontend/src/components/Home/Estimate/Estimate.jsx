@@ -12,14 +12,22 @@ import {
   InputGroup,
   FormControl,
   Alert,
+  Spinner,
 } from "react-bootstrap";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   createEstimate,
   getAllVehicles,
   getVehicleById,
+  getEstimateById,
+  updateEstimate,
 } from "../../../services/EstimateService";
 
 const Estimate = () => {
+  const { id } = useParams(); // Obtener el ID de la ruta si está en modo edición
+  const navigate = useNavigate();
+  const isEditMode = Boolean(id); // Determinar si es edición o creación
+
   // 1. Estados para manejar los modales
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
@@ -64,7 +72,7 @@ const Estimate = () => {
 
   // 5. Estados para vehículos
   const [vehicles, setVehicles] = useState([]);
-  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [owner, setOwner] = useState(null);
 
@@ -74,6 +82,9 @@ const Estimate = () => {
   // 7. Estados para manejo de errores y éxito
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  // 8. Estado para manejo de carga de datos
+  const [isLoading, setIsLoading] = useState(true);
 
   /********************************************************************
    *                    MANEJO DE MODALES                             *
@@ -228,7 +239,7 @@ const Estimate = () => {
   };
 
   /********************************************************************
-   *                  GUARDAR (POST) EL ESTIMATE                      *
+   *                  GUARDAR (POST/PUT) EL ESTIMATE                   *
    *******************************************************************/
   const handleSave = async () => {
     if (!selectedVehicleId) {
@@ -247,7 +258,6 @@ const Estimate = () => {
       Subtotal: subtotal,
       Tax: tax,
       Total: total,
-      // NUEVO: enviar AuthorizationStatus al backend
       AuthorizationStatus: authorizationStatus,
 
       Parts: parts.map((part) => ({
@@ -275,54 +285,124 @@ const Estimate = () => {
     };
 
     try {
-      const createdEstimate = await createEstimate(estimateData);
-      setSuccess(
-        `Estimate created successfully with ID: ${createdEstimate.ID}`
-      );
+      if (isEditMode) {
+        // Modo Edición
+        await updateEstimate(id, estimateData);
+        setSuccess(`Estimate with ID ${id} updated successfully.`);
+      } else {
+        // Modo Creación
+        const createdEstimate = await createEstimate(estimateData);
+        setSuccess(
+          `Estimate created successfully with ID: ${createdEstimate.ID}`
+        );
+      }
       setError(null);
 
-      // Limpiar formulario
-      setParts([]);
-      setLabors([]);
-      setFlatFees([]);
-      setCustomerNote("");
-      setExtendedDiagnostic("");
-      setSubtotal(0.0);
-      setTax(0.0);
-      setTotal(0.0);
-      setSelectedVehicleId(null);
-      setSelectedVehicle(null);
-      setOwner(null);
-      setNoTax(false);
-      // Dejar en "InReview" por defecto (o en el que consideres)
-      setAuthorizationStatus("InReview");
+      // Limpiar formulario si es creación
+      if (!isEditMode) {
+        setParts([]);
+        setLabors([]);
+        setFlatFees([]);
+        setCustomerNote("");
+        setExtendedDiagnostic("");
+        setSubtotal(0.0);
+        setTax(0.0);
+        setTotal(0.0);
+        setSelectedVehicleId("");
+        setSelectedVehicle(null);
+        setOwner(null);
+        setNoTax(false);
+        setAuthorizationStatus("InReview");
+      }
+
+      // Navegar de vuelta a la lista de Estimates después de guardar
+      navigate("/estimates");
     } catch (error) {
-      setError("Error creating the Estimate: " + error.message);
+      setError("Error saving the Estimate: " + error.message);
       setSuccess(null);
     }
   };
 
   /********************************************************************
-   *             CARGAR LISTA DE VEHÍCULOS AL MONTAR                   *
+   *             CARGAR LISTA DE VEHÍCULOS Y Datos del Estimate          *
    *******************************************************************/
   useEffect(() => {
-    const fetchVehicles = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch all vehicles
         const vehicleList = await getAllVehicles();
+        console.log("Vehicles List:", vehicleList);
         setVehicles(vehicleList);
+
+        if (isEditMode) {
+          // Fetch the existing Estimate
+          const existingEstimate = await getEstimateById(id);
+          console.log("Existing Estimate:", existingEstimate);
+          // Set Estimate data
+          setParts(existingEstimate.parts || []);
+          setLabors(existingEstimate.labors || []);
+          setFlatFees(existingEstimate.flatFees || []);
+          setCustomerNote(existingEstimate.customerNote || ""); // Correcto: 'customerNote'
+          setExtendedDiagnostic(existingEstimate.extendedDiagnostic || "");
+          setSubtotal(existingEstimate.subtotal || 0.0); // Correcto: 'subtotal'
+          setTax(existingEstimate.tax || 0.0);
+          setTotal(existingEstimate.total || 0.0);
+          setAuthorizationStatus(
+            existingEstimate.authorizationStatus || "InReview"
+          );
+
+          // Establecer el ID del vehículo desde el objeto 'vehicle'
+          if (existingEstimate.vehicle && existingEstimate.vehicle.id) {
+            const vehicleId = existingEstimate.vehicle.id.toString();
+            setSelectedVehicleId(vehicleId);
+
+            // Buscar el vehículo en la lista de vehículos ya cargada
+            const vehicleData = vehicleList.find(
+              (v) => v.id === existingEstimate.vehicle.id
+            );
+            if (vehicleData) {
+              setSelectedVehicle(vehicleData);
+              setOwner(existingEstimate.owner); // Corregido: usar 'existingEstimate.owner'
+              setNoTax(existingEstimate.owner.noTax); // Corregido: usar 'existingEstimate.owner.noTax'
+              console.log("Selected Vehicle:", vehicleData);
+            } else {
+              setError("Vehicle associated with this Estimate not found.");
+            }
+          } else {
+            setError("No vehicle associated with this Estimate.");
+          }
+        }
+
+        setIsLoading(false);
       } catch (error) {
-        setError("Error loading the vehicle list: " + error.message);
+        console.log("Error:", error);
+        setError("Error loading data: " + error.message);
+        setIsLoading(false);
       }
     };
-    fetchVehicles();
-  }, []);
+
+    fetchData();
+  }, [isEditMode, id]);
 
   /********************************************************************
    *                       RENDER DEL COMPONENTE                      *
    *******************************************************************/
+  if (isLoading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "80vh" }}
+      >
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 border rounded">
-      <h3>ESTIMATE</h3>
+      <h3>{isEditMode ? "Edit Estimate" : "Create Estimate"}</h3>
 
       {/* Error and Success Messages */}
       {error && (
@@ -340,18 +420,32 @@ const Estimate = () => {
       <div className="mb-3">
         <Form.Group controlId="selectVehicle">
           <Form.Label>Select Vehicle (VIN)</Form.Label>
-          <Form.Control
-            as="select"
-            value={selectedVehicleId || ""}
-            onChange={handleVehicleChange}
-          >
-            <option value="">-- Select a VIN --</option>
-            {vehicles.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.vin}
-              </option>
-            ))}
-          </Form.Control>
+          {!isEditMode ? (
+            // Mostrar ComboBox en modo creación
+            <Form.Control
+              as="select"
+              value={selectedVehicleId}
+              onChange={handleVehicleChange}
+            >
+              <option value="">-- Select a VIN --</option>
+              {vehicles.map((vehicle) => (
+                <option key={vehicle.id} value={vehicle.id.toString()}>
+                  {vehicle.vin}
+                </option>
+              ))}
+            </Form.Control>
+          ) : (
+            // Mostrar VIN en modo edición
+            <Form.Control
+              type="text"
+              readOnly
+              value={
+                selectedVehicle
+                  ? selectedVehicle.vin
+                  : "-- VIN not available --"
+              }
+            />
+          )}
         </Form.Group>
       </div>
 
@@ -412,7 +506,7 @@ const Estimate = () => {
           variant="primary"
           onClick={handleShowPartModal}
           className="me-2"
-          disabled={!selectedVehicleId}
+          disabled={!selectedVehicleId && !isEditMode}
         >
           Add Part
         </Button>
@@ -420,14 +514,14 @@ const Estimate = () => {
           variant="primary"
           onClick={handleShowLaborModal}
           className="me-2"
-          disabled={!selectedVehicleId}
+          disabled={!selectedVehicleId && !isEditMode}
         >
           Add Labor
         </Button>
         <Button
           variant="primary"
           onClick={handleShowFlatFeeModal}
-          disabled={!selectedVehicleId}
+          disabled={!selectedVehicleId && !isEditMode}
         >
           Add Flat Fee
         </Button>
@@ -567,11 +661,15 @@ const Estimate = () => {
 
       {/* Action Buttons */}
       <div className="text-end">
-        <Button variant="secondary" className="me-2">
+        <Button
+          variant="secondary"
+          className="me-2"
+          onClick={() => navigate("/estimates")}
+        >
           Cancel
         </Button>
         <Button variant="success" onClick={handleSave}>
-          Save
+          {isEditMode ? "Update" : "Save"}
         </Button>
       </div>
 
@@ -761,7 +859,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable es fijo por labor, pero se ignora si noTax */}
+            {/* Taxable is fixed per labor, but globally we might ignore it if noTax */}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -825,7 +923,7 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Taxable es fijo, pero se ignora globalmente si noTax */}
+            {/* Taxable is fixed per flat fee, but globally we might ignore it if noTax */}
           </Form>
         </Modal.Body>
         <Modal.Footer>

@@ -1,9 +1,12 @@
 // src/components/Estimate/EstimateList.jsx
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Alert } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import { getEstimates, deleteEstimate } from '../../../services/EstimateService';
+import React, { useEffect, useState } from "react";
+import { Table, Button, Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import {
+  getEstimates,
+  deleteEstimate,
+} from "../../../services/EstimateService";
 
 const EstimateList = () => {
   const [estimates, setEstimates] = useState([]);
@@ -29,7 +32,9 @@ const EstimateList = () => {
 
   // Maneja la eliminación de una Estimate
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this Estimate?');
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this Estimate?"
+    );
     if (!confirmDelete) return;
 
     try {
@@ -92,7 +97,7 @@ const EstimateList = () => {
             estimates.map((estimate) => (
               <tr key={estimate.id}>
                 <td>{estimate.id}</td>
-                <td>{estimate.vehicle?.vin || 'No VIN'}</td>
+                <td>{estimate.vehicle?.vin || "No VIN"}</td>
                 <td>${estimate.subtotal?.toFixed(2)}</td>
                 <td>${estimate.tax?.toFixed(2)}</td>
                 <td>${estimate.total?.toFixed(2)}</td>
@@ -112,7 +117,11 @@ const EstimateList = () => {
                   </Link>
 
                   {/* Botón "Delete" */}
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(estimate.id)}>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDelete(estimate.id)}
+                  >
                     Delete
                   </Button>
                 </td>

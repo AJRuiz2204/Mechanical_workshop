@@ -43,6 +43,13 @@ const Home = () => {
       >
         REPORTS
       </div>
+      <div
+        className="side-menu-item"
+        onClick={() => handleTabClick("/settings")}
+      >
+        SETTINGS
+      </div>
+      
     </div>
   );
 };

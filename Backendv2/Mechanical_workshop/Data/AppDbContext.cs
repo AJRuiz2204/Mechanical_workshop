@@ -22,6 +22,7 @@ namespace Mechanical_workshop.Data
         public DbSet<EstimatePart> EstimateParts { get; set; }
         public DbSet<EstimateLabor> EstimateLabors { get; set; }
         public DbSet<EstimateFlatFee> EstimateFlatFees { get; set; }
+        public DbSet<WorkshopSettings> WorkshopSettings { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

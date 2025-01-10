@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
 using Mechanical_workshop.Profiles;
 using AutoMapper;
+using Mechanical_workshop.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,7 @@ builder.Services.AddAutoMapper(typeof(DiagnosticProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly, typeof(DiagnosticProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EntityProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EstimatesProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(WorkshopSettings).Assembly);
 
 
 

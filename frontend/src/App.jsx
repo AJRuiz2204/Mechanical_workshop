@@ -16,6 +16,7 @@ import Estimate from "./components/Home/Estimate/Estimate";
 import MainLayout from "./components/Layout/MainLayout"; // Importa el layout
 import Home from "./components/Home/index";
 import invoice from "./components/Home/Invoice/Invoice";
+import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 
 const App = () => {
   return (
@@ -37,8 +38,10 @@ const App = () => {
         <Route path="/technicianDiagnostic/edit/:techDiagId" element={<TechnicianDiagnosticEdit />} />
         <Route path="/invoice" element={<invoice />} />
         <Route path="/diagnostic-list" element={<DiagnosticList />} />
-        <Route path="/estimates" element={<EstimateList />} />
-        <Route path="/estimate/:id" element={<Estimate />} />
+        <Route path="/estimates/" element={<EstimateList />} />
+        <Route path="/estimate/create" element={<Estimate />} />
+        <Route path="/estimate/edit/:id" element={<Estimate />} />
+        <Route path="/settings" element={<WorkshopSettingsForm />} />
       </Route>
     </Routes>
   );
