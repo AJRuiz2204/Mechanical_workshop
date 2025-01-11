@@ -3,47 +3,46 @@ using Mechanical_workshop.Data;
 using Mechanical_workshop.Profiles;
 using AutoMapper;
 using Mechanical_workshop.Models;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Obtener la cadena de conexión desde appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Registrar el DbContext con la base de datos (usando Pomelo.EntityFrameworkCore.MySql)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Configurar CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Ajusta la URL al frontend
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-// Registrar AutoMapper
+// Para JSON Patch con Newtonsoft
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+    });
+
 builder.Services.AddAutoMapper(typeof(UserWorkshopProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(DiagnosticProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly, typeof(DiagnosticProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EntityProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EstimatesProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(WorkshopSettings).Assembly);
+builder.Services.AddAutoMapper(typeof(LaborTaxMarkupSettingsProfile).Assembly);
 
-
-
-// Registrar Controladores con Vistas y APIs
 builder.Services.AddControllersWithViews();
-
-// Agregar Swagger para documentación de API (opcional pero recomendado)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configuración del pipeline de solicitud HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -60,15 +59,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Aplicar la política CORS antes de la autorización
 app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
 
-// Mapear controladores basados en atributos
 app.MapControllers();
 
-// Definir la ruta por defecto para los controladores MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

@@ -17,6 +17,7 @@ import MainLayout from "./components/Layout/MainLayout"; // Importa el layout
 import Home from "./components/Home/index";
 import invoice from "./components/Home/Invoice/Invoice";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
+import Settings from "./components/Home/Settings/Settings";
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register-user" element={<RegisterUser />} />
+      <Route path="/wsettings" element={<WorkshopSettingsForm />} />
       {/* Rutas con sidebar dentro de MainLayout */}
       <Route element={<MainLayout />}>
         <Route path="/home" element={<Home />} />
@@ -41,8 +43,9 @@ const App = () => {
         <Route path="/estimates/" element={<EstimateList />} />
         <Route path="/estimate/create" element={<Estimate />} />
         <Route path="/estimate/edit/:id" element={<Estimate />} />
-        <Route path="/settings" element={<WorkshopSettingsForm />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
+
     </Routes>
   );
 };

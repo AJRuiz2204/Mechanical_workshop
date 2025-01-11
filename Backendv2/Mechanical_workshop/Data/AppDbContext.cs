@@ -1,4 +1,3 @@
-// Data/AppDbContext.cs
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Models;
 
@@ -9,7 +8,6 @@ namespace Mechanical_workshop.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-
 
         public DbSet<User> Users { get; set; }
         public DbSet<UserWorkshop> UserWorkshops { get; set; }
@@ -24,10 +22,10 @@ namespace Mechanical_workshop.Data
         public DbSet<EstimateFlatFee> EstimateFlatFees { get; set; }
         public DbSet<WorkshopSettings> WorkshopSettings { get; set; }
 
+        public DbSet<PartLaborSettings> PartLaborSettings { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Configuraciones adicionales si es necesario
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<UserWorkshop>()
@@ -38,16 +36,14 @@ namespace Mechanical_workshop.Data
 
             modelBuilder.Entity<Diagnostic>()
                 .HasOne(d => d.Vehicle)
-                .WithMany() // o .WithMany(x => x.Diagnostics) si hay poner una lista de Diagnostics en Vehicle
+                .WithMany()
                 .HasForeignKey(d => d.VehicleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configurar relaciones si es necesario
             modelBuilder.Entity<Diagnostic>()
                 .HasMany(d => d.TechnicianDiagnostics)
                 .WithOne(td => td.Diagnostic)
                 .HasForeignKey(td => td.DiagnosticId);
-                
         }
     }
 }

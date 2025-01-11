@@ -259,6 +259,46 @@ namespace Mechanical_workshop.Migrations
                     b.ToTable("Invoices");
                 });
 
+            modelBuilder.Entity("Mechanical_workshop.Models.PartLaborSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("DefaultHourlyRate")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("HourlyRate1")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("HourlyRate2")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("HourlyRate3")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<bool>("LaborTaxByDefault")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("LaborTaxRate")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("PartMarkup")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<bool>("PartTaxByDefault")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<decimal>("PartTaxRate")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PartLaborSettings");
+                });
+
             modelBuilder.Entity("Mechanical_workshop.Models.Report", b =>
                 {
                     b.Property<int>("ID")
