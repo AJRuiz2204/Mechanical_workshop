@@ -50,6 +50,8 @@ namespace Mechanical_workshop.Models
 
         
         /// Gets or sets the date and time when the workshop settings were last updated.
+        [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd HH:mm:ss}", ApplyFormatInEditMode = true)]
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 
         

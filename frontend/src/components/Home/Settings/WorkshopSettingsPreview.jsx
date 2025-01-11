@@ -2,24 +2,49 @@
 /* eslint-disable no-unused-vars */
 // src/components/WorkshopSettings/WorkshopSettingsPreview.jsx
 
-import React from 'react';
-import { Card } from 'react-bootstrap';
+import React from "react";
+import { Card } from "react-bootstrap";
+import dayjs from "dayjs";
 
 const WorkshopSettingsPreview = ({ settings }) => {
+  if (!settings) {
+    return (
+      <Card>
+        <Card.Header>Vista Previa de Configuración</Card.Header>
+        <Card.Body>
+          <p>No hay ajustes guardados para mostrar.</p>
+        </Card.Body>
+      </Card>
+    );
+  }
+
+  // Función para convertir y formatear la fecha/hora restando 6 horas
+  const formatLastUpdated = (dateString) => {
+    // Verifica que exista el valor antes de formatear
+    if (!dateString) return "";
+
+    // dayjs(dateString) parsea la fecha/hora original
+    // .subtract(6, 'hour') le resta 6 horas
+    // .format('YYYY-MM-DD HH:mm:ss') la presenta en el formato deseado
+    return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+  };
+
   return (
     <Card>
-      <Card.Header>Configuration Preview</Card.Header>
+      <Card.Header>Vista Previa de Configuración</Card.Header>
       <Card.Body>
-        <h5>{settings.workshopName || 'Workshop Name'}</h5>
+        <h5>{settings.workshopName || "Nombre del Taller"}</h5>
         <p>
-          <strong>Address:</strong> {settings.address || 'Workshop Address'}
+          <strong>Dirección:</strong>{" "}
+          {settings.address || "Dirección del Taller"}
         </p>
         <p>
-          <strong>Primary Phone:</strong> {settings.primaryPhone || 'Primary Phone'}
+          <strong>Teléfono Principal:</strong>{" "}
+          {settings.primaryPhone || "Teléfono Principal"}
         </p>
         {settings.secondaryPhone && (
           <p>
-            <strong>Secondary Phone:</strong> {settings.secondaryPhone}
+            <strong>Teléfono Secundario:</strong> {settings.secondaryPhone}
           </p>
         )}
         {settings.fax && (
@@ -29,8 +54,12 @@ const WorkshopSettingsPreview = ({ settings }) => {
         )}
         {settings.websiteUrl && (
           <p>
-            <strong>Website:</strong>{' '}
-            <a href={settings.websiteUrl} target="_blank" rel="noopener noreferrer">
+            <strong>Sitio Web:</strong>{" "}
+            <a
+              href={settings.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {settings.websiteUrl}
             </a>
           </p>
@@ -47,7 +76,9 @@ const WorkshopSettingsPreview = ({ settings }) => {
         )}
         {settings.lastUpdated && (
           <p>
-            <em>Last Updated: {new Date(settings.lastUpdated).toLocaleString()}</em>
+            <em>
+              Última Actualización: {formatLastUpdated(settings.lastUpdated)}
+            </em>
           </p>
         )}
       </Card.Body>

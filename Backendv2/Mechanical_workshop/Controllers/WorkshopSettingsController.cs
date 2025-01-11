@@ -22,10 +22,7 @@ namespace Mechanical_workshop.Controllers
             _mapper = mapper;
         }
 
-        /// <summary>
-        /// Obtiene la configuración más reciente del taller.
-        /// </summary>
-        /// <returns>WorkshopSettingsReadDto con la configuración del taller.</returns>
+
         [HttpGet]
         public async Task<ActionResult<WorkshopSettingsReadDto>> GetWorkshopSettings()
         {
@@ -41,11 +38,6 @@ namespace Mechanical_workshop.Controllers
             return Ok(_mapper.Map<WorkshopSettingsReadDto>(settings));
         }
 
-        /// <summary>
-        /// Crea una nueva configuración del taller.
-        /// </summary>
-        /// <param name="workshopSettingsCreateDto">DTO con los datos para crear la configuración.</param>
-        /// <returns>WorkshopSettingsReadDto con la configuración creada.</returns>
         [HttpPost]
         public async Task<ActionResult<WorkshopSettingsReadDto>> CreateWorkshopSettings(WorkshopSettingsCreateDto workshopSettingsCreateDto)
         {
@@ -60,12 +52,6 @@ namespace Mechanical_workshop.Controllers
             return CreatedAtAction(nameof(GetWorkshopSettings), new { id = workshopSettings.Id }, workshopSettingsReadDto);
         }
 
-        /// <summary>
-        /// Actualiza una configuración existente del taller.
-        /// </summary>
-        /// <param name="id">ID de la configuración a actualizar.</param>
-        /// <param name="workshopSettingsUpdateDto">DTO con los datos actualizados.</param>
-        /// <returns>No Content.</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateWorkshopSettings(int id, WorkshopSettingsUpdateDto workshopSettingsUpdateDto)
         {
@@ -99,11 +85,6 @@ namespace Mechanical_workshop.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Elimina una configuración del taller por su ID.
-        /// </summary>
-        /// <param name="id">ID de la configuración a eliminar.</param>
-        /// <returns>No Content.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorkshopSettings(int id)
         {
@@ -119,11 +100,6 @@ namespace Mechanical_workshop.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Verifica si una configuración existe por su ID.
-        /// </summary>
-        /// <param name="id">ID a verificar.</param>
-        /// <returns>True si existe, de lo contrario false.</returns>
         private bool WorkshopSettingsExists(int id)
         {
             return _context.WorkshopSettings.Any(e => e.Id == id);
