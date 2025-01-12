@@ -37,8 +37,8 @@ const LaborTaxMarkupSettingsForm = () => {
     const fetchData = async () => {
       try {
         const data = await getSettingsById(SETTINGS_ID);
-        setDbData(data); 
-        setRecordId(data.id); 
+        setDbData(data);
+        setRecordId(data.id);
         setIsEditMode(true);
         setFormData({
           hourlyRate1: data.hourlyRate1 === 0 ? "" : String(data.hourlyRate1),

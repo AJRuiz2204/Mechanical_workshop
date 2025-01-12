@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -13,11 +15,6 @@ namespace Mechanical_workshop.Models
         [Required]
         public int VehicleId { get; set; }
         public Vehicle? Vehicle { get; set; }
-
-        // Opcional si deseas guardar también el UserWorkshopId (a nivel de Diagnóstico)
-        // [Required]
-        // public int UserWorkshopId { get; set; }
-        // public UserWorkshop? UserWorkshop { get; set; }
 
         [Required]
         [StringLength(100)]

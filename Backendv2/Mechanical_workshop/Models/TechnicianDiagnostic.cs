@@ -13,7 +13,6 @@ namespace Mechanical_workshop.Models
         public int DiagnosticId { get; set; }
         public Diagnostic? Diagnostic { get; set; }
 
-        // Nuevos campos
         [Required]
         public int Mileage { get; set; }
 
