@@ -11,6 +11,8 @@ namespace Mechanical_workshop.Dtos
         [Required]
         public int VehicleID { get; set; }
 
+        public int? TechnicianDiagnosticID { get; set; }
+
         [Required]
         public string CustomerNote { get; set; } = string.Empty;
 
@@ -25,6 +27,7 @@ namespace Mechanical_workshop.Dtos
 
         [Range(0, double.MaxValue)]
         public decimal Total { get; set; }
+
         public string AuthorizationStatus { get; set; } = "InReview";
 
         // Lista de Partes

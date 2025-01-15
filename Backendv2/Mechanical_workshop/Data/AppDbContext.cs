@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Models;
+using Mechanical_workshop.Controllers;
 
 namespace Mechanical_workshop.Data
 {
@@ -21,8 +22,8 @@ namespace Mechanical_workshop.Data
         public DbSet<EstimateLabor> EstimateLabors { get; set; }
         public DbSet<EstimateFlatFee> EstimateFlatFees { get; set; }
         public DbSet<WorkshopSettings> WorkshopSettings { get; set; }
+        public DbSet<LaborTaxMarkupSettings> LaborTaxMarkupSettings { get; set; }
 
-        public DbSet<PartLaborSettings> PartLaborSettings { get; set; } 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

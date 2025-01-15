@@ -3,16 +3,16 @@
 import React, { useEffect, useState } from "react";
 import { Form, Button, Container, Row, Col, Alert, Spinner } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
-import { createTechnicianDiagnostic, getTechnicianDiagnostic, updateTechnicianDiagnostic } from "../../../services/TechnicianDiagnosticService";
+import { createTechnicianDiagnostic, getTechnicianDiagnostic, updateTechnicianDiagnostic, deleteTechnicianDiagnostic } from "../../../services/TechnicianDiagnosticService";
 import { getDiagnosticById } from "../../../services/DiagnosticService";
 import "./Diagnostic.css";
 
 const TechnicianDiagnostic = () => {
   const navigate = useNavigate();
-  const { diagnosticId, techDiagId } = useParams(); // Routes: create/:diagnosticId and edit/:techDiagId
+  const { diagnosticId, techDiagId } = useParams();
 
-  // Determine the mode: creation or editing
-  const isEditMode = Boolean(techDiagId);
+  // State to determine the mode: creation or editing
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // State for the related diagnostic
   const [diagnostic, setDiagnostic] = useState(null);
@@ -33,24 +33,23 @@ const TechnicianDiagnostic = () => {
   // Fetch diagnostic information when the component mounts
   useEffect(() => {
     const fetchData = async () => {
+      if (!diagnosticId || diagnosticId === "undefined") return;
       try {
         setErrorMessage("");
         setSuccessMessage("");
 
-        if (isEditMode) {
-          // Edit mode: Get TechnicianDiagnostic
-          const techDiag = await getTechnicianDiagnostic(techDiagId);
+        const diag = await getDiagnosticById(diagnosticId);
+        setDiagnostic(diag);
+
+        // Si ya existe al menos un TechnicianDiagnostic
+        if (diag.technicianDiagnostics?.length) {
+          setIsEditMode(true);
+          // Llenar formData con el primer TechnicianDiagnostic
+          const existingTechDiag = diag.technicianDiagnostics[0];
           setFormData({
-            mileage: techDiag.mileage,
-            extendedDiagnostic: techDiag.extendedDiagnostic,
+            mileage: existingTechDiag.mileage,
+            extendedDiagnostic: existingTechDiag.extendedDiagnostic,
           });
-          // Get the related diagnostic
-          const diag = await getDiagnosticById(techDiag.diagnosticId);
-          setDiagnostic(diag);
-        } else {
-          // Creation mode: Get the related diagnostic
-          const diag = await getDiagnosticById(diagnosticId);
-          setDiagnostic(diag);
         }
       } catch (error) {
         setErrorMessage(error.message || "Error loading data.");
@@ -60,7 +59,7 @@ const TechnicianDiagnostic = () => {
     };
 
     fetchData();
-  }, [diagnosticId, techDiagId, isEditMode]);
+  }, [diagnosticId]);
 
   // Handle form changes
   const handleChange = (e) => {
@@ -101,7 +100,7 @@ const TechnicianDiagnostic = () => {
     try {
       if (isEditMode) {
         // Edit mode: Update the existing TechnicianDiagnostic
-        await updateTechnicianDiagnostic(techDiagId, techDiagData);
+        await updateTechnicianDiagnostic(diagnostic.technicianDiagnostics[0]?.id, techDiagData);
         setSuccessMessage("Technician Diagnostic updated successfully.");
       } else {
         // Creation mode: Create a new TechnicianDiagnostic
@@ -116,6 +115,16 @@ const TechnicianDiagnostic = () => {
       navigate("/diagnostic-list");
     } catch (error) {
       setErrorMessage("Error saving the Technician Diagnostic: " + error.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteTechnicianDiagnostic(diagnostic.technicianDiagnostics[0]?.id);
+      setSuccessMessage("Technician Diagnostic deleted successfully.");
+      navigate("/diagnostic-list");
+    } catch (error) {
+      setErrorMessage("Error deleting the Technician Diagnostic: " + error.message);
     }
   };
 
@@ -242,6 +251,11 @@ const TechnicianDiagnostic = () => {
           <Button variant="secondary" className="me-2" onClick={() => navigate("/diagnostic-list")}>
             Cancel
           </Button>
+          {isEditMode && (
+            <Button variant="danger" className="me-2" onClick={handleDelete}>
+              Delete
+            </Button>
+          )}
           <Button variant="success" type="submit">
             {isEditMode ? "Save Changes" : "Save Technician Diagnostic"}
           </Button>

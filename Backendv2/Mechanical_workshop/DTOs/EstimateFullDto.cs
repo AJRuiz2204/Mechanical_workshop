@@ -31,6 +31,9 @@ namespace Mechanical_workshop.Dtos
         // Información del Propietario
         public UserWorkshopReadDto Owner { get; set; } = null!;
 
+        // Relación con TechnicianDiagnostic
+        public TechnicianDiagnosticReadDto? TechnicianDiagnostic { get; set; }
+
         // Lista de Partes
         public List<EstimatePartReadDto> Parts { get; set; } = new List<EstimatePartReadDto>();
 

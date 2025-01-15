@@ -29,4 +29,4 @@ wwwroot/lib/
 .DS_Store
 
 # Archivos de configuración de Windows
-Thumbs.db
+Thumbs.dbMigrations/

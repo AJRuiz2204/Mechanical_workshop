@@ -9,13 +9,13 @@ namespace Mechanical_workshop.Profiles
         public LaborTaxMarkupSettingsProfile()
         {
              // De la entidad a los DTOs
-            CreateMap<PartLaborSettings, LaborTaxMarkupSettingsReadDto>();
-            CreateMap<PartLaborSettings, LaborTaxMarkupSettingsUpdateDto>();
-            CreateMap<PartLaborSettings, LaborTaxMarkupSettingsCreateDto>();
+            CreateMap<LaborTaxMarkupSettings, LaborTaxMarkupSettingsReadDto>();
+            CreateMap<LaborTaxMarkupSettings, LaborTaxMarkupSettingsUpdateDto>();
+            CreateMap<LaborTaxMarkupSettings, LaborTaxMarkupSettingsCreateDto>();
 
             // De los DTOs a la entidad
-            CreateMap<LaborTaxMarkupSettingsCreateDto, PartLaborSettings>();
-            CreateMap<LaborTaxMarkupSettingsUpdateDto, PartLaborSettings>();
+            CreateMap<LaborTaxMarkupSettingsCreateDto, LaborTaxMarkupSettings>();
+            CreateMap<LaborTaxMarkupSettingsUpdateDto, LaborTaxMarkupSettings>();
         }
     }
 }

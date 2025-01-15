@@ -28,8 +28,8 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<LaborTaxMarkupSettingsReadDto>> Create(LaborTaxMarkupSettingsCreateDto createDto)
         {
-            var entity = _mapper.Map<PartLaborSettings>(createDto);
-            _context.PartLaborSettings.Add(entity);
+            var entity = _mapper.Map<LaborTaxMarkupSettings>(createDto);
+            _context.LaborTaxMarkupSettings.Add(entity);
             await _context.SaveChangesAsync();
             var readDto = _mapper.Map<LaborTaxMarkupSettingsReadDto>(entity);
             return CreatedAtAction(nameof(GetById), new { id = entity.Id }, readDto);
@@ -39,7 +39,7 @@ namespace Mechanical_workshop.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<LaborTaxMarkupSettingsReadDto>> GetById(int id)
         {
-            var entity = await _context.PartLaborSettings.FindAsync(id);
+            var entity = await _context.LaborTaxMarkupSettings.FindAsync(id);
             if (entity == null)
                 return NotFound();
             var dto = _mapper.Map<LaborTaxMarkupSettingsReadDto>(entity);
@@ -52,7 +52,7 @@ namespace Mechanical_workshop.Controllers
         {
             if (patchDoc == null)
                 return BadRequest("Patch document cannot be null.");
-            var entity = await _context.PartLaborSettings.FindAsync(id);
+            var entity = await _context.LaborTaxMarkupSettings.FindAsync(id);
             if (entity == null)
                 return NotFound();
             var updateDto = _mapper.Map<LaborTaxMarkupSettingsUpdateDto>(entity);
@@ -64,8 +64,6 @@ namespace Mechanical_workshop.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
-        // PUT, DELETE, etc. si deseas
     }
 
 }

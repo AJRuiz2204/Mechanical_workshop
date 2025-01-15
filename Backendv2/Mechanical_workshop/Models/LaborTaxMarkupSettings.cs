@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Mechanical_workshop.Models
 {
-    public class PartLaborSettings
+    public class LaborTaxMarkupSettings
     {
         [Key]
         public int Id { get; set; }

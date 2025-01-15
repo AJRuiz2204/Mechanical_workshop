@@ -180,7 +180,6 @@ const Estimate = () => {
       const vehData = await getVehicleById(val);
       setSelectedVehicle(vehData);
       setOwner(vehData.userWorkshop);
-      // If the workshop is noTax => everything defaults to no taxes
       setNoTax(vehData.userWorkshop.noTax);
     } catch (err) {
       setError("Error fetching vehicle details: " + err.message);
@@ -197,15 +196,7 @@ const Estimate = () => {
   // SHOW / HIDE PART MODAL
   //------------------------------------------------------------
   const handleShowPartModal = () => {
-    // If noTax => default checkbox = false
-    // else => default = true to reflect "Taxable" scenario
-    // BUT we can also consider the DB config partTaxByDefault
-    // final logic: if noTax => false, else => true
     const defaultTax = noTax ? false : true;
-
-    // If you want to honor "partTaxByDefault" from DB:
-    //   const defaultTax = noTax ? false : settings ? settings.partTaxByDefault : false;
-
     setNewPart({
       description: "",
       partNumber: "",
@@ -234,14 +225,7 @@ const Estimate = () => {
   // SHOW / HIDE LABOR MODAL
   //------------------------------------------------------------
   const handleShowLaborModal = () => {
-    // If noTax => defaultTax = false
-    // else => true
     const defaultTax = noTax ? false : true;
-
-    // If you want to honor "laborTaxByDefault" from DB:
-    //   const defaultTax = noTax ? false : settings ? settings.laborTaxByDefault : false;
-
-    // Also set a default laborRate => defaultHourlyRate from DB if you want
     let defaultRate = 0;
     if (settings && settings.defaultHourlyRate) {
       defaultRate = settings.defaultHourlyRate;
@@ -271,7 +255,6 @@ const Estimate = () => {
   // SHOW / HIDE FLAT FEE MODAL
   //------------------------------------------------------------
   const handleShowFlatFeeModal = () => {
-    // If we want a "applyFlatFeeTax" => set default here
     setNewFlatFee({
       description: "",
       flatFeePrice: 0,
@@ -300,7 +283,6 @@ const Estimate = () => {
     const q = parseFloat(newPart.quantity) || 1;
     let finalListPrice = parseFloat(newPart.listPrice) || 0;
 
-    // If there's a markup from DB
     if (settings && settings.partMarkup > 0) {
       finalListPrice *= 1 + settings.partMarkup / 100;
     }
@@ -431,10 +413,6 @@ const Estimate = () => {
       newTax = partTaxAmount + laborTaxAmount;
     }
 
-    // If workshop is "NoTax" => the default is user sets apply*Tax = false
-    // But if user manually checked => we do the override as above
-    // So no additional logic needed. The item checkboxes decide.
-
     const newTotal = newSubtotal + newTax;
 
     setSubtotal(newSubtotal);
@@ -463,7 +441,6 @@ const Estimate = () => {
       Tax: tax,
       Total: total,
       AuthorizationStatus: authorizationStatus,
-
       Parts: parts.map((p) => ({
         description: p.description,
         partNumber: p.partNumber,
@@ -471,7 +448,6 @@ const Estimate = () => {
         netPrice: p.netPrice,
         listPrice: p.listPrice,
         extendedPrice: p.extendedPrice,
-        // store "taxable" or "applyPartTax" => same meaning in DB
         taxable: p.applyPartTax,
       })),
       Labors: labors.map((l) => ({
@@ -485,7 +461,7 @@ const Estimate = () => {
         description: f.description,
         flatFeePrice: f.flatFeePrice,
         extendedPrice: f.extendedPrice,
-        // if you had a checkbox => taxable: f.applyFlatFeeTax
+        // taxable: f.applyFlatFeeTax, // Add if implemented
       })),
     };
 
@@ -774,7 +750,7 @@ const Estimate = () => {
         </Button>
       </div>
 
-      {/* =========== MODAL: TAX SETTINGS =========== */}
+      {/* =========== MODAL: TAX & MARKUP SETTINGS =========== */}
       <Modal show={showTaxSettingsModal} onHide={handleCloseTaxSettingsModal}>
         <Modal.Header closeButton>
           <Modal.Title>Tax & Markup Settings</Modal.Title>

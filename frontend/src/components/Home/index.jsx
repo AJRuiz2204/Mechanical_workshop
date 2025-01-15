@@ -33,12 +33,6 @@ const Home = () => {
       </div>
       <div
         className="side-menu-item"
-        onClick={() => handleTabClick("/invoice")}
-      >
-        INVOICE
-      </div>
-      <div
-        className="side-menu-item"
         onClick={() => handleTabClick("/reports")}
       >
         REPORTS
