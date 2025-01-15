@@ -72,20 +72,7 @@ namespace Mechanical_workshop.Dtos
         public List<VehicleDto> Vehicles { get; set; } = new();
     }
 
-    // Para crear un TechnicianDiagnostic
-    public class TechnicianDiagnosticCreateDto
-    {
-        [Required]
-        public int DiagnosticId { get; set; }
-
-        [Required]
-        public int Mileage { get; set; }
-
-        [Required]
-        [StringLength(1000)]
-        public string ExtendedDiagnostic { get; set; } = string.Empty;
-    }
-
+    
     // Para leer un TechnicianDiagnostic (con ReasonForVisit)
     public class TechnicianDiagnosticReadDto
     {

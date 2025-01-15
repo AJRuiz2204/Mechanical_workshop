@@ -1,5 +1,3 @@
-// Dtos/EstimateFullDto.cs
-
 using System;
 using System.Collections.Generic;
 
@@ -14,19 +12,17 @@ namespace Mechanical_workshop.Dtos
 
         public string CustomerNote { get; set; } = string.Empty;
 
-        public string ExtendedDiagnostic { get; set; } = string.Empty;
-
         public decimal Subtotal { get; set; }
 
         public decimal Tax { get; set; }
 
         public decimal Total { get; set; }
 
-        // NUEVO: Estado de Autorización (InReview, Authorized, Denied, etc.)
+        // Estado de Autorización (InReview, Authorized, Denied, etc.)
         public string AuthorizationStatus { get; set; } = "InReview";
 
         // Información del Vehículo
-        public VehicleReadDto Vehicle { get; set; } = null!;
+        public VehicleDto Vehicle { get; set; } = null!;
 
         // Información del Propietario
         public UserWorkshopReadDto Owner { get; set; } = null!;

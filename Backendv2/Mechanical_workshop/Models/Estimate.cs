@@ -23,9 +23,6 @@ namespace Mechanical_workshop.Models
         [StringLength(500)]
         public string CustomerNote { get; set; } = string.Empty;
 
-        [StringLength(2000)]
-        public string ExtendedDiagnostic { get; set; } = string.Empty;
-
         [Range(0, double.MaxValue)]
         public decimal Subtotal { get; set; }
 
@@ -39,6 +36,7 @@ namespace Mechanical_workshop.Models
         [StringLength(20)]
         public string AuthorizationStatus { get; set; } = "InReview";
 
+        // Clave foránea para TechnicianDiagnostic
         public int? TechnicianDiagnosticID { get; set; }
 
         [ForeignKey("VehicleID")]
@@ -49,6 +47,9 @@ namespace Mechanical_workshop.Models
 
         [ForeignKey("TechnicianDiagnosticID")]
         public virtual TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
+
+        [NotMapped]
+        public string TechnicianExtendedDiagnostic => TechnicianDiagnostic?.ExtendedDiagnostic ?? string.Empty;
 
         public virtual ICollection<EstimatePart> Parts { get; set; } = new List<EstimatePart>();
 

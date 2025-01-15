@@ -1,5 +1,3 @@
-// Controllers/EstimatesController.cs
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
@@ -29,18 +27,27 @@ namespace Mechanical_workshop.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EstimateFullDto>>> GetEstimates()
         {
-            var estimates = await _context.Estimates
-                .Include(e => e.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(e => e.TechnicianDiagnostic)
-                    .ThenInclude(td => td.Diagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .ToListAsync();
+            try
+            {
+                var estimates = await _context.Estimates
+                    .Include(e => e.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td.Diagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .ToListAsync();
 
-            var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
-            return Ok(estimateDtos);
+                var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
+                return Ok(estimateDtos);
+            }
+            catch (Exception ex)
+            {
+                // Registrar el error (ajusta según tu mecanismo de logging)
+                Console.Error.WriteLine($"Error en GetEstimates: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno del servidor al obtener las estimaciones." });
+            }
         }
 
         // GET: api/Estimates/{id}
@@ -70,6 +77,7 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<EstimateFullDto>> CreateEstimate(EstimateCreateDto estimateCreateDto)
         {
+            // Verificar la existencia del vehículo
             var vehicle = await _context.Vehicles
                 .Include(v => v.UserWorkshop)
                 .FirstOrDefaultAsync(v => v.Id == estimateCreateDto.VehicleID);
@@ -79,23 +87,22 @@ namespace Mechanical_workshop.Controllers
                 return BadRequest(new { message = "Invalid Vehicle ID." });
             }
 
+            // Mapear el DTO a la entidad Estimate
             var estimate = _mapper.Map<Estimate>(estimateCreateDto);
             estimate.VehicleID = vehicle.Id;
             estimate.UserWorkshopID = vehicle.UserWorkshopId;
 
-            if (estimateCreateDto.TechnicianDiagnosticID.HasValue)
+            // Manejar TechnicianDiagnostic si está presente en el DTO
+            if (estimateCreateDto.TechnicianDiagnostic != null)
             {
-                var techDiag = await _context.TechnicianDiagnostics.FindAsync(estimateCreateDto.TechnicianDiagnosticID.Value);
-                if (techDiag == null)
-                {
-                    return BadRequest(new { message = "Invalid TechnicianDiagnostic ID." });
-                }
-                estimate.TechnicianDiagnosticID = techDiag.Id;
+                var technicianDiagnostic = _mapper.Map<TechnicianDiagnostic>(estimateCreateDto.TechnicianDiagnostic);
+                estimate.TechnicianDiagnostic = technicianDiagnostic;
             }
 
             _context.Estimates.Add(estimate);
             await _context.SaveChangesAsync();
 
+            // Agregar Partes
             foreach (var partDto in estimateCreateDto.Parts)
             {
                 var part = _mapper.Map<EstimatePart>(partDto);
@@ -103,6 +110,7 @@ namespace Mechanical_workshop.Controllers
                 _context.EstimateParts.Add(part);
             }
 
+            // Agregar Mano de Obra
             foreach (var laborDto in estimateCreateDto.Labors)
             {
                 var labor = _mapper.Map<EstimateLabor>(laborDto);
@@ -110,6 +118,7 @@ namespace Mechanical_workshop.Controllers
                 _context.EstimateLabors.Add(labor);
             }
 
+            // Agregar Tarifas Planas
             foreach (var flatFeeDto in estimateCreateDto.FlatFees)
             {
                 var flatFee = _mapper.Map<EstimateFlatFee>(flatFeeDto);
@@ -119,6 +128,7 @@ namespace Mechanical_workshop.Controllers
 
             await _context.SaveChangesAsync();
 
+            // Recuperar la estimación completa para la respuesta
             var createdEstimate = await _context.Estimates
                 .Include(e => e.Vehicle)
                     .ThenInclude(v => v.UserWorkshop)
@@ -143,6 +153,7 @@ namespace Mechanical_workshop.Controllers
             }
 
             var estimate = await _context.Estimates
+                .Include(e => e.TechnicianDiagnostic)
                 .Include(e => e.Parts)
                 .Include(e => e.Labors)
                 .Include(e => e.FlatFees)
@@ -153,28 +164,40 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = $"Estimate with ID {id} not found." });
             }
 
+            // Actualizar propiedades básicas del Estimate
             estimate.Date = estimateFullDto.Date;
             estimate.CustomerNote = estimateFullDto.CustomerNote;
-            estimate.ExtendedDiagnostic = estimateFullDto.ExtendedDiagnostic;
             estimate.Subtotal = estimateFullDto.Subtotal;
             estimate.Tax = estimateFullDto.Tax;
             estimate.Total = estimateFullDto.Total;
             estimate.AuthorizationStatus = estimateFullDto.AuthorizationStatus;
 
+            // Manejar TechnicianDiagnostic
             if (estimateFullDto.TechnicianDiagnostic != null)
             {
-                var techDiag = await _context.TechnicianDiagnostics.FindAsync(estimateFullDto.TechnicianDiagnostic.Id);
-                if (techDiag == null)
+                if (estimate.TechnicianDiagnostic == null)
                 {
-                    return BadRequest(new { message = "Invalid TechnicianDiagnostic ID." });
+                    // Crear un nuevo TechnicianDiagnostic si no existe
+                    var newTechDiag = _mapper.Map<TechnicianDiagnostic>(estimateFullDto.TechnicianDiagnostic);
+                    estimate.TechnicianDiagnostic = newTechDiag;
                 }
-                estimate.TechnicianDiagnosticID = techDiag.Id;
+                else
+                {
+                    // Actualizar el TechnicianDiagnostic existente
+                    _mapper.Map(estimateFullDto.TechnicianDiagnostic, estimate.TechnicianDiagnostic);
+                }
             }
             else
             {
-                estimate.TechnicianDiagnosticID = null;
+                // Eliminar la relación si no se proporciona TechnicianDiagnostic en el DTO
+                if (estimate.TechnicianDiagnostic != null)
+                {
+                    _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
+                    estimate.TechnicianDiagnostic = null;
+                }
             }
 
+            // Actualizar Partes
             var partsToRemove = estimate.Parts
                 .Where(p => !estimateFullDto.Parts.Any(dto => dto.ID == p.ID))
                 .ToList();
@@ -201,6 +224,7 @@ namespace Mechanical_workshop.Controllers
                 }
             }
 
+            // Actualizar Mano de Obra
             var laborsToRemove = estimate.Labors
                 .Where(l => !estimateFullDto.Labors.Any(dto => dto.ID == l.ID))
                 .ToList();
@@ -227,6 +251,7 @@ namespace Mechanical_workshop.Controllers
                 }
             }
 
+            // Actualizar Tarifas Planas
             var flatFeesToRemove = estimate.FlatFees
                 .Where(f => !estimateFullDto.FlatFees.Any(dto => dto.ID == f.ID))
                 .ToList();
@@ -277,6 +302,7 @@ namespace Mechanical_workshop.Controllers
         public async Task<IActionResult> DeleteEstimate(int id)
         {
             var estimate = await _context.Estimates
+                .Include(e => e.TechnicianDiagnostic)
                 .Include(e => e.Parts)
                 .Include(e => e.Labors)
                 .Include(e => e.FlatFees)
@@ -287,6 +313,13 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = $"Estimate with ID {id} not found." });
             }
 
+            // Eliminar TechnicianDiagnostic si existe
+            if (estimate.TechnicianDiagnostic != null)
+            {
+                _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
+            }
+
+            // Eliminar Partes, Mano de Obra y Tarifas Planas
             _context.EstimateParts.RemoveRange(estimate.Parts);
             _context.EstimateLabors.RemoveRange(estimate.Labors);
             _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);

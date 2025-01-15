@@ -128,5 +128,24 @@ namespace Mechanical_workshop.Controllers
             return NoContent();
         }
 
+        // GET: api/TechnicianDiagnostics/vehicle/{vehicleId}
+        [HttpGet("vehicle/{vehicleId}")]
+        public async Task<ActionResult<TechnicianDiagnosticReadDto>> GetDiagnosticByVehicleId(int vehicleId)
+        {
+            var techDiag = await _context.TechnicianDiagnostics
+                .Include(td => td.Diagnostic) // Incluir detalles del Diagnostic si es necesario
+                .FirstOrDefaultAsync(td => td.Diagnostic.VehicleId == vehicleId);
+
+            if (techDiag == null)
+            {
+                return NotFound(new { message = $"No Technician Diagnostic found for Vehicle ID {vehicleId}." });
+            }
+
+            var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(techDiag);
+            return Ok(readDto);
+        }
+
+        
+
     }
 }

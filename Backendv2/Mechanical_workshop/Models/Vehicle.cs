@@ -46,5 +46,6 @@ namespace Mechanical_workshop.Models
 
         // Navigation Property
         public UserWorkshop? UserWorkshop { get; set; }
+        public ICollection<Diagnostic> Diagnostics { get; set; } = new List<Diagnostic>();
     }
 }

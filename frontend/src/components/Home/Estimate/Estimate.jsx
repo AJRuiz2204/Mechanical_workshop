@@ -21,6 +21,7 @@ import {
   getVehicleById,
   getEstimateById,
   updateEstimate,
+  getDiagnosticByVehicleId, // Importar la nueva función
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 
@@ -52,6 +53,9 @@ const Estimate = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [owner, setOwner] = useState(null);
+
+  // Technician Diagnostic
+  const [diagnostic, setDiagnostic] = useState(null); // Nuevo estado para almacenar el diagnóstico
 
   // If the workshop is noTax => by default we consider no tax,
   // but user can override (see below).
@@ -122,7 +126,9 @@ const Estimate = () => {
           setLabors(existingEstimate.labors || []);
           setFlatFees(existingEstimate.flatFees || []);
           setCustomerNote(existingEstimate.customerNote || "");
-          setExtendedDiagnostic(existingEstimate.extendedDiagnostic || "");
+          setExtendedDiagnostic(
+            existingEstimate.technicianDiagnostic?.extendedDiagnostic || ""
+          );
           setSubtotal(existingEstimate.subtotal || 0);
           setTax(existingEstimate.tax || 0);
           setTotal(existingEstimate.total || 0);
@@ -142,6 +148,11 @@ const Estimate = () => {
               setOwner(existingEstimate.owner);
               setNoTax(existingEstimate.owner.noTax);
             }
+          }
+
+          // Establecer el diagnóstico existente
+          if (existingEstimate.technicianDiagnostic) {
+            setDiagnostic(existingEstimate.technicianDiagnostic);
           }
         }
       } catch (err) {
@@ -168,6 +179,8 @@ const Estimate = () => {
     setSubtotal(0);
     setTax(0);
     setTotal(0);
+    setExtendedDiagnostic("");
+    setDiagnostic(null); // Limpiar diagnóstico anterior
 
     if (!val) {
       setSelectedVehicle(null);
@@ -181,8 +194,18 @@ const Estimate = () => {
       setSelectedVehicle(vehData);
       setOwner(vehData.userWorkshop);
       setNoTax(vehData.userWorkshop.noTax);
+
+      // Obtener el diagnóstico asociado al vehículo
+      const fetchedDiagnostic = await getDiagnosticByVehicleId(val);
+      if (fetchedDiagnostic) {
+        setDiagnostic(fetchedDiagnostic);
+        setExtendedDiagnostic(fetchedDiagnostic.extendedDiagnostic);
+      } else {
+        setDiagnostic(null);
+        setExtendedDiagnostic("");
+      }
     } catch (err) {
-      setError("Error fetching vehicle details: " + err.message);
+      setError("Error fetching vehicle details or diagnostic: " + err.message);
     }
   };
 
@@ -436,7 +459,14 @@ const Estimate = () => {
     const estimateData = {
       VehicleID: parseInt(selectedVehicleId),
       CustomerNote: customerNote,
-      ExtendedDiagnostic: extendedDiagnostic,
+      // Incluir TechnicianDiagnostic si existe
+      TechnicianDiagnostic: extendedDiagnostic
+        ? {
+            DiagnosticId: diagnostic?.diagnosticId || 0, // Asignar 0 si no existe
+            Mileage: diagnostic?.mileage || 0, // Asignar 0 si no existe
+            ExtendedDiagnostic: extendedDiagnostic,
+          }
+        : null,
       Subtotal: subtotal,
       Tax: tax,
       Total: total,
@@ -488,8 +518,6 @@ const Estimate = () => {
         setOwner(null);
         setNoTax(false);
         setAuthorizationStatus("InReview");
-
-        navigate("/estimates");
       }
       setError(null);
     } catch (err) {
@@ -581,6 +609,17 @@ const Estimate = () => {
           </Row>
         </div>
       )}
+
+      {/* Extended Diagnostic */}
+      <Form.Group className="mb-3">
+        <Form.Label>Extended Diagnostic</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
+          value={extendedDiagnostic}
+          onChange={(e) => setExtendedDiagnostic(e.target.value)}
+        />
+      </Form.Group>
 
       {/* Buttons to add items */}
       <div className="mb-3">
@@ -688,17 +727,6 @@ const Estimate = () => {
           ))}
         </tbody>
       </Table>
-
-      {/* Extended Diagnostic */}
-      <Form.Group className="mb-3">
-        <Form.Label>Extended Diagnostic</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={3}
-          value={extendedDiagnostic}
-          onChange={(e) => setExtendedDiagnostic(e.target.value)}
-        />
-      </Form.Group>
 
       {/* Customer Note */}
       <Form.Group className="mb-3">
@@ -1114,56 +1142,6 @@ const Estimate = () => {
           </Button>
           <Button variant="primary" onClick={addFlatFee}>
             Add Flat Fee
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* =========== MODAL: TAX & MARKUP SETTINGS =========== */}
-      <Modal show={showTaxSettingsModal} onHide={handleCloseTaxSettingsModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Tax & Markup Settings</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {!settings ? (
-            <Alert variant="warning">No settings found.</Alert>
-          ) : (
-            <div className="row">
-              <div className="col-6 mb-2">
-                <strong>Hourly Rate 1:</strong> {settings.hourlyRate1}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Hourly Rate 2:</strong> {settings.hourlyRate2}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Hourly Rate 3:</strong> {settings.hourlyRate3}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Default Hourly Rate:</strong>{" "}
-                {settings.defaultHourlyRate}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Part Tax Rate:</strong> {settings.partTaxRate}%
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Part Tax By Default:</strong>{" "}
-                {settings.partTaxByDefault ? "Yes" : "No"}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Labor Tax Rate:</strong> {settings.laborTaxRate}%
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Labor Tax By Default:</strong>{" "}
-                {settings.laborTaxByDefault ? "Yes" : "No"}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Part Markup:</strong> {settings.partMarkup}%
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseTaxSettingsModal}>
-            Close
           </Button>
         </Modal.Footer>
       </Modal>

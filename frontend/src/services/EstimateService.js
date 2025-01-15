@@ -1,20 +1,23 @@
 // src/services/EstimateService.js
 
-const API_URL = '/api/Estimates';
-const VEHICLE_API_URL = '/api/UserWorkshops/vehicles';
+const API_URL = "/api/Estimates";
+const VEHICLE_API_URL = "/api/UserWorkshops/vehicles";
 const GET_VEHICLE_BY_ID_URL = (id) => `/api/UserWorkshops/vehicle/${id}`;
-const TECH_DIAGNOSTIC_API_URL = '/api/TechnicianDiagnostics';
-const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) => `/api/TechnicianDiagnostics/${id}`;
+const TECH_DIAGNOSTIC_API_URL = "/api/TechnicianDiagnostics";
+const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) =>
+  `/api/TechnicianDiagnostics/${id}`;
+const GET_DIAGNOSTIC_BY_VEHICLE_ID_URL = (vehicleId) =>
+  `/api/TechnicianDiagnostics/vehicle/${vehicleId}`; // Asegúrate de que esta ruta coincide con el backend
 
 export const getEstimates = async () => {
   try {
     const response = await fetch(API_URL);
     if (!response.ok) {
-      throw new Error('Error fetching the Estimates.');
+      throw new Error("Error fetching the Estimates.");
     }
     return await response.json(); // Returns an array of EstimateFullDto
   } catch (error) {
-    console.error('Error in getEstimates:', error);
+    console.error("Error in getEstimates:", error);
     throw error;
   }
 };
@@ -27,7 +30,7 @@ export const getEstimateById = async (id) => {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error in getEstimateById:', error);
+    console.error("Error in getEstimateById:", error);
     throw error;
   }
 };
@@ -35,9 +38,9 @@ export const getEstimateById = async (id) => {
 export const createEstimate = async (estimateData) => {
   try {
     const response = await fetch(API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(estimateData),
     });
@@ -47,13 +50,13 @@ export const createEstimate = async (estimateData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error('Error creating the Estimate.');
+        throw new Error("Error creating the Estimate.");
       }
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error in createEstimate:', error);
+    console.error("Error in createEstimate:", error);
     throw error;
   }
 };
@@ -61,9 +64,9 @@ export const createEstimate = async (estimateData) => {
 export const updateEstimate = async (id, estimateData) => {
   try {
     const response = await fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(estimateData),
     });
@@ -73,13 +76,13 @@ export const updateEstimate = async (id, estimateData) => {
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        throw new Error('Error updating the Estimate.');
+        throw new Error("Error updating the Estimate.");
       }
     }
 
     return;
   } catch (error) {
-    console.error('Error in updateEstimate:', error);
+    console.error("Error in updateEstimate:", error);
     throw error;
   }
 };
@@ -87,15 +90,15 @@ export const updateEstimate = async (id, estimateData) => {
 export const deleteEstimate = async (id) => {
   try {
     const response = await fetch(`${API_URL}/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
 
     if (!response.ok) {
-      throw new Error('Error deleting the Estimate.');
+      throw new Error("Error deleting the Estimate.");
     }
     return; // Successfully deleted
   } catch (error) {
-    console.error('Error in deleteEstimate:', error);
+    console.error("Error in deleteEstimate:", error);
     throw error;
   }
 };
@@ -105,11 +108,11 @@ export const getAllVehicles = async () => {
   try {
     const response = await fetch(VEHICLE_API_URL);
     if (!response.ok) {
-      throw new Error('Error fetching the list of vehicles.');
+      throw new Error("Error fetching the list of vehicles.");
     }
     return await response.json();
   } catch (error) {
-    console.error('Error in getAllVehicles:', error);
+    console.error("Error in getAllVehicles:", error);
     throw error;
   }
 };
@@ -122,7 +125,7 @@ export const getVehicleById = async (id) => {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error in getVehicleById:', error);
+    console.error("Error in getVehicleById:", error);
     throw error;
   }
 };
@@ -132,11 +135,11 @@ export const getAllTechnicianDiagnostics = async () => {
   try {
     const response = await fetch(TECH_DIAGNOSTIC_API_URL);
     if (!response.ok) {
-      throw new Error('Error fetching the list of Technician Diagnostics.');
+      throw new Error("Error fetching the list of Technician Diagnostics.");
     }
     return await response.json();
   } catch (error) {
-    console.error('Error in getAllTechnicianDiagnostics:', error);
+    console.error("Error in getAllTechnicianDiagnostics:", error);
     throw error;
   }
 };
@@ -145,11 +148,33 @@ export const getTechnicianDiagnosticById = async (id) => {
   try {
     const response = await fetch(GET_TECH_DIAGNOSTIC_BY_ID_URL(id));
     if (!response.ok) {
-      throw new Error(`Error fetching the Technician Diagnostic with ID ${id}.`);
+      throw new Error(
+        `Error fetching the Technician Diagnostic with ID ${id}.`
+      );
     }
     return await response.json();
   } catch (error) {
-    console.error('Error in getTechnicianDiagnosticById:', error);
+    console.error("Error in getTechnicianDiagnosticById:", error);
+    throw error;
+  }
+};
+
+// Nuevo: Obtener TechnicianDiagnostic por VehicleID
+export const getDiagnosticByVehicleId = async (vehicleId) => {
+  try {
+    const response = await fetch(GET_DIAGNOSTIC_BY_VEHICLE_ID_URL(vehicleId));
+    if (!response.ok) {
+      // Si no existe, devolver null en lugar de error
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(
+        `Error fetching Technician Diagnostic for Vehicle ID ${vehicleId}.`
+      );
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error in getDiagnosticByVehicleId:", error);
     throw error;
   }
 };

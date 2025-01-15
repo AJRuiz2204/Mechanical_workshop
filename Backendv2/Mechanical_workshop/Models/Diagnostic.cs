@@ -27,5 +27,7 @@ namespace Mechanical_workshop.Models
         public ICollection<TechnicianDiagnostic>? TechnicianDiagnostics { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
     }
 }

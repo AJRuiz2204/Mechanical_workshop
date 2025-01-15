@@ -1,6 +1,3 @@
-// Dtos/EstimateCreateDto.cs
-
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -11,13 +8,12 @@ namespace Mechanical_workshop.Dtos
         [Required]
         public int VehicleID { get; set; }
 
-        public int? TechnicianDiagnosticID { get; set; }
+        // Incluye el DTO para crear TechnicianDiagnostic si se proporciona
+        public TechnicianDiagnosticCreateDto? TechnicianDiagnostic { get; set; }
 
         [Required]
+        [StringLength(500)]
         public string CustomerNote { get; set; } = string.Empty;
-
-        [Required]
-        public string ExtendedDiagnostic { get; set; } = string.Empty;
 
         [Range(0, double.MaxValue)]
         public decimal Subtotal { get; set; }
@@ -28,6 +24,8 @@ namespace Mechanical_workshop.Dtos
         [Range(0, double.MaxValue)]
         public decimal Total { get; set; }
 
+        [Required]
+        [StringLength(20)]
         public string AuthorizationStatus { get; set; } = "InReview";
 
         // Lista de Partes
@@ -38,6 +36,20 @@ namespace Mechanical_workshop.Dtos
 
         // Lista de Tarifas Planas
         public List<EstimateFlatFeeCreateDto> FlatFees { get; set; } = new List<EstimateFlatFeeCreateDto>();
+    }
+
+    // DTO para crear TechnicianDiagnostic dentro de EstimateCreateDto
+    public class TechnicianDiagnosticCreateDto
+    {
+        [Required]
+        public int DiagnosticId { get; set; }
+
+        [Required]
+        public int Mileage { get; set; }
+
+        [Required]
+        [StringLength(1000)]
+        public string ExtendedDiagnostic { get; set; } = string.Empty;
     }
 
     // DTO para Partes al Crear Estimate

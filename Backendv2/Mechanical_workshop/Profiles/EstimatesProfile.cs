@@ -1,5 +1,3 @@
-// Profiles/EstimatesProfile.cs
-
 using AutoMapper;
 using Mechanical_workshop.Models;
 using Mechanical_workshop.Dtos;
@@ -20,7 +18,13 @@ namespace Mechanical_workshop.Profiles
             CreateMap<EstimateCreateDto, Estimate>()
                 .ForMember(dest => dest.Vehicle, opt => opt.Ignore())
                 .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore())
-                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.Ignore());
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic));
+
+            // Mapeo de TechnicianDiagnosticCreateDto a TechnicianDiagnostic
+            CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();
+
+            // Mapeo de TechnicianDiagnostic a TechnicianDiagnosticReadDto y viceversa
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>().ReverseMap();
 
             // Mapeo de EstimatePart a EstimatePartReadDto y viceversa
             CreateMap<EstimatePart, EstimatePartReadDto>().ReverseMap();
@@ -39,9 +43,6 @@ namespace Mechanical_workshop.Profiles
 
             // Mapeo de UserWorkshop a UserWorkshopReadDto y viceversa
             CreateMap<UserWorkshop, UserWorkshopReadDto>().ReverseMap();
-
-            // Mapeo de TechnicianDiagnostic a TechnicianDiagnosticReadDto y viceversa
-            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>().ReverseMap();
 
             // Mapeo de Diagnostic a DiagnosticReadDto y viceversa
             CreateMap<Diagnostic, DiagnosticReadDto>().ReverseMap();
