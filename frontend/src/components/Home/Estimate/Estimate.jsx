@@ -617,7 +617,7 @@ const Estimate = () => {
           as="textarea"
           rows={3}
           value={extendedDiagnostic}
-          onChange={(e) => setExtendedDiagnostic(e.target.value)}
+          readOnly
         />
       </Form.Group>
 
