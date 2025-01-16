@@ -27,27 +27,18 @@ namespace Mechanical_workshop.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EstimateFullDto>>> GetEstimates()
         {
-            try
-            {
-                var estimates = await _context.Estimates
-                    .Include(e => e.Vehicle)
-                        .ThenInclude(v => v.UserWorkshop)
-                    .Include(e => e.TechnicianDiagnostic)
-                        .ThenInclude(td => td.Diagnostic)
-                    .Include(e => e.Parts)
-                    .Include(e => e.Labors)
-                    .Include(e => e.FlatFees)
-                    .ToListAsync();
+            var estimates = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .ToListAsync();
 
-                var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
-                return Ok(estimateDtos);
-            }
-            catch (Exception ex)
-            {
-                // Registrar el error (ajusta según tu mecanismo de logging)
-                Console.Error.WriteLine($"Error en GetEstimates: {ex.Message}");
-                return StatusCode(500, new { message = "Error interno del servidor al obtener las estimaciones." });
-            }
+            var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
+            return Ok(estimateDtos);
         }
 
         // GET: api/Estimates/{id}

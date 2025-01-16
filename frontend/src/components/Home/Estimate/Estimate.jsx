@@ -21,7 +21,7 @@ import {
   getVehicleById,
   getEstimateById,
   updateEstimate,
-  getDiagnosticByVehicleId, // Importar la nueva función
+  getDiagnosticByVehicleId, // Import the new function
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 
@@ -55,7 +55,7 @@ const Estimate = () => {
   const [owner, setOwner] = useState(null);
 
   // Technician Diagnostic
-  const [diagnostic, setDiagnostic] = useState(null); // Nuevo estado para almacenar el diagnóstico
+  const [diagnostic, setDiagnostic] = useState(null); // New state to store the diagnostic
 
   // If the workshop is noTax => by default we consider no tax,
   // but user can override (see below).
@@ -104,6 +104,9 @@ const Estimate = () => {
   // The settings from DB
   const [settings, setSettings] = useState(null);
 
+  // New state to handle loading state when adding a part
+  const [isAddingPart, setIsAddingPart] = useState(false);
+
   //------------------------------------------------------------
   // LOAD (Vehicles, existing Estimate if editing, plus Settings)
   //------------------------------------------------------------
@@ -150,7 +153,7 @@ const Estimate = () => {
             }
           }
 
-          // Establecer el diagnóstico existente
+          // Set the existing diagnostic
           if (existingEstimate.technicianDiagnostic) {
             setDiagnostic(existingEstimate.technicianDiagnostic);
           }
@@ -180,7 +183,7 @@ const Estimate = () => {
     setTax(0);
     setTotal(0);
     setExtendedDiagnostic("");
-    setDiagnostic(null); // Limpiar diagnóstico anterior
+    setDiagnostic(null); // Clear previous diagnostic
 
     if (!val) {
       setSelectedVehicle(null);
@@ -195,7 +198,7 @@ const Estimate = () => {
       setOwner(vehData.userWorkshop);
       setNoTax(vehData.userWorkshop.noTax);
 
-      // Obtener el diagnóstico asociado al vehículo
+      // Get the diagnostic associated with the vehicle
       const fetchedDiagnostic = await getDiagnosticByVehicleId(val);
       if (fetchedDiagnostic) {
         setDiagnostic(fetchedDiagnostic);
@@ -295,35 +298,105 @@ const Estimate = () => {
   };
 
   //------------------------------------------------------------
+  // CALCULATE TOTALS
+  //------------------------------------------------------------
+  const calculateTotals = () => {
+    let newSubtotal = 0;
+    let newTax = 0;
+
+    // Calculate subtotal and tax for parts
+    parts.forEach((part) => {
+      newSubtotal += parseFloat(part.extendedPrice) || 0;
+      if (part.applyPartTax && settings) {
+        newTax +=
+          (parseFloat(part.extendedPrice) || 0) *
+          (parseFloat(settings.partTaxRate) / 100);
+      }
+    });
+
+    // Calculate subtotal and tax for labors
+    labors.forEach((labor) => {
+      newSubtotal += parseFloat(labor.extendedPrice) || 0;
+      if (labor.applyLaborTax && settings) {
+        newTax +=
+          (parseFloat(labor.extendedPrice) || 0) *
+          (parseFloat(settings.laborTaxRate) / 100);
+      }
+    });
+
+    // Calculate subtotal and tax for flat fees
+    flatFees.forEach((fee) => {
+      newSubtotal += parseFloat(fee.extendedPrice) || 0;
+      // If taxes apply to flat fees, add logic here
+      // Example:
+      // if (fee.applyFlatFeeTax && settings) {
+      //   newTax += (parseFloat(fee.extendedPrice) || 0) * (parseFloat(settings.flatFeeTaxRate) / 100);
+      // }
+    });
+
+    // Apply NoTax setting
+    if (noTax && settings) {
+      newTax = 0;
+    }
+
+    // Calculate total
+    const newTotal = newSubtotal + newTax;
+
+    // Update states
+    setSubtotal(newSubtotal);
+    setTax(newTax);
+    setTotal(newTotal);
+  };
+
+  // useEffect to recalculate totals when parts, labors, flatFees, or settings change
+  useEffect(() => {
+    calculateTotals();
+  }, [parts, labors, flatFees, settings, noTax]);
+
+  //------------------------------------------------------------
   // ADD PART
   //------------------------------------------------------------
-  const addPart = () => {
-    if (!newPart.description || !newPart.partNumber) {
-      setError("Please fill out all part fields.");
-      return;
+  const addPart = async () => {
+    if (isAddingPart) return; // Prevent multiple calls
+    setIsAddingPart(true);
+    try {
+      // Verificar si el Part Number ya existe
+      const duplicate = parts.find(part => part.partNumber === newPart.partNumber);
+      if (duplicate) {
+        setError(`The part with Part Number ${newPart.partNumber} already exists in this estimate.`);
+        setIsAddingPart(false);
+        return;
+      }
+
+      // Validar datos antes de agregar
+      if (!newPart.description || !newPart.partNumber) {
+        setError("Description and part number are required.");
+        setIsAddingPart(false);
+        return;
+      }
+
+      // Agregar la parte al estado
+      setParts([...parts, { ...newPart }]);
+
+      // Limpiar el formulario de la nueva parte
+      setNewPart({
+        description: "",
+        partNumber: "",
+        quantity: 1,
+        netPrice: 0,
+        listPrice: 0,
+        extendedPrice: 0,
+        applyPartTax: false,
+      });
+
+      setSuccess("Part added successfully.");
+      setShowPartModal(false); // Cerrar el modal de partes
+    } catch (err) {
+      setError("Error adding the part.");
+      console.error(err);
+    } finally {
+      setIsAddingPart(false);
     }
-
-    const q = parseFloat(newPart.quantity) || 1;
-    let finalListPrice = parseFloat(newPart.listPrice) || 0;
-
-    if (settings && settings.partMarkup > 0) {
-      finalListPrice *= 1 + settings.partMarkup / 100;
-    }
-    const ext = finalListPrice * q;
-
-    const newItem = {
-      ...newPart,
-      quantity: q,
-      listPrice: finalListPrice,
-      extendedPrice: ext,
-    };
-
-    const updatedParts = [...parts, newItem];
-    setParts(updatedParts);
-    calculateTotals(updatedParts, labors, flatFees);
-
-    setError(null);
-    handleClosePartModal();
   };
 
   //------------------------------------------------------------
@@ -381,66 +454,21 @@ const Estimate = () => {
   // REMOVE ITEM
   //------------------------------------------------------------
   const removeItem = (type, idx) => {
-    let updatedParts = [...parts];
-    let updatedLabors = [...labors];
-    let updatedFlatFees = [...flatFees];
-
+    let updatedList = [];
     if (type === "PART") {
-      updatedParts.splice(idx, 1);
-      setParts(updatedParts);
+      updatedList = [...parts];
+      updatedList.splice(idx, 1);
+      setParts(updatedList);
     } else if (type === "LABOR") {
-      updatedLabors.splice(idx, 1);
-      setLabors(updatedLabors);
+      updatedList = [...labors];
+      updatedList.splice(idx, 1);
+      setLabors(updatedList);
     } else if (type === "FLATFEE") {
-      updatedFlatFees.splice(idx, 1);
-      setFlatFees(updatedFlatFees);
+      updatedList = [...flatFees];
+      updatedList.splice(idx, 1);
+      setFlatFees(updatedList);
     }
-
-    calculateTotals(updatedParts, updatedLabors, updatedFlatFees);
-  };
-
-  //------------------------------------------------------------
-  // CALCULATE TOTALS
-  //------------------------------------------------------------
-  const calculateTotals = (currentParts, currentLabors, currentFlatFees) => {
-    const partSub = currentParts.reduce((acc, p) => acc + p.extendedPrice, 0);
-    const laborSub = currentLabors.reduce((acc, l) => acc + l.extendedPrice, 0);
-    const feeSub = currentFlatFees.reduce((acc, f) => acc + f.extendedPrice, 0);
-
-    const newSubtotal = partSub + laborSub + feeSub;
-    let newTax = 0;
-
-    if (settings) {
-      // PARTS: check "applyPartTax"
-      const partRate = parseFloat(settings.partTaxRate) / 100 || 0;
-      const partTaxable = currentParts.filter((p) => p.applyPartTax === true);
-      const partTaxAmount = partTaxable.reduce(
-        (acc, p) => acc + p.extendedPrice * partRate,
-        0
-      );
-
-      // LABORS: check "applyLaborTax"
-      const laborRate = parseFloat(settings.laborTaxRate) / 100 || 0;
-      const laborTaxable = currentLabors.filter(
-        (l) => l.applyLaborTax === true
-      );
-      const laborTaxAmount = laborTaxable.reduce(
-        (acc, l) => acc + l.extendedPrice * laborRate,
-        0
-      );
-
-      // FlatFee if you want it: you can define "applyFlatFeeTax"
-      // For now, skip
-
-      // sum them
-      newTax = partTaxAmount + laborTaxAmount;
-    }
-
-    const newTotal = newSubtotal + newTax;
-
-    setSubtotal(newSubtotal);
-    setTax(newTax);
-    setTotal(newTotal);
+    // Totals are recalculated automatically via useEffect
   };
 
   //------------------------------------------------------------
@@ -456,14 +484,22 @@ const Estimate = () => {
       return;
     }
 
+    // Verificar si hay partes duplicadas antes de enviar
+    const partNumbers = parts.map(part => part.partNumber);
+    const hasDuplicates = partNumbers.some((item, index) => partNumbers.indexOf(item) !== index);
+    if (hasDuplicates) {
+      setError("There are duplicate Part Numbers in the estimate.");
+      return;
+    }
+
     const estimateData = {
       VehicleID: parseInt(selectedVehicleId),
       CustomerNote: customerNote,
-      // Incluir TechnicianDiagnostic si existe
+      // Include TechnicianDiagnostic if it exists
       TechnicianDiagnostic: extendedDiagnostic
         ? {
-            DiagnosticId: diagnostic?.diagnosticId || 0, // Asignar 0 si no existe
-            Mileage: diagnostic?.mileage || 0, // Asignar 0 si no existe
+            DiagnosticId: diagnostic?.diagnosticId || 0, // Assign 0 if it doesn't exist
+            Mileage: diagnostic?.mileage || 0, // Assign 0 if it doesn't exist
             ExtendedDiagnostic: extendedDiagnostic,
           }
         : null,
@@ -954,8 +990,12 @@ const Estimate = () => {
           <Button variant="secondary" onClick={handleClosePartModal}>
             Close
           </Button>
-          <Button variant="primary" onClick={addPart}>
-            Add Part
+          <Button
+            variant="primary"
+            onClick={addPart}
+            disabled={isAddingPart} // Disable the button while adding
+          >
+            {isAddingPart ? "Adding..." : "Add Part"}
           </Button>
         </Modal.Footer>
       </Modal>

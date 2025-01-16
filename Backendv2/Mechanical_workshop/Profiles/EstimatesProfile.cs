@@ -27,15 +27,21 @@ namespace Mechanical_workshop.Profiles
             CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>().ReverseMap();
 
             // Mapeo de EstimatePart a EstimatePartReadDto y viceversa
-            CreateMap<EstimatePart, EstimatePartReadDto>().ReverseMap();
+            CreateMap<EstimatePart, EstimatePartReadDto>()
+                .ReverseMap()
+                .ForMember(dest => dest.ID, opt => opt.Ignore());
             CreateMap<EstimatePartCreateDto, EstimatePart>();
 
             // Mapeo de EstimateLabor a EstimateLaborReadDto y viceversa
-            CreateMap<EstimateLabor, EstimateLaborReadDto>().ReverseMap();
+            CreateMap<EstimateLabor, EstimateLaborReadDto>()
+                .ReverseMap()
+                .ForMember(dest => dest.ID, opt => opt.Ignore());
             CreateMap<EstimateLaborCreateDto, EstimateLabor>();
 
             // Mapeo de EstimateFlatFee a EstimateFlatFeeReadDto y viceversa
-            CreateMap<EstimateFlatFee, EstimateFlatFeeReadDto>().ReverseMap();
+            CreateMap<EstimateFlatFee, EstimateFlatFeeReadDto>()
+                .ReverseMap()
+                .ForMember(dest => dest.ID, opt => opt.Ignore());
             CreateMap<EstimateFlatFeeCreateDto, EstimateFlatFee>();
 
             // Mapeo de Vehicle a VehicleReadDto y viceversa

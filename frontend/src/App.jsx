@@ -17,6 +17,7 @@ import MainLayout from "./components/Layout/MainLayout"; // Importa el layout
 import Home from "./components/Home/index";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 import Settings from "./components/Home/Settings/Settings";
+import ShopReports from "./components/Home/Reports/ShopReports";
 
 const App = () => {
   return (
@@ -44,6 +45,8 @@ const App = () => {
         <Route path="/estimate/create" element={<Estimate />} />
         <Route path="/estimate/edit/:id" element={<Estimate />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/reports" element={<ShopReports />} />
+        
       </Route>
 
     </Routes>

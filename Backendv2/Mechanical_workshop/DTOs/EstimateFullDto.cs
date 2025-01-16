@@ -71,7 +71,7 @@ namespace Mechanical_workshop.Dtos
 
         public string Description { get; set; } = string.Empty;
 
-        public int Duration { get; set; } // Duración en horas
+        public int Duration { get; set; }
 
         public decimal LaborRate { get; set; }
 
