@@ -7,8 +7,6 @@ namespace Mechanical_workshop.Dtos
     {
         [Required]
         public int VehicleID { get; set; }
-
-        // Incluye el DTO para crear TechnicianDiagnostic si se proporciona
         public TechnicianDiagnosticCreateDto? TechnicianDiagnostic { get; set; }
 
         [Required]

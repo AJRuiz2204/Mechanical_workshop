@@ -13,6 +13,7 @@ namespace Mechanical_workshop.Models
 
         // Relación con Vehicle
         [Required]
+        [ForeignKey("Vehicle")]
         public int VehicleId { get; set; }
         public Vehicle? Vehicle { get; set; }
 

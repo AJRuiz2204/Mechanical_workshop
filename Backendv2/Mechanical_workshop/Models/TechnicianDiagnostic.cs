@@ -10,6 +10,7 @@ namespace Mechanical_workshop.Models
         public int Id { get; set; }
 
         [Required]
+        [ForeignKey("Diagnostic")]
         public int DiagnosticId { get; set; }
         public Diagnostic? Diagnostic { get; set; }
 
