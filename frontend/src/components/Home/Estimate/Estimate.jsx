@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 // src/components/Estimate/Estimate.jsx
 
@@ -24,6 +25,8 @@ import {
   getDiagnosticByVehicleId, // Import the new function
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import EstimatePDF from "./EstimatePDF";
 
 const Estimate = () => {
   const { id } = useParams();
@@ -107,6 +110,16 @@ const Estimate = () => {
   // New state to handle loading state when adding a part
   const [isAddingPart, setIsAddingPart] = useState(false);
 
+  // Estado para los totales del PDF
+  const [pdfTotals, setPdfTotals] = useState({
+    partsTotal: 0,
+    laborTotal: 0,
+    othersTotal: 0,
+    partsTax: 0,
+    laborTax: 0,
+    total: 0,
+  });
+
   //------------------------------------------------------------
   // LOAD (Vehicles, existing Estimate if editing, plus Settings)
   //------------------------------------------------------------
@@ -150,6 +163,7 @@ const Estimate = () => {
               setSelectedVehicle(foundVeh);
               setOwner(existingEstimate.owner);
               setNoTax(existingEstimate.owner.noTax);
+              console.log("Owner Data:", existingEstimate.owner); // Verificar en consola
             }
           }
 
@@ -300,55 +314,58 @@ const Estimate = () => {
   //------------------------------------------------------------
   // CALCULATE TOTALS
   //------------------------------------------------------------
-  const calculateTotals = () => {
-    let newSubtotal = 0;
-    let newTax = 0;
-
-    // Calculate subtotal and tax for parts
+  const calculatePdfTotals = () => {
+    let partsTotal = 0;
+    let taxParts = 0;
     parts.forEach((part) => {
-      newSubtotal += parseFloat(part.extendedPrice) || 0;
-      if (part.applyPartTax && settings) {
-        newTax +=
+      partsTotal += parseFloat(part.extendedPrice) || 0;
+      if (part.taxable && settings) {
+        taxParts +=
           (parseFloat(part.extendedPrice) || 0) *
           (parseFloat(settings.partTaxRate) / 100);
       }
     });
 
-    // Calculate subtotal and tax for labors
+    let laborTotal = 0;
+    let taxLabors = 0;
     labors.forEach((labor) => {
-      newSubtotal += parseFloat(labor.extendedPrice) || 0;
-      if (labor.applyLaborTax && settings) {
-        newTax +=
+      laborTotal += parseFloat(labor.extendedPrice) || 0;
+      if (labor.taxable && settings) {
+        taxLabors +=
           (parseFloat(labor.extendedPrice) || 0) *
           (parseFloat(settings.laborTaxRate) / 100);
       }
     });
 
-    // Calculate subtotal and tax for flat fees
+    let othersTotal = 0;
     flatFees.forEach((fee) => {
-      newSubtotal += parseFloat(fee.extendedPrice) || 0;
-      // If taxes apply to flat fees, add logic here
-      // Example:
-      // if (fee.applyFlatFeeTax && settings) {
-      //   newTax += (parseFloat(fee.extendedPrice) || 0) * (parseFloat(settings.flatFeeTaxRate) / 100);
-      // }
+      othersTotal += parseFloat(fee.extendedPrice) || 0;
+      // Si aplicas impuestos a flat fees, añade la lógica aquí
     });
 
-    // Apply NoTax setting
-    if (noTax && settings) {
-      newTax = 0;
-    }
+    const total = partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
 
-    // Calculate total
-    const newTotal = newSubtotal + newTax;
-
-    // Update states
-    setSubtotal(newSubtotal);
-    setTax(newTax);
-    setTotal(newTotal);
+    return {
+      partsTotal,
+      laborTotal,
+      othersTotal,
+      partsTax: taxParts,
+      laborTax: taxLabors,
+      total,
+    };
   };
 
-  // useEffect to recalculate totals when parts, labors, flatFees, or settings change
+  const calculateTotals = () => {
+    const totals = calculatePdfTotals();
+    setPdfTotals(totals);
+
+    // Además, actualiza los estados de subtotal, tax y total
+    setSubtotal(totals.partsTotal + totals.laborTotal + totals.othersTotal);
+    setTax(totals.partsTax + totals.laborTax);
+    setTotal(totals.total);
+  };
+
+  // useEffect para recalcular los totales cuando cambian los items
   useEffect(() => {
     calculateTotals();
   }, [parts, labors, flatFees, settings, noTax]);
@@ -361,9 +378,13 @@ const Estimate = () => {
     setIsAddingPart(true);
     try {
       // Verificar si el Part Number ya existe
-      const duplicate = parts.find(part => part.partNumber === newPart.partNumber);
+      const duplicate = parts.find(
+        (part) => part.partNumber === newPart.partNumber
+      );
       if (duplicate) {
-        setError(`The part with Part Number ${newPart.partNumber} already exists in this estimate.`);
+        setError(
+          `The part with Part Number ${newPart.partNumber} already exists in this estimate.`
+        );
         setIsAddingPart(false);
         return;
       }
@@ -421,7 +442,7 @@ const Estimate = () => {
 
     const updatedLabors = [...labors, newItem];
     setLabors(updatedLabors);
-    calculateTotals(parts, updatedLabors, flatFees);
+    calculateTotals();
 
     setError(null);
     handleCloseLaborModal();
@@ -444,7 +465,7 @@ const Estimate = () => {
 
     const updatedFlatFees = [...flatFees, newItem];
     setFlatFees(updatedFlatFees);
-    calculateTotals(parts, labors, updatedFlatFees);
+    calculateTotals();
 
     setError(null);
     handleCloseFlatFeeModal();
@@ -485,12 +506,47 @@ const Estimate = () => {
     }
 
     // Verificar si hay partes duplicadas antes de enviar
-    const partNumbers = parts.map(part => part.partNumber);
-    const hasDuplicates = partNumbers.some((item, index) => partNumbers.indexOf(item) !== index);
+    const partNumbers = parts.map((part) => part.partNumber);
+    const hasDuplicates = partNumbers.some(
+      (item, index) => partNumbers.indexOf(item) !== index
+    );
     if (hasDuplicates) {
       setError("There are duplicate Part Numbers in the estimate.");
       return;
     }
+
+    const combinedItems = [
+      ...parts.map((part) => ({
+        type: "Part",
+        description: part.description,
+        partNumber: part.partNumber, 
+        quantity: part.quantity,
+        price: part.netPrice,
+        listPrice: part.listPrice, 
+        extended: part.extendedPrice,
+        taxable: part.applyPartTax ? "Yes" : "No", 
+      })),
+      ...labors.map((labor) => ({
+        type: "Labor",
+        description: labor.description,
+        duration: labor.duration,
+        quantity: labor.duration, 
+        price: labor.laborRate,
+        extended: labor.extendedPrice,
+        taxable: labor.applyLaborTax ? "Yes" : "No", 
+      })),
+      ...flatFees.map((fee) => ({
+        type: "Flat Fee",
+        description: fee.description,
+        partNumber: "-",
+        quantity: "-",
+        price: fee.flatFeePrice,
+        listPrice: "-",
+        extended: fee.extendedPrice,
+        taxable: "No",
+      })),
+    ];
+    
 
     const estimateData = {
       VehicleID: parseInt(selectedVehicleId),
@@ -577,6 +633,30 @@ const Estimate = () => {
       </div>
     );
   }
+
+  const combinedItems = [
+    ...parts.map((part) => ({
+      type: "Part",
+      description: part.description,
+      quantity: part.quantity,
+      price: part.netPrice,
+      extended: part.extendedPrice,
+    })),
+    ...labors.map((labor) => ({
+      type: "Labor",
+      description: labor.description,
+      quantity: labor.duration,
+      price: labor.laborRate,
+      extended: labor.extendedPrice,
+    })),
+    ...flatFees.map((fee) => ({
+      type: "Flat Fee",
+      description: fee.description,
+      quantity: "-",
+      price: fee.flatFeePrice,
+      extended: fee.extendedPrice,
+    })),
+  ];
 
   return (
     <div className="p-4 border rounded">
@@ -802,6 +882,31 @@ const Estimate = () => {
 
       {/* Buttons to Save or Cancel */}
       <div className="text-end mt-3">
+        {settings && selectedVehicle && owner ? (
+          <PDFDownloadLink
+          document={
+            <EstimatePDF
+              workshopData={settings}
+              vehicle={selectedVehicle}
+              customer={owner}
+              items={combinedItems}
+              totals={pdfTotals}
+              customerNote={customerNote}
+            />
+          }
+          fileName={`Estimate_${id || "New"}.pdf`}
+          className="btn btn-primary me-2"
+        >
+          {({ blob, url, loading, error }) =>
+            loading ? "Generando PDF..." : "Descargar PDF"
+          }
+        </PDFDownloadLink>
+        
+        ) : (
+          <Button variant="primary" className="me-2" disabled>
+            Descargar PDF
+          </Button>
+        )}
         <Button
           variant="secondary"
           className="me-2"
