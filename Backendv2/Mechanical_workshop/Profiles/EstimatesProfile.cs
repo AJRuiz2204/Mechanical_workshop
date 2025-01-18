@@ -18,7 +18,10 @@ namespace Mechanical_workshop.Profiles
             CreateMap<EstimateCreateDto, Estimate>()
                 .ForMember(dest => dest.Vehicle, opt => opt.Ignore())
                 .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore())
-                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic));
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic))
+                .ForMember(dest => dest.Parts, opt => opt.MapFrom(src => src.Parts))
+                .ForMember(dest => dest.Labors, opt => opt.MapFrom(src => src.Labors))
+                .ForMember(dest => dest.FlatFees, opt => opt.MapFrom(src => src.FlatFees));
 
             // Mapeo de TechnicianDiagnosticCreateDto a TechnicianDiagnostic
             CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();

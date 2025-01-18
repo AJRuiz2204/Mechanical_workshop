@@ -93,32 +93,6 @@ namespace Mechanical_workshop.Controllers
             _context.Estimates.Add(estimate);
             await _context.SaveChangesAsync();
 
-            // Agregar Partes
-            foreach (var partDto in estimateCreateDto.Parts)
-            {
-                var part = _mapper.Map<EstimatePart>(partDto);
-                part.EstimateID = estimate.ID;
-                _context.EstimateParts.Add(part);
-            }
-
-            // Agregar Mano de Obra
-            foreach (var laborDto in estimateCreateDto.Labors)
-            {
-                var labor = _mapper.Map<EstimateLabor>(laborDto);
-                labor.EstimateID = estimate.ID;
-                _context.EstimateLabors.Add(labor);
-            }
-
-            // Agregar Tarifas Planas
-            foreach (var flatFeeDto in estimateCreateDto.FlatFees)
-            {
-                var flatFee = _mapper.Map<EstimateFlatFee>(flatFeeDto);
-                flatFee.EstimateID = estimate.ID;
-                _context.EstimateFlatFees.Add(flatFee);
-            }
-
-            await _context.SaveChangesAsync();
-
             // Recuperar la estimación completa para la respuesta
             var createdEstimate = await _context.Estimates
                 .Include(e => e.Vehicle)

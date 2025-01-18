@@ -19,6 +19,7 @@ import {
   updateWorkshopSettings,
 } from "../../../services/workshopSettingsService";
 import WorkshopSettingsPreview from "./WorkshopSettingsPreview";
+import EstimatePDF from "../Estimate/EstimatePDF";
 
 const formatPhoneNumber = (value) => {
   if (!value) return value;
@@ -62,6 +63,9 @@ const WorkshopSettingsForm = () => {
     websiteUrl: "",
     disclaimer: "",
     email: "",
+    quoteNumber: "",      // Nuevo campo
+    lastUpdated: "",      // Nuevo campo
+    expiryDate: "",       // Nuevo campo
   });
 
   const [savedSettings, setSavedSettings] = useState(null);
@@ -95,6 +99,9 @@ const WorkshopSettingsForm = () => {
           websiteUrl: data.websiteUrl || "",
           disclaimer: data.disclaimer || "",
           email: data.email || "",
+          quoteNumber: data.quoteNumber || "",      // Nuevo campo
+          lastUpdated: data.lastUpdated || "",      // Nuevo campo
+          expiryDate: data.expiryDate || "",       // Nuevo campo
         });
       } catch (err) {
         if (err.message === "Workshop settings not found.") {
@@ -188,6 +195,21 @@ const WorkshopSettingsForm = () => {
       newErrors.email = "La dirección de correo electrónico no es válida.";
     }
 
+    // Validación de Quote Number
+    if (!formData.quoteNumber.trim()) {
+      newErrors.quoteNumber = "El número de cotización es obligatorio.";
+    }
+
+    // Validación de Last Updated
+    if (!formData.lastUpdated.trim()) {
+      newErrors.lastUpdated = "La última actualización es obligatoria.";
+    }
+
+    // Validación de Expiry Date
+    if (!formData.expiryDate.trim()) {
+      newErrors.expiryDate = "La fecha de expiración es obligatoria.";
+    }
+
     return newErrors;
   };
 
@@ -250,6 +272,9 @@ const WorkshopSettingsForm = () => {
         websiteUrl: "",
         disclaimer: "",
         email: "",
+        quoteNumber: "",      // Nuevo campo
+        lastUpdated: "",      // Nuevo campo
+        expiryDate: "",       // Nuevo campo
       });
     } catch (err) {
       console.error("Detalles del error:", err); // Para depuración
@@ -416,6 +441,55 @@ const WorkshopSettingsForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
+            {/* Número de Cotización */}
+            <Form.Group controlId="quoteNumber" className="mb-3">
+              <Form.Label>Número de Cotización</Form.Label>
+              <Form.Control
+                type="text"
+                name="quoteNumber"
+                value={formData.quoteNumber}
+                onChange={handleChange}
+                isInvalid={!!errors.quoteNumber}
+                required
+                placeholder="Ingresa el número de cotización"
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.quoteNumber}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            {/* Última Actualización */}
+            <Form.Group controlId="lastUpdated" className="mb-3">
+              <Form.Label>Última Actualización</Form.Label>
+              <Form.Control
+                type="datetime-local"
+                name="lastUpdated"
+                value={formData.lastUpdated}
+                onChange={handleChange}
+                isInvalid={!!errors.lastUpdated}
+                required
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.lastUpdated}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            {/* Fecha de Expiración */}
+            <Form.Group controlId="expiryDate" className="mb-3">
+              <Form.Label>Fecha de Expiración</Form.Label>
+              <Form.Control
+                type="date"
+                name="expiryDate"
+                value={formData.expiryDate}
+                onChange={handleChange}
+                isInvalid={!!errors.expiryDate}
+                required
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.expiryDate}
+              </Form.Control.Feedback>
+            </Form.Group>
+
             {/* Disclaimer */}
             <Form.Group controlId="disclaimer" className="mb-3">
               <Form.Label>Disclaimer</Form.Label>
@@ -440,6 +514,20 @@ const WorkshopSettingsForm = () => {
               </Button>
             </div>
           </Form>
+        </Col>
+      </Row>
+
+      {/* Añadir EstimatePDF para visualizar el PDF con los datos */}
+      <Row className="mt-4">
+        <Col>
+          <EstimatePDF
+            workshopData={savedSettings} // Pasar savedSettings como workshopData
+            customer={{}} // Proveer datos de cliente según corresponda
+            vehicle={{}} // Proveer datos de vehículo según corresponda
+            items={[]} // Proveer items según corresponda
+            totals={{}} // Proveer totales según corresponda
+            customerNote="" // Proveer nota del cliente según corresponda
+          />
         </Col>
       </Row>
     </Container>

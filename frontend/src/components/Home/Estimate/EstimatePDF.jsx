@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
 });
 
 const EstimatePDF = ({
-  workshopData,
+  workshopData, // Asegurarse de recibir workshopData como prop
   customer,
   vehicle,
   items,
@@ -187,6 +187,8 @@ const EstimatePDF = ({
   const safeCustomer = customer || {};
   const safeVehicle = vehicle || {};
   const safeItems = items || [];
+
+  console.log("Workshop Data en EstimatePDF:", safeWorkshopData); // Para depuración
 
   return (
     <Document>
