@@ -1,16 +1,8 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import React from "react";
-import {
-  Page,
-  Text,
-  View,
-  Document,
-  StyleSheet,
-  Link,
-} from "@react-pdf/renderer";
+import { Page, Text, View, Document, StyleSheet, Link } from "@react-pdf/renderer";
 
-// Definir estilos
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -18,16 +10,10 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     backgroundColor: "#ffffff",
   },
-  header: {
-    marginBottom: 20,
-    borderBottom: 1,
-    borderBottomColor: "#e0e0e0",
-    paddingBottom: 15,
-  },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   headerLeft: {
     flex: 1,
@@ -39,11 +25,15 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   link: {
     textDecoration: "underline",
     color: "blue",
+    fontSize: 9,
+  },
+  textLine: {
+    fontSize: 9,
   },
   infoSection: {
     marginTop: 15,
@@ -53,18 +43,12 @@ const styles = StyleSheet.create({
     borderBottom: 1,
     borderBottomColor: "#e0e0e0",
   },
-  customerInfo: {
-    flex: 1,
-  },
-  vehicleInfo: {
-    flex: 1,
-  },
   sectionTitle: {
     fontSize: 10,
     fontWeight: "bold",
     marginBottom: 4,
   },
-  customerNoteSection: {
+  noteSection: {
     marginBottom: 15,
     padding: 10,
     borderBottom: 1,
@@ -77,16 +61,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },
+  tableHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000000",
+    backgroundColor: "#f5f5f5",
+  },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     minHeight: 24,
     alignItems: "center",
-  },
-  tableHeader: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#000000",
   },
   tableHeaderText: {
     fontSize: 8,
@@ -110,8 +95,8 @@ const styles = StyleSheet.create({
     borderRightColor: "#e0e0e0",
   },
   colPartHours: {
-    width: "10%",
-    textAlign: "right",
+    width: "12%",
+    textAlign: "center",
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
   },
@@ -128,7 +113,7 @@ const styles = StyleSheet.create({
     borderRightColor: "#e0e0e0",
   },
   colExtended: {
-    width: "10%",
+    width: "12%",
     textAlign: "right",
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
@@ -143,16 +128,18 @@ const styles = StyleSheet.create({
   },
   totalRow: {
     flexDirection: "row",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   totalLabel: {
     width: 100,
     textAlign: "right",
     marginRight: 10,
+    fontSize: 9,
   },
   totalAmount: {
     width: 80,
     textAlign: "right",
+    fontSize: 9,
   },
   grandTotal: {
     marginTop: 8,
@@ -175,36 +162,32 @@ const styles = StyleSheet.create({
   },
 });
 
-const EstimatePDF = ({
-  workshopData, // Asegurarse de recibir workshopData como prop
-  customer,
-  vehicle,
-  items,
-  totals,
-  customerNote,
-}) => {
+const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerNote }) => {
   const safeWorkshopData = workshopData || {};
   const safeCustomer = customer || {};
   const safeVehicle = vehicle || {};
   const safeItems = items || [];
 
-  console.log("Workshop Data en EstimatePDF:", safeWorkshopData); // Para depuración
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={styles.companyName}>
-              {safeWorkshopData.workshopName || "N/A"} {/* Correcto */}
+              {safeWorkshopData.workshopName || "Taller Genérico"}
             </Text>
-            <Text>{safeWorkshopData.primaryPhone || "N/A"}</Text>
+            <Text style={styles.textLine}>
+              {safeWorkshopData.primaryPhone || "Tel. N/A"}
+            </Text>
             {safeWorkshopData.secondaryPhone && (
-              <Text>{safeWorkshopData.secondaryPhone}</Text>
+              <Text style={styles.textLine}>{safeWorkshopData.secondaryPhone}</Text>
             )}
-            <Text>Fax: {safeWorkshopData.fax || "N/A"}</Text>
-            <Text>{safeWorkshopData.email || "N/A"}</Text>
+            <Text style={styles.textLine}>
+              Fax: {safeWorkshopData.fax || "N/A"}
+            </Text>
+            <Text style={styles.textLine}>
+              {safeWorkshopData.email || "Email N/A"}
+            </Text>
             {safeWorkshopData.websiteUrl && (
               <Link src={safeWorkshopData.websiteUrl} style={styles.link}>
                 {safeWorkshopData.websiteUrl}
@@ -212,119 +195,100 @@ const EstimatePDF = ({
             )}
           </View>
           <View style={styles.headerRight}>
-            <Text style={{ fontWeight: "bold" }}>
-              Quote # {safeWorkshopData.quoteNumber || "N/A"}
+            <Text style={styles.textLine}>
+              {safeWorkshopData.address || "Dirección N/A"}
             </Text>
-            <Text>Last Updated: {safeWorkshopData.lastUpdated || "N/A"}</Text>
-            <Text>Expires: {safeWorkshopData.expiryDate || "N/A"}</Text>
           </View>
         </View>
 
         <View style={styles.headerRow}>
           <View style={styles.headerRight}>
-            <Text>{safeWorkshopData.address || "N/A"}</Text>
-          </View>
-        </View>
-
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <View style={styles.customerInfo}>
-            <Text style={styles.sectionTitle}>Customer Information</Text>
-            <Text>{`${safeCustomer.name || "N/A"} ${
-              safeCustomer.lastName || ""
-            }`}</Text>
-            <Text>Email: {safeCustomer.email || "N/A"}</Text>
-          </View>
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.sectionTitle}>Vehicle Information</Text>
-            <Text>
-              {`${safeVehicle.year || "N/A"} ${safeVehicle.make || ""} ${
-                safeVehicle.model || ""
-              }`}
+            <Text style={styles.textLine}>
+              {safeWorkshopData.quoteNumber
+                ? `Quote # ${safeWorkshopData.quoteNumber}`
+                : ""}
             </Text>
-            <Text>Engine: {safeVehicle.engine || "N/A"}</Text>
-            <Text>Mileage: {safeVehicle.mileage || "N/A"}</Text>
+            <Text style={styles.textLine}>
+              {safeWorkshopData.lastUpdated
+                ? `Last Updated: ${safeWorkshopData.lastUpdated}`
+                : ""}
+            </Text>
+            <Text style={styles.textLine}>
+              {safeWorkshopData.expiryDate
+                ? `Expires: ${safeWorkshopData.expiryDate}`
+                : ""}
+            </Text>
           </View>
         </View>
 
-        {/* Customer Note */}
-        {customerNote && (
-          <View style={styles.customerNoteSection}>
+        <View style={styles.infoSection}>
+          <View style={{ flex: 1, marginRight: 10 }}>
+            <Text style={styles.sectionTitle}>Customer</Text>
+            <Text style={styles.textLine}>
+              {safeCustomer.name} {safeCustomer.lastName}
+            </Text>
+            <Text style={styles.textLine}>
+              {safeCustomer.email || "customer@email"}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>Vehicle</Text>
+            <Text style={styles.textLine}>
+              {safeVehicle.year} {safeVehicle.make} {safeVehicle.model}
+            </Text>
+            <Text style={styles.textLine}>
+              Engine: {safeVehicle.engine || "N/A"}
+            </Text>
+            <Text style={styles.textLine}>
+              VIN: {safeVehicle.vin || "N/A"}
+            </Text>
+          </View>
+        </View>
+
+        {customerNote ? (
+          <View style={styles.noteSection}>
             <Text style={styles.sectionTitle}>Customer Note:</Text>
             <Text>{customerNote}</Text>
           </View>
-        )}
+        ) : null}
 
-        {/* Items Table */}
         <View style={styles.table}>
-          {/* Cabecera de la Tabla */}
           <View style={[styles.tableRow, styles.tableHeader]}>
-            <Text
-              style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
-            >
-              Type
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
-            >
-              Description
-            </Text>
-            <Text
-              style={[
-                styles.tableCol,
-                styles.colPartHours,
-                styles.tableHeaderText,
-              ]}
-            >
+            <Text style={[styles.tableCol, styles.colType, styles.tableHeaderText]}>Type</Text>
+            <Text style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}>Description</Text>
+            <Text style={[styles.tableCol, styles.colPartHours, styles.tableHeaderText]}>
               Part# / Hours
             </Text>
-            <Text
-              style={[
-                styles.tableCol,
-                styles.colNetRate,
-                styles.tableHeaderText,
-              ]}
-            >
+            <Text style={[styles.tableCol, styles.colNetRate, styles.tableHeaderText]}>
               Net / Rate
             </Text>
-            <Text
-              style={[styles.tableCol, styles.colList, styles.tableHeaderText]}
-            >
+            <Text style={[styles.tableCol, styles.colList, styles.tableHeaderText]}>
               List
             </Text>
-            <Text
-              style={[
-                styles.tableCol,
-                styles.colExtended,
-                styles.tableHeaderText,
-              ]}
-            >
+            <Text style={[styles.tableCol, styles.colExtended, styles.tableHeaderText]}>
               Extended
             </Text>
-            <Text
-              style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
-            >
+            <Text style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}>
               Tax?
             </Text>
           </View>
 
-          {/* Filas de la Tabla */}
-          {safeItems.map((item, index) => (
-            <View key={index} style={styles.tableRow}>
+          {safeItems.map((item, idx) => (
+            <View key={idx} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.colType, styles.tableText]}>
                 {item.type || "N/A"}
               </Text>
               <Text style={[styles.tableCol, styles.colDesc, styles.tableText]}>
-                {item.description || "N/A"}
+                {item.description || ""}
               </Text>
-              <Text
-                style={[styles.tableCol, styles.colPartHours, styles.tableText]}
-              >
-                {item.type === "Part" ? item.partNumber : item.quantity}
+              <Text style={[styles.tableCol, styles.colPartHours, styles.tableText]}>
+                {item.type === "Part"
+                  ? item.partNumber
+                  : item.type === "Labor"
+                  ? `${item.quantity} hrs`
+                  : "-"}
               </Text>
-              <Text
-                style={[styles.tableCol, styles.colNetRate, styles.tableText]}
-              >
+              <Text style={[styles.tableCol, styles.colNetRate, styles.tableText]}>
                 ${parseFloat(item.price || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colList, styles.tableText]}>
@@ -332,9 +296,7 @@ const EstimatePDF = ({
                   ? `$${parseFloat(item.listPrice || 0).toFixed(2)}`
                   : "-"}
               </Text>
-              <Text
-                style={[styles.tableCol, styles.colExtended, styles.tableText]}
-              >
+              <Text style={[styles.tableCol, styles.colExtended, styles.tableText]}>
                 ${parseFloat(item.extended || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colTax, styles.tableText]}>
@@ -344,7 +306,6 @@ const EstimatePDF = ({
           ))}
         </View>
 
-        {/* Totales */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Parts Total:</Text>
@@ -377,23 +338,20 @@ const EstimatePDF = ({
             </Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={[styles.totalLabel, styles.grandTotalText]}>
-              Total:
-            </Text>
+            <Text style={[styles.totalLabel, styles.grandTotalText]}>Total:</Text>
             <Text style={[styles.totalAmount, styles.grandTotalText]}>
               ${(totals?.total || 0).toFixed(2)}
             </Text>
           </View>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
-          <Text>
-            Estimate good for 14 days. Not responsible for damage caused by
-            theft, fire or acts of nature. I authorize the above repairs, along
-            with any necessary materials.
-          </Text>
-          <Text style={{ marginTop: 8, textAlign: "right" }}>Page 1/1</Text>
+          {safeWorkshopData.disclaimer && (
+            <Text style={{ marginBottom: 8 }}>
+              {safeWorkshopData.disclaimer}
+            </Text>
+          )}
+          <Text style={{ textAlign: "right" }}>Page 1/1</Text>
         </View>
       </Page>
     </Document>
