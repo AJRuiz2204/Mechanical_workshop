@@ -79,7 +79,6 @@ const DiagnosticList = () => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Vehicle ID</th>
                   <th>VIN</th>
                   <th>Make</th>
                   <th>Model</th>
@@ -91,7 +90,6 @@ const DiagnosticList = () => {
                 {diagnostics.map((diag) => (
                   <tr key={diag.id}>
                     <td>{diag.id}</td>
-                    <td>{diag.VehicleId}</td>
                     <td>{diag.vehicle?.vin || "N/A"}</td>
                     <td>{diag.vehicle?.make || "N/A"}</td>
                     <td>{diag.vehicle?.model || "N/A"}</td>

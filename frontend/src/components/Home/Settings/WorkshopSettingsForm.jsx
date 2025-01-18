@@ -12,7 +12,7 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
-import dayjs from "dayjs"; // <--- Importamos dayjs
+import dayjs from "dayjs";
 import {
   getWorkshopSettings,
   createWorkshopSettings,
@@ -20,7 +20,6 @@ import {
 } from "../../../services/workshopSettingsService";
 import WorkshopSettingsPreview from "./WorkshopSettingsPreview";
 
-// Función utilitaria para formatear números de teléfono como (000) 000-0000
 const formatPhoneNumber = (value) => {
   if (!value) return value;
   const phoneNumber = value.replace(/[^\d]/g, "");
@@ -35,20 +34,18 @@ const formatPhoneNumber = (value) => {
   )}-${phoneNumber.slice(6, 10)}`;
 };
 
-// Función utilitaria para validar emails
 const validateEmail = (email) => {
   const re =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
   return re.test(String(email).toLowerCase());
 };
 
-// Función utilitaria para validar URLs
 const validateURL = (url) => {
   const pattern = new RegExp(
-    "^(https?:\\/\\/)" + // protocolo
+    "^(https?:\\/\\/)" +
       "((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,})" + // dominio
-      "(\\:\\d+)?(\\/[-a-zA-Z\\d%@_.~+&:]*)*" + // puerto y ruta
-      "(\\?[;&a-zA-Z\\d%@_.,~+&:=-]*)?" + // query string
+      "(\\:\\d+)?(\\/[-a-zA-Z\\d%@_.~+&:]*)*" +
+      "(\\?[;&a-zA-Z\\d%@_.,~+&:=-]*)?" +
       "(\\#[-a-zA-Z\\d_]*)?$",
     "i"
   );
@@ -56,7 +53,6 @@ const validateURL = (url) => {
 };
 
 const WorkshopSettingsForm = () => {
-  // Estado para los datos del formulario
   const [formData, setFormData] = useState({
     workshopName: "",
     address: "",
@@ -68,7 +64,6 @@ const WorkshopSettingsForm = () => {
     email: "",
   });
 
-  // Estado para los datos guardados (para la vista previa)
   const [savedSettings, setSavedSettings] = useState(null);
 
   // Estados para manejar carga, guardado, errores y mensajes de éxito

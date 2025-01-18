@@ -17,15 +17,10 @@ const WorkshopSettingsPreview = ({ settings }) => {
       </Card>
     );
   }
-
-  // Función para convertir y formatear la fecha/hora restando 6 horas
+  
   const formatLastUpdated = (dateString) => {
-    // Verifica que exista el valor antes de formatear
     if (!dateString) return "";
 
-    // dayjs(dateString) parsea la fecha/hora original
-    // .subtract(6, 'hour') le resta 6 horas
-    // .format('YYYY-MM-DD HH:mm:ss') la presenta en el formato deseado
     return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
   };
 

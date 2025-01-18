@@ -10,6 +10,7 @@ import {
   Link,
 } from "@react-pdf/renderer";
 
+// Definir estilos
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -42,6 +43,7 @@ const styles = StyleSheet.create({
   },
   link: {
     textDecoration: "underline",
+    color: "blue",
   },
   infoSection: {
     marginTop: 15,
@@ -190,33 +192,35 @@ const EstimatePDF = ({
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.companyName}>
-                {safeWorkshopData.name || "N/A"}
-              </Text>
-              <Text>{safeWorkshopData.phone || "N/A"}</Text>
-              <Link src={safeWorkshopData.website} style={styles.link}>
-                {safeWorkshopData.website || "N/A"}
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.companyName}>
+              {safeWorkshopData.workshopName || "N/A"} {/* Correcto */}
+            </Text>
+            <Text>{safeWorkshopData.primaryPhone || "N/A"}</Text>
+            {safeWorkshopData.secondaryPhone && (
+              <Text>{safeWorkshopData.secondaryPhone}</Text>
+            )}
+            <Text>Fax: {safeWorkshopData.fax || "N/A"}</Text>
+            <Text>{safeWorkshopData.email || "N/A"}</Text>
+            {safeWorkshopData.websiteUrl && (
+              <Link src={safeWorkshopData.websiteUrl} style={styles.link}>
+                {safeWorkshopData.websiteUrl}
               </Link>
-            </View>
-            <View style={styles.headerRight}>
-              <Text style={{ fontWeight: "bold" }}>
-                Quote # {safeWorkshopData.quoteNumber || "N/A"}
-              </Text>
-              <Text>Last Updated: {safeWorkshopData.lastUpdated || "N/A"}</Text>
-              <Text>Expires: {safeWorkshopData.expiryDate || "N/A"}</Text>
-            </View>
+            )}
           </View>
+          <View style={styles.headerRight}>
+            <Text style={{ fontWeight: "bold" }}>
+              Quote # {safeWorkshopData.quoteNumber || "N/A"}
+            </Text>
+            <Text>Last Updated: {safeWorkshopData.lastUpdated || "N/A"}</Text>
+            <Text>Expires: {safeWorkshopData.expiryDate || "N/A"}</Text>
+          </View>
+        </View>
 
-          <View style={styles.headerRow}>
-            <View style={styles.headerRight}>
-              <Text>{safeWorkshopData.address || "N/A"}</Text>
-              <Text>{safeWorkshopData.email || "N/A"}</Text>
-              <Text>Phone: {safeWorkshopData.phone || "N/A"}</Text>
-              <Text>Fax: {safeWorkshopData.fax || "N/A"}</Text>
-            </View>
+        <View style={styles.headerRow}>
+          <View style={styles.headerRight}>
+            <Text>{safeWorkshopData.address || "N/A"}</Text>
           </View>
         </View>
 
@@ -224,7 +228,9 @@ const EstimatePDF = ({
         <View style={styles.infoSection}>
           <View style={styles.customerInfo}>
             <Text style={styles.sectionTitle}>Customer Information</Text>
-            <Text>{`${safeCustomer.name || "N/A"} ${safeCustomer.lastName || ""}`}</Text>
+            <Text>{`${safeCustomer.name || "N/A"} ${
+              safeCustomer.lastName || ""
+            }`}</Text>
             <Text>Email: {safeCustomer.email || "N/A"}</Text>
           </View>
           <View style={styles.vehicleInfo}>
@@ -249,16 +255,58 @@ const EstimatePDF = ({
 
         {/* Items Table */}
         <View style={styles.table}>
+          {/* Cabecera de la Tabla */}
           <View style={[styles.tableRow, styles.tableHeader]}>
-            <Text style={[styles.tableCol, styles.colType, styles.tableHeaderText]}>Type</Text>
-            <Text style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}>Description</Text>
-            <Text style={[styles.tableCol, styles.colPartHours, styles.tableHeaderText]}>Part# / Hours</Text>
-            <Text style={[styles.tableCol, styles.colNetRate, styles.tableHeaderText]}>Net / Rate</Text>
-            <Text style={[styles.tableCol, styles.colList, styles.tableHeaderText]}>List</Text>
-            <Text style={[styles.tableCol, styles.colExtended, styles.tableHeaderText]}>Extended</Text>
-            <Text style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}>Tax?</Text>
+            <Text
+              style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
+            >
+              Type
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
+            >
+              Description
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colPartHours,
+                styles.tableHeaderText,
+              ]}
+            >
+              Part# / Hours
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colNetRate,
+                styles.tableHeaderText,
+              ]}
+            >
+              Net / Rate
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.colList, styles.tableHeaderText]}
+            >
+              List
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colExtended,
+                styles.tableHeaderText,
+              ]}
+            >
+              Extended
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
+            >
+              Tax?
+            </Text>
           </View>
 
+          {/* Filas de la Tabla */}
           {safeItems.map((item, index) => (
             <View key={index} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.colType, styles.tableText]}>
@@ -267,10 +315,14 @@ const EstimatePDF = ({
               <Text style={[styles.tableCol, styles.colDesc, styles.tableText]}>
                 {item.description || "N/A"}
               </Text>
-              <Text style={[styles.tableCol, styles.colPartHours, styles.tableText]}>
+              <Text
+                style={[styles.tableCol, styles.colPartHours, styles.tableText]}
+              >
                 {item.type === "Part" ? item.partNumber : item.quantity}
               </Text>
-              <Text style={[styles.tableCol, styles.colNetRate, styles.tableText]}>
+              <Text
+                style={[styles.tableCol, styles.colNetRate, styles.tableText]}
+              >
                 ${parseFloat(item.price || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colList, styles.tableText]}>
@@ -278,7 +330,9 @@ const EstimatePDF = ({
                   ? `$${parseFloat(item.listPrice || 0).toFixed(2)}`
                   : "-"}
               </Text>
-              <Text style={[styles.tableCol, styles.colExtended, styles.tableText]}>
+              <Text
+                style={[styles.tableCol, styles.colExtended, styles.tableText]}
+              >
                 ${parseFloat(item.extended || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colTax, styles.tableText]}>
@@ -288,7 +342,7 @@ const EstimatePDF = ({
           ))}
         </View>
 
-        {/* Totals */}
+        {/* Totales */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Parts Total:</Text>
@@ -321,7 +375,9 @@ const EstimatePDF = ({
             </Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={[styles.totalLabel, styles.grandTotalText]}>Total:</Text>
+            <Text style={[styles.totalLabel, styles.grandTotalText]}>
+              Total:
+            </Text>
             <Text style={[styles.totalAmount, styles.grandTotalText]}>
               ${(totals?.total || 0).toFixed(2)}
             </Text>
