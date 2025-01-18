@@ -103,7 +103,7 @@ const EstimateList = () => {
                 <td>${estimate.total?.toFixed(2)}</td>
                 <td>
                   {/* Botón "View" (puedes llevarlo a un detalle o a la vista de Invoice) */}
-                  <Link to={`/estimate/${estimate.id}`}>
+                  <Link to={`/invoice/${estimate.id}`}>
                     <Button variant="info" size="sm" className="me-2">
                       View
                     </Button>

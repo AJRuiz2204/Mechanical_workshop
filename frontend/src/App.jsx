@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RegisterUser from "./components/RegisterUser/RegisterUser";
@@ -18,6 +18,7 @@ import Home from "./components/Home/index";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 import Settings from "./components/Home/Settings/Settings";
 import ShopReports from "./components/Home/Reports/ShopReports";
+import Invoice from "./components/Home/Invoice/Invoice";
 
 const App = () => {
   return (
@@ -39,9 +40,11 @@ const App = () => {
         <Route path="/technicianDiagnostic/:id" element={<TechnicianDiagnostic />} />
         <Route path="/technicianDiagnostic/edit/:techDiagId" element={<TechnicianDiagnosticEdit />} />
         <Route path="/technicianDiagnostic/create/:diagnosticId" element={<TechnicianDiagnostic />} />
-        <Route path="/invoice" element={<invoice />} />
+        <Route path="/invoice" element={<Invoice />} />
+        <Route path="/invoice/:id" element={<Invoice />} />
         <Route path="/diagnostic-list" element={<DiagnosticList />} />
-        <Route path="/estimates/" element={<EstimateList />} />
+        <Route path="/estimates" element={<EstimateList />} />
+        <Route path="/estimates/:id" element={<Estimate />} />
         <Route path="/estimate/create" element={<Estimate />} />
         <Route path="/estimate/edit/:id" element={<Estimate />} />
         <Route path="/estimate/:id" element={<Estimate />} />
