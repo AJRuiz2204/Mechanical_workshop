@@ -3,21 +3,27 @@
 import emailjs from "emailjs-com";
 
 export const loginUser = async (credentials) => {
-  try {
-    const response = await fetch("/api/Users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(credentials),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData || "Error logging in.");
-    }
-    const data = await response.json();
-    return data; // Returns user information
-  } catch (error) {
-    throw error;
+  const response = await fetch("http://localhost:5121/api/Users/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.Message || "Login failed.");
   }
+
+  return response.json();
+};
+
+export const isLoggedIn = () => {
+  return !!localStorage.getItem("token");
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };
 
 export const forgotPassword = async (email) => {
@@ -30,10 +36,7 @@ export const forgotPassword = async (email) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData.Message ||
-          "Error requesting password reset."
-      );
+      throw new Error(errorData.Message || "Error requesting password reset.");
     }
 
     const data = await response.json();

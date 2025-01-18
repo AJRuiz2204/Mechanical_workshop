@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-// Frontend: src/components/login/Login.jsx
+// src/components/login/Login.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
@@ -14,12 +13,12 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const credentials = { Username: username, Password: password };
+    const credentials = { username, password };
     try {
-      const userInfo = await loginUser(credentials);
-      // Save user information if necessary
-      localStorage.setItem('user', JSON.stringify(userInfo));
-      navigate("/vehicle-list");
+      const { Token, User } = await loginUser(credentials);
+      localStorage.setItem("token", Token);
+      localStorage.setItem("user", JSON.stringify(User));
+      navigate("/home");
     } catch (err) {
       setError(err.message || "Error logging in.");
     }
@@ -55,7 +54,10 @@ const Login = () => {
               />
             </div>
             {error && <div className="text-danger mb-3">{error}</div>}
-            <button type="submit" className="btn btn-primary w-100 login-button">
+            <button
+              type="submit"
+              className="btn btn-primary w-100 login-button"
+            >
               LOGIN
             </button>
           </form>

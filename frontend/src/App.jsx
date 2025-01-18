@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "./components/login/Login";
@@ -13,39 +12,83 @@ import DiagnosticList from "./components/Home/Diagnostic/DiagnosticList";
 import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDiagnosticEdit";
 import EstimateList from "./components/Home/Estimate/EstimateList";
 import Estimate from "./components/Home/Estimate/Estimate";
-import MainLayout from "./components/Layout/MainLayout"; // Importa el layout
-import Home from "./components/Home/index";
-import invoice from "./components/Home/Invoice/Invoice";
+import MainLayout from "./components/Layout/MainLayout";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 import Settings from "./components/Home/Settings/Settings";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRouteComponent";
 
 const App = () => {
   return (
     <Routes>
-      {/* Rutas sin sidebar */}
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/register-user" element={<RegisterUser />} />
-      <Route path="/wsettings" element={<WorkshopSettingsForm />} />
-      {/* Rutas con sidebar dentro de MainLayout */}
-      <Route element={<MainLayout />}>
-        <Route path="/home" element={<Home />} />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/vehicle-reception" element={<VehicleReception />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/vehicle-list" element={<VehicleList />} />
         <Route path="/edit/:vin" element={<VehicleReception />} />
         <Route path="/diagnostic/:id" element={<Diagnostic />} />
-        <Route path="/technicianDiagnostic/:id" element={<TechnicianDiagnostic />} />
-        <Route path="/technicianDiagnostic/edit/:techDiagId" element={<TechnicianDiagnosticEdit />} />
-        <Route path="/invoice" element={<invoice />} />
+        <Route
+          path="/technicianDiagnostic/:id"
+          element={
+            <ProtectedRoute requiredRole="Technician">
+              <TechnicianDiagnostic />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/technicianDiagnostic/edit/:techDiagId"
+          element={
+            <ProtectedRoute requiredRole="Technician">
+              <TechnicianDiagnosticEdit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invoice"
+          element={
+            <ProtectedRoute requiredRole="Accountant">
+              <invoice />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/diagnostic-list" element={<DiagnosticList />} />
-        <Route path="/estimates/" element={<EstimateList />} />
-        <Route path="/estimate/create" element={<Estimate />} />
-        <Route path="/estimate/edit/:id" element={<Estimate />} />
+        <Route
+          path="/estimates/"
+          element={
+            <ProtectedRoute requiredRole="Manager">
+              <EstimateList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/estimate/create"
+          element={
+            <ProtectedRoute requiredRole="Manager">
+              <Estimate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/estimate/edit/:id"
+          element={
+            <ProtectedRoute requiredRole="Manager">
+              <Estimate />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/wsettings" element={<WorkshopSettingsForm />} />
       </Route>
-
     </Routes>
   );
 };
