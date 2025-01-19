@@ -83,13 +83,14 @@ const EstimateList = () => {
             <th>Subtotal</th>
             <th>Tax</th>
             <th>Total</th>
+            <th>Authorization</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {estimates.length === 0 ? (
             <tr>
-              <td colSpan="6" className="text-center">
+              <td colSpan="9" className="text-center">
                 No estimates found.
               </td>
             </tr>
@@ -101,6 +102,7 @@ const EstimateList = () => {
                 <td>${estimate.subtotal?.toFixed(2)}</td>
                 <td>${estimate.tax?.toFixed(2)}</td>
                 <td>${estimate.total?.toFixed(2)}</td>
+                <td>{estimate.authorizationStatus}</td>
                 <td>
                   {/* Botón "View" (puedes llevarlo a un detalle o a la vista de Invoice) */}
                   <Link to={`/invoice/${estimate.id}`}>

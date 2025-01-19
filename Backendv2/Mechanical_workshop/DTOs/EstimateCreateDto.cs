@@ -56,7 +56,8 @@ namespace Mechanical_workshop.Dtos
     public class EstimatePartCreateDto
     {
         
-        public int ID { get; set; }
+        // Eliminar o hacer opcional el ID
+        // public int ID { get; set; }
 
         [Required]
         public string Description { get; set; } = string.Empty;
@@ -82,7 +83,8 @@ namespace Mechanical_workshop.Dtos
     // DTO para Mano de Obra al Crear Estimate
     public class EstimateLaborCreateDto
     {
-        public int ID { get; set; }
+        // Eliminar o hacer opcional el ID
+        // public int ID { get; set; }
         
         [Required]
         public string Description { get; set; } = string.Empty;
@@ -102,7 +104,8 @@ namespace Mechanical_workshop.Dtos
     // DTO para Tarifas Planas al Crear Estimate
     public class EstimateFlatFeeCreateDto
     {
-        public int ID { get; set; }
+        // Eliminar o hacer opcional el ID
+        // public int ID { get; set; }
 
         [Required]
         public string Description { get; set; } = string.Empty;

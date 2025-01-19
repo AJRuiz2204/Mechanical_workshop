@@ -1,5 +1,4 @@
-// src/services/EstimateService.js
-
+/* eslint-disable no-unused-vars */
 const API_URL = "/api/Estimates";
 const VEHICLE_API_URL = "/api/UserWorkshops/vehicles";
 const GET_VEHICLE_BY_ID_URL = (id) => `/api/UserWorkshops/vehicle/${id}`;
@@ -7,7 +6,7 @@ const TECH_DIAGNOSTIC_API_URL = "/api/TechnicianDiagnostics";
 const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) =>
   `/api/TechnicianDiagnostics/${id}`;
 const GET_DIAGNOSTIC_BY_VEHICLE_ID_URL = (vehicleId) =>
-  `/api/TechnicianDiagnostics/vehicle/${vehicleId}`; // Asegúrate de que esta ruta coincide con el backend
+  `/api/TechnicianDiagnostics/vehicle/${vehicleId}`;
 
 export const getEstimates = async () => {
   try {
@@ -15,7 +14,7 @@ export const getEstimates = async () => {
     if (!response.ok) {
       throw new Error("Error fetching the Estimates.");
     }
-    return await response.json(); // Returns an array of EstimateFullDto
+    return await response.json();
   } catch (error) {
     console.error("Error in getEstimates:", error);
     throw error;
@@ -61,29 +60,43 @@ export const createEstimate = async (estimateData) => {
   }
 };
 
+// En EstimateService.js (updateEstimate)
 export const updateEstimate = async (id, estimateData) => {
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`/api/Estimates/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(estimateData),
     });
 
     if (!response.ok) {
+      // Lee el JSON una sola vez
       const errorData = await response.json().catch(() => null);
+
+      console.error("SERVER RESPONSE:", errorData);
+      console.error("SERVER ERRORS DETAIL:", errorData?.errors);
+
+      let errorMsg = "Error updating the estimate.";
       if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error updating the Estimate.");
+        errorMsg = errorData.message;
       }
+
+      if (errorData && Array.isArray(errorData.errors)) {
+        const detail = errorData.errors
+          .map((err) => err.Error || err.ErrorMessage || "")
+          .join(" | ");
+        errorMsg += ` ${detail}`;
+      }
+
+      throw new Error(errorMsg);
     }
 
-    return;
+    // Si todo va bien, parseamos la respuesta una sola vez
+    const updatedEstimate = await response.json();
+    return updatedEstimate;
   } catch (error) {
     console.error("Error in updateEstimate:", error);
-    throw error;
+    throw new Error(error.message || "Error updating the estimate.");
   }
 };
 
@@ -96,14 +109,13 @@ export const deleteEstimate = async (id) => {
     if (!response.ok) {
       throw new Error("Error deleting the Estimate.");
     }
-    return; // Successfully deleted
+    return;
   } catch (error) {
     console.error("Error in deleteEstimate:", error);
     throw error;
   }
 };
 
-// Vehicle-related functions
 export const getAllVehicles = async () => {
   try {
     const response = await fetch(VEHICLE_API_URL);
@@ -130,7 +142,6 @@ export const getVehicleById = async (id) => {
   }
 };
 
-// Technician Diagnostic-related functions
 export const getAllTechnicianDiagnostics = async () => {
   try {
     const response = await fetch(TECH_DIAGNOSTIC_API_URL);
@@ -159,12 +170,10 @@ export const getTechnicianDiagnosticById = async (id) => {
   }
 };
 
-// Nuevo: Obtener TechnicianDiagnostic por VehicleID
 export const getDiagnosticByVehicleId = async (vehicleId) => {
   try {
     const response = await fetch(GET_DIAGNOSTIC_BY_VEHICLE_ID_URL(vehicleId));
     if (!response.ok) {
-      // Si no existe, devolver null en lugar de error
       if (response.status === 404) {
         return null;
       }

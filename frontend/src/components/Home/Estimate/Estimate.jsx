@@ -23,9 +23,7 @@ import {
   getDiagnosticByVehicleId,
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
-// Importa la función para traer datos del taller
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
-
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import EstimatePDF from "./EstimatePDF";
 
@@ -50,11 +48,9 @@ const Estimate = () => {
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
 
-  // Configuración de impuestos, etc. (laborTaxMarkupSettingsService)
   const [settings, setSettings] = useState(null);
   const [noTax, setNoTax] = useState(false);
 
-  // Configuración del taller (workshopSettingsService)
   const [workshopSettings, setWorkshopSettings] = useState(null);
   const [loadingWorkshop, setLoadingWorkshop] = useState(true);
 
@@ -99,23 +95,19 @@ const Estimate = () => {
   });
   const [isAddingPart, setIsAddingPart] = useState(false);
 
-  // Cargar configuración de taller y tax/markup + vehicles + existingEstimate
+  // Cargar la configuración y el Estimate si es edición
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Trae datos del taller (workshopSettings)
         const shopData = await getWorkshopSettings();
         setWorkshopSettings(shopData);
 
-        // Trae datos de tax/markup
         const cfg = await getSettingsById(1);
         setSettings(cfg);
 
-        // Cargar vehículos
         const vList = await getAllVehicles();
         setVehicles(vList);
 
-        // Si es edición, cargar Estimate existente
         if (isEditMode) {
           const existingEstimate = await getEstimateById(id);
           setParts(existingEstimate.parts || []);
@@ -152,7 +144,7 @@ const Estimate = () => {
     loadData();
   }, [isEditMode, id]);
 
-  // Calcular totales
+  // Calcular totales en cada cambio de parts/labors/flatFees
   useEffect(() => {
     if (!settings) return;
     let partsTotal = 0;
@@ -201,8 +193,13 @@ const Estimate = () => {
   }, [parts, labors, flatFees, settings, noTax]);
 
   const handleVehicleChange = async (e) => {
-    const val = e.target.value;
-    setSelectedVehicleId(val);
+    const vehicleId = parseInt(e.target.value, 10);
+    if (!vehicleId || vehicleId <= 0) {
+      setError("Selecciona un vehículo válido (ID > 0).");
+      setSelectedVehicleId("");
+      return;
+    }
+    setSelectedVehicleId(vehicleId);
     setParts([]);
     setLabors([]);
     setFlatFees([]);
@@ -212,20 +209,20 @@ const Estimate = () => {
     setExtendedDiagnostic("");
     setDiagnostic(null);
 
-    if (!val) {
+    if (!vehicleId) {
       setSelectedVehicle(null);
       setOwner(null);
       setNoTax(false);
       return;
     }
     try {
-      const vehData = await getVehicleById(val);
+      const vehData = await getVehicleById(vehicleId);
       setSelectedVehicle(vehData);
       if (vehData.userWorkshop) {
         setOwner(vehData.userWorkshop);
         setNoTax(vehData.userWorkshop.noTax);
       }
-      const fetchedDiagnostic = await getDiagnosticByVehicleId(val);
+      const fetchedDiagnostic = await getDiagnosticByVehicleId(vehicleId);
       if (fetchedDiagnostic) {
         setDiagnostic(fetchedDiagnostic);
         setExtendedDiagnostic(fetchedDiagnostic.extendedDiagnostic);
@@ -238,11 +235,11 @@ const Estimate = () => {
     }
   };
 
-  // Mostrar/ocultar modal de tax
+  // Modales para Tax Settings
   const handleShowTaxSettingsModal = () => setShowTaxSettingsModal(true);
   const handleCloseTaxSettingsModal = () => setShowTaxSettingsModal(false);
 
-  // Mostrar/ocultar modales de items
+  // Modales para items
   const handleShowPartModal = () => {
     const defaultTax = noTax ? false : true;
     setNewPart({
@@ -310,7 +307,7 @@ const Estimate = () => {
     });
   };
 
-  // Agregar Part
+  // Añadir Part
   const addPart = async () => {
     if (isAddingPart) return;
     setIsAddingPart(true);
@@ -347,7 +344,7 @@ const Estimate = () => {
     }
   };
 
-  // Agregar Labor
+  // Añadir Labor
   const addLabor = () => {
     if (!newLabor.description || newLabor.duration <= 0) {
       setError("Please fill out all labor fields correctly.");
@@ -367,7 +364,7 @@ const Estimate = () => {
     handleCloseLaborModal();
   };
 
-  // Agregar FlatFee
+  // Añadir FlatFee
   const addFlatFee = () => {
     if (!newFlatFee.description || newFlatFee.flatFeePrice <= 0) {
       setError("Please fill out all flat fee fields correctly.");
@@ -403,9 +400,17 @@ const Estimate = () => {
     }
   };
 
-  // Guardar Estimate
+  // Guardar
   const handleSave = async (e) => {
     e.preventDefault();
+
+    // Validar que se haya seleccionado un vehículo
+    if (!selectedVehicleId || selectedVehicleId === "") {
+      setError("Por favor, seleccione un vehículo.");
+      return;
+    }
+
+    // Validaciones básicas
     if (!selectedVehicle && !isEditMode) {
       setError("Please select a vehicle.");
       return;
@@ -423,58 +428,113 @@ const Estimate = () => {
       return;
     }
 
-    const estimateData = {
-      VehicleID: selectedVehicle ? selectedVehicle.id || 0 : 0,
-      CustomerNote: customerNote,
-      TechnicianDiagnostic: extendedDiagnostic
-        ? {
-            DiagnosticId: diagnostic?.diagnosticId || 0,
-            Mileage: diagnostic?.mileage || 0,
-            ExtendedDiagnostic: extendedDiagnostic,
-          }
-        : null,
-      Subtotal: subtotal,
-      Tax: tax,
-      Total: total,
-      AuthorizationStatus: authorizationStatus,
-      Parts: parts.map((p) => ({
-        description: p.description,
-        partNumber: p.partNumber,
-        quantity: p.quantity,
-        netPrice: p.netPrice,
-        listPrice: p.listPrice,
-        extendedPrice: p.extendedPrice,
-        taxable: p.applyPartTax,
-      })),
-      Labors: labors.map((l) => ({
-        description: l.description,
-        duration: l.duration,
-        laborRate: l.laborRate,
-        extendedPrice: l.extendedPrice,
-        taxable: l.applyLaborTax,
-      })),
-      FlatFees: flatFees.map((f) => ({
-        description: f.description,
-        flatFeePrice: f.flatFeePrice,
-        extendedPrice: f.extendedPrice,
-      })),
-    };
-    try {
-      setSaving(true);
-      if (isEditMode) {
-        await updateEstimate(id, estimateData);
-        setSuccess(`Estimate with ID ${id} updated successfully.`);
-      } else {
-        const created = await createEstimate(estimateData);
-        setSuccess(`Estimate created successfully with ID: ${created.ID}`);
+    // Modo creación
+    if (!isEditMode) {
+      const vehicleIdParsed = parseInt(selectedVehicleId, 10);
+      if (!vehicleIdParsed || vehicleIdParsed <= 0) {
+        setError("Vehicle ID must be greater than 0.");
+        return;
       }
-      navigate("/estimates");
-      setError(null);
-    } catch (err) {
-      setError("Error saving the Estimate: " + err.message);
-      setSuccess(null);
-    } finally {
-      setSaving(false);
+      // Armar objeto estilo CreateDto
+      const createDto = {
+        VehicleID: vehicleIdParsed,
+        TechnicianDiagnostic: extendedDiagnostic
+          ? {
+              DiagnosticId: diagnostic?.diagnosticId || 0,
+              Mileage: diagnostic?.mileage || 0,
+              ExtendedDiagnostic: extendedDiagnostic,
+            }
+          : null,
+        CustomerNote: customerNote,
+        Subtotal: subtotal,
+        Tax: tax,
+        Total: total,
+        AuthorizationStatus: authorizationStatus,
+        Parts: parts.map((p) => ({
+          Description: p.description,
+          PartNumber: p.partNumber,
+          Quantity: p.quantity,
+          NetPrice: p.netPrice,
+          ListPrice: p.listPrice,
+          ExtendedPrice: p.extendedPrice,
+          Taxable: p.applyPartTax,
+        })),
+        Labors: labors.map((l) => ({
+          Description: l.description,
+          Duration: l.duration,
+          LaborRate: l.laborRate,
+          ExtendedPrice: l.extendedPrice,
+          Taxable: l.applyLaborTax,
+        })),
+        FlatFees: flatFees.map((f) => ({
+          Description: f.description,
+          FlatFeePrice: f.flatFeePrice,
+          ExtendedPrice: f.extendedPrice,
+          Taxable: false,
+        })),
+      };
+
+      try {
+        setSaving(true);
+        const created = await createEstimate(createDto);
+        setSuccess(`Estimate created successfully with ID: ${created.ID}`);
+        navigate("/estimates");
+      } catch (err) {
+        setError(err.message || "Error creating the estimate.");
+      } finally {
+        setSaving(false);
+      }
+    }
+    // Modo edición
+    else {
+      const updateDto = {
+        ID: parseInt(id, 10),
+        CustomerNote: customerNote,
+        Subtotal: subtotal,
+        Tax: tax,
+        Total: total,
+        AuthorizationStatus: authorizationStatus,
+        TechnicianDiagnostic: extendedDiagnostic
+          ? {
+              DiagnosticId: diagnostic?.diagnosticId || 0,
+              Mileage: diagnostic?.mileage || 0,
+              ExtendedDiagnostic: extendedDiagnostic,
+            }
+          : null,
+        Parts: parts.map((p) => ({
+          Description: p.description,
+          PartNumber: p.partNumber,
+          Quantity: p.quantity,
+          NetPrice: p.netPrice,
+          ListPrice: p.listPrice,
+          ExtendedPrice: p.extendedPrice,
+          Taxable: p.applyPartTax,
+        })),
+        Labors: labors.map((l) => ({
+          Description: l.description,
+          Duration: l.duration,
+          LaborRate: l.laborRate,
+          ExtendedPrice: l.extendedPrice,
+          Taxable: l.applyLaborTax,
+        })),
+        FlatFees: flatFees.map((f) => ({
+          Description: f.description,
+          FlatFeePrice: f.flatFeePrice,
+          ExtendedPrice: f.extendedPrice,
+          Taxable: false,
+        })),
+      };
+
+      try {
+        setSaving(true);
+        const updated = await updateEstimate(id, updateDto);
+        setSuccess(`Estimate with ID ${updated.ID} updated successfully.`);
+        navigate("/estimates");
+      } catch (err) {
+        setError(err.message || "Error updating the estimate.");
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -491,6 +551,7 @@ const Estimate = () => {
     );
   }
 
+  // Para la vista previa del PDF
   const combinedItems = [
     ...parts.map((p) => ({
       type: "Part",
@@ -523,9 +584,7 @@ const Estimate = () => {
 
   return (
     <Container className="p-4 border rounded mt-4">
-      <h3 className="mb-4">
-        {isEditMode ? "Edit Estimate" : "Create Estimate"}
-      </h3>
+      <h3 className="mb-4">{isEditMode ? "Edit Estimate" : "Create Estimate"}</h3>
 
       {error && (
         <Alert variant="danger" onClose={() => setError(null)} dismissible>
@@ -545,6 +604,9 @@ const Estimate = () => {
       </div>
 
       <Form onSubmit={handleSave}>
+        {/* ---------------------------------------------
+            Modo CREACIÓN => Elegir Vehículo, etc.
+        --------------------------------------------- */}
         {!isEditMode && (
           <Row>
             <Col md={6} className="mb-3">
@@ -584,6 +646,9 @@ const Estimate = () => {
           </Row>
         )}
 
+        {/* ---------------------------------------------
+            Modo EDICIÓN => Muestra info del Vehicle y Owner
+        --------------------------------------------- */}
         {isEditMode && (
           <Row className="mb-3">
             <Col md={6}>
@@ -650,6 +715,7 @@ const Estimate = () => {
           </div>
         )}
 
+        {/* Technician Diagnostic */}
         <Form.Group controlId="diagnostic" className="mb-3">
           <Form.Label>Extended Diagnostic</Form.Label>
           <Form.Control
@@ -660,6 +726,7 @@ const Estimate = () => {
           />
         </Form.Group>
 
+        {/* Botones para añadir items */}
         <Row className="mb-3">
           <Col>
             <Button
@@ -688,6 +755,7 @@ const Estimate = () => {
           </Col>
         </Row>
 
+        {/* Lista de Items */}
         <Row>
           <Col>
             <h5>Items</h5>
@@ -772,6 +840,7 @@ const Estimate = () => {
           </Col>
         </Row>
 
+        {/* Nota para el cliente */}
         <Form.Group className="mb-3">
           <Form.Label>Customer Note</Form.Label>
           <Form.Control
@@ -782,6 +851,7 @@ const Estimate = () => {
           />
         </Form.Group>
 
+        {/* Totales */}
         <Row>
           <Col md={8}></Col>
           <Col md={4}>
@@ -793,6 +863,7 @@ const Estimate = () => {
           </Col>
         </Row>
 
+        {/* Botones finales */}
         <Row className="mb-3">
           <Col>
             <Button
@@ -812,7 +883,6 @@ const Estimate = () => {
               <PDFDownloadLink
                 document={
                   <EstimatePDF
-                    // Aquí pasamos la configuración del taller
                     workshopData={workshopSettings}
                     vehicle={selectedVehicle}
                     customer={owner}
@@ -845,6 +915,7 @@ const Estimate = () => {
         </Row>
       </Form>
 
+      {/* Modal: Tax Settings */}
       <Modal show={showTaxSettingsModal} onHide={handleCloseTaxSettingsModal}>
         <Modal.Header closeButton>
           <Modal.Title>Tax & Markup Settings</Modal.Title>
@@ -894,7 +965,7 @@ const Estimate = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* MODALS para añadir PART, LABOR, FLATFEE */}
+      {/* Modal: Add Part */}
       <Modal show={showPartModal} onHide={handleClosePartModal}>
         <Modal.Header closeButton>
           <Modal.Title>Add Part</Modal.Title>
@@ -974,11 +1045,9 @@ const Estimate = () => {
                   value={newPart.listPrice}
                   onChange={(e) => {
                     const price = parseFloat(e.target.value) || 0;
-                    const ext = price * newPart.quantity;
                     setNewPart((prev) => ({
                       ...prev,
                       listPrice: price,
-                      extendedPrice: ext,
                     }));
                   }}
                   required
@@ -1023,6 +1092,7 @@ const Estimate = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* Modal: Add Labor */}
       <Modal show={showLaborModal} onHide={handleCloseLaborModal}>
         <Modal.Header closeButton>
           <Modal.Title>Add Labor</Modal.Title>
@@ -1127,6 +1197,7 @@ const Estimate = () => {
         </Modal.Footer>
       </Modal>
 
+      {/* Modal: Add FlatFee */}
       <Modal show={showFlatFeeModal} onHide={handleCloseFlatFeeModal}>
         <Modal.Header closeButton>
           <Modal.Title>Add Flat Fee</Modal.Title>

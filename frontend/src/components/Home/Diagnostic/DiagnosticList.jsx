@@ -13,7 +13,6 @@ const DiagnosticList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Function to get the list of diagnostics
   const fetchDiagnostics = async () => {
     try {
       setLoading(true);
@@ -31,7 +30,6 @@ const DiagnosticList = () => {
     fetchDiagnostics();
   }, []);
 
-  // Function to handle deletion of a TechnicianDiagnostic
   const handleDeleteTechDiag = async (techDiagId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this Technician Diagnostic?"
@@ -41,7 +39,6 @@ const DiagnosticList = () => {
     try {
       await deleteTechnicianDiagnostic(techDiagId);
       alert("Technician Diagnostic successfully deleted.");
-      // Update local state
       setDiagnostics((prevDiagnostics) =>
         prevDiagnostics.map((diag) =>
           diag.techDiagnosticId === techDiagId
@@ -60,10 +57,8 @@ const DiagnosticList = () => {
     <Container className="p-4 border rounded">
       <h3>Diagnostic List</h3>
 
-      {/* Show error messages if any */}
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* Show loading indicator */}
       {loading ? (
         <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
           <Spinner animation="border" role="status">

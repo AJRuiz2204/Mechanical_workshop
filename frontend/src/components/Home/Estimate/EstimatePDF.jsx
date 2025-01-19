@@ -260,7 +260,7 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
               Part# / Hours
             </Text>
             <Text style={[styles.tableCol, styles.colNetRate, styles.tableHeaderText]}>
-              Net / Rate
+              List Price
             </Text>
             <Text style={[styles.tableCol, styles.colList, styles.tableHeaderText]}>
               List
@@ -289,7 +289,7 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
                   : "-"}
               </Text>
               <Text style={[styles.tableCol, styles.colNetRate, styles.tableText]}>
-                ${parseFloat(item.price || 0).toFixed(2)}
+                ${parseFloat(item.listPrice || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colList, styles.tableText]}>
                 {item.type === "Part"

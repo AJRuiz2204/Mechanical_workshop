@@ -93,6 +93,32 @@ namespace Mechanical_workshop.Controllers
             _context.Estimates.Add(estimate);
             await _context.SaveChangesAsync();
 
+            // Agregar Partes
+            foreach (var partDto in estimateCreateDto.Parts)
+            {
+                var part = _mapper.Map<EstimatePart>(partDto);
+                part.EstimateID = estimate.ID;
+                _context.EstimateParts.Add(part);
+            }
+
+            // Agregar Mano de Obra
+            foreach (var laborDto in estimateCreateDto.Labors)
+            {
+                var labor = _mapper.Map<EstimateLabor>(laborDto);
+                labor.EstimateID = estimate.ID;
+                _context.EstimateLabors.Add(labor);
+            }
+
+            // Agregar Tarifas Planas
+            foreach (var flatFeeDto in estimateCreateDto.FlatFees)
+            {
+                var flatFee = _mapper.Map<EstimateFlatFee>(flatFeeDto);
+                flatFee.EstimateID = estimate.ID;
+                _context.EstimateFlatFees.Add(flatFee);
+            }
+
+            await _context.SaveChangesAsync();
+
             // Recuperar la estimación completa para la respuesta
             var createdEstimate = await _context.Estimates
                 .Include(e => e.Vehicle)
@@ -107,15 +133,13 @@ namespace Mechanical_workshop.Controllers
             var estimateFullDto = _mapper.Map<EstimateFullDto>(createdEstimate);
             return CreatedAtAction(nameof(GetEstimate), new { id = estimate.ID }, estimateFullDto);
         }
-
+        
         // PUT: api/Estimates/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEstimate(int id, EstimateFullDto estimateFullDto)
+        public async Task<IActionResult> UpdateEstimate(int id, [FromBody] EstimateUpdateDto dto)
         {
-            if (id != estimateFullDto.ID)
-            {
+            if (id != dto.ID)
                 return BadRequest(new { message = "ID mismatch." });
-            }
 
             var estimate = await _context.Estimates
                 .Include(e => e.TechnicianDiagnostic)
@@ -129,117 +153,69 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = $"Estimate with ID {id} not found." });
             }
 
-            // Actualizar propiedades básicas del Estimate
-            estimate.Date = estimateFullDto.Date;
-            estimate.CustomerNote = estimateFullDto.CustomerNote;
-            estimate.Subtotal = estimateFullDto.Subtotal;
-            estimate.Tax = estimateFullDto.Tax;
-            estimate.Total = estimateFullDto.Total;
-            estimate.AuthorizationStatus = estimateFullDto.AuthorizationStatus;
+            // Actualizar SOLO los campos permitidos
+            estimate.CustomerNote = dto.CustomerNote ?? estimate.CustomerNote;
+            estimate.Subtotal = dto.Subtotal;
+            estimate.Tax = dto.Tax;
+            estimate.Total = dto.Total;
+            estimate.AuthorizationStatus = dto.AuthorizationStatus;
 
-            // Manejar TechnicianDiagnostic
-            if (estimateFullDto.TechnicianDiagnostic != null)
+            // TechnicianDiagnostic
+            if (dto.TechnicianDiagnostic == null)
             {
-                if (estimate.TechnicianDiagnostic == null)
-                {
-                    // Crear un nuevo TechnicianDiagnostic si no existe
-                    var newTechDiag = _mapper.Map<TechnicianDiagnostic>(estimateFullDto.TechnicianDiagnostic);
-                    estimate.TechnicianDiagnostic = newTechDiag;
-                }
-                else
-                {
-                    // Actualizar el TechnicianDiagnostic existente
-                    _mapper.Map(estimateFullDto.TechnicianDiagnostic, estimate.TechnicianDiagnostic);
-                }
-            }
-            else
-            {
-                // Eliminar la relación si no se proporciona TechnicianDiagnostic en el DTO
                 if (estimate.TechnicianDiagnostic != null)
                 {
                     _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
                     estimate.TechnicianDiagnostic = null;
                 }
             }
-
-            // Actualizar Partes
-            var partsToRemove = estimate.Parts
-                .Where(p => !estimateFullDto.Parts.Any(dto => dto.ID == p.ID))
-                .ToList();
-            foreach (var part in partsToRemove)
+            else
             {
-                _context.EstimateParts.Remove(part);
-            }
-
-            foreach (var partDto in estimateFullDto.Parts)
-            {
-                if (partDto.ID == 0)
+                if (estimate.TechnicianDiagnostic == null)
                 {
-                    var newPart = _mapper.Map<EstimatePart>(partDto);
-                    newPart.EstimateID = estimate.ID;
-                    _context.EstimateParts.Add(newPart);
+                    var newDiag = _mapper.Map<TechnicianDiagnostic>(dto.TechnicianDiagnostic);
+                    newDiag.Id = 0; // Insertar nueva
+                    estimate.TechnicianDiagnostic = newDiag;
                 }
                 else
                 {
-                    var existingPart = estimate.Parts.FirstOrDefault(p => p.ID == partDto.ID);
-                    if (existingPart != null)
-                    {
-                        _mapper.Map(partDto, existingPart);
-                    }
+                    // Mantener la misma PK para no romper EF
+                    dto.TechnicianDiagnostic.ID = estimate.TechnicianDiagnostic.Id;
+                    _mapper.Map(dto.TechnicianDiagnostic, estimate.TechnicianDiagnostic);
                 }
             }
 
-            // Actualizar Mano de Obra
-            var laborsToRemove = estimate.Labors
-                .Where(l => !estimateFullDto.Labors.Any(dto => dto.ID == l.ID))
-                .ToList();
-            foreach (var labor in laborsToRemove)
-            {
-                _context.EstimateLabors.Remove(labor);
-            }
+            // Reemplazar listas de Parts, Labors, FlatFees
+            _context.EstimateParts.RemoveRange(estimate.Parts);
+            _context.EstimateLabors.RemoveRange(estimate.Labors);
+            _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
 
-            foreach (var laborDto in estimateFullDto.Labors)
+            estimate.Parts.Clear();
+            estimate.Labors.Clear();
+            estimate.FlatFees.Clear();
+
+            if (dto.Parts != null)
             {
-                if (laborDto.ID == 0)
+                foreach (var partDto in dto.Parts)
                 {
-                    var newLabor = _mapper.Map<EstimateLabor>(laborDto);
-                    newLabor.EstimateID = estimate.ID;
-                    _context.EstimateLabors.Add(newLabor);
-                }
-                else
-                {
-                    var existingLabor = estimate.Labors.FirstOrDefault(l => l.ID == laborDto.ID);
-                    if (existingLabor != null)
-                    {
-                        _mapper.Map(laborDto, existingLabor);
-                    }
+                    var partEntity = _mapper.Map<EstimatePart>(partDto);
+                    estimate.Parts.Add(partEntity);
                 }
             }
-
-            // Actualizar Tarifas Planas
-            var flatFeesToRemove = estimate.FlatFees
-                .Where(f => !estimateFullDto.FlatFees.Any(dto => dto.ID == f.ID))
-                .ToList();
-            foreach (var fee in flatFeesToRemove)
+            if (dto.Labors != null)
             {
-                _context.EstimateFlatFees.Remove(fee);
-            }
-
-            foreach (var flatFeeDto in estimateFullDto.FlatFees)
-            {
-                if (flatFeeDto.ID == 0)
+                foreach (var laborDto in dto.Labors)
                 {
-                    var newFlatFee = _mapper.Map<EstimateFlatFee>(flatFeeDto);
-                    newFlatFee.EstimateID = estimate.ID;
-                    _context.EstimateFlatFees.Add(newFlatFee);
+                    var laborEntity = _mapper.Map<EstimateLabor>(laborDto);
+                    estimate.Labors.Add(laborEntity);
                 }
-                else
+            }
+            if (dto.FlatFees != null)
+            {
+                foreach (var feeDto in dto.FlatFees)
                 {
-                    var existingFlatFee = estimate.FlatFees.FirstOrDefault(f => f.ID == flatFeeDto.ID);
-                    if (existingFlatFee != null)
-                    {
-                        _mapper.Map(flatFeeDto, existingFlatFee);
-                    }
+                    var feeEntity = _mapper.Map<EstimateFlatFee>(feeDto);
+                    estimate.FlatFees.Add(feeEntity);
                 }
             }
 
@@ -247,19 +223,13 @@ namespace Mechanical_workshop.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException ex)
             {
-                if (!EstimateExists(id))
-                {
-                    return NotFound(new { message = $"Estimate with ID {id} not found." });
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, new { message = "Error updating the estimate.", details = ex.Message });
             }
 
-            return NoContent();
+            var updatedDto = _mapper.Map<EstimateFullDto>(estimate);
+            return Ok(updatedDto);
         }
 
         // DELETE: api/Estimates/{id}
@@ -289,8 +259,8 @@ namespace Mechanical_workshop.Controllers
             _context.EstimateLabors.RemoveRange(estimate.Labors);
             _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
             _context.Estimates.Remove(estimate);
-            await _context.SaveChangesAsync();
 
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
@@ -298,5 +268,6 @@ namespace Mechanical_workshop.Controllers
         {
             return _context.Estimates.Any(e => e.ID == id);
         }
+
     }
 }
