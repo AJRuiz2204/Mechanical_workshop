@@ -2,7 +2,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
-import EstimateList from "./Estimate/EstimateList";
 
 const Home = () => {
   const navigate = useNavigate();
