@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 const API_URL = "/api/Estimates";
 const VEHICLE_API_URL = "/api/UserWorkshops/vehicles";
 const GET_VEHICLE_BY_ID_URL = (id) => `/api/UserWorkshops/vehicle/${id}`;

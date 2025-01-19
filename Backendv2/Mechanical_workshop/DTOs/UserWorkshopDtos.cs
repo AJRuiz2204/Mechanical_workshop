@@ -24,9 +24,6 @@ namespace Mechanical_workshop.Dtos
         // Foreign Key
         public int UserWorkshopId { get; set; }
 
-        // Navigation Property
-        public List<VehicleDto> Vehicles { get; set; } = new();
-
     }
 
     public class UserWorkshopCreateDto
@@ -66,7 +63,26 @@ namespace Mechanical_workshop.Dtos
         public string Name { get; set; } = string.Empty;
         [Required]
         public string Username { get; set; } = string.Empty;
+        [Required]
+        public string LastName { get; set; } = string.Empty;
         public bool NoTax { get; set; }
+
+        [Required]
+        public string Address { get; set; } = string.Empty;
+
+        [Required]
+        public string City { get; set; } = string.Empty;
+
+        [Required]
+        public string State { get; set; } = string.Empty;
+
+        [Required]
+        public string Zip { get; set; } = string.Empty;
+
+        [Required]
+        public string PrimaryNumber { get; set; } = string.Empty;
+
+        public string? SecondaryNumber { get; set; }
 
         [Required]
         public List<VehicleDto> Vehicles { get; set; } = new();

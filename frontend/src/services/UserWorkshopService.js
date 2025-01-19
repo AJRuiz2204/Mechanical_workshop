@@ -2,12 +2,14 @@
 
 // FUNCIONES PARA USERWORKSHOPS (TALLERES MECÁNICOS)
 
+const API_BASE_URL = 'http://localhost:5121/api/UserWorkshops'; // Actualizar al puerto del backend
+
 /**
  * Obtiene la lista de todos los talleres mecánicos.
  */
 export const getUserWorkshops = async () => {
   try {
-    const response = await fetch("/api/UserWorkshops");
+    const response = await fetch(`${API_BASE_URL}`);
     if (!response.ok) {
       throw new Error("Error fetching the mechanical workshops.");
     }
@@ -24,7 +26,7 @@ export const getUserWorkshops = async () => {
  */
 export const getUserWorkshopById = async (id) => {
   try {
-    const response = await fetch(`/api/UserWorkshops/${id}`);
+    const response = await fetch(`${API_BASE_URL}/${id}`);
     if (!response.ok) {
       throw new Error("Error fetching the mechanical workshop.");
     }
@@ -41,7 +43,7 @@ export const getUserWorkshopById = async (id) => {
  */
 export const createUserWorkshop = async (userWorkshopData) => {
   try {
-    const response = await fetch("/api/UserWorkshops", {
+    const response = await fetch(`${API_BASE_URL}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userWorkshopData),
@@ -70,7 +72,7 @@ export const createUserWorkshop = async (userWorkshopData) => {
  */
 export const updateUserWorkshop = async (id, userWorkshopData) => {
   try {
-    const response = await fetch(`/api/UserWorkshops/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userWorkshopData),
@@ -99,7 +101,7 @@ export const updateUserWorkshop = async (id, userWorkshopData) => {
  */
 export const deleteUserWorkshop = async (id) => {
   try {
-    const response = await fetch(`/api/UserWorkshops/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: "DELETE",
     });
 
@@ -124,7 +126,7 @@ export const deleteUserWorkshop = async (id) => {
 export const searchVehicles = async (searchTerm) => {
   try {
     const encodedTerm = encodeURIComponent(searchTerm);
-    const response = await fetch(`/api/UserWorkshops/searchVehicles?searchTerm=${encodedTerm}`);
+    const response = await fetch(`${API_BASE_URL}/searchVehicles?searchTerm=${encodedTerm}`);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
@@ -147,7 +149,7 @@ export const searchVehicles = async (searchTerm) => {
  */
 export const getAllVehicles = async () => {
   try {
-    const response = await fetch("/api/UserWorkshops/vehicles");
+    const response = await fetch(`${API_BASE_URL}/vehicles`);
     if (!response.ok) {
       // Intentar leer el cuerpo de la respuesta como JSON
       const errorData = await response.json().catch(() => null);
@@ -173,7 +175,7 @@ export const getAllVehicles = async () => {
  */
 export const deleteVehicle = async (vin) => {
   try {
-    const response = await fetch(`/api/UserWorkshops/vehicle/${vin}`, {
+    const response = await fetch(`${API_BASE_URL}/vehicle/${vin}`, {
       method: "DELETE",
     });
 
@@ -201,7 +203,7 @@ export const deleteVehicle = async (vin) => {
  */
 export const getVehicleById = async (id) => {
   try {
-    const response = await fetch(`/api/UserWorkshops/vehicle/${id}`);
+    const response = await fetch(`${API_BASE_URL}/vehicle/${id}`);
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {

@@ -1,30 +1,20 @@
-/* eslint-disable react/prop-types */
-/* eslint-disable no-unused-vars */
 // src/components/VehicleReception/VehicleReception.jsx
 
+/* eslint-disable react/prop-types */
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import {
-  Form,
-  Button,
-  Row,
-  Col,
-  Container,
-  Spinner,
-  Alert,
-} from "react-bootstrap";
+import { Form, Button, Row, Col, Container, Spinner } from "react-bootstrap";
 import {
   createUserWorkshop,
   getUserWorkshopById,
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
-import { useParams, useNavigate } from "react-router-dom";
 
 const VehicleReception = ({
-  onClose, // función para cerrar modal
+  onClose, // función para cerrar el modal
   afterSubmit, // función opcional para refrescar datos en el padre
-  editingId, // si deseas editar un registro en particular
+  editingId, // ID para editar un registro en particular
 }) => {
-  const navigate = useNavigate();
   const [userWorkshop, setUserWorkshop] = useState({
     email: "",
     name: "",
@@ -37,65 +27,88 @@ const VehicleReception = ({
     primaryNumber: "",
     secondaryNumber: "",
     noTax: false,
-    vehicles: [
-      {
-        vin: "",
-        make: "",
-        model: "",
-        year: "",
-        engine: "",
-        plate: "",
-        state: "",
-      },
-    ],
+    vehicles: [{
+      vin: "",
+      make: "",
+      model: "",
+      year: "",
+      engine: "",
+      plate: "",
+      state: "",
+    }],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Opcional: si vas a usar la ruta /vehicle-reception/:id
-  // pero en este ejemplo, normalmente no usaremos useParams
-  const { id: routeId } = useParams();
-
-  // ID a editar, ya sea por prop (editingId) o desde la ruta
-  const finalId = editingId || routeId || null;
-
-  // Si se está editando un registro (finalId existe), cargar data
+  // Cargar datos si existe editingId
   useEffect(() => {
-    if (finalId) {
+    if (editingId) {
       setLoading(true);
-      getUserWorkshopById(finalId)
+      getUserWorkshopById(editingId)
         .then((data) => {
+          console.log("DATA RECIBIDA =>", data);
+          
           setUserWorkshop({
-            email: data.email,
-            name: data.name,
-            lastName: data.lastName,
-            profile: data.profile,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            zip: data.zip,
-            primaryNumber: data.primaryNumber,
-            secondaryNumber: data.secondaryNumber,
-            noTax: data.noTax,
-            vehicles: data.vehicles.map((v) => ({
-              vin: v.vin,
-              make: v.make,
-              model: v.model,
-              year: v.year,
-              engine: v.engine,
-              plate: v.plate,
-              state: v.state,
-            })),
+            email: data.email || "",
+            name: data.name || "",
+            lastName: data.lastName || "", 
+            profile: data.profile || "admin", 
+            address: data.address || "",
+            city: data.city || "",
+            state: data.state || "",
+            zip: data.zip || "",
+            primaryNumber: data.primaryNumber || "",
+            secondaryNumber: data.secondaryNumber || "",
+            noTax: data.noTax || false, 
+            vehicles: data.vehicles?.length > 0 ? [{
+              vin: data.vehicles[0].vin || "",
+              make: data.vehicles[0].make || "",
+              model: data.vehicles[0].model || "",
+              year: data.vehicles[0].year || "",
+              engine: data.vehicles[0].engine || "",
+              plate: data.vehicles[0].plate || "",
+              state: data.vehicles[0].state || "",
+            }] : [{
+              vin: "",
+              make: "",
+              model: "",
+              year: "",
+              engine: "",
+              plate: "",
+              state: "",
+            }],
           });
+
+          console.log("Estado después de cargar datos:", {
+            ...userWorkshop,
+            vehicles: data.vehicles?.length > 0 ? [{
+              vin: data.vehicles[0].vin || "",
+              make: data.vehicles[0].make || "",
+              model: data.vehicles[0].model || "",
+              year: data.vehicles[0].year || "",
+              engine: data.vehicles[0].engine || "",
+              plate: data.vehicles[0].plate || "",
+              state: data.vehicles[0].state || "",
+            }] : [{
+              vin: "",
+              make: "",
+              model: "",
+              year: "",
+              engine: "",
+              plate: "",
+              state: "",
+            }],
+          }); // Log para depuración
         })
         .catch((error) => alert(`Error loading data: ${error.message}`))
         .finally(() => setLoading(false));
     }
-  }, [finalId]);
+  }, [editingId]);
 
-  // Validaciones (idénticas a antes, omito comentarios)
+  // ========== VALIDACIONES BÁSICAS ==========
   const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
   const validateEmail = (email) =>
     /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
@@ -109,71 +122,86 @@ const VehicleReception = ({
     return true;
   };
 
-  // Manejadores de cambio en campos principales
+  // ========== MANEJO DE CAMPOS (OWNER) ==========
   const handleInputChange = (field, value) => {
     let error = "";
     switch (field) {
       case "name":
       case "lastName":
         if (!validateNotEmpty(value)) {
-          error = "Este campo es obligatorio.";
+          error = "This field is required.";
         } else if (!validateName(value)) {
-          error = "Solo se permiten letras y espacios.";
+          error = "Only letters and spaces are allowed.";
         }
         break;
+
       case "email":
         if (!validateNotEmpty(value)) {
-          error = "Este campo es obligatorio.";
+          error = "This field is required.";
         } else if (!validateEmail(value)) {
-          error = "Correo electrónico inválido.";
+          error = "Invalid email address.";
         }
         break;
+
       case "primaryNumber":
       case "secondaryNumber":
         if (validateNotEmpty(value) && !validatePhoneNumber(value)) {
-          error = "Número de teléfono inválido. Formato: (000) 000-0000";
+          error = "Invalid phone number. Format: (000) 000-0000";
         }
         break;
+
+      case "noTax":
+        // Corregir para asignar el valor directamente sin invertir
+        setUserWorkshop((prev) => ({
+          ...prev,
+          noTax: value,
+        }));
+        setErrors((prev) => ({ ...prev, [field]: error }));
+        return;
+
       default:
+        // Si no es "noTax", debe ser requerido
         if (field !== "noTax" && !validateNotEmpty(value)) {
-          error = "Este campo es obligatorio.";
+          error = "This field is required.";
         }
     }
-    setErrors((prev) => ({ ...prev, [field]: error }));
 
+    setErrors((prev) => ({ ...prev, [field]: error }));
     setUserWorkshop((prev) => ({
       ...prev,
-      [field]: field === "noTax" ? !prev.noTax : value,
+      [field]: value,
     }));
   };
 
-  // Manejo de vehículos
+  // ========== MANEJO DE CAMPOS (VEHÍCULOS) ==========
   const handleVehicleChange = (index, field, value) => {
     let error = "";
     if (field === "year") {
       if (!validateNotEmpty(value)) {
-        error = "Este campo es obligatorio.";
+        error = "This field is required.";
       } else if (!validateYear(value)) {
-        error = "Debe ser un año válido de 4 dígitos.";
+        error = "Must be a valid 4-digit year.";
       }
     } else {
       if (!validateNotEmpty(value)) {
-        error = "Este campo es obligatorio.";
+        error = "This field is required.";
       }
     }
 
     setErrors((prev) => ({
       ...prev,
-      [`vehicle_${index}_${field}`]: error,
+      [`vehicle_${field}`]: error,
     }));
 
     setUserWorkshop((prev) => {
       const updatedVehicles = [...prev.vehicles];
       updatedVehicles[index][field] = value;
+      console.log(`Actualizando vehículo ${index}:`, updatedVehicles[index]); // Log para depuración
       return { ...prev, vehicles: updatedVehicles };
     });
   };
 
+  // ========== FORMATEAR TELÉFONO ==========
   const formatPhoneNumber = (value) => {
     const cleaned = value.replace(/\D/g, "");
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
@@ -192,42 +220,7 @@ const VehicleReception = ({
     handleInputChange(field, formatted);
   };
 
-  const addVehicle = () => {
-    setUserWorkshop((prev) => ({
-      ...prev,
-      vehicles: [
-        ...prev.vehicles,
-        {
-          vin: "",
-          make: "",
-          model: "",
-          year: "",
-          engine: "",
-          plate: "",
-          state: "",
-        },
-      ],
-    }));
-  };
-
-  const deleteVehicleRow = (index) => {
-    setUserWorkshop((prev) => {
-      const updated = prev.vehicles.filter((_, i) => i !== index);
-      return { ...prev, vehicles: updated };
-    });
-    // Eliminar errores asociados a ese vehículo
-    setErrors((prev) => {
-      const updated = { ...prev };
-      Object.keys(updated).forEach((key) => {
-        if (key.startsWith(`vehicle_${index}_`)) {
-          delete updated[key];
-        }
-      });
-      return updated;
-    });
-  };
-
-  // LIMPIAR CAMPOS al finalizar la operación
+  // ========== LIMPIAR FORMULARIO ==========
   const resetForm = () => {
     setUserWorkshop({
       email: "",
@@ -241,33 +234,31 @@ const VehicleReception = ({
       primaryNumber: "",
       secondaryNumber: "",
       noTax: false,
-      vehicles: [
-        {
-          vin: "",
-          make: "",
-          model: "",
-          year: "",
-          engine: "",
-          plate: "",
-          state: "",
-        },
-      ],
+      vehicles: [{
+        vin: "",
+        make: "",
+        model: "",
+        year: "",
+        engine: "",
+        plate: "",
+        state: "",
+      }],
     });
     setErrors({});
+    console.log("Formulario reiniciado.");
   };
 
+  // ========== SUBMIT DEL FORMULARIO ==========
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
-    // Validación final ...
-    // (Opcional: replicar tu lógica de verificación de todos los campos)
-    // Si algo falla, return sin continuar.
+    if (isSubmitting || hasSubmitted) return;
 
     setIsSubmitting(true);
+    setHasSubmitted(true);
 
+    // Prepara payload según tu backend
     const payload = {
-      id: finalId ? parseInt(finalId) : 0,
+      id: editingId ? parseInt(editingId) : 0,
       email: userWorkshop.email,
       name: userWorkshop.name,
       lastName: userWorkshop.lastName,
@@ -279,45 +270,38 @@ const VehicleReception = ({
       primaryNumber: userWorkshop.primaryNumber,
       secondaryNumber: userWorkshop.secondaryNumber,
       noTax: userWorkshop.noTax,
-      vehicles: userWorkshop.vehicles.map((v) => ({
-        vin: v.vin,
-        make: v.make,
-        model: v.model,
-        year: v.year,
-        engine: v.engine,
-        plate: v.plate,
-        state: v.state,
-      })),
+      vehicles: [userWorkshop.vehicles[0]],
     };
 
+    console.log("Payload a enviar:", payload);
+
     try {
-      if (finalId) {
-        // Editar
-        await updateUserWorkshop(finalId, payload);
+      if (editingId) {
+        // Modo edición
+        await updateUserWorkshop(editingId, payload);
         alert("Workshop successfully updated.");
       } else {
-        // Crear
+        // Modo creación
         await createUserWorkshop(payload);
         alert("Workshop successfully created.");
       }
 
-      // 1. Limpiar campos
+      // Limpia formulario
       resetForm();
 
-      // 2. Llamar a afterSubmit() si deseas refrescar la lista en el padre
       if (afterSubmit) afterSubmit();
 
-      // 3. Cerrar modal
+      // Cierra el modal
       if (onClose) onClose();
-      navigate("/vehicle-list"); // Return to the main screen
     } catch (error) {
       alert(`Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
+      setHasSubmitted(false);
     }
   };
 
-  // Muestra un spinner mientras carga los datos para edición
+  // ======= MIENTRAS CARGA LA DATA PARA EDITAR =======
   if (loading) {
     return (
       <Container
@@ -329,11 +313,12 @@ const VehicleReception = ({
     );
   }
 
+  // ======= RENDER =======
   return (
     <Container className="p-3">
       <Form onSubmit={handleSubmit}>
         <h4 className="mb-3">
-          {finalId ? "Edit Workshop" : "Register Workshop"}
+          {editingId ? "Edit Workshop" : "Register Workshop"}
         </h4>
 
         <Row className="mb-3">
@@ -369,7 +354,6 @@ const VehicleReception = ({
           </Col>
         </Row>
 
-        {/* Ejemplo con email y primaryNumber */}
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group controlId="email">
@@ -423,7 +407,7 @@ const VehicleReception = ({
           </Col>
         </Row>
 
-        {/* Dirección, Ciudad, Estado, ZIP */}
+        {/* Address, City, State, Zip */}
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group controlId="address">
@@ -487,7 +471,7 @@ const VehicleReception = ({
           </Col>
         </Row>
 
-        {/* noTax y Profile si así lo requieres */}
+        {/* noTax y Profile */}
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group controlId="profile">
@@ -505,160 +489,129 @@ const VehicleReception = ({
             <Form.Group controlId="noTax">
               <Form.Check
                 type="checkbox"
-                label="Exento de Impuestos (noTax)"
+                label="Exempt from Taxes (noTax)"
                 checked={userWorkshop.noTax}
-                onChange={() => handleInputChange("noTax")}
+                onChange={(e) => handleInputChange("noTax", e.target.checked)}
               />
             </Form.Group>
           </Col>
         </Row>
 
-        {/* Vehicles */}
-        <h5 className="mt-4 mb-2">Vehicle(s) Information</h5>
-        {userWorkshop.vehicles.map((vehicle, index) => (
-          <div key={index} className="border rounded p-2 mb-2 bg-white">
-            <Row>
-              <Col md={3}>
-                <Form.Group controlId={`vin_${index}`}>
-                  <Form.Label>VIN (17 chars)</Form.Label>
-                  <Form.Control
-                    type="text"
-                    maxLength={17}
-                    value={vehicle.vin}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "vin", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_vin`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_vin`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group controlId={`make_${index}`}>
-                  <Form.Label>Make</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={vehicle.make}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "make", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_make`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_make`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group controlId={`model_${index}`}>
-                  <Form.Label>Model</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={vehicle.model}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "model", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_model`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_model`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                {/* Eliminar vehículo si hay más de uno */}
-                {userWorkshop.vehicles.length > 1 && (
-                  <Button
-                    variant="danger"
-                    className="mt-4"
-                    onClick={() => deleteVehicleRow(index)}
-                  >
-                    Delete
-                  </Button>
-                )}
-              </Col>
-            </Row>
-            <Row className="mt-2">
-              <Col md={3}>
-                <Form.Group controlId={`year_${index}`}>
-                  <Form.Label>Year</Form.Label>
-                  <Form.Control
-                    type="text"
-                    maxLength={4}
-                    value={vehicle.year}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "year", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_year`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_year`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group controlId={`engine_${index}`}>
-                  <Form.Label>Engine</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={vehicle.engine}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "engine", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_engine`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_engine`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group controlId={`plate_${index}`}>
-                  <Form.Label>Plate</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={vehicle.plate}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "plate", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_plate`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_plate`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-              <Col md={3}>
-                <Form.Group controlId={`state_${index}`}>
-                  <Form.Label>State</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={vehicle.state}
-                    onChange={(e) =>
-                      handleVehicleChange(index, "state", e.target.value)
-                    }
-                    isInvalid={!!errors[`vehicle_${index}_state`]}
-                    required
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors[`vehicle_${index}_state`]}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-          </div>
-        ))}
-        <Button variant="primary" onClick={addVehicle} className="mb-3">
-          + Add Vehicle
-        </Button>
+        {/* Vehicle */}
+        <h5 className="mt-4 mb-2">Vehicle Information</h5>
+        <div className="border rounded p-2 mb-2 bg-white">
+          <Row>
+            <Col md={3}>
+              <Form.Group controlId="vin">
+                <Form.Label>VIN (17 chars)</Form.Label>
+                <Form.Control
+                  type="text"
+                  maxLength={17}
+                  value={userWorkshop.vehicles[0].vin}
+                  onChange={(e) => handleVehicleChange(0, "vin", e.target.value)}
+                  isInvalid={!!errors.vehicle_vin}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_vin}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Form.Group controlId="make">
+                <Form.Label>Make</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userWorkshop.vehicles[0].make}
+                  onChange={(e) => handleVehicleChange(0, "make", e.target.value)}
+                  isInvalid={!!errors.vehicle_make}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_make}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Form.Group controlId="model">
+                <Form.Label>Model</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userWorkshop.vehicles[0].model}
+                  onChange={(e) => handleVehicleChange(0, "model", e.target.value)}
+                  isInvalid={!!errors.vehicle_model}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_model}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mt-2">
+            <Col md={3}>
+              <Form.Group controlId="year">
+                <Form.Label>Year</Form.Label>
+                <Form.Control
+                  type="text"
+                  maxLength={4}
+                  value={userWorkshop.vehicles[0].year}
+                  onChange={(e) => handleVehicleChange(0, "year", e.target.value)}
+                  isInvalid={!!errors.vehicle_year}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_year}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Form.Group controlId="engine">
+                <Form.Label>Engine</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userWorkshop.vehicles[0].engine}
+                  onChange={(e) => handleVehicleChange(0, "engine", e.target.value)}
+                  isInvalid={!!errors.vehicle_engine}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_engine}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Form.Group controlId="plate">
+                <Form.Label>Plate</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userWorkshop.vehicles[0].plate}
+                  onChange={(e) => handleVehicleChange(0, "plate", e.target.value)}
+                  isInvalid={!!errors.vehicle_plate}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_plate}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Form.Group controlId="state">
+                <Form.Label>State</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={userWorkshop.vehicles[0].state}
+                  onChange={(e) => handleVehicleChange(0, "state", e.target.value)}
+                  isInvalid={!!errors.vehicle_state}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.vehicle_state}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+          </Row>
+        </div>
 
         <div className="text-end">
           <Button
@@ -669,7 +622,7 @@ const VehicleReception = ({
           >
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
-          <Button variant="secondary" onClick={() => navigate("/vehicle-list")}>
+          <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
         </div>

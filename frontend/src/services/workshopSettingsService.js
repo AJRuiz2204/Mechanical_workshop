@@ -2,9 +2,6 @@
 
 import axios from "axios";
 
-// Define the base URL for the WorkshopSettings API
-// Since Vite is configured to proxy '/api' to 'http://localhost:5121',
-// we can use a relative URL here.
 const API_URL = "/api/WorkshopSettings";
 
 // Add an interceptor to log error details

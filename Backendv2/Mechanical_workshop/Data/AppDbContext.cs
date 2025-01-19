@@ -37,14 +37,16 @@ namespace Mechanical_workshop.Data
 
             modelBuilder.Entity<Diagnostic>()
                 .HasOne(d => d.Vehicle)
-                .WithMany()
+                .WithMany(v => v.Diagnostics)
                 .HasForeignKey(d => d.VehicleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Diagnostic>()
                 .HasMany(d => d.TechnicianDiagnostics)
                 .WithOne(td => td.Diagnostic)
-                .HasForeignKey(td => td.DiagnosticId);
+                .HasForeignKey(td => td.DiagnosticId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
         }
     }
 }

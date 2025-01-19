@@ -1045,9 +1045,11 @@ const Estimate = () => {
                   value={newPart.listPrice}
                   onChange={(e) => {
                     const price = parseFloat(e.target.value) || 0;
+                    const ext = price * newPart.quantity;
                     setNewPart((prev) => ({
                       ...prev,
                       listPrice: price,
+                      extendedPrice: ext,
                     }));
                   }}
                   required

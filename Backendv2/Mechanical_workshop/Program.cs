@@ -22,7 +22,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Para JSON Patch con Newtonsoft
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
@@ -36,6 +35,7 @@ builder.Services.AddAutoMapper(typeof(EntityProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EstimatesProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(WorkshopSettings).Assembly);
 builder.Services.AddAutoMapper(typeof(LaborTaxMarkupSettingsProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();

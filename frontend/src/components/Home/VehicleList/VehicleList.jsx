@@ -1,4 +1,3 @@
-// src/components/VehicleList/VehicleList.jsx
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
@@ -21,16 +20,19 @@ import { useNavigate } from "react-router-dom";
 
 const VehicleList = () => {
   const navigate = useNavigate();
+
   const [vehicles, setVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [searchMessage, setSearchMessage] = useState("");
 
-  // Estado para controlar el modal:
+  // State for the modal:
   const [showReceptionModal, setShowReceptionModal] = useState(false);
 
-  // 1. Cargar todos los vehículos al inicio
+  const [editingId, setEditingId] = useState(null);
+
+  // 1. Load all vehicles at the beginning
   const fetchAllVehicles = async () => {
     try {
       const data = await getAllVehicles();
@@ -46,7 +48,7 @@ const VehicleList = () => {
     fetchAllVehicles();
   }, []);
 
-  // 2. Búsqueda en tiempo real (con debounce)
+  // 2. Real-time search (with debounce)
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -54,7 +56,7 @@ const VehicleList = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (!searchTerm.trim()) {
-        // Si está vacío, recargar todos
+        // If empty, reload all
         fetchAllVehicles();
         setSearchMessage("");
         return;
@@ -65,7 +67,7 @@ const VehicleList = () => {
         try {
           const results = await searchVehicles(searchTerm);
           if (results.message) {
-            // Si el backend retorna un objeto { message: "..." }
+            // If the backend returns { message: "..." }
             setVehicles([]);
             setSearchMessage(results.message);
           } else {
@@ -86,30 +88,33 @@ const VehicleList = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  // (A) En lugar de navegar, abrimos el modal
+  // (A) Show the empty modal (create a new Customer/Workshop/Vehicle)
   const handleAddCustomer = () => {
+    setEditingId(null); // Indicates that it is a new record
     setShowReceptionModal(true);
   };
 
-  // (B) Después de guardar o cerrar en “VehicleReception”, refrescamos la lista
+  // (B) Open the modal in edit mode
+  const handleEdit = (id) => {
+    setEditingId(id); // Indicates which record you are going to edit
+    setShowReceptionModal(true);
+  };
+
+  // (C) After saving or closing in the modal, refresh the list if necessary
   const closeReceptionModal = (shouldRefresh = false) => {
     setShowReceptionModal(false);
+    setEditingId(null); // clear the edit ID
     if (shouldRefresh) {
       fetchAllVehicles();
     }
   };
 
-  // Recibir diagnóstico (mantenemos la navegación si tu app lo requiere)
+  // Receive diagnosis (if you keep it in your flow; here only example)
   const handleReception = (id) => {
-    navigate(`/diagnostic/${id}`)
+    navigate(`/diagnostic/${id}`);
   };
 
-  // Editar vehículo (mantenemos la navegación o podrías abrir otro modal)
-  const handleEdit = (id) => {
-    navigate(`/edit/${id}`)
-  };
-
-  // Eliminar vehículo
+  // Delete vehicle
   const handleDelete = async (vin) => {
     if (
       window.confirm(
@@ -118,8 +123,8 @@ const VehicleList = () => {
     ) {
       try {
         await deleteVehicle(vin);
-        // Filtrar la lista local
-        setVehicles(vehicles.filter((vehicle) => vehicle.vin !== vin));
+        // Filter the local list
+        setVehicles((prev) => prev.filter((v) => v.vin !== vin));
         alert("Vehicle successfully deleted.");
       } catch (error) {
         alert(`Error deleting: ${error.message}`);
@@ -218,7 +223,7 @@ const VehicleList = () => {
         </>
       )}
 
-      {/* Modal que contiene el formulario de VehicleReception */}
+      {/* Modal that contains the VehicleReception form */}
       <Modal
         show={showReceptionModal}
         onHide={() => closeReceptionModal(false)}
@@ -227,11 +232,15 @@ const VehicleList = () => {
         keyboard={false}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Register Workshop / Vehicle</Modal.Title>
+          <Modal.Title>
+            {editingId
+              ? "Edit Workshop / Vehicle"
+              : "Register Workshop / Vehicle"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <VehicleReception
-            // Enviamos dos props:
+            editingId={editingId}
             onClose={() => closeReceptionModal(false)}
             afterSubmit={() => closeReceptionModal(true)}
           />

@@ -11,11 +11,18 @@ namespace Mechanical_workshop.Profiles
             // Mapeo entre UserWorkshop y UserWorkshopReadDto
             CreateMap<UserWorkshop, UserWorkshopReadDto>()
                 .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles))
-                .ForMember(dest => dest.NoTax, opt => opt.MapFrom(src => src.NoTax));
+                .ForMember(dest => dest.NoTax, opt => opt.MapFrom(src => src.NoTax))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                .ForMember(dest => dest.State, opt => opt.MapFrom(src => src.State))
+                .ForMember(dest => dest.Zip, opt => opt.MapFrom(src => src.Zip))
+                .ForMember(dest => dest.PrimaryNumber, opt => opt.MapFrom(src => src.PrimaryNumber))
+                .ForMember(dest => dest.SecondaryNumber, opt => opt.MapFrom(src => src.SecondaryNumber))
+                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
 
             // Mapeo entre UserWorkshopCreateDto y UserWorkshop
             CreateMap<UserWorkshopCreateDto, UserWorkshop>()
-                .ForMember(dest => dest.Vehicles, opt => opt.Ignore()); // Las relaciones se manejarán manualmente
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore()); // Manejar manualmente para evitar duplicados
 
             // Mapeo entre Vehicle y VehicleDto
             CreateMap<Vehicle, VehicleDto>().ReverseMap();
@@ -32,21 +39,6 @@ namespace Mechanical_workshop.Profiles
             CreateMap<UserWorkshopUpdateDto, UserWorkshop>();
             CreateMap<VehicleDto, Vehicle>()
                 .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore());
-
-            // Mapeo para leer UserWorkshop
-            CreateMap<UserWorkshop, UserWorkshopReadDto>()
-                .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles));
-
-            // Mapeo para crear UserWorkshop
-            CreateMap<UserWorkshopCreateDto, UserWorkshop>()
-                .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
-
-            // Mapeo para Vehicle y VehicleDto
-            CreateMap<Vehicle, VehicleDto>().ReverseMap();
-
-            // Mapeo para actualizar UserWorkshop
-            CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
-                .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
 
             // Mapeo para VehicleSearchDto
             CreateMap<Vehicle, VehicleSearchDto>()
