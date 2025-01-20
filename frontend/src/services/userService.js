@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-catch */
 // Frontend: src/services/userService.js
-export const addUser = async (userData) => {
+export const Register = async (userData) => {
   try {
-    const response = await fetch("/api/Users", {
+    const response = await fetch("http://localhost:5121/api/Users/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),

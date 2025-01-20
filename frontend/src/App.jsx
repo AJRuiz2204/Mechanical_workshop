@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/login/Login";
@@ -13,108 +14,242 @@ import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDia
 import EstimateList from "./components/Home/Estimate/EstimateList";
 import Estimate from "./components/Home/Estimate/Estimate";
 import MainLayout from "./components/Layout/MainLayout";
-<<<<<<< HEAD
 import Home from "./components/Home/index";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 import Settings from "./components/Home/Settings/Settings";
 import ShopReports from "./components/Home/Reports/ShopReports";
 import Invoice from "./components/Home/Invoice/Invoice";
-=======
-import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
-import Settings from "./components/Home/Settings/Settings";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRouteComponent";
->>>>>>> new_change
+import ErrorBoundary from "./components/ProtectedRoute/ErrorBoundary";
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/register-user" element={<RegisterUser />} />
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/register-user" element={<RegisterUser />} />
+        <Route path="/home" element={<Home />} />
 
-      <Route
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/vehicle-reception" element={<VehicleReception />} />
-        <Route path="/change-password" element={<ChangePassword />} />
-        <Route path="/vehicle-list" element={<VehicleList />} />
-        <Route path="/edit/:vin" element={<VehicleReception />} />
-        <Route path="/diagnostic/:id" element={<Diagnostic />} />
-<<<<<<< HEAD
-        <Route path="/technicianDiagnostic/:id" element={<TechnicianDiagnostic />} />
-        <Route path="/technicianDiagnostic/edit/:techDiagId" element={<TechnicianDiagnosticEdit />} />
-        <Route path="/technicianDiagnostic/create/:diagnosticId" element={<TechnicianDiagnostic />} />
-        <Route path="/invoice" element={<Invoice />} />
-        <Route path="/invoice/:id" element={<Invoice />} />
-        <Route path="/diagnostic-list" element={<DiagnosticList />} />
-        <Route path="/estimates" element={<EstimateList />} />
-        <Route path="/estimates/:id" element={<Estimate />} />
-        <Route path="/estimate/create" element={<Estimate />} />
-        <Route path="/estimate/edit/:id" element={<Estimate />} />
-        <Route path="/estimate/:id" element={<Estimate />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/reports" element={<ShopReports />} />
-        
-=======
         <Route
-          path="/technicianDiagnostic/:id"
           element={
-            <ProtectedRoute requiredRole="Technician">
-              <TechnicianDiagnostic />
+            <ProtectedRoute>
+              <MainLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/technicianDiagnostic/edit/:techDiagId"
-          element={
-            <ProtectedRoute requiredRole="Technician">
-              <TechnicianDiagnosticEdit />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/invoice"
-          element={
-            <ProtectedRoute requiredRole="Accountant">
-              <invoice />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/diagnostic-list" element={<DiagnosticList />} />
-        <Route
-          path="/estimates/"
-          element={
-            <ProtectedRoute requiredRole="Manager">
-              <EstimateList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/estimate/create"
-          element={
-            <ProtectedRoute requiredRole="Manager">
-              <Estimate />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/estimate/edit/:id"
-          element={
-            <ProtectedRoute requiredRole="Manager">
-              <Estimate />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/wsettings" element={<WorkshopSettingsForm />} />
->>>>>>> new_change
-      </Route>
-    </Routes>
+        >
+          <Route
+            path="/vehicle-reception"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <VehicleReception />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vehicle-list"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <VehicleList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit/:vin"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <VehicleReception />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diagnostic/:id"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Diagnostic />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technicianDiagnostic/:id"
+            element={
+              <ProtectedRoute requiredRole="Technician">
+                <TechnicianDiagnostic />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technicianDiagnostic/edit/:techDiagId"
+            element={<TechnicianDiagnosticEdit />}
+          />
+          <Route
+            path="/technicianDiagnostic/create/:diagnosticId"
+            element={<TechnicianDiagnostic />}
+          />
+          <Route
+            path="/invoice"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Invoice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoice/:id"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Invoice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diagnostic-list"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <DiagnosticList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimates"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <EstimateList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimates/:id"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Estimate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimate/create"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Estimate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimate/edit/:id"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Estimate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimate/:id"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Estimate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <ShopReports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technicianDiagnostic/:id"
+            element={
+              <ProtectedRoute requiredRole="Technician">
+                <TechnicianDiagnostic />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technicianDiagnostic/edit/:techDiagId"
+            element={
+              <ProtectedRoute requiredRole="Technician">
+                <TechnicianDiagnosticEdit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/invoice"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <invoice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diagnostic-list"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <DiagnosticList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimates/"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <EstimateList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimate/create"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Estimate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimate/edit/:id"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Estimate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wsettings"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <WorkshopSettingsForm />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+      </Routes>
+    </ErrorBoundary>
   );
 };
 

@@ -1,20 +1,15 @@
-/* eslint-disable no-useless-catch */
-// Frontend: src/services/UserLoginServices.js
 import emailjs from "emailjs-com";
+import axios from "axios";
+
+const API_URL = "http://localhost:5121/api/Users";
 
 export const loginUser = async (credentials) => {
-  const response = await fetch("http://localhost:5121/api/Users/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(credentials),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.Message || "Login failed.");
+  try {
+    const response = await axios.post(`${API_URL}/login`, credentials);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
   }
-
-  return response.json();
 };
 
 export const isLoggedIn = () => {

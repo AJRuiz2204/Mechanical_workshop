@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging; // Añadir esta línea
 
 namespace Mechanical_workshop.Controllers
 {
@@ -22,18 +23,22 @@ namespace Mechanical_workshop.Controllers
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
+        private readonly ILogger<UsersController> _logger; // Añadir esta línea
 
-        public UsersController(AppDbContext context, IMapper mapper, IConfiguration config)
+        public UsersController(AppDbContext context, IMapper mapper, IConfiguration config, ILogger<UsersController> logger) // Modificar constructor
         {
             _context = context;
             _mapper = mapper;
             _config = config;
+            _logger = logger; // Añadir esta línea
         }
 
         // 🔹 POST: api/Users/register (Crear usuario)
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(UserCreateDto userCreateDto)
         {
+            _logger.LogInformation("Register endpoint llamado."); // Añadir esta línea
+
             if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
                 return BadRequest(new { Message = "Username already exists." });
 
@@ -53,6 +58,8 @@ namespace Mechanical_workshop.Controllers
         [HttpPost("login")]
         public async Task<ActionResult> Login(UserLoginDto userLoginDto)
         {
+            _logger.LogInformation("Login endpoint llamado."); // Añadir esta línea
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
             if (user == null)
                 return Unauthorized(new { Message = "User not found." });
@@ -114,6 +121,8 @@ namespace Mechanical_workshop.Controllers
         [Authorize]
         public async Task<ActionResult> GetProfile()
         {
+            _logger.LogInformation("GetProfile endpoint llamado."); // Añadir esta línea
+
             var username = User.Identity.Name;
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
@@ -131,11 +140,64 @@ namespace Mechanical_workshop.Controllers
             });
         }
 
+        // POST: api/Users/forgot-password
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            if (!IsValidEmail(forgotPasswordDto.Email))
+                return BadRequest(new { Message = "Invalid email format." });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDto.Email);
+            if (user == null)
+                return BadRequest(new { Message = "Email not found." });
+
+            // Generate a verification code
+            var code = new Random().Next(100000, 999999).ToString();
+            user.ResetCode = code;
+            user.ResetCodeExpiry = DateTime.Now.AddMinutes(5);
+
+            // Save the code to the database
+            await _context.SaveChangesAsync();
+
+            // Log the generated code in the server console
+            Console.WriteLine($"Generated code for {user.Email}: {code}");
+
+            // Return the generated code
+            return Ok(new { Code = code });
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [HttpPost("verify-code")]
+        public async Task<ActionResult> VerifyCode(VerifyCodeDto verifyCodeDto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == verifyCodeDto.Email);
+            if (user == null || user.ResetCode != verifyCodeDto.Code || user.ResetCodeExpiry < DateTime.Now)
+            {
+                return BadRequest(new { Message = "Invalid or expired code." }); // JSON
+            }
+
+            return Ok(new { Message = "Code verified successfully." }); // JSON
+        }
+
         // 🔹 GET: api/Users/admin (Solo accesible para admins)
         [HttpGet("admin")]
         [Authorize(Roles = "Administrator")]
         public IActionResult GetAdminData()
         {
+            _logger.LogInformation("GetAdminData endpoint llamado."); // Añadir esta línea
+
             return Ok(new { Message = "This is protected admin data" });
         }
     }

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
-import { addUser } from "../../services/userService"; // Import the correct function
+import { Register } from "../../services/userService"; // Asegurarse de que se importe la función correcta
 
 const RegisterUser = () => {
   const [email, setEmail] = useState("");
@@ -11,7 +11,7 @@ const RegisterUser = () => {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [profile, setProfile] = useState("Administrator");
+  const [profile, setProfile] = useState("Manager");
   const [showPassword, setShowPassword] = useState(false);
 
   // Function to generate a secure random password
@@ -30,27 +30,27 @@ const RegisterUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Create the user data object
+    // Crear el objeto de datos del usuario
     const userData = {
       email,
       name,
       lastName,
       username,
       password,
-      profile, // "Administrator" or "Mechanical Technician"
+      profile,
     };
 
     try {
-      await addUser(userData); // Call the addUser function
+      await Register(userData); // Llamar a la función Register
       alert("User registered successfully.");
 
-      // Clear the form
+      // Limpiar el formulario
       setEmail("");
       setName("");
       setLastName("");
       setUsername("");
       setPassword("");
-      setProfile("Administrator");
+      setProfile("Manager");
       setShowPassword(false);
     } catch (err) {
       alert(`Error: ${err.message}`);
@@ -161,8 +161,8 @@ const RegisterUser = () => {
               value={profile}
               onChange={(e) => setProfile(e.target.value)}
             >
-              <option value="Administrator">Administrator</option>
-              <option value="Mechanical Technician">Mechanical Technician</option>
+              <option value="Manager">Administrator</option>
+              <option value="Technician">Mechanical Technician</option>
             </select>
           </div>
           <div className="d-grid gap-2">

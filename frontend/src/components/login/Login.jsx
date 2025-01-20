@@ -1,9 +1,10 @@
+/* eslint-disable no-unused-vars */
 // src/components/login/Login.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import loginImage from "../../images/login-image.jpg";
-import { loginUser } from "../../services/UserLoginServices";
+import { loginUser } from "../../services/UserLoginServices"; // Asegurarse de importar correctamente
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -13,14 +14,30 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Intentando iniciar sesión con:", { username, password }); // Log de credenciales
     const credentials = { username, password };
     try {
-      const { Token, User } = await loginUser(credentials);
-      localStorage.setItem("token", Token);
-      localStorage.setItem("user", JSON.stringify(User));
+      const response = await loginUser(credentials); // Guardar la respuesta completa
+      console.log("Respuesta de loginUser:", response); // Log de respuesta
+
+      // Desestructurar con nombres correctos
+      const { token, user } = response;
+
+      if (!token || !user) {
+        throw new Error("Respuesta de login inválida.");
+      }
+
+      // Almacenar en localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      console.log("Datos almacenados en localStorage."); // Confirmación de almacenamiento
+
+      // Navegar a la página principal
       navigate("/home");
     } catch (err) {
-      setError(err.message || "Error logging in.");
+      console.error("Error en handleSubmit:", err); // Log de error
+      // Manejar errores más detalladamente si es posible
+      setError(err.message || "Error al iniciar sesión.");
     }
   };
 
