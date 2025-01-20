@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Mechanical_workshop.Models;
 using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 using System.Text;
+using Mechanical_workshop.MappingProfiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +69,7 @@ builder.Services.AddAutoMapper(typeof(EstimatesProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(WorkshopSettings).Assembly);
 builder.Services.AddAutoMapper(typeof(LaborTaxMarkupSettingsProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(TechnicianProfile).Assembly);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();

@@ -2,30 +2,44 @@
 // Frontend: src/components/Diagnostic/Diagnostic.jsx
 
 import React, { useState, useEffect } from "react";
-import { Form, Button, Container, Row, Col, Alert, Spinner } from "react-bootstrap";
+import {
+  Form,
+  Button,
+  Container,
+  Row,
+  Col,
+  Alert,
+  Spinner,
+} from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { createDiagnostic } from "../../../services/DiagnosticService";
 import { getVehicleById } from "../../../services/VehicleService";
+import technicianService from "../../../services/technicianService"; // Importa el service de técnicos
 import "./Diagnostic.css";
 
 const Diagnostic = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Ensure your route is /diagnostic/:id
+  const { id } = useParams(); // Asegúrate de que tu ruta es /diagnostic/:id
 
-  // State for the vehicle
+  // Estado para el vehículo
   const [vehicle, setVehicle] = useState(null);
 
-  // Form state
+  // Estado para técnicos
+  const [technicians, setTechnicians] = useState([]);
+  const [techLoading, setTechLoading] = useState(true);
+  const [techError, setTechError] = useState("");
+
+  // Estado del formulario
   const [formData, setFormData] = useState({
     reasonForVisit: "",
-    assignedTechnician: "", // Added to include the assigned technician
+    assignedTechnician: "", // Incluye el técnico asignado
   });
 
-  // State for error and success messages
+  // Estado para mensajes de error y éxito
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Loading state
+  // Estado de carga para el vehículo
   const [loading, setLoading] = useState(true);
 
   // Fetch vehicle information when the component mounts
@@ -48,6 +62,22 @@ const Diagnostic = () => {
 
     fetchVehicle();
   }, [id]);
+
+  // Fetch technicians when the component mounts
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        const data = await technicianService.getTechnicians();
+        setTechnicians(data);
+      } catch (error) {
+        setTechError("Error fetching technicians: " + error.message);
+      } finally {
+        setTechLoading(false);
+      }
+    };
+
+    fetchTechnicians();
+  }, []);
 
   // Handle form changes
   const handleChange = (e) => {
@@ -88,10 +118,13 @@ const Diagnostic = () => {
     }
   };
 
-  if (loading) {
+  if (loading || techLoading) {
     return (
       <Container className="p-4 border rounded">
-        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ height: "200px" }}
+        >
           <Spinner animation="border" role="status">
             <span className="visually-hidden">Loading...</span>
           </Spinner>
@@ -100,11 +133,14 @@ const Diagnostic = () => {
     );
   }
 
-  if (!vehicle) {
+  if (errorMessage) {
     return (
       <Container className="p-4 border rounded">
-        <Alert variant="danger">Unable to load vehicle information.</Alert>
-        <Button variant="secondary" onClick={() => navigate("/diagnostic-list")}>
+        <Alert variant="danger">{errorMessage}</Alert>
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/diagnostic-list")}
+        >
           Back to Diagnostics List
         </Button>
       </Container>
@@ -116,8 +152,8 @@ const Diagnostic = () => {
       <h3>Create Diagnostic</h3>
 
       {/* Display error or success messages */}
-      {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
+      {techError && <Alert variant="danger">{techError}</Alert>}
 
       {/* Vehicle Information (read-only) */}
       <h5>Vehicle Information</h5>
@@ -175,10 +211,18 @@ const Diagnostic = () => {
                 required
               >
                 <option value="">-- Select --</option>
-                {/* You can populate this list dynamically if necessary */}
-                <option value="Mario Aguirre">Mario Aguirre</option>
-                <option value="Jane Doe">Jane Doe</option>
-                <option value="John Smith">John Smith</option>
+                {technicians.length > 0 ? (
+                  technicians.map((tech) => (
+                    <option
+                      key={tech.ID}
+                      value={`${tech.name} ${tech.lastName}`}
+                    >
+                      {`${tech.name} ${tech.lastName}`}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No technicians available</option>
+                )}
               </Form.Select>
             </Form.Group>
           </Col>
