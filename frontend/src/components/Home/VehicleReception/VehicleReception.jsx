@@ -11,15 +11,15 @@ import {
 } from "../../../services/UserWorkshopService";
 
 const VehicleReception = ({
-  onClose, // función para cerrar el modal
-  afterSubmit, // función opcional para refrescar datos en el padre
-  editingId, // ID para editar un registro en particular
+  onClose, // function to close the modal
+  afterSubmit, // optional function to refresh data in the parent
+  editingId, // ID to edit a particular record
 }) => {
   const [userWorkshop, setUserWorkshop] = useState({
     email: "",
     name: "",
     lastName: "",
-    profile: "admin",
+    profile: "",
     address: "",
     city: "",
     state: "",
@@ -27,15 +27,17 @@ const VehicleReception = ({
     primaryNumber: "",
     secondaryNumber: "",
     noTax: false,
-    vehicles: [{
-      vin: "",
-      make: "",
-      model: "",
-      year: "",
-      engine: "",
-      plate: "",
-      state: "",
-    }],
+    vehicles: [
+      {
+        vin: "",
+        make: "",
+        model: "",
+        year: "",
+        engine: "",
+        plate: "",
+        state: "",
+      },
+    ],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,72 +45,118 @@ const VehicleReception = ({
   const [errors, setErrors] = useState({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Cargar datos si existe editingId
+  // Function to get the user profile from localStorage
+  const getProfileFromLocalStorage = () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        return user.profile || "";
+      } catch (error) {
+        console.error("Error parsing user from localStorage:", error);
+        return "";
+      }
+    }
+    return "";
+  };
+
+  // Load data if editingId exists
   useEffect(() => {
     if (editingId) {
       setLoading(true);
       getUserWorkshopById(editingId)
         .then((data) => {
-          console.log("DATA RECIBIDA =>", data);
-          
+          console.log("DATA RECEIVED =>", data);
+
+          // Get the profile from localStorage
+          const storedProfile = getProfileFromLocalStorage();
+          if (!storedProfile) {
+            alert("User profile not found in localStorage.");
+            return;
+          }
           setUserWorkshop({
             email: data.email || "",
             name: data.name || "",
-            lastName: data.lastName || "", 
-            profile: data.profile || "admin", 
+            lastName: data.lastName || "",
+            profile: storedProfile, // Use the stored profile without default value
             address: data.address || "",
             city: data.city || "",
             state: data.state || "",
             zip: data.zip || "",
             primaryNumber: data.primaryNumber || "",
             secondaryNumber: data.secondaryNumber || "",
-            noTax: data.noTax || false, 
-            vehicles: data.vehicles?.length > 0 ? [{
-              vin: data.vehicles[0].vin || "",
-              make: data.vehicles[0].make || "",
-              model: data.vehicles[0].model || "",
-              year: data.vehicles[0].year || "",
-              engine: data.vehicles[0].engine || "",
-              plate: data.vehicles[0].plate || "",
-              state: data.vehicles[0].state || "",
-            }] : [{
-              vin: "",
-              make: "",
-              model: "",
-              year: "",
-              engine: "",
-              plate: "",
-              state: "",
-            }],
+            noTax: data.noTax || false,
+            vehicles:
+              data.vehicles?.length > 0
+                ? [
+                    {
+                      vin: data.vehicles[0].vin || "",
+                      make: data.vehicles[0].make || "",
+                      model: data.vehicles[0].model || "",
+                      year: data.vehicles[0].year || "",
+                      engine: data.vehicles[0].engine || "",
+                      plate: data.vehicles[0].plate || "",
+                      state: data.vehicles[0].state || "",
+                    },
+                  ]
+                : [
+                    {
+                      vin: "",
+                      make: "",
+                      model: "",
+                      year: "",
+                      engine: "",
+                      plate: "",
+                      state: "",
+                    },
+                  ],
           });
 
-          console.log("Estado después de cargar datos:", {
+          console.log("State after loading data:", {
             ...userWorkshop,
-            vehicles: data.vehicles?.length > 0 ? [{
-              vin: data.vehicles[0].vin || "",
-              make: data.vehicles[0].make || "",
-              model: data.vehicles[0].model || "",
-              year: data.vehicles[0].year || "",
-              engine: data.vehicles[0].engine || "",
-              plate: data.vehicles[0].plate || "",
-              state: data.vehicles[0].state || "",
-            }] : [{
-              vin: "",
-              make: "",
-              model: "",
-              year: "",
-              engine: "",
-              plate: "",
-              state: "",
-            }],
-          }); // Log para depuración
+            vehicles:
+              data.vehicles?.length > 0
+                ? [
+                    {
+                      vin: data.vehicles[0].vin || "",
+                      make: data.vehicles[0].make || "",
+                      model: data.vehicles[0].model || "",
+                      year: data.vehicles[0].year || "",
+                      engine: data.vehicles[0].engine || "",
+                      plate: data.vehicles[0].plate || "",
+                      state: data.vehicles[0].state || "",
+                    },
+                  ]
+                : [
+                    {
+                      vin: "",
+                      make: "",
+                      model: "",
+                      year: "",
+                      engine: "",
+                      plate: "",
+                      state: "",
+                    },
+                  ],
+          }); // Debug log
         })
         .catch((error) => alert(`Error loading data: ${error.message}`))
         .finally(() => setLoading(false));
     }
+
+    // Get the profile from localStorage when the component mounts
+    const storedProfile = getProfileFromLocalStorage();
+    if (storedProfile) {
+      setUserWorkshop((prev) => ({
+        ...prev,
+        profile: storedProfile,
+      }));
+    } else {
+      alert("User profile not found in localStorage.");
+    }
   }, [editingId]);
 
-  // ========== VALIDACIONES BÁSICAS ==========
+  // ========== BASIC VALIDATIONS ==========
   const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
   const validateEmail = (email) =>
     /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
@@ -122,7 +170,7 @@ const VehicleReception = ({
     return true;
   };
 
-  // ========== MANEJO DE CAMPOS (OWNER) ==========
+  // ========== FIELD HANDLING (OWNER) ==========
   const handleInputChange = (field, value) => {
     let error = "";
     switch (field) {
@@ -151,7 +199,7 @@ const VehicleReception = ({
         break;
 
       case "noTax":
-        // Corregir para asignar el valor directamente sin invertir
+        // Assign the value directly without inverting
         setUserWorkshop((prev) => ({
           ...prev,
           noTax: value,
@@ -160,7 +208,7 @@ const VehicleReception = ({
         return;
 
       default:
-        // Si no es "noTax", debe ser requerido
+        // If not "noTax", it must be required
         if (field !== "noTax" && !validateNotEmpty(value)) {
           error = "This field is required.";
         }
@@ -173,7 +221,7 @@ const VehicleReception = ({
     }));
   };
 
-  // ========== MANEJO DE CAMPOS (VEHÍCULOS) ==========
+  // ========== FIELD HANDLING (VEHICLES) ==========
   const handleVehicleChange = (index, field, value) => {
     let error = "";
     if (field === "year") {
@@ -196,12 +244,12 @@ const VehicleReception = ({
     setUserWorkshop((prev) => {
       const updatedVehicles = [...prev.vehicles];
       updatedVehicles[index][field] = value;
-      console.log(`Actualizando vehículo ${index}:`, updatedVehicles[index]); // Log para depuración
+      console.log(`Updating vehicle ${index}:`, updatedVehicles[index]); // Debug log
       return { ...prev, vehicles: updatedVehicles };
     });
   };
 
-  // ========== FORMATEAR TELÉFONO ==========
+  // ========== FORMAT PHONE NUMBER ==========
   const formatPhoneNumber = (value) => {
     const cleaned = value.replace(/\D/g, "");
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
@@ -220,35 +268,37 @@ const VehicleReception = ({
     handleInputChange(field, formatted);
   };
 
-  // ========== LIMPIAR FORMULARIO ==========
+  // ========== RESET FORM ==========
   const resetForm = () => {
     setUserWorkshop({
       email: "",
       name: "",
       lastName: "",
-      profile: "admin",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-      primaryNumber: "",
+      profile: "", // Added
+      address: "", // Added
+      city: "", // Added
+      state: "", // Added
+      zip: "", // Added
+      primaryNumber: "", // Added
       secondaryNumber: "",
       noTax: false,
-      vehicles: [{
-        vin: "",
-        make: "",
-        model: "",
-        year: "",
-        engine: "",
-        plate: "",
-        state: "",
-      }],
+      vehicles: [
+        {
+          vin: "",
+          make: "",
+          model: "",
+          year: "",
+          engine: "",
+          plate: "",
+          state: "",
+        },
+      ],
     });
     setErrors({});
-    console.log("Formulario reiniciado.");
+    console.log("Form reset.");
   };
 
-  // ========== SUBMIT DEL FORMULARIO ==========
+  // ========== FORM SUBMIT ==========
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting || hasSubmitted) return;
@@ -256,7 +306,7 @@ const VehicleReception = ({
     setIsSubmitting(true);
     setHasSubmitted(true);
 
-    // Prepara payload según tu backend
+    // Prepare payload according to your backend
     const payload = {
       id: editingId ? parseInt(editingId) : 0,
       email: userWorkshop.email,
@@ -273,25 +323,25 @@ const VehicleReception = ({
       vehicles: [userWorkshop.vehicles[0]],
     };
 
-    console.log("Payload a enviar:", payload);
+    console.log("Payload to send:", payload);
 
     try {
       if (editingId) {
-        // Modo edición
+        // Edit mode
         await updateUserWorkshop(editingId, payload);
         alert("Workshop successfully updated.");
       } else {
-        // Modo creación
+        // Create mode
         await createUserWorkshop(payload);
         alert("Workshop successfully created.");
       }
 
-      // Limpia formulario
+      // Reset form
       resetForm();
 
       if (afterSubmit) afterSubmit();
 
-      // Cierra el modal
+      // Close the modal
       if (onClose) onClose();
     } catch (error) {
       alert(`Error: ${error.message}`);
@@ -301,7 +351,7 @@ const VehicleReception = ({
     }
   };
 
-  // ======= MIENTRAS CARGA LA DATA PARA EDITAR =======
+  // ======= WHILE LOADING DATA FOR EDITING =======
   if (loading) {
     return (
       <Container
@@ -471,25 +521,13 @@ const VehicleReception = ({
           </Col>
         </Row>
 
-        {/* noTax y Profile */}
+        {/* noTax and Profile */}
         <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group controlId="profile">
-              <Form.Label>Profile</Form.Label>
-              <Form.Select
-                value={userWorkshop.profile}
-                onChange={(e) => handleInputChange("profile", e.target.value)}
-              >
-                <option value="admin">Admin</option>
-                <option value="technician">Technician</option>
-              </Form.Select>
-            </Form.Group>
-          </Col>
           <Col md={6} className="d-flex align-items-center">
             <Form.Group controlId="noTax">
               <Form.Check
                 type="checkbox"
-                label="Exempt from Taxes (noTax)"
+                label="Tax Exempt (noTax)"
                 checked={userWorkshop.noTax}
                 onChange={(e) => handleInputChange("noTax", e.target.checked)}
               />
@@ -503,12 +541,14 @@ const VehicleReception = ({
           <Row>
             <Col md={3}>
               <Form.Group controlId="vin">
-                <Form.Label>VIN (17 chars)</Form.Label>
+                <Form.Label>VIN (17 characters)</Form.Label>
                 <Form.Control
                   type="text"
                   maxLength={17}
-                  value={userWorkshop.vehicles[0].vin}
-                  onChange={(e) => handleVehicleChange(0, "vin", e.target.value)}
+                  value={userWorkshop.vehicles[0].vin || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "vin", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_vin}
                   required
                 />
@@ -522,8 +562,10 @@ const VehicleReception = ({
                 <Form.Label>Make</Form.Label>
                 <Form.Control
                   type="text"
-                  value={userWorkshop.vehicles[0].make}
-                  onChange={(e) => handleVehicleChange(0, "make", e.target.value)}
+                  value={userWorkshop.vehicles[0].make || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "make", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_make}
                   required
                 />
@@ -537,8 +579,10 @@ const VehicleReception = ({
                 <Form.Label>Model</Form.Label>
                 <Form.Control
                   type="text"
-                  value={userWorkshop.vehicles[0].model}
-                  onChange={(e) => handleVehicleChange(0, "model", e.target.value)}
+                  value={userWorkshop.vehicles[0].model || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "model", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_model}
                   required
                 />
@@ -555,8 +599,10 @@ const VehicleReception = ({
                 <Form.Control
                   type="text"
                   maxLength={4}
-                  value={userWorkshop.vehicles[0].year}
-                  onChange={(e) => handleVehicleChange(0, "year", e.target.value)}
+                  value={userWorkshop.vehicles[0].year || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "year", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_year}
                   required
                 />
@@ -570,8 +616,10 @@ const VehicleReception = ({
                 <Form.Label>Engine</Form.Label>
                 <Form.Control
                   type="text"
-                  value={userWorkshop.vehicles[0].engine}
-                  onChange={(e) => handleVehicleChange(0, "engine", e.target.value)}
+                  value={userWorkshop.vehicles[0].engine || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "engine", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_engine}
                   required
                 />
@@ -585,8 +633,10 @@ const VehicleReception = ({
                 <Form.Label>Plate</Form.Label>
                 <Form.Control
                   type="text"
-                  value={userWorkshop.vehicles[0].plate}
-                  onChange={(e) => handleVehicleChange(0, "plate", e.target.value)}
+                  value={userWorkshop.vehicles[0].plate || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "plate", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_plate}
                   required
                 />
@@ -600,8 +650,10 @@ const VehicleReception = ({
                 <Form.Label>State</Form.Label>
                 <Form.Control
                   type="text"
-                  value={userWorkshop.vehicles[0].state}
-                  onChange={(e) => handleVehicleChange(0, "state", e.target.value)}
+                  value={userWorkshop.vehicles[0].state || ""}
+                  onChange={(e) =>
+                    handleVehicleChange(0, "state", e.target.value)
+                  }
                   isInvalid={!!errors.vehicle_state}
                   required
                 />
