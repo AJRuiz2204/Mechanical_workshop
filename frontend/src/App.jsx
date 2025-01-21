@@ -41,7 +41,7 @@ const App = () => {
           }
         >
           <Route
-            path="/vehicle-reception"
+            path="/vehicle-reception/:id"
             element={
               <ProtectedRoute requiredRole="Manager">
                 <VehicleReception />

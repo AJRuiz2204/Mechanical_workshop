@@ -8,11 +8,15 @@ public class VehicleProfile : Profile
     {
         CreateMap<Vehicle, VehicleReadDto>();
         CreateMap<VehicleDto, Vehicle>();
+        CreateMap<UserWorkshop, UserWorkshopReadDto>();
+
+        CreateMap<Vehicle, VehicleDto>().ReverseMap();
 
         CreateMap<UserWorkshopCreateDto, UserWorkshop>()
             .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
 
         CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
             .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
     }
 }

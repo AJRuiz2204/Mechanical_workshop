@@ -1,8 +1,9 @@
+/* eslint-disable no-unused-vars */
 // src/services/UserWorkshopService.js
 
 // FUNCIONES PARA USERWORKSHOPS (TALLERES MECÁNICOS)
 
-const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Actualizar al puerto del backend
+const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Asegúrate de que este es el URL correcto
 
 /**
  * Obtiene la lista de todos los talleres mecánicos.
@@ -33,6 +34,26 @@ export const getUserWorkshopById = async (id) => {
     return await response.json();
   } catch (error) {
     console.error("Error in getUserWorkshopById:", error);
+    throw error;
+  }
+};
+
+export const getUserWorkshopByIdWithVehicles = async (id, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`, // Añade el token aquí
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Error fetching the mechanical workshop with vehicles.");
+    }
+    return await response.json(); // <-- Asegura la devolución del JSON
+  } catch (error) {
+    console.error("Error in getUserWorkshopByIdWithVehicles:", error);
     throw error;
   }
 };
