@@ -1,7 +1,7 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 // src/components/VehicleReception/VehicleReception.jsx
 
-/* eslint-disable react/prop-types */
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Container, Spinner } from "react-bootstrap";
 import {
@@ -140,7 +140,7 @@ const VehicleReception = ({
                   ],
           }); // Debug log
         })
-        .catch((error) => alert(`Error loading data: ${error.message}`))
+        .catch((error) => alert(`Error loading data: ${error.message}`)) // Corregido
         .finally(() => setLoading(false));
     }
 
@@ -308,7 +308,6 @@ const VehicleReception = ({
 
     // Prepare payload according to your backend
     const payload = {
-      id: editingId ? parseInt(editingId) : 0,
       email: userWorkshop.email,
       name: userWorkshop.name,
       lastName: userWorkshop.lastName,
@@ -320,7 +319,7 @@ const VehicleReception = ({
       primaryNumber: userWorkshop.primaryNumber,
       secondaryNumber: userWorkshop.secondaryNumber,
       noTax: userWorkshop.noTax,
-      vehicles: [userWorkshop.vehicles[0]],
+      vehicles: userWorkshop.vehicles, // Enviar todos los vehículos
     };
 
     console.log("Payload to send:", payload);

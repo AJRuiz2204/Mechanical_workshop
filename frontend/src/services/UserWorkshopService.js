@@ -2,7 +2,7 @@
 
 // FUNCIONES PARA USERWORKSHOPS (TALLERES MECÁNICOS)
 
-const API_BASE_URL = 'http://localhost:5121/api/UserWorkshops'; // Actualizar al puerto del backend
+const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Actualizar al puerto del backend
 
 /**
  * Obtiene la lista de todos los talleres mecánicos.
@@ -126,8 +126,10 @@ export const deleteUserWorkshop = async (id) => {
 export const searchVehicles = async (searchTerm) => {
   try {
     const encodedTerm = encodeURIComponent(searchTerm);
-    const response = await fetch(`${API_BASE_URL}/searchVehicles?searchTerm=${encodedTerm}`);
-    
+    const response = await fetch(
+      `${API_BASE_URL}/searchVehicles?searchTerm=${encodedTerm}`
+    );
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {

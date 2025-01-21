@@ -20,7 +20,7 @@ const Home = () => {
           className="side-menu-item"
           onClick={() => handleTabClick("/vehicle-list")}
         >
-          VEHICLE LIST
+          VEHICLE RECEPTION
         </div>
         <div
           className="side-menu-item"
