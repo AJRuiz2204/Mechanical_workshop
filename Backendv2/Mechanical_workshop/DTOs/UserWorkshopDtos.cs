@@ -21,7 +21,6 @@ namespace Mechanical_workshop.Dtos
         public string State { get; set; } = string.Empty;
      
         public string Status { get; set; } = "Visto";
-        // Foreign Key
         public int UserWorkshopId { get; set; }
 
     }

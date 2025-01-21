@@ -21,6 +21,7 @@ import ShopReports from "./components/Home/Reports/ShopReports";
 import Invoice from "./components/Home/Invoice/Invoice";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRouteComponent";
 import ErrorBoundary from "./components/ProtectedRoute/ErrorBoundary";
+import TechnicianDiagnosticList from "./components/Home/Diagnostic/TechnicianDiagnosticList";
 
 const App = () => {
   return (
@@ -82,18 +83,26 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/:id"
             element={
-              <ProtectedRoute requiredRole="Technician">
+              <ProtectedRoute requiredRole="Manager">
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }
           />
           <Route
             path="/technicianDiagnostic/edit/:techDiagId"
-            element={<TechnicianDiagnosticEdit />}
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <TechnicianDiagnosticEdit />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/technicianDiagnostic/create/:diagnosticId"
-            element={<TechnicianDiagnostic />}
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <TechnicianDiagnostic />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/invoice"
@@ -178,7 +187,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/:id"
             element={
-              <ProtectedRoute requiredRole="Technician">
+              <ProtectedRoute requiredRole="Manager">
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }
@@ -186,7 +195,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/edit/:techDiagId"
             element={
-              <ProtectedRoute requiredRole="Technician">
+              <ProtectedRoute requiredRole="Manager">
                 <TechnicianDiagnosticEdit />
               </ProtectedRoute>
             }
@@ -248,6 +257,14 @@ const App = () => {
             }
           />
         </Route>
+        <Route
+          path="/technicianDiagnosticList"
+          element={
+            <ProtectedRoute requiredRole="Technician">
+              <TechnicianDiagnosticList />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </ErrorBoundary>
   );

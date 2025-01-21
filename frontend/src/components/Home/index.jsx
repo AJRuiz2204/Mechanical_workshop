@@ -10,39 +10,52 @@ const Home = () => {
     navigate(route);
   };
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const { profile, name, lastName } = user;
+
   return (
     <div className="side-menu">
-      <div
-        className="side-menu-item"
-        onClick={() => handleTabClick("/vehicle-list")}
-      >
-        VEHICLE LIST
+      <div className="menu-items">
+        <div
+          className="side-menu-item"
+          onClick={() => handleTabClick("/vehicle-list")}
+        >
+          VEHICLE LIST
+        </div>
+        <div
+          className="side-menu-item"
+          onClick={() => handleTabClick("/diagnostic-list")}
+        >
+          DIAGNOSTIC
+        </div>
+        <div
+          className="side-menu-item"
+          onClick={() => handleTabClick("/technicianDiagnosticList")}
+          >
+            MY DIAGNOSTICS
+        </div>
+        <div
+          className="side-menu-item"
+          onClick={() => handleTabClick("/estimates")}
+        >
+          ESTIMATES
+        </div>
+        <div
+          className="side-menu-item"
+          onClick={() => handleTabClick("/reports")}
+        >
+          REPORTS
+        </div>
+        <div
+          className="side-menu-item"
+          onClick={() => handleTabClick("/settings")}
+        >
+          SETTINGS
+        </div>
       </div>
-      <div
-        className="side-menu-item"
-        onClick={() => handleTabClick("/diagnostic-list")}
-      >
-        DIAGNOSTIC
+      <div className="welcome-message">
+        Welcome {profile} {name} {lastName}
       </div>
-      <div
-        className="side-menu-item"
-        onClick={() => handleTabClick("/estimates")}
-      >
-        ESTIMATES
-      </div>
-      <div
-        className="side-menu-item"
-        onClick={() => handleTabClick("/reports")}
-      >
-        REPORTS
-      </div>
-      <div
-        className="side-menu-item"
-        onClick={() => handleTabClick("/settings")}
-      >
-        SETTINGS
-      </div>
-      
     </div>
   );
 };

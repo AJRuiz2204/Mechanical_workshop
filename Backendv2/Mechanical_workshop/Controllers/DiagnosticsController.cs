@@ -8,6 +8,9 @@ using AutoMapper;
 
 namespace Mechanical_workshop.Controllers
 {
+    /// <summary>
+    /// Controller for managing diagnostics.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class DiagnosticsController : ControllerBase
@@ -21,7 +24,11 @@ namespace Mechanical_workshop.Controllers
             _mapper = mapper;
         }
 
-        // POST: api/Diagnostics
+        /// <summary>
+        /// Creates a new diagnostic.
+        /// </summary>
+        /// <param name="diagnosticCreateDto">Diagnostic data transfer object.</param>
+        /// <returns>The created diagnostic read DTO.</returns>
         [HttpPost]
         public async Task<ActionResult<DiagnosticReadDto>> CreateDiagnostic(DiagnosticCreateDto diagnosticCreateDto)
         {
@@ -113,6 +120,28 @@ namespace Mechanical_workshop.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // GET: api/Diagnostics/byTechnician?name=John&lastName=Doe
+        [HttpGet("byTechnician")]
+        public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnosticsByTechnician([FromQuery] string name, [FromQuery] string lastName)
+        {
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(lastName))
+            {
+                return BadRequest(new { message = "Query parameters 'name' and 'lastName' are required." });
+            }
+
+            var fullName = $"{name} {lastName}";
+
+            var diagnostics = await _context.Diagnostics
+                .Where(d => d.AssignedTechnician == fullName)
+                .Include(d => d.Vehicle)
+                .Include(d => d.TechnicianDiagnostics)
+                .ToListAsync();
+
+            var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+
+            return Ok(diagnosticReadDtos);
         }
     }
 }

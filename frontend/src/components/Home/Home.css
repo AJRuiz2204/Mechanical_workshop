@@ -11,7 +11,17 @@
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Ocupa el 100% del alto de la vista */
+  height: 100vh;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
 }
 
 .side-menu-item {
@@ -19,9 +29,10 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 16px;
-  height: 50px; /* Altura fija para cada item */
+  height: 50px;
   display: flex;
   align-items: center;
+  margin: 10px 0;
 }
 
 .side-menu-item:hover {
@@ -39,7 +50,6 @@
   overflow-y: auto;
 }
 
-/* Estilos específicos para el contenido */
 .tab-content {
   text-align: center;
 }
@@ -82,4 +92,10 @@
   padding: 20px;
   border: 1px solid #ddd;
   background-color: #fff;
+}
+
+.welcome-message {
+  margin-top: auto;
+  text-align: center;
+  padding: 20px;
 }
