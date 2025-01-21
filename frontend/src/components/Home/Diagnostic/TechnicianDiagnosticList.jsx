@@ -49,9 +49,6 @@ const TechnicianDiagnosticList = () => {
     fetchTechnicianDiagnostics();
   }, []);
 
-  const handleViewDetails = (id) => {
-    navigate(`/technicianDiagnostic/${id}`); // Updated with backticks
-  };
 
   return (
     <Container className="p-4 border rounded bg-light">
@@ -96,7 +93,7 @@ const TechnicianDiagnosticList = () => {
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => handleViewDetails(diag.id)}
+                        onClick={() => navigate(`/technicianDiagnostic/create/${diag.id}`)}
                       >
                         View Details
                       </Button>

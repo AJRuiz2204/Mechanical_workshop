@@ -83,7 +83,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/:id"
             element={
-              <ProtectedRoute requiredRole="Manager">
+              <ProtectedRoute requiredRole="Technician">
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }
@@ -91,7 +91,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/edit/:techDiagId"
             element={
-              <ProtectedRoute requiredRole="Manager">
+              <ProtectedRoute requiredRole="Technician">
                 <TechnicianDiagnosticEdit />
               </ProtectedRoute>
             }
@@ -99,7 +99,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/create/:diagnosticId"
             element={
-              <ProtectedRoute requiredRole="Manager">
+              <ProtectedRoute requiredRole="Technician">
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }
@@ -185,70 +185,6 @@ const App = () => {
             }
           />
           <Route
-            path="/technicianDiagnostic/:id"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <TechnicianDiagnostic />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/technicianDiagnostic/edit/:techDiagId"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <TechnicianDiagnosticEdit />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/invoice"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <invoice />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/diagnostic-list"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <DiagnosticList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/estimates/"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <EstimateList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/estimate/create"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <Estimate />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/estimate/edit/:id"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <Estimate />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/wsettings"
             element={
               <ProtectedRoute requiredRole="Manager">
@@ -256,15 +192,15 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="technicianDiagnosticList"
+            element={
+              <ProtectedRoute requiredRole="Technician">
+                <TechnicianDiagnosticList />
+              </ProtectedRoute>
+            }
+          />
         </Route>
-        <Route
-          path="/technicianDiagnosticList"
-          element={
-            <ProtectedRoute requiredRole="Technician">
-              <TechnicianDiagnosticList />
-            </ProtectedRoute>
-          }
-        />
       </Routes>
     </ErrorBoundary>
   );
