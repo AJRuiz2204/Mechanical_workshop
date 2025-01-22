@@ -228,7 +228,7 @@ const Diagnostic = () => {
           </Col>
           <Col md={6}>
             <Form.Group controlId="reasonForVisit">
-              <Form.Label>Reason for Visit</Form.Label>
+              <Form.Label>Costumer State</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}

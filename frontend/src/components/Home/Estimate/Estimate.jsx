@@ -842,7 +842,7 @@ const Estimate = () => {
 
         {/* Nota para el cliente */}
         <Form.Group className="mb-3">
-          <Form.Label>Customer Note</Form.Label>
+          <Form.Label>Description of labor or services</Form.Label>
           <Form.Control
             as="textarea"
             rows={3}
