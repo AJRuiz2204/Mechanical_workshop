@@ -1,7 +1,16 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React from "react";
-import { Page, Text, View, Document, StyleSheet, Link } from "@react-pdf/renderer";
+import React, { useState, useEffect } from "react";
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  Link,
+} from "@react-pdf/renderer";
+import dayjs from "dayjs";
+import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 
 const styles = StyleSheet.create({
   page: {
@@ -162,11 +171,38 @@ const styles = StyleSheet.create({
   },
 });
 
-const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerNote }) => {
-  const safeWorkshopData = workshopData || {};
+const EstimatePDF = ({
+  workshopData,
+  customer,
+  vehicle,
+  items,
+  totals,
+  customerNote,
+}) => {
+  const [workshopSettings, setWorkshopSettings] = useState(null);
+
+  useEffect(() => {
+    const fetchWorkshopSettings = async () => {
+      try {
+        const settings = await getWorkshopSettings();
+        setWorkshopSettings(settings);
+      } catch (error) {
+        console.error("Error al cargar workshop settings:", error);
+      }
+    };
+    fetchWorkshopSettings();
+  }, []);
+
+  const safeWorkshopData = workshopSettings || {};
   const safeCustomer = customer || {};
   const safeVehicle = vehicle || {};
   const safeItems = items || [];
+
+  const formatLastUpdated = (dateString) => {
+    if (!dateString) return "";
+
+    return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+  };
 
   return (
     <Document>
@@ -174,13 +210,15 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={styles.companyName}>
-              {safeWorkshopData.workshopName || "Taller Genérico"}
+              {safeWorkshopData.workshopName}
             </Text>
             <Text style={styles.textLine}>
               {safeWorkshopData.primaryPhone || "Tel. N/A"}
             </Text>
             {safeWorkshopData.secondaryPhone && (
-              <Text style={styles.textLine}>{safeWorkshopData.secondaryPhone}</Text>
+              <Text style={styles.textLine}>
+                {safeWorkshopData.secondaryPhone}
+              </Text>
             )}
             <Text style={styles.textLine}>
               Fax: {safeWorkshopData.fax || "N/A"}
@@ -210,7 +248,9 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
             </Text>
             <Text style={styles.textLine}>
               {safeWorkshopData.lastUpdated
-                ? `Last Updated: ${safeWorkshopData.lastUpdated}`
+                ? `Last Updated: ${formatLastUpdated(
+                    safeWorkshopData.lastUpdated
+                  )}`
                 : ""}
             </Text>
             <Text style={styles.textLine}>
@@ -239,9 +279,7 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
             <Text style={styles.textLine}>
               Engine: {safeVehicle.engine || "N/A"}
             </Text>
-            <Text style={styles.textLine}>
-              VIN: {safeVehicle.vin || "N/A"}
-            </Text>
+            <Text style={styles.textLine}>VIN: {safeVehicle.vin || "N/A"}</Text>
           </View>
         </View>
 
@@ -254,21 +292,51 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
 
         <View style={styles.table}>
           <View style={[styles.tableRow, styles.tableHeader]}>
-            <Text style={[styles.tableCol, styles.colType, styles.tableHeaderText]}>Type</Text>
-            <Text style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}>Description</Text>
-            <Text style={[styles.tableCol, styles.colPartHours, styles.tableHeaderText]}>
+            <Text
+              style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
+            >
+              Type
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
+            >
+              Description
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colPartHours,
+                styles.tableHeaderText,
+              ]}
+            >
               Part# / Hours
             </Text>
-            <Text style={[styles.tableCol, styles.colNetRate, styles.tableHeaderText]}>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colNetRate,
+                styles.tableHeaderText,
+              ]}
+            >
               List Price
             </Text>
-            <Text style={[styles.tableCol, styles.colList, styles.tableHeaderText]}>
+            <Text
+              style={[styles.tableCol, styles.colList, styles.tableHeaderText]}
+            >
               List
             </Text>
-            <Text style={[styles.tableCol, styles.colExtended, styles.tableHeaderText]}>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colExtended,
+                styles.tableHeaderText,
+              ]}
+            >
               Extended
             </Text>
-            <Text style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}>
+            <Text
+              style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
+            >
               Tax?
             </Text>
           </View>
@@ -281,14 +349,18 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
               <Text style={[styles.tableCol, styles.colDesc, styles.tableText]}>
                 {item.description || ""}
               </Text>
-              <Text style={[styles.tableCol, styles.colPartHours, styles.tableText]}>
+              <Text
+                style={[styles.tableCol, styles.colPartHours, styles.tableText]}
+              >
                 {item.type === "Part"
                   ? item.partNumber
                   : item.type === "Labor"
                   ? `${item.quantity} hrs`
                   : "-"}
               </Text>
-              <Text style={[styles.tableCol, styles.colNetRate, styles.tableText]}>
+              <Text
+                style={[styles.tableCol, styles.colNetRate, styles.tableText]}
+              >
                 ${parseFloat(item.listPrice || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colList, styles.tableText]}>
@@ -296,7 +368,9 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
                   ? `$${parseFloat(item.listPrice || 0).toFixed(2)}`
                   : "-"}
               </Text>
-              <Text style={[styles.tableCol, styles.colExtended, styles.tableText]}>
+              <Text
+                style={[styles.tableCol, styles.colExtended, styles.tableText]}
+              >
                 ${parseFloat(item.extended || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colTax, styles.tableText]}>
@@ -338,7 +412,9 @@ const EstimatePDF = ({ workshopData, customer, vehicle, items, totals, customerN
             </Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={[styles.totalLabel, styles.grandTotalText]}>Total:</Text>
+            <Text style={[styles.totalLabel, styles.grandTotalText]}>
+              Total:
+            </Text>
             <Text style={[styles.totalAmount, styles.grandTotalText]}>
               ${(totals?.total || 0).toFixed(2)}
             </Text>
