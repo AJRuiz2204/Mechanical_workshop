@@ -248,9 +248,7 @@ const EstimatePDF = ({
             </Text>
             <Text style={styles.textLine}>
               {safeWorkshopData.lastUpdated
-                ? `Last Updated: ${formatLastUpdated(
-                    safeWorkshopData.lastUpdated
-                  )}`
+                ? `Last Updated: ${formatLastUpdated(safeWorkshopData.lastUpdated)}`
                 : ""}
             </Text>
             <Text style={styles.textLine}>
