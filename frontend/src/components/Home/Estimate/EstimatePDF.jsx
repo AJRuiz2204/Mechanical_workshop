@@ -14,45 +14,44 @@ import dayjs from "dayjs";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 import logo from "../../../images/logo.png";
 
-// Define styles for PDF document
+// Styles definition for PDF document
 const styles = StyleSheet.create({
-  // Page container
   page: {
     padding: 40,
     fontSize: 10,
     fontFamily: "Helvetica",
     backgroundColor: "#ffffff",
   },
-  // Header container with logo and info
+  // Header container styles
   headerContainer: {
     flexDirection: "row",
     marginBottom: 20,
   },
-  // Logo section styles
+  // Logo container on the left
   logoSection: {
     width: 150,
     height: 150,
     marginRight: 20,
   },
-  // Workshop and quote info container
+  // Header information container
   headerInfo: {
     flex: 1,
     flexDirection: "column",
   },
-  // Quote details section
+  // Quote information styles at the top right
   quoteInfo: {
     alignItems: "flex-end",
     marginBottom: 15,
   },
-  // Workshop contact info section
+  // Workshop information styles
   workshopInfo: {
     alignItems: "flex-end",
   },
-  // Common text styles
+  // Title and text styles
   companyName: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 3,
+    marginBottom: 5,
   },
   textLine: {
     fontSize: 9,
@@ -63,7 +62,7 @@ const styles = StyleSheet.create({
     color: "blue",
     fontSize: 9,
   },
-  // Customer and vehicle info section
+  // Information section styles
   infoSection: {
     marginTop: 15,
     marginBottom: 20,
@@ -77,14 +76,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 4,
   },
-  // Customer notes section
+  // Note section styles
   noteSection: {
     marginBottom: 15,
     padding: 10,
     borderBottom: 1,
     borderBottomColor: "#e0e0e0",
   },
-  // Items table styles
+  // Table styles remain the same as original
   table: {
     display: "table",
     width: "auto",
@@ -114,7 +113,6 @@ const styles = StyleSheet.create({
   tableCol: {
     padding: 4,
   },
-  // Table column width definitions
   colType: {
     width: "8%",
     textAlign: "left",
@@ -196,19 +194,6 @@ const styles = StyleSheet.create({
   },
 });
 
-/**
- * EstimatePDF Component
- * Generates a PDF estimate document with workshop, customer, and vehicle information
- *
- * @param {Object} props Component properties
- * @param {Object} props.workshopData Workshop information
- * @param {Object} props.customer Customer details
- * @param {Object} props.vehicle Vehicle information
- * @param {Array} props.items Line items for the estimate
- * @param {Object} props.totals Total amounts
- * @param {string} props.customerNote Customer specific notes
- * @param {string} props.logo Base64 or URL string for workshop logo
- */
 const EstimatePDF = ({
   workshopData,
   customer,
@@ -217,7 +202,7 @@ const EstimatePDF = ({
   totals,
   customerNote,
 }) => {
-  // State management
+  // State for workshop settings
   const [workshopSettings, setWorkshopSettings] = useState(null);
 
   // Fetch workshop settings on component mount
@@ -233,20 +218,16 @@ const EstimatePDF = ({
     fetchWorkshopSettings();
   }, []);
 
-  // Handle null values with defaults
+  // Safe data handling with defaults
   const safeWorkshopData = workshopSettings || {};
   const safeCustomer = customer || {};
   const safeVehicle = vehicle || {};
   const safeItems = items || [];
 
-  /**
-   * Formats the last updated date string
-   * @param {string} dateString - Date string to format
-   * @returns {string} Formatted date string
-   */
+  // Format date string for last updated
   const formatLastUpdated = (dateString) => {
     if (!dateString) return "";
-    return dayjs(dateString).format("YYYY-MM-DD HH:mm:ss");
+    return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
   };
 
   return (
@@ -254,9 +235,9 @@ const EstimatePDF = ({
       <Page size="A4" style={styles.page}>
         {/* Header Section */}
         <View style={styles.headerContainer}>
-          {/* Logo Section */}
+          {/* Logo Space */}
           <View style={styles.logoSection}>
-            {logo && <Image source={logo} />}
+            <Image src={logo} />
           </View>
 
           {/* Header Information */}
@@ -305,14 +286,16 @@ const EstimatePDF = ({
           </View>
         </View>
 
-        {/* Customer and Vehicle Information */}
+        {/* Rest of the component remains unchanged */}
         <View style={styles.infoSection}>
           <View style={{ flex: 1, marginRight: 10 }}>
             <Text style={styles.sectionTitle}>Customer</Text>
             <Text style={styles.textLine}>
               {safeCustomer.name} {safeCustomer.lastName}
             </Text>
-            <Text style={styles.textLine}>{safeCustomer.email || ""}</Text>
+            <Text style={styles.textLine}>
+              {safeCustomer.email || "customer@email"}
+            </Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Vehicle</Text>
@@ -326,17 +309,14 @@ const EstimatePDF = ({
           </View>
         </View>
 
-        {/* Customer Note Section */}
         {customerNote && (
           <View style={styles.noteSection}>
             <Text style={styles.sectionTitle}>Customer Note:</Text>
-            <Text style={styles.textLine}>{customerNote}</Text>
+            <Text>{customerNote}</Text>
           </View>
         )}
 
-        {/* Items Table */}
         <View style={styles.table}>
-          {/* Table Header */}
           <View style={[styles.tableRow, styles.tableHeader]}>
             <Text
               style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
@@ -364,7 +344,7 @@ const EstimatePDF = ({
                 styles.tableHeaderText,
               ]}
             >
-              Net Rate
+              List Price
             </Text>
             <Text
               style={[styles.tableCol, styles.colList, styles.tableHeaderText]}
@@ -387,7 +367,6 @@ const EstimatePDF = ({
             </Text>
           </View>
 
-          {/* Table Rows */}
           {safeItems.map((item, idx) => (
             <View key={idx} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.colType, styles.tableText]}>
@@ -427,7 +406,6 @@ const EstimatePDF = ({
           ))}
         </View>
 
-        {/* Totals Section */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Parts Total:</Text>
@@ -469,7 +447,6 @@ const EstimatePDF = ({
           </View>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
           {safeWorkshopData.disclaimer && (
             <Text style={{ marginBottom: 8 }}>
