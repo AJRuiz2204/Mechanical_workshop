@@ -8,42 +8,62 @@ import {
   Document,
   StyleSheet,
   Link,
+  Image,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
+import logo from "../../../images/logo.png";
 
+// Define styles for PDF document
 const styles = StyleSheet.create({
+  // Page container
   page: {
     padding: 40,
     fontSize: 10,
     fontFamily: "Helvetica",
     backgroundColor: "#ffffff",
   },
-  headerRow: {
+  // Header container with logo and info
+  headerContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 20,
   },
-  headerLeft: {
-    flex: 1,
+  // Logo section styles
+  logoSection: {
+    width: 150,
+    height: 150,
+    marginRight: 20,
   },
-  headerRight: {
+  // Workshop and quote info container
+  headerInfo: {
     flex: 1,
+    flexDirection: "column",
+  },
+  // Quote details section
+  quoteInfo: {
+    alignItems: "flex-end",
+    marginBottom: 15,
+  },
+  // Workshop contact info section
+  workshopInfo: {
     alignItems: "flex-end",
   },
+  // Common text styles
   companyName: {
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 3,
+  },
+  textLine: {
+    fontSize: 9,
+    marginBottom: 2,
   },
   link: {
     textDecoration: "underline",
     color: "blue",
     fontSize: 9,
   },
-  textLine: {
-    fontSize: 9,
-  },
+  // Customer and vehicle info section
   infoSection: {
     marginTop: 15,
     marginBottom: 20,
@@ -57,12 +77,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 4,
   },
+  // Customer notes section
   noteSection: {
     marginBottom: 15,
     padding: 10,
     borderBottom: 1,
     borderBottomColor: "#e0e0e0",
   },
+  // Items table styles
   table: {
     display: "table",
     width: "auto",
@@ -92,6 +114,7 @@ const styles = StyleSheet.create({
   tableCol: {
     padding: 4,
   },
+  // Table column width definitions
   colType: {
     width: "8%",
     textAlign: "left",
@@ -131,6 +154,7 @@ const styles = StyleSheet.create({
     width: "8%",
     textAlign: "center",
   },
+  // Totals section styles
   totalsSection: {
     marginTop: 15,
     alignItems: "flex-end",
@@ -159,6 +183,7 @@ const styles = StyleSheet.create({
   grandTotalText: {
     fontWeight: "bold",
   },
+  // Footer styles
   footer: {
     position: "absolute",
     bottom: 40,
@@ -171,6 +196,19 @@ const styles = StyleSheet.create({
   },
 });
 
+/**
+ * EstimatePDF Component
+ * Generates a PDF estimate document with workshop, customer, and vehicle information
+ *
+ * @param {Object} props Component properties
+ * @param {Object} props.workshopData Workshop information
+ * @param {Object} props.customer Customer details
+ * @param {Object} props.vehicle Vehicle information
+ * @param {Array} props.items Line items for the estimate
+ * @param {Object} props.totals Total amounts
+ * @param {string} props.customerNote Customer specific notes
+ * @param {string} props.logo Base64 or URL string for workshop logo
+ */
 const EstimatePDF = ({
   workshopData,
   customer,
@@ -179,95 +217,102 @@ const EstimatePDF = ({
   totals,
   customerNote,
 }) => {
+  // State management
   const [workshopSettings, setWorkshopSettings] = useState(null);
 
+  // Fetch workshop settings on component mount
   useEffect(() => {
     const fetchWorkshopSettings = async () => {
       try {
         const settings = await getWorkshopSettings();
         setWorkshopSettings(settings);
       } catch (error) {
-        console.error("Error al cargar workshop settings:", error);
+        console.error("Error loading workshop settings:", error);
       }
     };
     fetchWorkshopSettings();
   }, []);
 
+  // Handle null values with defaults
   const safeWorkshopData = workshopSettings || {};
   const safeCustomer = customer || {};
   const safeVehicle = vehicle || {};
   const safeItems = items || [];
 
+  /**
+   * Formats the last updated date string
+   * @param {string} dateString - Date string to format
+   * @returns {string} Formatted date string
+   */
   const formatLastUpdated = (dateString) => {
     if (!dateString) return "";
-
-    return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+    return dayjs(dateString).format("YYYY-MM-DD HH:mm:ss");
   };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>
-              {safeWorkshopData.workshopName}
-            </Text>
-            <Text style={styles.textLine}>
-              {safeWorkshopData.primaryPhone || "Tel. N/A"}
-            </Text>
-            {safeWorkshopData.secondaryPhone && (
+        {/* Header Section */}
+        <View style={styles.headerContainer}>
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            {logo && <Image source={logo} />}
+          </View>
+
+          {/* Header Information */}
+          <View style={styles.headerInfo}>
+            {/* Quote Information */}
+            <View style={styles.quoteInfo}>
               <Text style={styles.textLine}>
-                {safeWorkshopData.secondaryPhone}
+                Quote # {safeWorkshopData.quoteNumber || ""}
               </Text>
-            )}
-            <Text style={styles.textLine}>
-              Fax: {safeWorkshopData.fax || "N/A"}
-            </Text>
-            <Text style={styles.textLine}>
-              {safeWorkshopData.email || "Email N/A"}
-            </Text>
-            {safeWorkshopData.websiteUrl && (
-              <Link src={safeWorkshopData.websiteUrl} style={styles.link}>
-                {safeWorkshopData.websiteUrl}
-              </Link>
-            )}
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.textLine}>
-              {safeWorkshopData.address || "Dirección N/A"}
-            </Text>
+              <Text style={styles.textLine}>
+                Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
+              </Text>
+              <Text style={styles.textLine}>
+                Expires: {safeWorkshopData.expiryDate || ""}
+              </Text>
+            </View>
+
+            {/* Workshop Information */}
+            <View style={styles.workshopInfo}>
+              <Text style={styles.textLine}>
+                {safeWorkshopData.workshopName}
+              </Text>
+              <Text style={styles.textLine}>
+                {safeWorkshopData.address || ""}
+              </Text>
+              <Text style={styles.textLine}>
+                {safeWorkshopData.primaryPhone || ""}
+              </Text>
+              {safeWorkshopData.secondaryPhone && (
+                <Text style={styles.textLine}>
+                  {safeWorkshopData.secondaryPhone}
+                </Text>
+              )}
+              <Text style={styles.textLine}>
+                Fax: {safeWorkshopData.fax || ""}
+              </Text>
+              <Text style={styles.textLine}>
+                {safeWorkshopData.email || ""}
+              </Text>
+              {safeWorkshopData.websiteUrl && (
+                <Link src={safeWorkshopData.websiteUrl} style={styles.link}>
+                  {safeWorkshopData.websiteUrl}
+                </Link>
+              )}
+            </View>
           </View>
         </View>
 
-        <View style={styles.headerRow}>
-          <View style={styles.headerRight}>
-            <Text style={styles.textLine}>
-              {safeWorkshopData.quoteNumber
-                ? `Quote # ${safeWorkshopData.quoteNumber}`
-                : ""}
-            </Text>
-            <Text style={styles.textLine}>
-              {safeWorkshopData.lastUpdated
-                ? `Last Updated: ${formatLastUpdated(safeWorkshopData.lastUpdated)}`
-                : ""}
-            </Text>
-            <Text style={styles.textLine}>
-              {safeWorkshopData.expiryDate
-                ? `Expires: ${safeWorkshopData.expiryDate}`
-                : ""}
-            </Text>
-          </View>
-        </View>
-
+        {/* Customer and Vehicle Information */}
         <View style={styles.infoSection}>
           <View style={{ flex: 1, marginRight: 10 }}>
             <Text style={styles.sectionTitle}>Customer</Text>
             <Text style={styles.textLine}>
               {safeCustomer.name} {safeCustomer.lastName}
             </Text>
-            <Text style={styles.textLine}>
-              {safeCustomer.email || "customer@email"}
-            </Text>
+            <Text style={styles.textLine}>{safeCustomer.email || ""}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Vehicle</Text>
@@ -281,14 +326,17 @@ const EstimatePDF = ({
           </View>
         </View>
 
-        {customerNote ? (
+        {/* Customer Note Section */}
+        {customerNote && (
           <View style={styles.noteSection}>
             <Text style={styles.sectionTitle}>Customer Note:</Text>
-            <Text>{customerNote}</Text>
+            <Text style={styles.textLine}>{customerNote}</Text>
           </View>
-        ) : null}
+        )}
 
+        {/* Items Table */}
         <View style={styles.table}>
+          {/* Table Header */}
           <View style={[styles.tableRow, styles.tableHeader]}>
             <Text
               style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
@@ -316,7 +364,7 @@ const EstimatePDF = ({
                 styles.tableHeaderText,
               ]}
             >
-              List Price
+              Net Rate
             </Text>
             <Text
               style={[styles.tableCol, styles.colList, styles.tableHeaderText]}
@@ -339,6 +387,7 @@ const EstimatePDF = ({
             </Text>
           </View>
 
+          {/* Table Rows */}
           {safeItems.map((item, idx) => (
             <View key={idx} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.colType, styles.tableText]}>
@@ -378,6 +427,7 @@ const EstimatePDF = ({
           ))}
         </View>
 
+        {/* Totals Section */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Parts Total:</Text>
@@ -419,6 +469,7 @@ const EstimatePDF = ({
           </View>
         </View>
 
+        {/* Footer */}
         <View style={styles.footer}>
           {safeWorkshopData.disclaimer && (
             <Text style={{ marginBottom: 8 }}>
