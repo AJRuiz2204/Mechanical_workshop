@@ -21,7 +21,7 @@ namespace Mechanical_workshop.Dtos
         public string State { get; set; } = string.Empty;
      
         public string Status { get; set; } = "Visto";
-        public int UserWorkshopId { get; set; }
+        // public int UserWorkshopId { get; set; }
 
     }
 

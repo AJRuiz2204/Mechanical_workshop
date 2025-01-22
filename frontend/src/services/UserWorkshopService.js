@@ -1,12 +1,11 @@
-/* eslint-disable no-unused-vars */
 // src/services/UserWorkshopService.js
 
-// FUNCIONES PARA USERWORKSHOPS (TALLERES MECÁNICOS)
+// FUNCTIONS FOR USERWORKSHOPS (MECHANICAL WORKSHOPS)
 
-const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Asegúrate de que este es el URL correcto
+const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Ensure this is the correct URL
 
 /**
- * Obtiene la lista de todos los talleres mecánicos.
+ * Retrieves the list of all mechanical workshops.
  */
 export const getUserWorkshops = async () => {
   try {
@@ -22,8 +21,8 @@ export const getUserWorkshops = async () => {
 };
 
 /**
- * Obtiene un taller mecánico por su ID.
- * @param {number} id - ID del UserWorkshop a consultar
+ * Retrieves a mechanical workshop by its ID.
+ * @param {number} id - ID of the UserWorkshop to fetch
  */
 export const getUserWorkshopById = async (id) => {
   try {
@@ -38,20 +37,25 @@ export const getUserWorkshopById = async (id) => {
   }
 };
 
+/**
+ * Retrieves a mechanical workshop by its ID along with associated vehicles.
+ * @param {number} id - ID of the UserWorkshop to fetch
+ * @param {string} token - Authentication token
+ */
 export const getUserWorkshopByIdWithVehicles = async (id, token) => {
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${token}`, // Añade el token aquí
+        Authorization: `Bearer ${token}`, // Add the token here
       },
     });
 
     if (!response.ok) {
       throw new Error("Error fetching the mechanical workshop with vehicles.");
     }
-    return await response.json(); // <-- Asegura la devolución del JSON
+    return await response.json(); // Ensure JSON is returned
   } catch (error) {
     console.error("Error in getUserWorkshopByIdWithVehicles:", error);
     throw error;
@@ -59,8 +63,8 @@ export const getUserWorkshopByIdWithVehicles = async (id, token) => {
 };
 
 /**
- * Crea un nuevo taller mecánico (UserWorkshop).
- * @param {Object} userWorkshopData - Objeto con la información del taller y vehículos asociados
+ * Creates a new mechanical workshop (UserWorkshop).
+ * @param {Object} userWorkshopData - Object containing workshop and associated vehicle information
  */
 export const createUserWorkshop = async (userWorkshopData) => {
   try {
@@ -87,38 +91,61 @@ export const createUserWorkshop = async (userWorkshopData) => {
 };
 
 /**
- * Actualiza un taller mecánico existente.
- * @param {number} id - ID del taller a actualizar
- * @param {Object} userWorkshopData - Objeto con la nueva información del taller
+ * Updates an existing UserWorkshop.
+ * @param {number} id - ID of the UserWorkshop to update
+ * @param {Object} userWorkshopData - Updated data for the UserWorkshop
+ * @param {string} token - Authentication token
+ * @returns {Promise<void>}
  */
-export const updateUserWorkshop = async (id, userWorkshopData) => {
+export const updateUserWorkshop = async (id, userWorkshopData, token) => {
   try {
+    console.log(
+      "Updating UserWorkshop with ID:",
+      id,
+      "Data:",
+      userWorkshopData
+    ); // Debug log
     const response = await fetch(`${API_BASE_URL}/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`, // Add the token here
+      },
       body: JSON.stringify(userWorkshopData),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
+      const errorData = await response.json().catch(() => ({
+        message: "Error updating the mechanical workshop.",
+      }));
+      console.error("Error details:", errorData.errors || errorData.message); // Detailed error log
+      // Manejar errores de validación
+      if (errorData.errors) {
+        // Extraer mensajes de error
+        const messages = Object.values(errorData.errors)
+          .flat()
+          .join(" ");
+        throw new Error(messages);
       } else {
-        throw new Error("Error updating the mechanical workshop.");
+        throw new Error(
+          errorData.message || "Error updating the mechanical workshop."
+        );
       }
     }
 
-    // Si todo salió bien, no hay contenido que retornar
-    return;
+    console.log(`UserWorkshop with ID ${id} updated successfully.`);
   } catch (error) {
     console.error("Error in updateUserWorkshop:", error);
-    throw error;
+    throw new Error(
+      error.message || "Unexpected error while updating the UserWorkshop."
+    );
   }
 };
 
 /**
- * Elimina un taller mecánico por su ID.
- * @param {number} id - ID del taller a eliminar
+ * Deletes a mechanical workshop by its ID.
+ * @param {number} id - ID of the workshop to delete
  */
 export const deleteUserWorkshop = async (id) => {
   try {
@@ -130,7 +157,7 @@ export const deleteUserWorkshop = async (id) => {
       throw new Error("Error deleting the mechanical workshop.");
     }
 
-    // Si todo salió bien, no hay contenido que retornar
+    // If everything went well, there's no content to return
     return;
   } catch (error) {
     console.error("Error in deleteUserWorkshop:", error);
@@ -138,11 +165,11 @@ export const deleteUserWorkshop = async (id) => {
   }
 };
 
-// FUNCIONES PARA GESTIONAR VEHÍCULOS DENTRO DEL TALLER
+// FUNCTIONS FOR MANAGING VEHICLES WITHIN THE WORKSHOP
 
 /**
- * Busca vehículos según un término de búsqueda (VIN, nombre de cliente, etc.).
- * @param {string} searchTerm - Término de búsqueda
+ * Searches for vehicles based on a search term (VIN, client name, etc.).
+ * @param {string} searchTerm - Search term
  */
 export const searchVehicles = async (searchTerm) => {
   try {
@@ -168,18 +195,18 @@ export const searchVehicles = async (searchTerm) => {
 };
 
 /**
- * Obtiene todos los vehículos registrados.
+ * Retrieves all registered vehicles.
  */
 export const getAllVehicles = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/vehicles`);
     if (!response.ok) {
-      // Intentar leer el cuerpo de la respuesta como JSON
+      // Attempt to read the response body as JSON
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
       } else {
-        // Si no se pudo parsear, arrojar error genérico
+        // If it couldn't be parsed, throw a generic error
         throw new Error(
           `Error fetching the list of vehicles. HTTP Code: ${response.status}`
         );
@@ -193,8 +220,8 @@ export const getAllVehicles = async () => {
 };
 
 /**
- * Elimina un vehículo por su VIN.
- * @param {string} vin - VIN del vehículo a eliminar
+ * Deletes a vehicle by its VIN.
+ * @param {string} vin - VIN of the vehicle to delete
  */
 export const deleteVehicle = async (vin) => {
   try {
@@ -203,7 +230,7 @@ export const deleteVehicle = async (vin) => {
     });
 
     if (!response.ok) {
-      // Intentar parsear un error en JSON
+      // Attempt to parse an error in JSON
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
         throw new Error(errorData.message);
@@ -212,7 +239,7 @@ export const deleteVehicle = async (vin) => {
       }
     }
 
-    // 204 No Content -> no se retorna nada
+    // 204 No Content -> nothing to return
     return;
   } catch (error) {
     console.error("Error in deleteVehicle:", error);
@@ -221,8 +248,8 @@ export const deleteVehicle = async (vin) => {
 };
 
 /**
- * Obtiene la información de un vehículo por ID (o VIN, dependiendo de tu backend).
- * @param {number|string} id - El ID o VIN del vehículo
+ * Retrieves vehicle information by ID (or VIN, depending on your backend).
+ * @param {number|string} id - The ID or VIN of the vehicle
  */
 export const getVehicleById = async (id) => {
   try {

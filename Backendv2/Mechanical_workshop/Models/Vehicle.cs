@@ -41,8 +41,10 @@ namespace Mechanical_workshop.Models
         [StringLength(50)]
         public string Status { get; set; } = "Visto";
 
+        // Foreign Key
         public int UserWorkshopId { get; set; }
 
+        [ForeignKey("UserWorkshopId")]
         public UserWorkshop? UserWorkshop { get; set; }
         public ICollection<Diagnostic> Diagnostics { get; set; } = new List<Diagnostic>();
     }

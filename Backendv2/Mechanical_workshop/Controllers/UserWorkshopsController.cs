@@ -76,24 +76,24 @@ namespace Mechanical_workshop.Controllers
         }
 
         /// <summary>
-        /// Crea un nuevo UserWorkshop.
+        /// Creates a new UserWorkshop.
         /// </summary>
-        /// <param name="userWorkshopDto">Objeto UserWorkshopCreateDto con la información del taller y vehículos asociados.</param>
-        /// <returns>El UserWorkshopReadDto creado.</returns>
+        /// <param name="userWorkshopDto">UserWorkshopCreateDto object with workshop and associated vehicle information.</param>
+        /// <returns>The created UserWorkshopReadDto.</returns>
         [HttpPost]
         public async Task<ActionResult<UserWorkshopReadDto>> CreateUserWorkshop(UserWorkshopCreateDto userWorkshopDto)
         {
-            _logger.LogInformation("POST: Creando un nuevo UserWorkshop.");
+            _logger.LogInformation("POST: Creating a new UserWorkshop.");
 
             if (userWorkshopDto == null)
             {
-                _logger.LogWarning("POST: UserWorkshopCreateDto es nulo.");
-                return BadRequest("Datos de UserWorkshop inválidos.");
+                _logger.LogWarning("POST: UserWorkshopCreateDto is null.");
+                return BadRequest("Invalid UserWorkshop data.");
             }
 
             try
             {
-                // Mapear el DTO a la entidad
+                // Map the DTO to the entity
                 var userWorkshop = _mapper.Map<UserWorkshop>(userWorkshopDto);
 
                 userWorkshop.Vehicles = new List<Vehicle>();
@@ -102,7 +102,7 @@ namespace Mechanical_workshop.Controllers
                 {
                     if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
                     {
-                        _logger.LogWarning("POST: Se omitirá un VehicleDto con VIN vacío.");
+                        _logger.LogWarning("POST: A VehicleDto with an empty VIN will be skipped.");
                         continue;
                     }
 
@@ -117,7 +117,7 @@ namespace Mechanical_workshop.Controllers
                     if (existingVehicle == null)
                     {
                         _logger.LogInformation(
-                            "No se encontró vehículo existente con VIN = {Vin}. Creando uno nuevo...",
+                            "No existing vehicle found with VIN = {Vin}. Creating a new one...",
                             vehicleDto.Vin
                         );
                         var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
@@ -126,7 +126,7 @@ namespace Mechanical_workshop.Controllers
                     else
                     {
                         _logger.LogInformation(
-                            "Vehículo existente encontrado con VIN = {Vin}. Reutilizando la misma entidad.",
+                            "Existing vehicle found with VIN = {Vin}. Reusing the same entity.",
                             vehicleDto.Vin
                         );
                         userWorkshop.Vehicles.Add(existingVehicle);
@@ -134,37 +134,37 @@ namespace Mechanical_workshop.Controllers
                 }
 
                 _logger.LogInformation(
-                    "Después de las adiciones manuales, userWorkshop.Vehicles.Count = {Count}",
+                    "After manual additions, userWorkshop.Vehicles.Count = {Count}",
                     userWorkshop.Vehicles.Count
                 );
 
-                // Guardar el UserWorkshop en la base de datos
+                // Save the UserWorkshop to the database
                 _context.UserWorkshops.Add(userWorkshop);
                 await _context.SaveChangesAsync();
 
-                // Mapear la entidad a ReadDto
+                // Map the entity to ReadDto
                 var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
 
-                _logger.LogInformation("POST: UserWorkshop creado exitosamente con ID = {Id}.", userWorkshop.Id);
+                _logger.LogInformation("POST: UserWorkshop created successfully with ID = {Id}.", userWorkshop.Id);
 
                 return CreatedAtAction(nameof(GetUserWorkshop), new { id = readDto.Id }, readDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "POST: Error al crear UserWorkshop.");
-                return StatusCode(500, "Error al crear el taller mecánico.");
+                _logger.LogError(ex, "POST: Error creating UserWorkshop.");
+                return StatusCode(500, "Error creating the mechanical workshop.");
             }
         }
 
         /// <summary>
-        /// Crea múltiples UserWorkshops.
+        /// Creates multiple UserWorkshops.
         /// </summary>
-        /// <param name="userWorkshopsDto">Lista de UserWorkshopCreateDto.</param>
-        /// <returns>Lista de UserWorkshopReadDto creados.</returns>
+        /// <param name="userWorkshopsDto">List of UserWorkshopCreateDto.</param>
+        /// <returns>List of created UserWorkshopReadDto.</returns>
         [HttpPost("bulk")]
         public async Task<ActionResult<IEnumerable<UserWorkshopReadDto>>> CreateUserWorkshops(IEnumerable<UserWorkshopCreateDto> userWorkshopsDto)
         {
-            _logger.LogInformation("POST: Creando múltiples UserWorkshops. Cantidad: {Count}", userWorkshopsDto.Count());
+            _logger.LogInformation("POST: Creating multiple UserWorkshops. Count: {Count}", userWorkshopsDto.Count());
 
             var readDtos = new List<UserWorkshopReadDto>();
 
@@ -180,7 +180,7 @@ namespace Mechanical_workshop.Controllers
                     {
                         if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
                         {
-                            _logger.LogWarning("POST Bulk: Se omitirá un VehicleDto con VIN vacío.");
+                            _logger.LogWarning("POST Bulk: A VehicleDto with an empty VIN will be skipped.");
                             continue;
                         }
 
@@ -195,7 +195,7 @@ namespace Mechanical_workshop.Controllers
                         if (existingVehicle == null)
                         {
                             _logger.LogInformation(
-                                "No se encontró vehículo existente con VIN = {Vin}. Creando uno nuevo...",
+                                "No existing vehicle found with VIN = {Vin}. Creating a new one...",
                                 vehicleDto.Vin
                             );
                             var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
@@ -204,7 +204,7 @@ namespace Mechanical_workshop.Controllers
                         else
                         {
                             _logger.LogInformation(
-                                "Vehículo existente encontrado con VIN = {Vin}. Reutilizando la misma entidad.",
+                                "Existing vehicle found with VIN = {Vin}. Reusing the same entity.",
                                 vehicleDto.Vin
                             );
                             userWorkshop.Vehicles.Add(existingVehicle);
@@ -212,24 +212,24 @@ namespace Mechanical_workshop.Controllers
                     }
 
                     _logger.LogInformation(
-                        "Después de las adiciones manuales, userWorkshop.Vehicles.Count = {Count}",
+                        "After manual additions, userWorkshop.Vehicles.Count = {Count}",
                         userWorkshop.Vehicles.Count
                     );
 
-                    // Guardar el UserWorkshop
+                    // Save the UserWorkshop
                     _context.UserWorkshops.Add(userWorkshop);
                     await _context.SaveChangesAsync();
 
-                    // Mapear al ReadDto y agregar a la lista de respuestas
+                    // Map to ReadDto and add to the response list
                     var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
                     readDtos.Add(readDto);
 
-                    _logger.LogInformation("POST Bulk: UserWorkshop creado exitosamente con ID = {Id}.", userWorkshop.Id);
+                    _logger.LogInformation("POST Bulk: UserWorkshop created successfully with ID = {Id}.", userWorkshop.Id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "POST Bulk: Error al crear UserWorkshop.");
-                    // Opcional: Puedes decidir cómo manejar errores individuales sin detener todo el proceso
+                    _logger.LogError(ex, "POST Bulk: Error creating UserWorkshop.");
+                    // Optional: Decide how to handle individual errors without stopping the entire process
                 }
             }
 
@@ -245,94 +245,112 @@ namespace Mechanical_workshop.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUserWorkshop(int id, UserWorkshopUpdateDto userWorkshopUpdateDto)
         {
-            _logger.LogInformation("PUT: Actualizando UserWorkshop con ID = {Id}. DTO entrante: {@Dto}", id, userWorkshopUpdateDto);
+            _logger.LogInformation("PUT: Updating UserWorkshop with ID = {Id}. Incoming DTO: {@Dto}", id, userWorkshopUpdateDto);
 
+            // 1. Verify if the ID in the route matches the ID in the DTO
             if (id != userWorkshopUpdateDto.Id)
             {
-                _logger.LogWarning("PUT: Desajuste de ID. ID de ruta: {RouteId}, ID del DTO: {DtoId}", id, userWorkshopUpdateDto.Id);
-                return BadRequest("Desajuste de ID");
+                _logger.LogWarning("PUT: ID mismatch. Route ID: {RouteId}, DTO ID: {DtoId}", id, userWorkshopUpdateDto.Id);
+                return BadRequest(new { message = "The ID in the route does not match the ID in the request body." });
             }
 
+            // 2. Retrieve the existing UserWorkshop including Vehicles
             var userWorkshop = await _context.UserWorkshops
                 .Include(uw => uw.Vehicles)
                 .FirstOrDefaultAsync(uw => uw.Id == id);
 
             if (userWorkshop == null)
             {
-                _logger.LogWarning("PUT: UserWorkshop con ID = {Id} no encontrado.", id);
-                return NotFound();
+                _logger.LogWarning("PUT: UserWorkshop with ID {Id} not found.", id);
+                return NotFound(new { message = $"UserWorkshop with ID {id} not found." });
             }
 
-            // Mapear los campos principales (UserWorkshop)
+            // 3. Map the main fields from the DTO to the existing UserWorkshop
             _mapper.Map(userWorkshopUpdateDto, userWorkshop);
 
-            // Manejar vehículos
-            // 1) Remover vehículos que ya no están presentes
+            // 4. Handle Vehicle updates
+            // 4.1. Identify existing VINs in the database
+            var existingVins = userWorkshop.Vehicles.Select(v => v.Vin).ToList();
+
+            // 4.2. Identify VINs in the DTO
+            var dtoVins = userWorkshopUpdateDto.Vehicles.Select(v => v.Vin).ToList();
+
+            // 4.3. Identify vehicles to remove (present in the database but not in the DTO)
             var vehiclesToRemove = userWorkshop.Vehicles
-                .Where(v => !userWorkshopUpdateDto.Vehicles.Any(dto => dto.Vin == v.Vin))
+                .Where(v => !dtoVins.Contains(v.Vin))
                 .ToList();
 
             if (vehiclesToRemove.Any())
             {
-                _logger.LogInformation("PUT: Removiendo {Count} vehículos que ya no están presentes en el DTO.", vehiclesToRemove.Count);
+                _logger.LogInformation("PUT: Removing {Count} vehicles not present in the DTO.", vehiclesToRemove.Count);
+                _context.Vehicles.RemoveRange(vehiclesToRemove);
             }
 
-            foreach (var vehicle in vehiclesToRemove)
-            {
-                _logger.LogInformation("PUT: Removiendo vehículo con VIN = {Vin}", vehicle.Vin);
-                _context.Vehicles.Remove(vehicle);
-            }
-
-            // 2) Añadir o actualizar vehículos
+            // 4.4. Process each vehicle in the DTO
             foreach (var vehicleDto in userWorkshopUpdateDto.Vehicles)
             {
-                _logger.LogInformation("PUT: Procesando VehicleDto con VIN = {Vin}", vehicleDto.Vin);
+                if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
+                {
+                    _logger.LogWarning("PUT: Found a vehicle with an empty VIN in the DTO. It will be skipped.");
+                    continue;
+                }
 
-                var existingVehicle = userWorkshop.Vehicles
-                    .FirstOrDefault(v => v.Vin == vehicleDto.Vin);
+                var existingVehicle = userWorkshop.Vehicles.FirstOrDefault(v => v.Vin == vehicleDto.Vin);
 
                 if (existingVehicle != null)
                 {
-                    _logger.LogInformation("PUT: Vehículo existente encontrado en UserWorkshop con VIN = {Vin}. Actualizando campos...", vehicleDto.Vin);
+                    // Update the fields of the existing vehicle
                     _mapper.Map(vehicleDto, existingVehicle);
+                    _logger.LogInformation("PUT: Updated existing vehicle with VIN = {Vin}.", vehicleDto.Vin);
                 }
                 else
                 {
-                    // Verificar si el vehículo ya existe en DB (otra instancia)
+                    // Check if the vehicle already exists in another entity (if VIN is unique)
                     var vehicleExists = await _context.Vehicles.AnyAsync(v => v.Vin == vehicleDto.Vin);
                     if (!vehicleExists)
                     {
-                        _logger.LogInformation("PUT: Vehículo con VIN {Vin} no encontrado en DB, creando uno nuevo.", vehicleDto.Vin);
+                        // Create a new vehicle and add it to the UserWorkshop
                         var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
                         userWorkshop.Vehicles.Add(newVehicle);
+                        _logger.LogInformation("PUT: Added new vehicle with VIN = {Vin}.", vehicleDto.Vin);
                     }
                     else
                     {
-                        var existing = await _context.Vehicles.FirstOrDefaultAsync(v => v.Vin == vehicleDto.Vin);
-                        if (existing != null)
-                        {
-                            _logger.LogInformation("PUT: Vehículo con VIN {Vin} encontrado en DB, reutilizándolo.", vehicleDto.Vin);
-                            userWorkshop.Vehicles.Add(existing);
-                        }
+                        // If the VIN already exists in another entity, handle according to business logic
+                        _logger.LogWarning("PUT: Vehicle with VIN = {Vin} already exists in another entity. It will be skipped or handled according to business logic.", vehicleDto.Vin);
+                        // Optional: You can throw an exception or handle it differently based on your requirements
                     }
                 }
             }
 
             try
             {
+                // 5. Save changes to the database
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("PUT: UserWorkshop con ID = {Id} actualizado exitosamente.", id);
+                _logger.LogInformation("PUT: UserWorkshop with ID = {Id} updated successfully.", id);
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                _logger.LogError(ex, "PUT: Error de concurrencia al actualizar UserWorkshop con ID = {Id}", id);
+                _logger.LogError(ex, "PUT: Concurrency error updating UserWorkshop with ID = {Id}", id);
 
                 if (!UserWorkshopExists(id))
-                    return NotFound();
+                {
+                    _logger.LogWarning("PUT: UserWorkshop with ID {Id} no longer exists after concurrency error.", id);
+                    return NotFound(new { message = $"UserWorkshop with ID {id} no longer exists." });
+                }
                 else
-                    throw;
+                {
+                    _logger.LogError("PUT: Unknown concurrency error for UserWorkshop with ID = {Id}.", id);
+                    return StatusCode(500, new { message = "Concurrency error while updating the UserWorkshop." });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "PUT: Unexpected error updating UserWorkshop with ID = {Id}", id);
+                return StatusCode(500, new { message = "Unexpected error while updating the UserWorkshop." });
             }
 
+            // 6. Return a successful response
             return NoContent();
         }
 
@@ -344,23 +362,28 @@ namespace Mechanical_workshop.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserWorkshop(int id)
         {
-            _logger.LogInformation("DELETE: Eliminando UserWorkshop con ID = {Id}", id);
+            _logger.LogInformation("DELETE: Deleting UserWorkshop with ID = {Id}", id);
 
             var userWorkshop = await _context.UserWorkshops.FindAsync(id);
             if (userWorkshop == null)
             {
-                _logger.LogWarning("DELETE: UserWorkshop con ID {Id} no encontrado.", id);
+                _logger.LogWarning("DELETE: UserWorkshop with ID {Id} not found.", id);
                 return NotFound();
             }
 
             _context.UserWorkshops.Remove(userWorkshop);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("DELETE: UserWorkshop con ID = {Id} eliminado exitosamente.", id);
+            _logger.LogInformation("DELETE: UserWorkshop with ID {Id} deleted successfully.", id);
 
             return NoContent();
         }
 
+        /// <summary>
+        /// Checks if a UserWorkshop exists by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the UserWorkshop.</param>
+        /// <returns>True if it exists, otherwise False.</returns>
         private bool UserWorkshopExists(int id)
         {
             return _context.UserWorkshops.Any(e => e.Id == id);
@@ -440,7 +463,7 @@ namespace Mechanical_workshop.Controllers
                     )
                     .ToListAsync();
 
-                _logger.LogInformation("GET: Retrieved total of {Count} vehicles.", vehicles.Count);
+                _logger.LogInformation("GET: Retrieved a total of {Count} vehicles.", vehicles.Count);
 
                 var result = vehicles.Select(v => new VehicleSearchDto
                 {

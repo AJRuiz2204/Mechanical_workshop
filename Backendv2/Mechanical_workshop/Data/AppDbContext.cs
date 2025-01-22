@@ -47,7 +47,7 @@ namespace Mechanical_workshop.Data
                 .WithOne(td => td.Diagnostic)
                 .HasForeignKey(td => td.DiagnosticId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
         }
     }
 }

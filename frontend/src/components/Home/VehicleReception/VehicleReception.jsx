@@ -14,16 +14,17 @@ import {
 } from "react-bootstrap";
 import {
   createUserWorkshop,
-  getUserWorkshopByIdWithVehicles, // Importa el servicio corregido
+  getUserWorkshopByIdWithVehicles, // Import the corrected service
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
 
 const VehicleReception = ({
-  onClose, // Función para cerrar el modal
-  afterSubmit, // Función opcional para refrescar datos en el componente padre
-  editingId, // ID para editar un registro en particular
+  onClose, // Function to close the modal
+  afterSubmit, // Optional function to refresh data in the parent component
+  editingId, // ID to edit a specific record
 }) => {
   const [userWorkshop, setUserWorkshop] = useState({
+    id: null, // Initialize the ID
     email: "",
     name: "",
     lastName: "",
@@ -53,7 +54,7 @@ const VehicleReception = ({
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
 
-  // Función para obtener el perfil del usuario desde localStorage
+  // Function to get the user's profile from localStorage
   const getProfileFromLocalStorage = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -68,27 +69,28 @@ const VehicleReception = ({
     return "";
   };
 
-  // Cargar datos si editingId existe
+  // Load data if editingId exists
   useEffect(() => {
     const loadData = async () => {
       if (editingId) {
         setLoading(true);
         try {
-          const token = localStorage.getItem("token"); // <-- Obtiene el token
-          const data = await getUserWorkshopByIdWithVehicles(editingId, token); // <-- Pasa el token
+          const token = localStorage.getItem("token"); // Get the token
+          const data = await getUserWorkshopByIdWithVehicles(editingId, token); // Pass the token
           console.log("DATA RECEIVED =>", data);
 
           if (!data) {
-            throw new Error("No se encontraron datos para el ID proporcionado");
+            throw new Error("No data found for the provided ID");
           }
 
           const storedProfile = getProfileFromLocalStorage();
           if (!storedProfile) {
-            throw new Error("No se encontró el perfil del usuario");
+            throw new Error("User profile not found");
           }
 
-          // Asegurar que los datos existan antes de asignarlos
+          // Ensure data exists before assigning
           setUserWorkshop({
+            id: data.id, // Ensure the ID is included
             email: data?.email ?? "",
             name: data?.name ?? "",
             lastName: data?.lastName ?? "",
@@ -98,35 +100,35 @@ const VehicleReception = ({
             state: data?.state ?? "",
             zip: data?.zip ?? "",
             primaryNumber: data?.primaryNumber ?? "",
-            secondaryNumber: data?.secondaryNumber ?? "",
+            secondaryNumber: data?.secondaryNumber ?? null, // Set to null if not provided
             noTax: data?.noTax ?? false,
-            vehicles: Array.isArray(data?.vehicles) && data.vehicles.length > 0
-              ? data.vehicles.map((v) => ({
-                  vin: v?.vin ?? "",
-                  make: v?.make ?? "",
-                  model: v?.model ?? "",
-                  year: v?.year ?? "",
-                  engine: v?.engine ?? "",
-                  plate: v?.plate ?? "",
-                  state: v?.state ?? "",
-                }))
-              : [
-                  {
-                    vin: "",
-                    make: "",
-                    model: "",
-                    year: "",
-                    engine: "",
-                    plate: "",
-                    state: "",
-                  },
-                ],
+            vehicles:
+              Array.isArray(data?.vehicles) && data.vehicles.length > 0
+                ? data.vehicles.map((v) => ({
+                    vin: v?.vin ?? "",
+                    make: v?.make ?? "",
+                    model: v?.model ?? "",
+                    year: v?.year ?? "",
+                    engine: v?.engine ?? "",
+                    plate: v?.plate ?? "",
+                    state: v?.state ?? "",
+                  }))
+                : [
+                    {
+                      vin: "",
+                      make: "",
+                      model: "",
+                      year: "",
+                      engine: "",
+                      plate: "",
+                      state: "",
+                    },
+                  ],
           });
-
         } catch (error) {
           console.error("Error loading data:", error);
           setSubmitError(error.message);
-          // Si hay un error, establecer los valores por defecto
+          // If there's an error, set default values
           const storedProfile = getProfileFromLocalStorage();
           setUserWorkshop((prev) => ({
             ...prev,
@@ -143,7 +145,7 @@ const VehicleReception = ({
             profile: storedProfile,
           }));
         } else {
-          setSubmitError("No se encontró el perfil del usuario");
+          setSubmitError("User profile not found");
         }
       }
     };
@@ -151,7 +153,7 @@ const VehicleReception = ({
     loadData();
   }, [editingId]);
 
-  // ========== VALIDACIONES ==========
+  // ========== VALIDATIONS ==========
   const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
   const validateEmail = (email) =>
     /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
@@ -165,36 +167,36 @@ const VehicleReception = ({
     return true;
   };
 
-  // ========== MANEJO DE CAMBIOS EN EL FORMULARIO ==========
+  // ========== HANDLE FORM INPUT CHANGES ==========
   const handleInputChange = (field, value) => {
     let error = "";
     switch (field) {
       case "name":
       case "lastName":
         if (!validateNotEmpty(value)) {
-          error = "Este campo es obligatorio.";
+          error = "This field is required.";
         } else if (!validateName(value)) {
-          error = "Solo se permiten letras y espacios.";
+          error = "Only letters and spaces are allowed.";
         }
         break;
 
       case "email":
         if (!validateNotEmpty(value)) {
-          error = "Este campo es obligatorio.";
+          error = "This field is required.";
         } else if (!validateEmail(value)) {
-          error = "Correo electrónico inválido.";
+          error = "Invalid email address.";
         }
         break;
 
       case "primaryNumber":
       case "secondaryNumber":
         if (validateNotEmpty(value) && !validatePhoneNumber(value)) {
-          error = "Número de teléfono inválido. Formato: (000) 000-0000";
+          error = "Invalid phone number. Format: (000) 000-0000";
         }
         break;
 
       case "noTax":
-        // Asigna el valor directamente sin invertir
+        // Assign the value directly without toggling
         setUserWorkshop((prev) => ({
           ...prev,
           noTax: value,
@@ -203,9 +205,9 @@ const VehicleReception = ({
         return;
 
       default:
-        // Si no es un campo específico, verifica que no esté vacío
+        // If not a specific field, check that it's not empty
         if (field !== "noTax" && !validateNotEmpty(value)) {
-          error = "Este campo es obligatorio.";
+          error = "This field is required.";
         }
         break;
     }
@@ -217,24 +219,24 @@ const VehicleReception = ({
     }));
   };
 
-  // ========== MANEJO DE CAMBIOS EN VEHÍCULOS ==========
+  // ========== HANDLE VEHICLE INPUT CHANGES ==========
   const handleVehicleChange = (index, field, value) => {
     let error = "";
     if (field === "year") {
       if (!validateNotEmpty(value)) {
-        error = "Este campo es obligatorio.";
+        error = "This field is required.";
       } else if (!validateYear(value)) {
-        error = "Debe ser un año válido de 4 dígitos.";
+        error = "Must be a valid 4-digit year.";
       }
     } else if (field === "vin") {
       if (!validateNotEmpty(value)) {
-        error = "Este campo es obligatorio.";
+        error = "This field is required.";
       } else if (value.length !== 17) {
-        error = "El VIN debe tener exactamente 17 caracteres.";
+        error = "The VIN must be exactly 17 characters.";
       }
     } else {
       if (!validateNotEmpty(value)) {
-        error = "Este campo es obligatorio.";
+        error = "This field is required.";
       }
     }
 
@@ -250,7 +252,7 @@ const VehicleReception = ({
     });
   };
 
-  // ========== FORMATEO DE NÚMEROS DE TELÉFONO ==========
+  // ========== FORMAT PHONE NUMBER ==========
   const formatPhoneNumber = (value) => {
     const cleaned = value.replace(/\D/g, "");
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
@@ -269,7 +271,7 @@ const VehicleReception = ({
     handleInputChange(field, formatted);
   };
 
-  // ========== AGREGAR VEHÍCULO ==========
+  // ========== ADD VEHICLE ==========
   const addVehicle = () => {
     setUserWorkshop((prev) => ({
       ...prev,
@@ -288,7 +290,7 @@ const VehicleReception = ({
     }));
   };
 
-  // ========== ELIMINAR VEHÍCULO ==========
+  // ========== REMOVE VEHICLE ==========
   const removeVehicle = (index) => {
     setUserWorkshop((prev) => ({
       ...prev,
@@ -296,9 +298,10 @@ const VehicleReception = ({
     }));
   };
 
-  // ========== RESETEAR FORMULARIO ==========
+  // ========== RESET FORM ==========
   const resetForm = () => {
     setUserWorkshop({
+      id: null, // Reset the ID
       email: "",
       name: "",
       lastName: "",
@@ -324,86 +327,87 @@ const VehicleReception = ({
     });
     setErrors({});
     setSubmitError(null);
-    console.log("Formulario reseteado.");
+    console.log("Form has been reset.");
   };
 
-  // ========== LIMPIAR PAYLOAD ==========
+  // ========== CLEAN PAYLOAD ==========
   const cleanPayload = (payload) => ({
     ...payload,
+    id: payload.id,
+    secondaryNumber:
+      payload.secondaryNumber.trim() === "" ? null : payload.secondaryNumber,
     vehicles: payload.vehicles.filter((v) => v.vin.trim() !== ""), // Solo incluir vehículos con VIN válido
   });
 
-  // ========== MANEJO DEL ENVÍO DEL FORMULARIO ==========
+  // ========== HANDLE FORM SUBMISSION ==========
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
 
     setSubmitError(null);
 
-    // Validación básica en el frontend antes de enviar
+    // Basic frontend validation before sending
     let valid = true;
     const newErrors = {};
 
-    // Validar campos del propietario
+    // Validate owner fields
     ["email", "name", "lastName", "primaryNumber"].forEach((field) => {
       if (!validateNotEmpty(userWorkshop[field])) {
-        newErrors[field] = "Este campo es obligatorio.";
+        newErrors[field] = "This field is required.";
         valid = false;
       }
     });
 
-    // Validar email
+    // Validate email
     if (userWorkshop.email && !validateEmail(userWorkshop.email)) {
-      newErrors.email = "Correo electrónico inválido.";
+      newErrors.email = "Invalid email address.";
       valid = false;
     }
 
-    // Validar números de teléfono
+    // Validate phone numbers
     ["primaryNumber", "secondaryNumber"].forEach((field) => {
       if (userWorkshop[field] && !validatePhoneNumber(userWorkshop[field])) {
-        newErrors[field] =
-          "Número de teléfono inválido. Formato: (000) 000-0000";
+        newErrors[field] = "Invalid phone number. Format: (000) 000-0000";
         valid = false;
       }
     });
 
-    // Validar vehículos
+    // Validate vehicles
     userWorkshop.vehicles.forEach((vehicle, index) => {
       ["vin", "make", "model", "year", "engine", "plate", "state"].forEach(
         (field) => {
           if (!validateNotEmpty(vehicle[field])) {
-            newErrors[`vehicle_${field}_${index}`] =
-              "Este campo es obligatorio.";
+            newErrors[`vehicle_${field}_${index}`] = "This field is required.";
             valid = false;
           }
         }
       );
 
-      // Validación específica para año
+      // Specific validation for year
       if (vehicle.year && !validateYear(vehicle.year)) {
-        newErrors[`vehicle_year_${index}`] =
-          "Debe ser un año válido de 4 dígitos.";
+        newErrors[`vehicle_year_${index}`] = "Must be a valid 4-digit year.";
         valid = false;
       }
 
-      // Validación específica para VIN
+      // Specific validation for VIN
       if (vehicle.vin && vehicle.vin.length !== 17) {
         newErrors[`vehicle_vin_${index}`] =
-          "El VIN debe tener exactamente 17 caracteres.";
+          "The VIN must be exactly 17 characters.";
         valid = false;
       }
     });
 
     if (!valid) {
       setErrors(newErrors);
-      alert("Por favor, corrige los errores en el formulario antes de enviar.");
+      alert("Please correct the errors in the form before submitting.");
       return;
     }
 
     setIsSubmitting(true);
 
-    // Preparar el payload según tu backend
+    // Prepare the payload according to your backend
     const payload = {
+      id: userWorkshop.id, // Ensure the ID is included
       email: userWorkshop.email,
       name: userWorkshop.name,
       lastName: userWorkshop.lastName,
@@ -418,32 +422,33 @@ const VehicleReception = ({
       vehicles: userWorkshop.vehicles,
     };
 
-    console.log("Payload a enviar:", payload);
+    console.log("Payload to send:", payload);
 
     try {
       const cleanedPayload = cleanPayload(payload);
+      const token = localStorage.getItem("token"); // Get the token
 
       if (editingId) {
-        // Modo edición
-        await updateUserWorkshop(editingId, cleanedPayload);
-        alert("Taller mecánico actualizado exitosamente.");
+        // Edit mode
+        await updateUserWorkshop(editingId, cleanedPayload, token); // Pass the token
+        alert("Mechanical workshop updated successfully.");
       } else {
-        // Modo creación
+        // Create mode
         await createUserWorkshop(cleanedPayload);
-        alert("Taller mecánico creado exitosamente.");
+        alert("Mechanical workshop created successfully.");
       }
 
-      // Resetear formulario
+      // Reset the form
       resetForm();
 
-      // Refrescar datos en el componente padre si es necesario
+      // Refresh data in the parent component if necessary
       if (afterSubmit) afterSubmit();
 
-      // Cerrar el modal
+      // Close the modal
       if (onClose) onClose();
     } catch (error) {
-      console.error("Error al enviar el formulario:", error);
-      setSubmitError(error.message || "Error al enviar el formulario.");
+      console.error("Error submitting the form:", error);
+      setSubmitError(error.message || "Error submitting the form.");
       alert(`Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -463,15 +468,17 @@ const VehicleReception = ({
       ) : (
         <Form onSubmit={handleSubmit}>
           <h4 className="mb-3">
-            {editingId ? "Editar Taller Mecánico" : "Registrar Taller Mecánico"}
+            {editingId
+              ? "Edit Mechanical Workshop"
+              : "Register Mechanical Workshop"}
           </h4>
 
-          {/* Mostrar error de envío */}
+          {/* Display submission error */}
           {submitError && <Alert variant="danger">{submitError}</Alert>}
 
-          {/* Email y Nombre */}
+          {/* Email, First Name, and Last Name */}
           <Row className="mb-3">
-            <Col md={6}>
+            <Col md={4}>
               <Form.Group controlId="email">
                 <Form.Label>Email *</Form.Label>
                 <Form.Control
@@ -486,9 +493,9 @@ const VehicleReception = ({
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
-            <Col md={6}>
+            <Col md={4}>
               <Form.Group controlId="name">
-                <Form.Label>Nombre *</Form.Label>
+                <Form.Label>First Name *</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.name}
@@ -501,13 +508,9 @@ const VehicleReception = ({
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
-          </Row>
-
-          {/* Apellido */}
-          <Row className="mb-3">
-            <Col md={6}>
+            <Col md={4}>
               <Form.Group controlId="lastName">
-                <Form.Label>Apellido *</Form.Label>
+                <Form.Label>Last Name *</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.lastName}
@@ -522,9 +525,13 @@ const VehicleReception = ({
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
+          </Row>
+
+          {/* Profile */}
+          <Row className="mb-3">
             <Col md={6}>
               <Form.Group controlId="profile">
-                <Form.Label>Perfil</Form.Label>
+                <Form.Label>Profile</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.profile}
@@ -535,11 +542,11 @@ const VehicleReception = ({
             </Col>
           </Row>
 
-          {/* Dirección */}
+          {/* Address */}
           <Row className="mb-3">
             <Col md={6}>
               <Form.Group controlId="address">
-                <Form.Label>Dirección *</Form.Label>
+                <Form.Label>Address *</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.address}
@@ -554,7 +561,7 @@ const VehicleReception = ({
             </Col>
             <Col md={3}>
               <Form.Group controlId="city">
-                <Form.Label>Ciudad *</Form.Label>
+                <Form.Label>City *</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.city}
@@ -569,7 +576,7 @@ const VehicleReception = ({
             </Col>
             <Col md={3}>
               <Form.Group controlId="state">
-                <Form.Label>Estado *</Form.Label>
+                <Form.Label>State *</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.state}
@@ -584,11 +591,11 @@ const VehicleReception = ({
             </Col>
           </Row>
 
-          {/* Código Postal */}
+          {/* Zip Code */}
           <Row className="mb-3">
             <Col md={3}>
               <Form.Group controlId="zip">
-                <Form.Label>Código Postal *</Form.Label>
+                <Form.Label>Zip Code *</Form.Label>
                 <Form.Control
                   type="text"
                   value={userWorkshop.zip}
@@ -603,11 +610,11 @@ const VehicleReception = ({
             </Col>
           </Row>
 
-          {/* Números de Teléfono */}
+          {/* Phone Numbers */}
           <Row className="mb-3">
             <Col md={6}>
               <Form.Group controlId="primaryNumber">
-                <Form.Label>Número Primario *</Form.Label>
+                <Form.Label>Primary Number *</Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="(000) 000-0000"
@@ -625,11 +632,11 @@ const VehicleReception = ({
             </Col>
             <Col md={6}>
               <Form.Group controlId="secondaryNumber">
-                <Form.Label>Número Secundario</Form.Label>
+                <Form.Label>Secondary Number</Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="(000) 000-0000"
-                  value={userWorkshop.secondaryNumber}
+                  value={userWorkshop.secondaryNumber || ""}
                   onChange={(e) =>
                     handlePhoneNumberChange("secondaryNumber", e.target.value)
                   }
@@ -642,13 +649,13 @@ const VehicleReception = ({
             </Col>
           </Row>
 
-          {/* Exención de Impuestos */}
+          {/* Tax Exemption */}
           <Row className="mb-3">
             <Col md={6} className="d-flex align-items-center">
               <Form.Group controlId="noTax">
                 <Form.Check
                   type="checkbox"
-                  label="Exento de Impuestos (noTax)"
+                  label="Tax Exempt (noTax)"
                   checked={userWorkshop.noTax}
                   onChange={(e) => handleInputChange("noTax", e.target.checked)}
                 />
@@ -656,16 +663,16 @@ const VehicleReception = ({
             </Col>
           </Row>
 
-          {/* Información de Vehículos */}
-          <h5 className="mt-4 mb-2">Información de Vehículos</h5>
+          {/* Vehicle Information */}
+          <h5 className="mt-4 mb-2">Vehicle Information</h5>
           <div className="border rounded p-2 mb-2 bg-white">
             {userWorkshop.vehicles.map((vehicle, index) => (
               <div key={index}>
-                {/* Primer Fila del Vehículo */}
+                {/* First Row of the Vehicle */}
                 <Row>
                   <Col md={3}>
                     <Form.Group controlId={`vin_${index}`}>
-                      <Form.Label>VIN (17 caracteres) *</Form.Label>
+                      <Form.Label>VIN (17 characters) *</Form.Label>
                       <Form.Control
                         type="text"
                         maxLength={17}
@@ -675,7 +682,7 @@ const VehicleReception = ({
                         }
                         isInvalid={!!errors[`vehicle_vin_${index}`]}
                         required
-                        disabled={editingId && vehicle.vin} // Deshabilitar VIN si ya existe
+                        disabled={editingId && vehicle.vin} // Disable VIN if it already exists
                       />
                       <Form.Control.Feedback type="invalid">
                         {errors[`vehicle_vin_${index}`]}
@@ -684,7 +691,7 @@ const VehicleReception = ({
                   </Col>
                   <Col md={3}>
                     <Form.Group controlId={`make_${index}`}>
-                      <Form.Label>Marca *</Form.Label>
+                      <Form.Label>Make *</Form.Label>
                       <Form.Control
                         type="text"
                         value={vehicle.make || ""}
@@ -701,7 +708,7 @@ const VehicleReception = ({
                   </Col>
                   <Col md={3}>
                     <Form.Group controlId={`model_${index}`}>
-                      <Form.Label>Modelo *</Form.Label>
+                      <Form.Label>Model *</Form.Label>
                       <Form.Control
                         type="text"
                         value={vehicle.model || ""}
@@ -722,16 +729,16 @@ const VehicleReception = ({
                       onClick={() => removeVehicle(index)}
                       disabled={userWorkshop.vehicles.length === 1}
                     >
-                      Eliminar Vehículo
+                      Remove Vehicle
                     </Button>
                   </Col>
                 </Row>
 
-                {/* Segunda Fila del Vehículo */}
+                {/* Second Row of the Vehicle */}
                 <Row className="mt-2">
                   <Col md={3}>
                     <Form.Group controlId={`year_${index}`}>
-                      <Form.Label>Año *</Form.Label>
+                      <Form.Label>Year *</Form.Label>
                       <Form.Control
                         type="text"
                         maxLength={4}
@@ -749,7 +756,7 @@ const VehicleReception = ({
                   </Col>
                   <Col md={3}>
                     <Form.Group controlId={`engine_${index}`}>
-                      <Form.Label>Motor *</Form.Label>
+                      <Form.Label>Engine *</Form.Label>
                       <Form.Control
                         type="text"
                         value={vehicle.engine || ""}
@@ -766,7 +773,7 @@ const VehicleReception = ({
                   </Col>
                   <Col md={3}>
                     <Form.Group controlId={`plate_${index}`}>
-                      <Form.Label>Placa *</Form.Label>
+                      <Form.Label>Plate *</Form.Label>
                       <Form.Control
                         type="text"
                         value={vehicle.plate || ""}
@@ -783,7 +790,7 @@ const VehicleReception = ({
                   </Col>
                   <Col md={3}>
                     <Form.Group controlId={`state_${index}`}>
-                      <Form.Label>Estado *</Form.Label>
+                      <Form.Label>State *</Form.Label>
                       <Form.Control
                         type="text"
                         value={vehicle.state || ""}
@@ -804,11 +811,11 @@ const VehicleReception = ({
             ))}
 
             <Button variant="primary" onClick={addVehicle}>
-              Agregar Vehículo
+              Add Vehicle
             </Button>
           </div>
 
-          {/* Botones de Submit y Cancel */}
+          {/* Submit and Cancel Buttons */}
           <div className="text-end">
             <Button
               type="submit"
@@ -816,10 +823,10 @@ const VehicleReception = ({
               className="me-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Guardando..." : "Guardar"}
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
             <Button variant="secondary" onClick={onClose}>
-              Cancelar
+              Cancel
             </Button>
           </div>
         </Form>

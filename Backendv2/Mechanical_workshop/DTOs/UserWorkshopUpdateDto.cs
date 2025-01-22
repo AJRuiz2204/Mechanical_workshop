@@ -21,22 +21,13 @@ namespace Mechanical_workshop.Dtos
         [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
 
-        [Required]
+        
         [StringLength(50)]
         public string Username { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(255)]
-        public string Password { get; set; } = string.Empty;
-
-        [Required]
         [StringLength(50)]
         public string Profile { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string? ResetCode { get; set; }
-
-        public DateTime? ResetCodeExpiration { get; set; }
 
         [Required]
         [StringLength(200)]
@@ -65,7 +56,6 @@ namespace Mechanical_workshop.Dtos
 
         public bool NoTax { get; set; } = false;
 
-        // Relación con Vehicles
         public List<VehicleDto> Vehicles { get; set; } = new();
     }
 }

@@ -8,7 +8,7 @@ namespace Mechanical_workshop.Profiles
     {
         public UserWorkshopProfile()
         {
-            // Mapeo entre UserWorkshop y UserWorkshopReadDto
+            // Mapping between UserWorkshop and UserWorkshopReadDto
             CreateMap<UserWorkshop, UserWorkshopReadDto>()
                 .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles))
                 .ForMember(dest => dest.NoTax, opt => opt.MapFrom(src => src.NoTax))
@@ -20,29 +20,45 @@ namespace Mechanical_workshop.Profiles
                 .ForMember(dest => dest.SecondaryNumber, opt => opt.MapFrom(src => src.SecondaryNumber))
                 .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
 
-            // Mapeo entre UserWorkshopCreateDto y UserWorkshop
+            // Mapping between UserWorkshopCreateDto and UserWorkshop
             CreateMap<UserWorkshopCreateDto, UserWorkshop>()
-                .ForMember(dest => dest.Vehicles, opt => opt.Ignore()); // Manejar manualmente para evitar duplicados
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore()); // Handle manually to avoid duplicates
 
-            // Mapeo entre Vehicle y VehicleDto
+            // Mapping between Vehicle and VehicleDto with reverse mapping
             CreateMap<Vehicle, VehicleDto>().ReverseMap();
 
-            // Mapeo para crear
+            // Mapping for creation
             CreateMap<UserWorkshopCreateDto, UserWorkshop>();
             CreateMap<VehicleDto, Vehicle>();
 
-            // Mapeo para leer
+            // Mapping for reading
             CreateMap<UserWorkshop, UserWorkshopReadDto>();
             CreateMap<Vehicle, VehicleDto>();
 
-            // Mapeo para actualizar
+            // Mapping for updating
             CreateMap<UserWorkshopUpdateDto, UserWorkshop>();
             CreateMap<VehicleDto, Vehicle>()
                 .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore());
 
-            // Mapeo para VehicleSearchDto
+            // Mapping for VehicleSearchDto
             CreateMap<Vehicle, VehicleSearchDto>()
                 .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => $"{src.UserWorkshop.Name} {src.UserWorkshop.LastName}"));
+
+            // Additional mappings for updating UserWorkshop
+            CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore());
+
+            // Mapping for updating UserWorkshop, ignoring Vehicles to handle manually
+            CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
+            // Mapping for updating Vehicles, ignoring UserWorkshop to avoid circular references
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore()) // Ignore UserWorkshop to avoid circular references
+                .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore()); // Ignore UserWorkshopId to avoid circular references
         }
     }
 }
