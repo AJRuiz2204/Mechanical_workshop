@@ -90,7 +90,7 @@ const Login = () => {
               LOGIN
             </button>
           </form>
-          <div className="text-center mt-3">
+          {/* <div className="text-center mt-3">
             <Link to="/forgot-password" className="forgot-password-link">
               FORGOT PASSWORD?
             </Link>
@@ -100,7 +100,7 @@ const Login = () => {
             <Link to="/register-user" className="register-user-link">
               Register here
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

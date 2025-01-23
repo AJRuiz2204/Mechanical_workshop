@@ -30,11 +30,6 @@ const Home = () => {
       roles: ["Manager"],
     },
     {
-      label: "MY DIAGNOSTICS",
-      route: "/technicianDiagnosticList",
-      roles: ["Technician", "Manager"],
-    },
-    {
       label: "ESTIMATES",
       route: "/estimates",
       roles: ["Manager"],
