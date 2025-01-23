@@ -20,6 +20,12 @@ import {
 } from "../../../services/workshopSettingsService";
 import WorkshopSettingsPreview from "./WorkshopSettingsPreview";
 
+/**
+ * Formats a phone number string to the format (XXX) XXX-XXXX.
+ *
+ * @param {string} value - The raw phone number input.
+ * @returns {string} - The formatted phone number.
+ */
 const formatPhoneNumber = (value) => {
   if (!value) return value;
   const phoneNumber = value.replace(/[^\d]/g, "");
@@ -34,25 +40,43 @@ const formatPhoneNumber = (value) => {
   )}-${phoneNumber.slice(6, 10)}`;
 };
 
+/**
+ * Validates an email address using a regular expression.
+ *
+ * @param {string} email - The email address to validate.
+ * @returns {boolean} - True if valid, false otherwise.
+ */
 const validateEmail = (email) => {
   const re =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
   return re.test(String(email).toLowerCase());
 };
 
-const validateURL = (url) => {
-  const pattern = new RegExp(
-    "^(https?:\\/\\/)" +
-      "((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,})" + // dominio
-      "(\\:\\d+)?(\\/[-a-zA-Z\\d%@_.~+&:]*)*" +
-      "(\\?[;&a-zA-Z\\d%@_.,~+&:=-]*)?" +
-      "(\\#[-a-zA-Z\\d_]*)?$",
-    "i"
-  );
-  return !!pattern.test(url);
-};
-
+/**
+ * WorkshopSettingsForm Component
+ *
+ * Description:
+ * This component manages the workshop settings, allowing users to create or edit
+ * settings such as workshop name, address, contact information, website URL, and disclaimers.
+ * It fetches existing settings from the backend, populates the form for editing,
+ * and handles form submission for creating or updating settings.
+ *
+ * Features:
+ * - Fetch existing workshop settings on mount.
+ * - Form fields for workshop details with validation.
+ * - Real-time phone number formatting.
+ * - Display of success and error messages.
+ * - Preview of saved settings.
+ *
+ * Dependencies:
+ * - React and React Hooks for state management.
+ * - React Bootstrap for UI components and styling.
+ * - dayjs for date and time formatting.
+ * - WorkshopSettingsService for API interactions.
+ * - WorkshopSettingsPreview for displaying a preview of settings.
+ */
 const WorkshopSettingsForm = () => {
+  // State to manage form inputs
   const [formData, setFormData] = useState({
     workshopName: "",
     address: "",
@@ -64,28 +88,35 @@ const WorkshopSettingsForm = () => {
     email: "",
   });
 
+  // State to hold saved settings fetched from the backend
   const [savedSettings, setSavedSettings] = useState(null);
 
-  // Estados para manejar carga, guardado, errores y mensajes de éxito
+  // States to handle loading, saving, errors, and success messages
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Estado para errores de validación del formulario
+  // State to manage form validation errors
   const [errors, setErrors] = useState({});
 
-  // Determinar si ya existen ajustes guardados (modo edición)
+  // State to determine if the form is in edit mode (updating existing settings)
   const [isEditMode, setIsEditMode] = useState(false);
 
+  /**
+   * useEffect Hook
+   *
+   * Fetches existing workshop settings from the backend when the component mounts.
+   * Determines if the form should be in edit mode or create mode based on the response.
+   */
   useEffect(() => {
-    // Obtener los ajustes existentes del taller al montar el componente
+    // Function to fetch existing workshop settings
     const fetchSettings = async () => {
       try {
         const data = await getWorkshopSettings();
         setSavedSettings(data);
         setIsEditMode(true);
-        // Inicializar formData con los datos existentes
+        // Populate formData with fetched data, ensuring no undefined values
         setFormData({
           workshopName: data.workshopName || "",
           address: data.address || "",
@@ -98,14 +129,15 @@ const WorkshopSettingsForm = () => {
         });
       } catch (err) {
         if (err.message === "Workshop settings not found.") {
-          // No existen ajustes guardados, permanecer en modo creación
+          // If no settings exist, remain in create mode
           setIsEditMode(false);
           setSavedSettings(null);
         } else {
+          // Handle other errors by setting the error state
           setError(err.message || "Error al obtener los ajustes del taller.");
         }
       } finally {
-        setLoading(false);
+        setLoading(false); // Stop the loading spinner
       }
     };
 
@@ -113,13 +145,14 @@ const WorkshopSettingsForm = () => {
   }, []);
 
   /**
-   * Maneja los cambios en los campos del formulario.
-   * @param {Object} e - El objeto del evento.
+   * Handles changes in form input fields.
+   *
+   * @param {Object} e - The event object from the input change.
    */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Si el campo es un número de teléfono, formatearlo
+    // If the field is a phone number, format it
     if (
       name === "primaryPhone" ||
       name === "secondaryPhone" ||
@@ -137,7 +170,7 @@ const WorkshopSettingsForm = () => {
       });
     }
 
-    // Limpiar el error específico del campo al cambiar su valor
+    // Clear the specific field error if it exists
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -147,24 +180,27 @@ const WorkshopSettingsForm = () => {
   };
 
   /**
-   * Valida los campos del formulario.
-   * @returns {Object} Un objeto que contiene los errores de validación.
+   * Validates the form inputs and returns an object containing any errors found.
+   *
+   * @returns {Object} - An object with field names as keys and error messages as values.
    */
   const validateForm = () => {
     const newErrors = {};
 
-    // Validación del nombre del taller
+    // Validate workshop name
     if (!formData.workshopName.trim()) {
       newErrors.workshopName = "El nombre del taller es obligatorio.";
     }
 
-    // Validación de la dirección
+    // Validate address
     if (!formData.address.trim()) {
       newErrors.address = "La dirección es obligatoria.";
     }
 
-    // Validación del teléfono principal
+    // Regular expression for phone number validation: (XXX) XXX-XXXX
     const phoneRegex = /^\(\d{3}\) \d{3}-\d{4}$/;
+
+    // Validate primary phone
     if (!formData.primaryPhone.trim()) {
       newErrors.primaryPhone = "El teléfono principal es obligatorio.";
     } else if (!phoneRegex.test(formData.primaryPhone)) {
@@ -172,28 +208,52 @@ const WorkshopSettingsForm = () => {
         "El teléfono principal debe tener el formato (000) 000-0000.";
     }
 
-    // Validación del teléfono secundario (opcional)
+    // Validate secondary phone (optional)
     if (formData.secondaryPhone && !phoneRegex.test(formData.secondaryPhone)) {
       newErrors.secondaryPhone =
         "El teléfono secundario debe tener el formato (000) 000-0000.";
     }
 
-    // Validación del fax (opcional)
+    // Validate fax (optional)
     if (formData.fax && !phoneRegex.test(formData.fax)) {
       newErrors.fax = "El fax debe tener el formato (000) 000-0000.";
     }
 
-    // Validación del correo electrónico (opcional)
+    // Validate email (optional)
     if (formData.email && !validateEmail(formData.email)) {
       newErrors.email = "La dirección de correo electrónico no es válida.";
+    }
+
+    // Validate website URL (optional)
+    if (formData.websiteUrl && !validateURL(formData.websiteUrl)) {
+      newErrors.websiteUrl = "La URL del sitio web no es válida.";
     }
 
     return newErrors;
   };
 
   /**
-   * Maneja el envío del formulario para crear o actualizar los ajustes del taller.
-   * @param {Object} e - El objeto del evento.
+   * Validates a URL using a regular expression.
+   *
+   * @param {string} url - The URL to validate.
+   * @returns {boolean} - True if valid, false otherwise.
+   */
+  const validateURL = (url) => {
+    const pattern = new RegExp(
+      "^(https?:\\/\\/)" + // protocol
+        "((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,})" + // domain name
+        "(\\:\\d+)?(\\/[-a-zA-Z\\d%@_.~+&:]*)*" + // port and path
+        "(\\?[;&a-zA-Z\\d%@_.,~+&:=-]*)?" + // query string
+        "(\\#[-a-zA-Z\\d_]*)?$", // fragment locator
+      "i"
+    );
+    return !!pattern.test(url);
+  };
+
+  /**
+   * Handles form submission for creating or updating workshop settings.
+   *
+   * @param {Object} e - The event object from form submission.
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -202,7 +262,7 @@ const WorkshopSettingsForm = () => {
     setSuccess(null);
     setErrors({});
 
-    // Validar los campos del formulario
+    // Perform form validation
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -210,27 +270,25 @@ const WorkshopSettingsForm = () => {
       return;
     }
 
-    console.log("Enviando ajustes:", formData); // Para depuración
+    console.log("Enviando ajustes:", formData); // For debugging
 
-    // Generar timestamp con dayjs. Se puede usar un formato ISO 8601 o personalizado.
-    // Por ejemplo, ISO 8601: dayjs().format()
-    // O un formato más legible, e.g.: dayjs().format('YYYY-MM-DD HH:mm:ss')
-    const timestamp = dayjs().format(); // Fecha/hora en formato ISO 8601
+    // Generate a timestamp for 'lastUpdated' using dayjs in ISO 8601 format
+    const timestamp = dayjs().format();
 
     try {
       if (isEditMode && savedSettings?.id) {
-        // Actualizar los ajustes existentes, agregando "lastUpdated"
+        // Update existing workshop settings
         await updateWorkshopSettings(savedSettings.id, {
           ...formData,
           lastUpdated: timestamp,
         });
         setSuccess("Ajustes del taller actualizados exitosamente.");
 
-        // Obtener los ajustes actualizados para la vista previa
+        // Fetch the updated settings to display in the preview
         const updatedSettings = await getWorkshopSettings();
         setSavedSettings(updatedSettings);
       } else {
-        // Crear nuevos ajustes, agregando "lastUpdated"
+        // Create new workshop settings
         const createdSettings = await createWorkshopSettings({
           ...formData,
           lastUpdated: timestamp,
@@ -240,7 +298,7 @@ const WorkshopSettingsForm = () => {
         setIsEditMode(true);
       }
 
-      // Limpiar los campos del formulario después de una entrega exitosa
+      // Reset the form fields after successful submission
       setFormData({
         workshopName: "",
         address: "",
@@ -252,13 +310,14 @@ const WorkshopSettingsForm = () => {
         email: "",
       });
     } catch (err) {
-      console.error("Detalles del error:", err); // Para depuración
+      console.error("Detalles del error:", err); // For debugging
       setError(err.message || "Error al guardar los ajustes del taller.");
     } finally {
       setSaving(false);
     }
   };
 
+  // Render a loading spinner while fetching data
   if (loading) {
     return (
       <Container
@@ -278,14 +337,14 @@ const WorkshopSettingsForm = () => {
         {isEditMode ? "Editar Ajustes del Taller" : "Crear Ajustes del Taller"}
       </h3>
 
-      {/* Mensaje de Error */}
+      {/* Display Error Message */}
       {error && (
         <Alert variant="danger" onClose={() => setError(null)} dismissible>
           {error}
         </Alert>
       )}
 
-      {/* Mensaje de Éxito */}
+      {/* Display Success Message */}
       {success && (
         <Alert variant="success" onClose={() => setSuccess(null)} dismissible>
           {success}
@@ -293,15 +352,15 @@ const WorkshopSettingsForm = () => {
       )}
 
       <Row>
-        {/* Vista Previa */}
+        {/* Preview Section */}
         <Col md={6} className="mb-4">
           <WorkshopSettingsPreview settings={savedSettings} />
         </Col>
 
-        {/* Formulario */}
+        {/* Form Section */}
         <Col md={6}>
           <Form onSubmit={handleSubmit}>
-            {/* Nombre del Taller */}
+            {/* Workshop Name */}
             <Form.Group controlId="workshopName" className="mb-3">
               <Form.Label>Nombre del Taller</Form.Label>
               <Form.Control
@@ -318,7 +377,7 @@ const WorkshopSettingsForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Dirección */}
+            {/* Address */}
             <Form.Group controlId="address" className="mb-3">
               <Form.Label>Dirección</Form.Label>
               <Form.Control
@@ -335,7 +394,7 @@ const WorkshopSettingsForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Teléfono Principal */}
+            {/* Primary Phone */}
             <Form.Group controlId="primaryPhone" className="mb-3">
               <Form.Label>Teléfono Principal</Form.Label>
               <Form.Control
@@ -352,7 +411,7 @@ const WorkshopSettingsForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Teléfono Secundario */}
+            {/* Secondary Phone */}
             <Form.Group controlId="secondaryPhone" className="mb-3">
               <Form.Label>Teléfono Secundario</Form.Label>
               <Form.Control
@@ -384,7 +443,7 @@ const WorkshopSettingsForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* URL del Sitio Web */}
+            {/* Website URL */}
             <Form.Group controlId="websiteUrl" className="mb-3">
               <Form.Label>URL del Sitio Web</Form.Label>
               <Form.Control
@@ -400,7 +459,7 @@ const WorkshopSettingsForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            {/* Dirección de Email */}
+            {/* Email Address */}
             <Form.Group controlId="email" className="mb-3">
               <Form.Label>Dirección de Email</Form.Label>
               <Form.Control
@@ -429,7 +488,7 @@ const WorkshopSettingsForm = () => {
               />
             </Form.Group>
 
-            {/* Botón de Envío */}
+            {/* Submit Button */}
             <div className="text-end">
               <Button variant="primary" type="submit" disabled={saving}>
                 {saving

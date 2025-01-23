@@ -8,7 +8,25 @@ import {
   patchSettings,
 } from "../../../services/laborTaxMarkupSettingsService";
 
+/**
+ * LaborTaxMarkupSettingsForm Component
+ *
+ * Description:
+ * This component manages the Labor, Tax, and Markup settings for the workshop.
+ * It allows users to create new settings or edit existing ones. The form includes fields
+ * for hourly rates, tax rates, and markup percentages. Additionally, it displays the current
+ * settings fetched from the backend for reference.
+ *
+ * Features:
+ * - Fetch existing settings on mount.
+ * - Create new settings if none exist.
+ * - Patch existing settings with updated values.
+ * - Display success and error messages based on operations.
+ * - Show a loading spinner while fetching data.
+ * - Display current settings from the database in a read-only format.
+ */
 const LaborTaxMarkupSettingsForm = () => {
+  // State to manage form data inputs
   const [formData, setFormData] = useState({
     hourlyRate1: "",
     hourlyRate2: "",
@@ -21,25 +39,45 @@ const LaborTaxMarkupSettingsForm = () => {
     partMarkup: "",
   });
 
-  // Datos que vienen de la BD (para mostrar en la vista 'DB read')
+  // State to hold data fetched from the database
   const [dbData, setDbData] = useState(null);
 
+  // State to manage the record ID from the database
   const [recordId, setRecordId] = useState(null);
+
+  // Determines if the form is in edit mode (patch) or create mode
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // State to manage loading state while fetching data
   const [loading, setLoading] = useState(true);
+
+  // State to manage saving state during create or patch operations
   const [saving, setSaving] = useState(false);
+
+  // State to handle error messages
   const [error, setError] = useState(null);
+
+  // State to handle success messages
   const [success, setSuccess] = useState(null);
 
+  // Constant ID used to fetch specific settings; adjust if necessary
   const SETTINGS_ID = 1;
 
+  /**
+   * useEffect Hook
+   *
+   * Fetches existing settings from the backend when the component mounts.
+   * Determines if the form should be in edit mode or create mode based on the response.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Attempt to fetch settings by ID
         const data = await getSettingsById(SETTINGS_ID);
         setDbData(data);
         setRecordId(data.id);
         setIsEditMode(true);
+        // Populate formData with fetched data, converting numerical zeros to empty strings
         setFormData({
           hourlyRate1: data.hourlyRate1 === 0 ? "" : String(data.hourlyRate1),
           hourlyRate2: data.hourlyRate2 === 0 ? "" : String(data.hourlyRate2),
@@ -55,19 +93,28 @@ const LaborTaxMarkupSettingsForm = () => {
         });
       } catch (err) {
         if (err?.status === 404 || err?.message?.includes("404")) {
-          // No existe registro => modo crear
+          // If no settings exist, switch to create mode
           setIsEditMode(false);
           setDbData(null);
         } else {
+          // Handle other errors
           setError(err.message || "Error loading settings.");
         }
       } finally {
-        setLoading(false);
+        setLoading(false); // Stop loading spinner
       }
     };
     fetchData();
   }, []);
 
+  /**
+   * handleChange Function
+   *
+   * Updates the formData state based on user input.
+   * Handles both text/number inputs and checkboxes.
+   *
+   * @param {Object} e - The event object from the input change.
+   */
   const handleChange = (e) => {
     const { name, type, checked, value } = e.target;
     if (type === "checkbox") {
@@ -77,13 +124,30 @@ const LaborTaxMarkupSettingsForm = () => {
     }
   };
 
+  /**
+   * safeNumber Function
+   *
+   * Safely converts a string input to a float number.
+   * Returns 0 if the input is an empty string or not a valid number.
+   *
+   * @param {string} val - The input value to convert.
+   * @returns {number} - The parsed float or 0.
+   */
   const safeNumber = (val) => {
     if (val === "") return 0;
     const p = parseFloat(val);
     return isNaN(p) ? 0 : p;
   };
 
-  // CREAR registro
+  /**
+   * handleSubmitCreate Function
+   *
+   * Handles the creation of new settings.
+   * Validates inputs, sends a create request to the backend,
+   * and updates the UI based on the response.
+   *
+   * @param {Object} e - The event object from form submission.
+   */
   const handleSubmitCreate = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -91,6 +155,7 @@ const LaborTaxMarkupSettingsForm = () => {
     setSuccess(null);
 
     try {
+      // Prepare the data payload for creation
       const createDto = {
         hourlyRate1: safeNumber(formData.hourlyRate1),
         hourlyRate2: safeNumber(formData.hourlyRate2),
@@ -102,16 +167,17 @@ const LaborTaxMarkupSettingsForm = () => {
         laborTaxByDefault: formData.laborTaxByDefault,
         partMarkup: safeNumber(formData.partMarkup),
       };
+      // Send create request to the backend
       const created = await createSettings(createDto);
       setRecordId(created.id);
       setIsEditMode(true);
       setSuccess("Record created successfully.");
 
-      // Recargamos datos de la BD para mostrar
+      // Fetch the newly created data to display
       const newDbData = await getSettingsById(created.id);
       setDbData(newDbData);
 
-      // Limpiamos campos
+      // Reset the form fields
       setFormData({
         hourlyRate1: "",
         hourlyRate2: "",
@@ -130,7 +196,15 @@ const LaborTaxMarkupSettingsForm = () => {
     }
   };
 
-  // PATCH (actualización parcial)
+  /**
+   * handleSubmitPatch Function
+   *
+   * Handles the patching (partial updating) of existing settings.
+   * Validates inputs, sends a patch request to the backend,
+   * and updates the UI based on the response.
+   *
+   * @param {Object} e - The event object from form submission.
+   */
   const handleSubmitPatch = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -138,6 +212,7 @@ const LaborTaxMarkupSettingsForm = () => {
     setSuccess(null);
 
     try {
+      // Prepare the patch document as per JSON Patch standards
       const patchDoc = [
         {
           op: "replace",
@@ -185,14 +260,15 @@ const LaborTaxMarkupSettingsForm = () => {
           value: safeNumber(formData.partMarkup),
         },
       ];
+      // Send patch request to the backend
       await patchSettings(recordId, patchDoc);
       setSuccess("Record patched successfully.");
 
-      // Recargamos datos de la BD para mostrar
+      // Fetch the updated data to display
       const updatedData = await getSettingsById(recordId);
       setDbData(updatedData);
 
-      // Limpiamos campos
+      // Reset the form fields
       setFormData({
         hourlyRate1: "",
         hourlyRate2: "",
@@ -211,6 +287,7 @@ const LaborTaxMarkupSettingsForm = () => {
     }
   };
 
+  // Render a loading spinner while fetching data
   if (loading) {
     return (
       <div
@@ -224,16 +301,18 @@ const LaborTaxMarkupSettingsForm = () => {
     );
   }
 
-  // Elegimos la acción: si existe un registro => patch, sino => create
+  // Determine which submit handler to use based on edit mode
   const handleSubmit = isEditMode ? handleSubmitPatch : handleSubmitCreate;
 
   return (
     <div className="container mt-4">
+      {/* Display error message if any */}
       {error && (
         <div className="alert alert-danger mt-3" role="alert">
           {error}
         </div>
       )}
+      {/* Display success message if any */}
       {success && (
         <div className="alert alert-success mt-3" role="alert">
           {success}
@@ -241,7 +320,7 @@ const LaborTaxMarkupSettingsForm = () => {
       )}
 
       <div className="row">
-        {/* Contenedor del formulario */}
+        {/* Form Container */}
         <div className="col-md-6">
           <div className="card mb-3">
             <div className="card-body">
@@ -250,6 +329,7 @@ const LaborTaxMarkupSettingsForm = () => {
               </h3>
 
               <form onSubmit={handleSubmit} className="mt-3">
+                {/* Hourly Rate 1 */}
                 <div className="mb-3">
                   <label htmlFor="hourlyRate1" className="form-label">
                     Hourly Rate 1:
@@ -267,6 +347,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Hourly Rate 2 */}
                 <div className="mb-3">
                   <label htmlFor="hourlyRate2" className="form-label">
                     Hourly Rate 2:
@@ -284,6 +365,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Hourly Rate 3 */}
                 <div className="mb-3">
                   <label htmlFor="hourlyRate3" className="form-label">
                     Hourly Rate 3:
@@ -301,6 +383,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Default Hourly Rate */}
                 <div className="mb-3">
                   <label htmlFor="defaultHourlyRate" className="form-label">
                     Default Hourly Rate:
@@ -318,6 +401,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Part Tax Rate */}
                 <div className="mb-3">
                   <label htmlFor="partTaxRate" className="form-label">
                     Part Tax Rate:
@@ -335,6 +419,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Part Tax By Default Checkbox */}
                 <div className="form-check mb-3">
                   <input
                     type="checkbox"
@@ -352,6 +437,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   </label>
                 </div>
 
+                {/* Labor Tax Rate */}
                 <div className="mb-3">
                   <label htmlFor="laborTaxRate" className="form-label">
                     Labor Tax Rate:
@@ -369,6 +455,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Labor Tax By Default Checkbox */}
                 <div className="form-check mb-3">
                   <input
                     type="checkbox"
@@ -386,6 +473,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   </label>
                 </div>
 
+                {/* Part Markup */}
                 <div className="mb-3">
                   <label htmlFor="partMarkup" className="form-label">
                     Part Markup:
@@ -403,6 +491,7 @@ const LaborTaxMarkupSettingsForm = () => {
                   />
                 </div>
 
+                {/* Submit Button */}
                 <button
                   type="submit"
                   className="btn btn-primary"
@@ -428,18 +517,19 @@ const LaborTaxMarkupSettingsForm = () => {
           </div>
         </div>
 
-        {/* Contenedor DB read */}
+        {/* Database Read Container */}
         <div className="col-md-6">
           <div className="card mb-3">
             <div className="card-body">
               <h5>Labor & Tax Markup Settings (DB Read)</h5>
+              {/* If no data exists, show an informational alert */}
               {!dbData ? (
                 <div className="alert alert-info mt-3" role="alert">
                   No record in DB yet.
                 </div>
               ) : (
                 <div className="row">
-                  {/* 2 col por fila */}
+                  {/* Display each setting in a read-only input field */}
                   <div className="col-md-6 mb-3">
                     <label className="form-label">DB Hourly Rate 1:</label>
                     <input

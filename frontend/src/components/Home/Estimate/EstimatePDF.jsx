@@ -11,9 +11,9 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
-import logo from "../../../images/logo.png";
+import logo from "../../../images/logo.png"; // Ensure the path to the logo is correct
 
-// Styles definition for PDF document
+// Definition of styles for the PDF document
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -21,47 +21,43 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     backgroundColor: "#ffffff",
   },
-  // Header container styles
+  // Styles for the header container
   headerContainer: {
     flexDirection: "row",
     marginBottom: 20,
   },
-  // Logo container on the left
+  // Space for the logo on the left
   logoSection: {
     width: 150,
     height: 150,
     marginRight: 20,
   },
-  // Header information container
+  // Container for the header information
   headerInfo: {
     flex: 1,
     flexDirection: "column",
   },
-  // Quote information styles at the top right
+  // Styles for the quote information in the top right
   quoteInfo: {
     alignItems: "flex-end",
     marginBottom: 15,
   },
-  // Workshop information styles
+  // Styles for the workshop information
   workshopInfo: {
     alignItems: "flex-end",
   },
-  // Title and text styles
-  companyName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
+  // Styles for text lines
   textLine: {
     fontSize: 9,
     marginBottom: 2,
   },
+  // Styles for links
   link: {
     textDecoration: "underline",
     color: "blue",
     fontSize: 9,
   },
-  // Information section styles
+  // Information section (Customer and Vehicle)
   infoSection: {
     marginTop: 15,
     marginBottom: 20,
@@ -70,19 +66,20 @@ const styles = StyleSheet.create({
     borderBottom: 1,
     borderBottomColor: "#e0e0e0",
   },
+  // Section titles
   sectionTitle: {
     fontSize: 10,
     fontWeight: "bold",
     marginBottom: 4,
   },
-  // Note section styles
+  // Customer note section
   noteSection: {
     marginBottom: 15,
     padding: 10,
     borderBottom: 1,
     borderBottomColor: "#e0e0e0",
   },
-  // Table styles remain the same as original
+  // Styles for the table
   table: {
     display: "table",
     width: "auto",
@@ -90,11 +87,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },
+  // Styles for the table header
   tableHeader: {
     borderBottomWidth: 1,
     borderBottomColor: "#000000",
     backgroundColor: "#f5f5f5",
   },
+  // Styles for table rows
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
@@ -102,13 +101,16 @@ const styles = StyleSheet.create({
     minHeight: 24,
     alignItems: "center",
   },
+  // Styles for table header text
   tableHeaderText: {
     fontSize: 8,
     fontWeight: "bold",
   },
+  // Styles for table row text
   tableText: {
     fontSize: 8,
   },
+  // Styles for table columns
   tableCol: {
     padding: 4,
   },
@@ -135,13 +137,22 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
   },
-  colList: {
+  colQuantity: {
+    // New column for Quantity
     width: "10%",
     textAlign: "right",
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
   },
-  colExtended: {
+  colListPrice: {
+    // New column for List Price
+    width: "12%",
+    textAlign: "right",
+    borderRightWidth: 1,
+    borderRightColor: "#e0e0e0",
+  },
+  colExtendedPrice: {
+    // New column for Extended Price
     width: "12%",
     textAlign: "right",
     borderRightWidth: 1,
@@ -151,26 +162,30 @@ const styles = StyleSheet.create({
     width: "8%",
     textAlign: "center",
   },
-  // Totals section styles
+  // Totals section
   totalsSection: {
     marginTop: 15,
     alignItems: "flex-end",
   },
+  // Individual totals rows
   totalRow: {
     flexDirection: "row",
     marginBottom: 3,
   },
+  // Total label
   totalLabel: {
-    width: 100,
+    width: 150,
     textAlign: "right",
     marginRight: 10,
     fontSize: 9,
   },
+  // Total amount
   totalAmount: {
     width: 80,
     textAlign: "right",
     fontSize: 9,
   },
+  // Styles for the grand total
   grandTotal: {
     marginTop: 8,
     paddingTop: 8,
@@ -187,14 +202,25 @@ const styles = StyleSheet.create({
     left: 40,
     right: 40,
     fontSize: 8,
-    borderTop: 1,
+    borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
     paddingTop: 10,
   },
 });
 
+/**
+ * EstimatePDF Component
+ *
+ * Description:
+ * This component generates a PDF document for an estimate using the @react-pdf/renderer library.
+ * It displays workshop information, customer and vehicle details, a list of items (parts, labor, flat fees),
+ * calculated totals, and customer notes. The PDF also includes a header with the workshop logo and footer with disclaimers.
+ *
+ * Props:
+ * - pdfData: An object containing all necessary data to populate the PDF, including workshopData, customer, vehicle, items, totals, and customerNote.
+ */
 const EstimatePDF = ({ pdfData }) => {
-  // Safe data handling with defaults
+  // Safely handle data with default values to prevent undefined errors
   const safeWorkshopData = pdfData?.workshopData || {};
   const safeCustomer = pdfData?.customer || {};
   const safeVehicle = pdfData?.vehicle || {};
@@ -202,11 +228,17 @@ const EstimatePDF = ({ pdfData }) => {
   const totals = pdfData?.totals || {};
   const customerNote = pdfData?.customerNote || "";
 
-  // Format date string for last updated
+  /**
+   * Formats the date string for "Last Updated".
+   * Adjusts the time based on timezone if necessary.
+   *
+   * @param {string} dateString - The date string to format.
+   * @returns {string} - The formatted date string.
+   */
   const formatLastUpdated = (dateString) => {
     if (!dateString) return "";
     return dayjs(dateString)
-      .subtract(6, "hour")
+      .subtract(6, "hour") // Adjust according to your timezone
       .format("YYYY-MM-DD HH:mm:ss");
   };
 
@@ -215,7 +247,7 @@ const EstimatePDF = ({ pdfData }) => {
       <Page size="A4" style={styles.page}>
         {/* Header Section */}
         <View style={styles.headerContainer}>
-          {/* Logo Space */}
+          {/* Logo Section */}
           <View style={styles.logoSection}>
             <Image src={logo} />
           </View>
@@ -266,7 +298,7 @@ const EstimatePDF = ({ pdfData }) => {
           </View>
         </View>
 
-        {/* Rest of the component remains unchanged */}
+        {/* Customer and Vehicle Information */}
         <View style={styles.infoSection}>
           <View style={{ flex: 1, marginRight: 10 }}>
             <Text style={styles.sectionTitle}>Customer</Text>
@@ -289,6 +321,7 @@ const EstimatePDF = ({ pdfData }) => {
           </View>
         </View>
 
+        {/* Customer Note */}
         {customerNote && (
           <View style={styles.noteSection}>
             <Text style={styles.sectionTitle}>Customer Note:</Text>
@@ -296,7 +329,9 @@ const EstimatePDF = ({ pdfData }) => {
           </View>
         )}
 
+        {/* Items Table */}
         <View style={styles.table}>
+          {/* Table Headers */}
           <View style={[styles.tableRow, styles.tableHeader]}>
             <Text
               style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
@@ -324,21 +359,34 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              List Price
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.colList, styles.tableHeaderText]}
-            >
-              List
+              Net / Rate
             </Text>
             <Text
               style={[
                 styles.tableCol,
-                styles.colExtended,
+                styles.colQuantity,
                 styles.tableHeaderText,
               ]}
             >
-              Extended
+              Quantity
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colListPrice,
+                styles.tableHeaderText,
+              ]}
+            >
+              List Price
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colExtendedPrice,
+                styles.tableHeaderText,
+              ]}
+            >
+              Extended Price
             </Text>
             <Text
               style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
@@ -347,6 +395,7 @@ const EstimatePDF = ({ pdfData }) => {
             </Text>
           </View>
 
+          {/* Table Rows */}
           {safeItems.map((item, idx) => (
             <View key={idx} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.colType, styles.tableText]}>
@@ -367,17 +416,26 @@ const EstimatePDF = ({ pdfData }) => {
               <Text
                 style={[styles.tableCol, styles.colNetRate, styles.tableText]}
               >
-                ${parseFloat(item.listPrice || 0).toFixed(2)}
-              </Text>
-              <Text style={[styles.tableCol, styles.colList, styles.tableText]}>
-                {item.type === "Part"
-                  ? `$${parseFloat(item.listPrice || 0).toFixed(2)}`
-                  : "-"}
+                ${parseFloat(item.price || 0).toFixed(2)}
               </Text>
               <Text
-                style={[styles.tableCol, styles.colExtended, styles.tableText]}
+                style={[styles.tableCol, styles.colQuantity, styles.tableText]}
               >
-                ${parseFloat(item.extended || 0).toFixed(2)}
+                {item.quantity}
+              </Text>
+              <Text
+                style={[styles.tableCol, styles.colListPrice, styles.tableText]}
+              >
+                ${parseFloat(item.listPrice || 0).toFixed(2)}
+              </Text>
+              <Text
+                style={[
+                  styles.tableCol,
+                  styles.colExtendedPrice,
+                  styles.tableText,
+                ]}
+              >
+                ${parseFloat(item.extendedPrice || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colTax, styles.tableText]}>
                 {item.taxable ? "Yes" : "No"}
@@ -386,6 +444,7 @@ const EstimatePDF = ({ pdfData }) => {
           ))}
         </View>
 
+        {/* Totals Section */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Parts Total:</Text>
@@ -427,6 +486,7 @@ const EstimatePDF = ({ pdfData }) => {
           </View>
         </View>
 
+        {/* Footer */}
         <View style={styles.footer}>
           {safeWorkshopData.disclaimer && (
             <Text style={{ marginBottom: 8 }}>

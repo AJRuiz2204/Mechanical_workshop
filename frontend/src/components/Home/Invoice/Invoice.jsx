@@ -1,51 +1,209 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Container, Row, Col, Table, Alert, Button, Spinner } from "react-bootstrap";
-import { getEstimateById } from "../../../services/EstimateService";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import EstimatePDF from "../Estimate/EstimatePDF"; // Ajusta la ruta si es necesario
+// Frontend: src/components/Invoice/Invoice.jsx
 
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Alert,
+  Button,
+  Spinner,
+} from "react-bootstrap";
+import { getEstimateById } from "../../../services/EstimateService";
+import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
+import { getWorkshopSettings } from "../../../services/workshopSettingsService";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import EstimatePDF from "../Estimate/EstimatePDF"; // Ensure the path is correct
+
+/**
+ * Invoice Component
+ * 
+ * This component fetches invoice data based on the provided ID,
+ * calculates totals, and allows the user to download the invoice as a PDF.
+ *
+ * @returns {JSX.Element} The Invoice component.
+ */
 const Invoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // States to manage loading and errors
   const [loading, setLoading] = useState(true);
+  const [loadingWorkshop, setLoadingWorkshop] = useState(true);
   const [error, setError] = useState(null);
   const [estimate, setEstimate] = useState(null);
+  const [settings, setSettings] = useState(null);
+  const [workshopSettings, setWorkshopSettings] = useState(null);
+
+  // States for totals
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
+  const [pdfTotals, setPdfTotals] = useState({
+    partsTotal: 0,
+    laborTotal: 0,
+    othersTotal: 0,
+    partsTax: 0,
+    laborTax: 0,
+    total: 0,
+  });
 
+  // State for PDF download
+  const [generatedPdfData, setGeneratedPdfData] = useState(null);
+  const pdfContainerRef = useRef(null);
+
+  /**
+   * Fetches data when the component mounts.
+   * Retrieves estimate data, settings, and workshop settings in parallel.
+   */
   useEffect(() => {
-    const fetchEstimate = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getEstimateById(id);
-        setEstimate(data);
+        const [estimateData, cfg, shopData] = await Promise.all([
+          getEstimateById(id),
+          getSettingsById(1),
+          getWorkshopSettings(),
+        ]);
+        setEstimate(estimateData);
+        setSettings(cfg);
+        setWorkshopSettings(shopData);
       } catch (err) {
-        setError(`Error fetching Estimate/Invoice data: ${err.message}`);
+        setError(`Error fetching data: ${err.message}`);
       } finally {
         setLoading(false);
+        setLoadingWorkshop(false);
       }
     };
-    fetchEstimate();
+    fetchData();
   }, [id]);
 
+  /**
+   * Calculates totals whenever estimate or settings change.
+   */
   useEffect(() => {
-    if (!estimate) return;
-    let calculatedSubtotal = 0;
-    let calculatedTax = 0;
-    let calculatedTotal = 0;
-    if (estimate.subtotal) calculatedSubtotal = estimate.subtotal;
-    if (estimate.tax) calculatedTax = estimate.tax;
-    if (estimate.total) calculatedTotal = estimate.total;
-    setSubtotal(calculatedSubtotal);
-    setTax(calculatedTax);
-    setTotal(calculatedTotal);
-  }, [estimate]);
+    if (!estimate || !settings) return;
 
-  if (loading) {
+    let partsTotal = 0;
+    let taxParts = 0;
+    let laborTotal = 0;
+    let taxLabors = 0;
+    let othersTotal = 0;
+
+    // Calculate totals for parts
+    estimate.parts.forEach((part) => {
+      const partExt = parseFloat(part.extendedPrice) || 0;
+      partsTotal += partExt;
+      if (part.taxable) {
+        taxParts += partExt * (parseFloat(settings.partTaxRate) / 100);
+      }
+    });
+
+    // Calculate totals for labors
+    estimate.labors.forEach((labor) => {
+      const laborExt = parseFloat(labor.extendedPrice) || 0;
+      laborTotal += laborExt;
+      if (labor.taxable) {
+        taxLabors += laborExt * (parseFloat(settings.laborTaxRate) / 100);
+      }
+    });
+
+    // Calculate totals for flat fees
+    estimate.flatFees.forEach((fee) => {
+      othersTotal += parseFloat(fee.extendedPrice) || 0;
+    });
+
+    const totalCalc =
+      partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
+
+    setPdfTotals({
+      partsTotal,
+      laborTotal,
+      othersTotal,
+      partsTax: taxParts,
+      laborTax: taxLabors,
+      total: totalCalc,
+    });
+
+    setSubtotal(partsTotal + laborTotal + othersTotal);
+    setTax(taxParts + taxLabors);
+    setTotal(totalCalc);
+  }, [estimate, settings]);
+
+  /**
+   * Handles the PDF download by preparing the necessary data.
+   */
+  const handleDownloadPDF = () => {
+    if (!workshopSettings || !estimate.vehicle || !estimate.owner) {
+      setError("Missing necessary data to generate PDF.");
+      return;
+    }
+
+    const itemsForPDF = [
+      ...estimate.parts.map((p) => ({
+        type: "Part",
+        description: p.description,
+        quantity: p.quantity,
+        price: p.netPrice,
+        listPrice: p.listPrice,
+        extendedPrice: p.extendedPrice,
+        taxable: p.taxable,
+        partNumber: p.partNumber,
+      })),
+      ...estimate.labors.map((l) => ({
+        type: "Labor",
+        description: l.description,
+        quantity: l.duration,
+        price: l.laborRate,
+        listPrice: "", // Labor does not have listPrice
+        extendedPrice: l.extendedPrice,
+        taxable: l.taxable,
+        partNumber: "",
+      })),
+      ...estimate.flatFees.map((f) => ({
+        type: "Flat Fee",
+        description: f.description,
+        quantity: "-", // Flat Fee does not have quantity
+        price: f.flatFeePrice,
+        listPrice: "", // Flat Fee does not have listPrice
+        extendedPrice: f.extendedPrice,
+        taxable: false,
+        partNumber: "",
+      })),
+    ];
+
+    const payload = {
+      workshopData: workshopSettings,
+      vehicle: estimate.vehicle,
+      customer: estimate.owner,
+      items: itemsForPDF,
+      totals: pdfTotals,
+      customerNote: estimate.customerNote || "",
+    };
+    setGeneratedPdfData(payload);
+  };
+
+  /**
+   * Automatically initiates the PDF download when PDF data is generated.
+   */
+  useEffect(() => {
+    if (generatedPdfData && pdfContainerRef.current) {
+      const linkElement = pdfContainerRef.current.querySelector("a");
+      if (linkElement) {
+        linkElement.click();
+      }
+    }
+  }, [generatedPdfData]);
+
+  // Show loading spinner while data is being fetched
+  if (loading || loadingWorkshop) {
     return (
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "80vh" }}>
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "80vh" }}
+      >
         <Spinner animation="border" role="status">
           <span className="visually-hidden">Loading Invoice...</span>
         </Spinner>
@@ -53,6 +211,7 @@ const Invoice = () => {
     );
   }
 
+  // Display error message if there is an error
   if (error) {
     return (
       <Container className="p-4 border rounded">
@@ -61,6 +220,7 @@ const Invoice = () => {
     );
   }
 
+  // Display warning if no estimate data is found
   if (!estimate) {
     return (
       <Container className="p-4 border rounded">
@@ -74,36 +234,6 @@ const Invoice = () => {
   const parts = estimate.parts || [];
   const labors = estimate.labors || [];
   const flatFees = estimate.flatFees || [];
-
-  const combinedItems = [
-    ...parts.map((p) => ({
-      type: "Part",
-      description: p.description,
-      detail: p.partNumber || "",
-      qty: p.quantity,
-      price: p.netPrice,
-      total: p.extendedPrice,
-      taxable: p.taxable,
-    })),
-    ...labors.map((l) => ({
-      type: "Labor",
-      description: l.description,
-      detail: `${l.duration} hrs`,
-      qty: l.duration,
-      price: l.laborRate,
-      total: l.extendedPrice,
-      taxable: l.taxable,
-    })),
-    ...flatFees.map((f) => ({
-      type: "Flat Fee",
-      description: f.description,
-      detail: "",
-      qty: "",
-      price: f.flatFeePrice,
-      total: f.extendedPrice,
-      taxable: false,
-    })),
-  ];
 
   return (
     <Container className="p-4 border rounded">
@@ -129,34 +259,64 @@ const Invoice = () => {
           <tr>
             <th>Item</th>
             <th>Description</th>
-            <th>Detail</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Total</th>
+            <th>Part# / Hours</th>
+            <th>Net / Rate</th>
+            <th>Quantity</th>
+            <th>List Price</th>
+            <th>Extended Price</th>
             <th>Taxable</th>
           </tr>
         </thead>
         <tbody>
-          {combinedItems.length === 0 ? (
+          {parts.length === 0 &&
+          labors.length === 0 &&
+          flatFees.length === 0 ? (
             <tr>
-              <td colSpan="7" className="text-center">
+              <td colSpan="8" className="text-center">
                 No items
               </td>
             </tr>
           ) : (
-            combinedItems.map((item, idx) => (
-              <tr key={idx}>
-                <td>{item.type}</td>
-                <td>{item.description}</td>
-                <td>{item.detail || "-"}</td>
-                <td>{item.qty || "-"}</td>
-                <td>${item.price ? item.price.toFixed(2) : "0.00"}</td>
-                <td>${item.total ? item.total.toFixed(2) : "0.00"}</td>
-                <td>
-                  {item.taxable ? <span>Yes</span> : <span>No</span>}
-                </td>
-              </tr>
-            ))
+            <>
+              {parts.map((p, idx) => (
+                <tr key={`p-${idx}`}>
+                  <td>{p.type}</td>
+                  <td>{p.description}</td>
+                  <td>
+                    {p.partNumber} (QTY: {p.quantity})
+                  </td>
+                  <td>${parseFloat(p.netPrice).toFixed(2)}</td>
+                  <td>{p.quantity}</td>
+                  <td>${parseFloat(p.listPrice).toFixed(2)}</td>
+                  <td>${parseFloat(p.extendedPrice).toFixed(2)}</td>
+                  <td>{p.taxable ? "Yes" : "No"}</td>
+                </tr>
+              ))}
+              {labors.map((l, idx) => (
+                <tr key={`l-${idx}`}>
+                  <td>{l.type}</td>
+                  <td>{l.description}</td>
+                  <td>{l.duration} hrs</td>
+                  <td>${parseFloat(l.laborRate).toFixed(2)}</td>
+                  <td>{l.duration}</td>
+                  <td>-</td>
+                  <td>${parseFloat(l.extendedPrice).toFixed(2)}</td>
+                  <td>{l.taxable ? "Yes" : "No"}</td>
+                </tr>
+              ))}
+              {flatFees.map((f, idx) => (
+                <tr key={`f-${idx}`}>
+                  <td>{f.type}</td>
+                  <td>{f.description}</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>${parseFloat(f.extendedPrice).toFixed(2)}</td>
+                  <td>No</td>
+                </tr>
+              ))}
+            </>
           )}
         </tbody>
       </Table>
@@ -168,48 +328,24 @@ const Invoice = () => {
       </div>
 
       <div className="text-end">
-        {estimate.vehicle && estimate.owner ? (
+        <Button variant="success" onClick={handleDownloadPDF} className="me-2">
+          Download PDF
+        </Button>
+        <Button variant="secondary" onClick={() => navigate("/estimates")}>
+          Back
+        </Button>
+      </div>
+
+      {/* Hidden element to initiate download automatically */}
+      <div style={{ display: "none" }} ref={pdfContainerRef}>
+        {generatedPdfData && (
           <PDFDownloadLink
-            document={
-              <EstimatePDF
-                workshopData={{}}
-                vehicle={vehicle}
-                customer={owner}
-                items={combinedItems.map((i) => ({
-                  type: i.type,
-                  description: i.description,
-                  quantity: i.qty,
-                  price: i.price,
-                  extended: i.total,
-                }))}
-                totals={{
-                  partsTotal: 0,
-                  laborTotal: 0,
-                  othersTotal: 0,
-                  partsTax: 0,
-                  laborTax: 0,
-                  total: total,
-                }}
-                customerNote={estimate.customerNote || ""}
-              />
-            }
+            document={<EstimatePDF pdfData={generatedPdfData} />}
             fileName={`Invoice_${id}.pdf`}
-            className="btn btn-primary"
           >
             {({ loading }) => (loading ? "Generating PDF..." : "Download PDF")}
           </PDFDownloadLink>
-        ) : (
-          <Button variant="primary" disabled>
-            Download PDF
-          </Button>
         )}
-        <Button
-          variant="secondary"
-          className="ms-2"
-          onClick={() => navigate("/estimates")}
-        >
-          Back
-        </Button>
       </div>
     </Container>
   );
