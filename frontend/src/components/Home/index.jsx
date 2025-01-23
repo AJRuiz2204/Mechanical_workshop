@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 
 import React, { useEffect, useState } from "react";
@@ -45,15 +44,21 @@ const Home = () => {
       roles: ["Manager"],
     },
     {
-      label: "INVOICE",
-      route: "/invoice",
-      roles: ["Manager"],
-    },
-    {
       label: "ADD USER",
       route: "/register-user",
       roles: ["Manager"],
     },
+    {
+      label: "CHANGE PASSWORD",
+      route: "/change-password",
+      roles: ["Manager"],
+    },
+    {
+      label: "MY DIAGNOSTICS",
+      route: "/technicianDiagnosticList",
+      roles: ["Technician"],
+    }
+
   ];
 
   /**

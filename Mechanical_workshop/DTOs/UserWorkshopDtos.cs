@@ -5,6 +5,7 @@ namespace Mechanical_workshop.Dtos
 {
     public class VehicleDto
     {
+        public int Id { get; set; }
         [Required]
         public string Vin { get; set; } = string.Empty;
         [Required]

@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Page,
   Text,
@@ -11,7 +11,6 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
-import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 import logo from "../../../images/logo.png";
 
 // Styles definition for PDF document
@@ -194,40 +193,21 @@ const styles = StyleSheet.create({
   },
 });
 
-const EstimatePDF = ({
-  workshopData,
-  customer,
-  vehicle,
-  items,
-  totals,
-  customerNote,
-}) => {
-  // State for workshop settings
-  const [workshopSettings, setWorkshopSettings] = useState(null);
-
-  // Fetch workshop settings on component mount
-  useEffect(() => {
-    const fetchWorkshopSettings = async () => {
-      try {
-        const settings = await getWorkshopSettings();
-        setWorkshopSettings(settings);
-      } catch (error) {
-        console.error("Error loading workshop settings:", error);
-      }
-    };
-    fetchWorkshopSettings();
-  }, []);
-
+const EstimatePDF = ({ pdfData }) => {
   // Safe data handling with defaults
-  const safeWorkshopData = workshopSettings || {};
-  const safeCustomer = customer || {};
-  const safeVehicle = vehicle || {};
-  const safeItems = items || [];
+  const safeWorkshopData = pdfData?.workshopData || {};
+  const safeCustomer = pdfData?.customer || {};
+  const safeVehicle = pdfData?.vehicle || {};
+  const safeItems = pdfData?.items || [];
+  const totals = pdfData?.totals || {};
+  const customerNote = pdfData?.customerNote || "";
 
   // Format date string for last updated
   const formatLastUpdated = (dateString) => {
     if (!dateString) return "";
-    return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+    return dayjs(dateString)
+      .subtract(6, "hour")
+      .format("YYYY-MM-DD HH:mm:ss");
   };
 
   return (

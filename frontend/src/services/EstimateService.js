@@ -59,45 +59,28 @@ export const createEstimate = async (estimateData) => {
   }
 };
 
-// En EstimateService.js (updateEstimate)
 export const updateEstimate = async (id, estimateData) => {
   try {
-    const response = await fetch(`/api/Estimates/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch(`http://localhost:5173/api/Estimates/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(estimateData),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      // Lee el JSON una sola vez
-      const errorData = await response.json().catch(() => null);
-
-      console.error("SERVER RESPONSE:", errorData);
-      console.error("SERVER ERRORS DETAIL:", errorData?.errors);
-
-      let errorMsg = "Error updating the estimate.";
-      if (errorData && errorData.message) {
-        errorMsg = errorData.message;
-      }
-
-      if (errorData && Array.isArray(errorData.errors)) {
-        const detail = errorData.errors
-          .map((err) => err.Error || err.ErrorMessage || "")
-          .join(" | ");
-        errorMsg += ` ${detail}`;
-      }
-
-      throw new Error(errorMsg);
+      console.error("SERVER RESPONSE:", data);
+      throw new Error(data.details || data.message || 'Error updating the estimate.');
     }
 
-    // Si todo va bien, parseamos la respuesta una sola vez
-    const updatedEstimate = await response.json();
-    return updatedEstimate;
+    return data;
   } catch (error) {
     console.error("Error in updateEstimate:", error);
-    throw new Error(error.message || "Error updating the estimate.");
+    throw error;
   }
 };
+
 
 export const deleteEstimate = async (id) => {
   try {

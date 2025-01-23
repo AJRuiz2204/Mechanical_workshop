@@ -30,6 +30,11 @@ const EstimateList = () => {
     fetchEstimates();
   }, []);
 
+  // Nueva función para manejar el clic en "Edit"
+  const handleEdit = (estimate) => {
+    console.log("Editing Estimate:", estimate);
+  };
+
   // Maneja la eliminación de una Estimate
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -113,7 +118,7 @@ const EstimateList = () => {
 
                   {/* Botón "Edit" (si tienes una ruta /estimate/edit/:id) */}
                   <Link to={`/estimate/edit/${estimate.id}`}>
-                    <Button variant="warning" size="sm" className="me-2">
+                    <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(estimate)}>
                       Edit
                     </Button>
                   </Link>

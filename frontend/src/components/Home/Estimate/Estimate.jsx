@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Form,
   Button,
@@ -95,6 +95,60 @@ const Estimate = () => {
   });
   const [isAddingPart, setIsAddingPart] = useState(false);
 
+  const [generatedPdfData, setGeneratedPdfData] = useState(null);
+
+  const pdfContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (generatedPdfData && pdfContainerRef.current) {
+      const linkElement = pdfContainerRef.current.querySelector("a");
+      if (linkElement) {
+        linkElement.click();
+      }
+    }
+  }, [generatedPdfData]);
+
+  const handleDownloadPDF = () => {
+    const itemsPayload = [
+      ...parts.map((p) => ({
+        type: "Part",
+        description: p.description,
+        quantity: p.quantity,
+        price: p.netPrice,
+        listPrice: p.listPrice,
+        extended: p.extendedPrice,
+        taxable: p.applyPartTax,
+        partNumber: p.partNumber,
+      })),
+      ...labors.map((l) => ({
+        type: "Labor",
+        description: l.description,
+        quantity: l.duration,
+        price: l.laborRate,
+        extended: l.extendedPrice,
+        taxable: l.applyLaborTax,
+      })),
+      ...flatFees.map((f) => ({
+        type: "Flat Fee",
+        description: f.description,
+        quantity: "-",
+        price: f.flatFeePrice,
+        extended: f.extendedPrice,
+        taxable: false,
+        partNumber: "",
+      })),
+    ];
+    const payload = {
+      workshopData: workshopSettings,
+      vehicle: selectedVehicle,
+      customer: owner,
+      items: itemsPayload,
+      totals: pdfTotals,
+      customerNote,
+    };
+    setGeneratedPdfData(payload);
+  };
+
   // Cargar la configuración y el Estimate si es edición
   useEffect(() => {
     const loadData = async () => {
@@ -109,30 +163,19 @@ const Estimate = () => {
         setVehicles(vList);
 
         if (isEditMode) {
-          const existingEstimate = await getEstimateById(id);
-          setParts(existingEstimate.parts || []);
-          setLabors(existingEstimate.labors || []);
-          setFlatFees(existingEstimate.flatFees || []);
-          setCustomerNote(existingEstimate.customerNote || "");
-          setExtendedDiagnostic(
-            existingEstimate.technicianDiagnostic?.extendedDiagnostic || ""
-          );
-          setSubtotal(existingEstimate.subtotal || 0);
-          setTax(existingEstimate.tax || 0);
-          setTotal(existingEstimate.total || 0);
-          setAuthorizationStatus(
-            existingEstimate.authorizationStatus || "InReview"
-          );
-          if (existingEstimate.vehicle) {
-            setSelectedVehicle(existingEstimate.vehicle);
-          }
-          if (existingEstimate.owner) {
-            setOwner(existingEstimate.owner);
-            setNoTax(existingEstimate.owner.noTax);
-          }
-          if (existingEstimate.technicianDiagnostic) {
-            setDiagnostic(existingEstimate.technicianDiagnostic);
-          }
+          const estimateData = await getEstimateById(id);
+          setSelectedVehicle(estimateData.vehicle);
+          setOwner(estimateData.owner);
+          setParts(estimateData.parts);
+          setLabors(estimateData.labors);
+          setFlatFees(estimateData.flatFees);
+          setDiagnostic(estimateData.technicianDiagnostic);
+          setExtendedDiagnostic(estimateData.technicianDiagnostic?.extendedDiagnostic || "");
+          setCustomerNote(estimateData.customerNote || "");
+          setSubtotal(estimateData.subtotal || 0);
+          setTax(estimateData.tax || 0);
+          setTotal(estimateData.total || 0);
+          setAuthorizationStatus(estimateData.authorizationStatus || "InReview");
         }
       } catch (err) {
         setError("Error loading data: " + err.message);
@@ -155,7 +198,7 @@ const Estimate = () => {
 
     parts.forEach((part) => {
       partsTotal += parseFloat(part.extendedPrice) || 0;
-      if (part.applyPartTax && !noTax) {
+      if (part.applyPartTax) {
         taxParts +=
           (parseFloat(part.extendedPrice) || 0) *
           (parseFloat(settings.partTaxRate) / 100);
@@ -164,7 +207,7 @@ const Estimate = () => {
 
     labors.forEach((labor) => {
       laborTotal += parseFloat(labor.extendedPrice) || 0;
-      if (labor.applyLaborTax && !noTax) {
+      if (labor.applyLaborTax) {
         taxLabors +=
           (parseFloat(labor.extendedPrice) || 0) *
           (parseFloat(settings.laborTaxRate) / 100);
@@ -190,11 +233,11 @@ const Estimate = () => {
     setSubtotal(partsTotal + laborTotal + othersTotal);
     setTax(taxParts + taxLabors);
     setTotal(totalCalc);
-  }, [parts, labors, flatFees, settings, noTax]);
+  }, [parts, labors, flatFees, settings]);
 
   const handleVehicleChange = async (e) => {
-    const vehicleId = parseInt(e.target.value, 10);
-    if (!vehicleId || vehicleId <= 0) {
+    const vehicleId = e.target.value; // Mantener como string
+    if (!vehicleId || parseInt(vehicleId, 10) <= 0) {
       setError("Selecciona un vehículo válido (ID > 0).");
       setSelectedVehicleId("");
       return;
@@ -216,13 +259,15 @@ const Estimate = () => {
       return;
     }
     try {
-      const vehData = await getVehicleById(vehicleId);
+      const vehData = await getVehicleById(parseInt(vehicleId, 10));
       setSelectedVehicle(vehData);
       if (vehData.userWorkshop) {
         setOwner(vehData.userWorkshop);
         setNoTax(vehData.userWorkshop.noTax);
       }
-      const fetchedDiagnostic = await getDiagnosticByVehicleId(vehicleId);
+      const fetchedDiagnostic = await getDiagnosticByVehicleId(
+        parseInt(vehicleId, 10)
+      );
       if (fetchedDiagnostic) {
         setDiagnostic(fetchedDiagnostic);
         setExtendedDiagnostic(fetchedDiagnostic.extendedDiagnostic);
@@ -262,7 +307,7 @@ const Estimate = () => {
       netPrice: 0,
       listPrice: 0,
       extendedPrice: 0,
-      applyPartTax: false,
+      applyPartTax: noTax ? false : true, // Establecer según noTax
     });
   };
   const handleShowLaborModal = () => {
@@ -285,9 +330,9 @@ const Estimate = () => {
     setNewLabor({
       description: "",
       duration: 0,
-      laborRate: 0,
+      laborRate: settings?.defaultHourlyRate || 0,
       extendedPrice: 0,
-      applyLaborTax: false,
+      applyLaborTax: noTax ? false : true, // Establecer según noTax
     });
   };
   const handleShowFlatFeeModal = () => {
@@ -333,10 +378,11 @@ const Estimate = () => {
         netPrice: 0,
         listPrice: 0,
         extendedPrice: 0,
-        applyPartTax: false,
+        applyPartTax: noTax ? false : true,
       });
       setSuccess("Part added successfully.");
       setShowPartModal(false);
+      setError(null); // Limpiar errores
     } catch (err) {
       setError("Error adding the part.");
     } finally {
@@ -358,6 +404,7 @@ const Estimate = () => {
       duration: dur,
       laborRate: rate,
       extendedPrice: ext,
+      applyLaborTax: newLabor.applyLaborTax,
     };
     setLabors([...labors, newItem]);
     setError(null);
@@ -404,17 +451,13 @@ const Estimate = () => {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Validar que se haya seleccionado un vehículo
-    if (!selectedVehicleId || selectedVehicleId === "") {
+    // Validar que se haya seleccionado un vehículo solo en modo creación
+    if (!isEditMode && (!selectedVehicleId || selectedVehicleId === "")) {
       setError("Por favor, seleccione un vehículo.");
       return;
     }
 
     // Validaciones básicas
-    if (!selectedVehicle && !isEditMode) {
-      setError("Please select a vehicle.");
-      return;
-    }
     if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
       setError("Add at least one item to the Estimate.");
       return;
@@ -489,6 +532,7 @@ const Estimate = () => {
     else {
       const updateDto = {
         ID: parseInt(id, 10),
+        VehicleID: selectedVehicle ? parseInt(selectedVehicleId, 10) || 0 : 0, // Asegurar que sea número
         CustomerNote: customerNote,
         Subtotal: subtotal,
         Tax: tax,
@@ -538,6 +582,39 @@ const Estimate = () => {
     }
   };
 
+  // Para la vista previa del PDF
+  const combinedItems = useMemo(() => {
+    return [
+      ...parts.map((p) => ({
+        type: "Part",
+        description: p.description,
+        quantity: p.quantity,
+        price: p.netPrice,
+        listPrice: p.listPrice,
+        extended: p.extendedPrice,
+        taxable: p.applyPartTax,
+        partNumber: p.partNumber,
+      })),
+      ...labors.map((l) => ({
+        type: "Labor",
+        description: l.description,
+        quantity: l.duration,
+        price: l.laborRate,
+        extended: l.extendedPrice,
+        taxable: l.applyLaborTax,
+      })),
+      ...flatFees.map((f) => ({
+        type: "Flat Fee",
+        description: f.description,
+        quantity: "-",
+        price: f.flatFeePrice,
+        extended: f.extendedPrice,
+        taxable: false,
+        partNumber: "",
+      })),
+    ];
+  }, [parts, labors, flatFees]);
+
   if (isLoading || loadingWorkshop) {
     return (
       <Container
@@ -551,40 +628,11 @@ const Estimate = () => {
     );
   }
 
-  // Para la vista previa del PDF
-  const combinedItems = [
-    ...parts.map((p) => ({
-      type: "Part",
-      description: p.description,
-      quantity: p.quantity,
-      price: p.netPrice,
-      listPrice: p.listPrice,
-      extended: p.extendedPrice,
-      taxable: p.applyPartTax,
-      partNumber: p.partNumber,
-    })),
-    ...labors.map((l) => ({
-      type: "Labor",
-      description: l.description,
-      quantity: l.duration,
-      price: l.laborRate,
-      extended: l.extendedPrice,
-      taxable: l.applyLaborTax,
-    })),
-    ...flatFees.map((f) => ({
-      type: "Flat Fee",
-      description: f.description,
-      quantity: "-",
-      price: f.flatFeePrice,
-      extended: f.extendedPrice,
-      taxable: false,
-      partNumber: "",
-    })),
-  ];
-
   return (
     <Container className="p-4 border rounded mt-4">
-      <h3 className="mb-4">{isEditMode ? "Edit Estimate" : "Create Estimate"}</h3>
+      <h3 className="mb-4">
+        {isEditMode ? "Edit Estimate" : "Create Estimate"}
+      </h3>
 
       {error && (
         <Alert variant="danger" onClose={() => setError(null)} dismissible>
@@ -653,12 +701,14 @@ const Estimate = () => {
           <Row className="mb-3">
             <Col md={6}>
               <p className="fw-bold">Vehicle:</p>
-              {selectedVehicle && (
+              {selectedVehicle ? (
                 <p>
                   {selectedVehicle.vin} - {selectedVehicle.year}{" "}
                   {selectedVehicle.make} {selectedVehicle.model} (
                   {selectedVehicle.engine})
                 </p>
+              ) : (
+                <p>No vehicle associated.</p>
               )}
             </Col>
             <Col md={6}>
@@ -723,6 +773,8 @@ const Estimate = () => {
             rows={3}
             value={extendedDiagnostic}
             onChange={(e) => setExtendedDiagnostic(e.target.value)}
+            placeholder="Enter technician diagnostic..."
+            readOnly={isEditMode} // Considera eliminar si deseas permitir la edición
           />
         </Form.Group>
 
@@ -879,34 +931,24 @@ const Estimate = () => {
                 : "Create Estimate"}
             </Button>
 
-            {workshopSettings && selectedVehicle && owner ? (
-              <PDFDownloadLink
-                document={
-                  <EstimatePDF
-                    workshopData={workshopSettings}
-                    vehicle={selectedVehicle}
-                    customer={owner}
-                    items={combinedItems}
-                    totals={pdfTotals}
-                    customerNote={customerNote}
-                  />
-                }
-                fileName={`Estimate_${id || "New"}.pdf`}
-                className="btn btn-primary"
-              >
-                {({ loading }) =>
-                  loading ? (
-                    <span>Generating PDF...</span>
-                  ) : (
-                    <span>Download PDF</span>
-                  )
-                }
-              </PDFDownloadLink>
-            ) : (
-              <Button variant="primary" className="me-2" disabled>
-                Download PDF
-              </Button>
-            )}
+            <Button
+              variant="success"
+              className="me-2"
+              onClick={handleDownloadPDF}
+              disabled={!workshopSettings || !selectedVehicle || !owner}
+            >
+              Descargar PDF
+            </Button>
+            <div style={{ display: "none" }} ref={pdfContainerRef}>
+              {generatedPdfData && (
+                <PDFDownloadLink
+                  document={<EstimatePDF pdfData={generatedPdfData} />}
+                  fileName={`Estimate_${id || "New"}.pdf`}
+                >
+                  Oculto
+                </PDFDownloadLink>
+              )}
+            </div>
 
             <Button variant="secondary" onClick={() => navigate("/estimates")}>
               Cancel
@@ -1081,6 +1123,11 @@ const Estimate = () => {
                   setNewPart({ ...newPart, applyPartTax: e.target.checked })
                 }
               />
+              <Form.Text className="text-muted">
+                {noTax
+                  ? "Si marcas esta casilla, se aplicará el impuesto incluso si el perfil tiene NoTax."
+                  : "Si marcas esta casilla, no se aplicará el impuesto para este ítem."}
+              </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -1186,6 +1233,11 @@ const Estimate = () => {
                   setNewLabor({ ...newLabor, applyLaborTax: e.target.checked })
                 }
               />
+              <Form.Text className="text-muted">
+                {noTax
+                  ? "Si marcas esta casilla, se aplicará el impuesto incluso si el perfil tiene NoTax."
+                  : "Si marcas esta casilla, no se aplicará el impuesto para esta labor."}
+              </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>
