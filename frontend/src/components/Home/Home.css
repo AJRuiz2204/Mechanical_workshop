@@ -99,3 +99,14 @@
   text-align: center;
   padding: 20px;
 }
+
+.welcome-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logout-button {
+  /* Estilos adicionales para el botón si es necesario */
+  margin-left: 20px;
+}

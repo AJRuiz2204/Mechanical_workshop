@@ -1,43 +1,55 @@
 /* eslint-disable no-unused-vars */
 // src/components/login/Login.jsx
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import loginImage from "../../images/login-image.jpg";
-import { loginUser } from "../../services/UserLoginServices"; // Asegurarse de importar correctamente
+import { loginUser } from "../../services/UserLoginServices"; // Ensure correct import
 
+/**
+ * Login Component
+ * Handles user authentication by allowing users to enter their credentials and log into the application.
+ *
+ * @returns {JSX.Element} The Login component.
+ */
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  /**
+   * Handles form submission for user login.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Intentando iniciar sesión con:", { username, password }); // Log de credenciales
+    console.log("Attempting to log in with:", { username, password }); // Credential log
     const credentials = { username, password };
     try {
-      const response = await loginUser(credentials); // Guardar la respuesta completa
-      console.log("Respuesta de loginUser:", response); // Log de respuesta
+      const response = await loginUser(credentials); // Save the full response
+      console.log("Response from loginUser:", response); // Response log
 
-      // Desestructurar con nombres correctos
+      // Destructure with correct names
       const { token, user } = response;
 
       if (!token || !user) {
-        throw new Error("Respuesta de login inválida.");
+        throw new Error("Invalid login response.");
       }
 
-      // Almacenar en localStorage
+      // Store in localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      console.log("Datos almacenados en localStorage."); // Confirmación de almacenamiento
+      console.log("Data stored in localStorage."); // Storage confirmation
 
-      // Navegar a la página principal
+      // Navigate to the home page
       navigate("/home");
     } catch (err) {
-      console.error("Error en handleSubmit:", err); // Log de error
-      // Manejar errores más detalladamente si es posible
-      setError(err.message || "Error al iniciar sesión.");
+      console.error("Error in handleSubmit:", err); // Error log
+      // Handle errors more specifically if possible
+      setError(err.message || "Error logging in.");
     }
   };
 

@@ -1,7 +1,13 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
-const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode, requiredRole?: string }) => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: string;
+  requiredRoles?: string[];
+}
+
+const ProtectedRoute = ({ children, requiredRole, requiredRoles }: ProtectedRouteProps) => {
   const location = useLocation();
   let user: any = {};
 
@@ -21,6 +27,10 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode,
 
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requiredRoles && !requiredRoles.includes(user.profile)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   if (requiredRole && user.profile !== requiredRole) {

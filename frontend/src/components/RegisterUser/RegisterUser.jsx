@@ -1,11 +1,19 @@
 /* eslint-disable no-unused-vars */
 // Frontend: src/components/RegisterUser/RegisterUser.jsx
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
-import { Register } from "../../services/userService"; // Asegurarse de que se importe la función correcta
+import { Register } from "../../services/userService";
 
+/**
+ * RegisterUser Component
+ * Handles the registration of new users by collecting user details and sending them to the backend service.
+ *
+ * @returns {JSX.Element} The RegisterUser component.
+ */
 const RegisterUser = () => {
+  // State variables to manage form inputs
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -14,7 +22,10 @@ const RegisterUser = () => {
   const [profile, setProfile] = useState("Manager");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Function to generate a secure random password
+  /**
+   * Generates a secure random password and updates the password state.
+   * The password includes uppercase letters, lowercase letters, numbers, and symbols.
+   */
   const generatePassword = () => {
     const chars =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
@@ -27,10 +38,16 @@ const RegisterUser = () => {
     setPassword(generatedPassword);
   };
 
+  /**
+   * Handles form submission for user registration.
+   * Sends the user data to the backend service and manages the response.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Crear el objeto de datos del usuario
+    // Create the user data object
     const userData = {
       email,
       name,
@@ -41,10 +58,10 @@ const RegisterUser = () => {
     };
 
     try {
-      await Register(userData); // Llamar a la función Register
+      await Register(userData); // Call the Register function from the userService
       alert("User registered successfully.");
 
-      // Limpiar el formulario
+      // Clear the form fields after successful registration
       setEmail("");
       setName("");
       setLastName("");
@@ -57,11 +74,22 @@ const RegisterUser = () => {
     }
   };
 
+  const handleCancel = () => {
+    setEmail("");
+    setName("");
+    setLastName("");
+    setUsername("");
+    setPassword("");
+    setProfile("Manager");
+    setShowPassword(false);
+  };
+
   return (
     <div className="register-user-container d-flex justify-content-center align-items-center vh-100">
       <div className="card shadow p-4 register-user-card">
         <h2 className="text-center mb-4">REGISTER USER</h2>
         <form onSubmit={handleSubmit}>
+          {/* Email Input */}
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
               EMAIL
@@ -76,6 +104,8 @@ const RegisterUser = () => {
               required
             />
           </div>
+
+          {/* First Name Input */}
           <div className="mb-3">
             <label htmlFor="name" className="form-label">
               NAME
@@ -90,6 +120,8 @@ const RegisterUser = () => {
               required
             />
           </div>
+
+          {/* Last Name Input */}
           <div className="mb-3">
             <label htmlFor="lastName" className="form-label">
               LAST NAME
@@ -104,6 +136,8 @@ const RegisterUser = () => {
               required
             />
           </div>
+
+          {/* Username Input */}
           <div className="mb-3">
             <label htmlFor="username" className="form-label">
               USERNAME
@@ -118,6 +152,8 @@ const RegisterUser = () => {
               required
             />
           </div>
+
+          {/* Password Input with Generate and Show/Hide functionality */}
           <div className="mb-3">
             <label htmlFor="password" className="form-label">
               PASSWORD
@@ -151,6 +187,8 @@ const RegisterUser = () => {
               The password must be at least 12 characters long, including uppercase letters, lowercase letters, numbers, and symbols.
             </div>
           </div>
+
+          {/* Profile Selection */}
           <div className="mb-3">
             <label htmlFor="profile" className="form-label">
               PROFILE
@@ -165,20 +203,17 @@ const RegisterUser = () => {
               <option value="Technician">Mechanical Technician</option>
             </select>
           </div>
+
+          {/* Submit and Cancel Buttons */}
           <div className="d-grid gap-2">
             <button type="submit" className="btn btn-primary">
               ADD USER
             </button>
-            <Link to="/" className="btn btn-secondary text-decoration-none">
+            <button type="button" className="btn btn-secondary" onClick={handleCancel}>
               CANCEL
-            </Link>
+            </button>
           </div>
         </form>
-        <div className="text-center mt-3">
-          <Link to="/" className="text-decoration-none">
-            ← BACK TO LOGIN
-          </Link>
-        </div>
       </div>
     </div>
   );
