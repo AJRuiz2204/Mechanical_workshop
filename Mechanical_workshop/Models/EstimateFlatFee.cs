@@ -25,6 +25,8 @@ namespace Mechanical_workshop.Models
 
         public bool Taxable { get; set; } = false;
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         // Clave Foránea a Estimate
         [Required]
         public int EstimateID { get; set; }

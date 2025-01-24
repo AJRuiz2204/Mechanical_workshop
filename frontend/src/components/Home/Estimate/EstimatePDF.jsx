@@ -315,10 +315,10 @@ const EstimatePDF = ({ pdfData }) => {
           </View>
         </View>
 
-        {/* Customer Note */}
+        {/* Description of labor or services */}
         {customerNote && (
           <View style={styles.noteSection}>
-            <Text style={styles.sectionTitle}>Customer Note:</Text>
+            <Text style={styles.sectionTitle}>Description of labor or services:</Text>
             <Text>{customerNote}</Text>
           </View>
         )}

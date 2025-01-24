@@ -41,5 +41,7 @@ namespace Mechanical_workshop.Models
         // Propiedad de navegación a Estimate
         [ForeignKey("EstimateID")]
         public virtual Estimate Estimate { get; set; } = null!;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

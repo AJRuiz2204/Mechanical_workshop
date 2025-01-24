@@ -1,5 +1,11 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Form,
   Button,
@@ -24,16 +30,14 @@ import {
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import EstimatePDF from "./EstimatePDF";
 
 /**
  * Component: Estimate
  *
  * Description:
- * This component handles the creation and editing of estimates. It allows users to select vehicles,
+ * Handles the creation and editing of estimates. Allows users to select vehicles,
  * add parts, labor, and flat fees, view calculated totals, and generate PDF versions of the estimates.
- * The component operates in two modes:
+ * Operates in two modes:
  * - Create Mode: For creating new estimates.
  * - Edit Mode: For editing existing estimates based on the provided ID.
  */
@@ -75,16 +79,6 @@ const Estimate = () => {
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
 
-  // State to hold PDF totals for export
-  const [pdfTotals, setPdfTotals] = useState({
-    partsTotal: 0,
-    laborTotal: 0,
-    othersTotal: 0,
-    partsTax: 0,
-    laborTax: 0,
-    total: 0,
-  });
-
   // State variables for new items being added
   const [newPart, setNewPart] = useState({
     description: "",
@@ -108,69 +102,6 @@ const Estimate = () => {
     extendedPrice: 0,
   });
   const [isAddingPart, setIsAddingPart] = useState(false); // Indicates if a part is being added
-
-  const [generatedPdfData, setGeneratedPdfData] = useState(null); // Data for the generated PDF
-
-  const pdfContainerRef = useRef(null); // Reference to the hidden PDF download container
-
-  /**
-   * Effect to automatically trigger PDF download when data is ready.
-   */
-  useEffect(() => {
-    if (generatedPdfData && pdfContainerRef.current) {
-      const linkElement = pdfContainerRef.current.querySelector("a");
-      if (linkElement) {
-        linkElement.click();
-      }
-    }
-  }, [generatedPdfData]);
-
-  /**
-   * Handles the download of the PDF by preparing the payload and setting the PDF data.
-   */
-  const handleDownloadPDF = () => {
-    const itemsPayload = [
-      ...parts.map((p) => ({
-        type: "Part",
-        description: p.description,
-        quantity: p.quantity,
-        price: p.netPrice,
-        listPrice: p.listPrice,
-        extendedPrice: p.extendedPrice,
-        taxable: p.applyPartTax,
-        partNumber: p.partNumber,
-      })),
-      ...labors.map((l) => ({
-        type: "Labor",
-        description: l.description,
-        quantity: l.duration,
-        price: l.laborRate,
-        listPrice: "", // Labor does not have a list price
-        extendedPrice: l.extendedPrice,
-        taxable: l.applyLaborTax,
-        partNumber: "",
-      })),
-      ...flatFees.map((f) => ({
-        type: "Flat Fee",
-        description: f.description,
-        quantity: "-", // Flat Fee does not have a quantity
-        price: f.flatFeePrice,
-        listPrice: "", // Flat Fee does not have a list price
-        extendedPrice: f.extendedPrice,
-        taxable: false,
-        partNumber: "",
-      })),
-    ];
-    const payload = {
-      workshopData: workshopSettings,
-      vehicle: selectedVehicle,
-      customer: owner,
-      items: itemsPayload,
-      totals: pdfTotals,
-      customerNote,
-    };
-    setGeneratedPdfData(payload);
-  };
 
   /**
    * Effect to load necessary data on component mount and when in edit mode.
@@ -259,15 +190,6 @@ const Estimate = () => {
       partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
 
     // Set the calculated totals for PDF and display
-    setPdfTotals({
-      partsTotal,
-      laborTotal,
-      othersTotal,
-      partsTax: taxParts,
-      laborTax: taxLabors,
-      total: totalCalc,
-    });
-
     setSubtotal(partsTotal + laborTotal + othersTotal);
     setTax(taxParts + taxLabors);
     setTotal(totalCalc);
@@ -294,12 +216,6 @@ const Estimate = () => {
     setExtendedDiagnostic("");
     setDiagnostic(null);
 
-    if (!vehicleId) {
-      setSelectedVehicle(null);
-      setOwner(null);
-      setNoTax(false);
-      return;
-    }
     try {
       const vehData = await getVehicleById(parseInt(vehicleId, 10));
       setSelectedVehicle(vehData);
@@ -543,6 +459,11 @@ const Estimate = () => {
     );
     if (hasDuplicates) {
       setError("There are duplicate Part Numbers in the estimate.");
+      return;
+    }
+
+    if (!customerNote.trim()) {
+      setError("The 'Description of labor or services' field cannot be empty.");
       return;
     }
 
@@ -1024,26 +945,6 @@ const Estimate = () => {
                 : "Create Estimate"}
             </Button>
 
-            <Button
-              variant="success"
-              className="me-2"
-              onClick={handleDownloadPDF}
-              disabled={!workshopSettings || !selectedVehicle || !owner}
-            >
-              Download PDF
-            </Button>
-            {/* Hidden PDF download link */}
-            <div style={{ display: "none" }} ref={pdfContainerRef}>
-              {generatedPdfData && (
-                <PDFDownloadLink
-                  document={<EstimatePDF pdfData={generatedPdfData} />}
-                  fileName={`Estimate_${id || "New"}.pdf`}
-                >
-                  Hidden
-                </PDFDownloadLink>
-              )}
-            </div>
-
             <Button variant="secondary" onClick={() => navigate("/estimates")}>
               Cancel
             </Button>
@@ -1140,7 +1041,7 @@ const Estimate = () => {
               <Form.Control
                 type="number"
                 min="1"
-                value={newPart.quantity}
+                value={newPart.quantity === 0 ? "" : newPart.quantity}
                 onChange={(e) => {
                   const qty = parseInt(e.target.value, 10) || 1;
                   const ext = newPart.netPrice * qty;
@@ -1150,6 +1051,7 @@ const Estimate = () => {
                     extendedPrice: ext,
                   }));
                 }}
+                placeholder="Quantity"
                 required
               />
             </Form.Group>
@@ -1161,7 +1063,7 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={newPart.netPrice}
+                  value={newPart.netPrice === 0 ? "" : newPart.netPrice}
                   onChange={(e) => {
                     const price = parseFloat(e.target.value) || 0;
                     const ext = price * newPart.quantity;
@@ -1171,6 +1073,7 @@ const Estimate = () => {
                       extendedPrice: ext,
                     }));
                   }}
+                  placeholder="Net Price"
                   required
                 />
               </InputGroup>
@@ -1183,7 +1086,7 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={newPart.listPrice}
+                  value={newPart.listPrice === 0 ? "" : newPart.listPrice}
                   onChange={(e) => {
                     const price = parseFloat(e.target.value) || 0;
                     const ext = price * newPart.quantity;
@@ -1193,6 +1096,7 @@ const Estimate = () => {
                       extendedPrice: ext,
                     }));
                   }}
+                  placeholder="List Price"
                   required
                 />
               </InputGroup>
@@ -1205,8 +1109,11 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={newPart.extendedPrice}
+                  value={
+                    newPart.extendedPrice === 0 ? "" : newPart.extendedPrice
+                  }
                   readOnly
+                  placeholder="0" // Read-only field
                 />
               </InputGroup>
             </Form.Group>
@@ -1267,7 +1174,7 @@ const Estimate = () => {
               <Form.Control
                 type="number"
                 min="0"
-                value={newLabor.duration}
+                value={newLabor.duration === 0 ? "" : newLabor.duration}
                 onChange={(e) => {
                   const dur = parseFloat(e.target.value) || 0;
                   setNewLabor((prev) => ({
@@ -1276,6 +1183,7 @@ const Estimate = () => {
                     extendedPrice: dur * prev.laborRate,
                   }));
                 }}
+                placeholder="Hours"
               />
             </Form.Group>
             {/* Labor Rate Field */}
@@ -1320,8 +1228,11 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={newLabor.extendedPrice}
+                  value={
+                    newLabor.extendedPrice === 0 ? "" : newLabor.extendedPrice
+                  }
                   readOnly
+                  placeholder="0" // Read-only field
                 />
               </InputGroup>
             </Form.Group>
@@ -1385,7 +1296,9 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={newFlatFee.flatFeePrice}
+                  value={
+                    newFlatFee.flatFeePrice === 0 ? "" : newFlatFee.flatFeePrice
+                  }
                   onChange={(e) => {
                     const val = parseFloat(e.target.value) || 0;
                     setNewFlatFee((prev) => ({
@@ -1394,6 +1307,7 @@ const Estimate = () => {
                       extendedPrice: val,
                     }));
                   }}
+                  placeholder="Flat Fee Price"
                   required
                 />
               </InputGroup>
@@ -1406,8 +1320,13 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={newFlatFee.extendedPrice}
+                  value={
+                    newFlatFee.extendedPrice === 0
+                      ? ""
+                      : newFlatFee.extendedPrice
+                  }
                   readOnly
+                  placeholder="0" // Read-only field
                 />
               </InputGroup>
             </Form.Group>

@@ -36,6 +36,8 @@ namespace Mechanical_workshop.Models
         [StringLength(20)]
         public string AuthorizationStatus { get; set; } = "InReview";
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         // Clave foránea para TechnicianDiagnostic
         public int? TechnicianDiagnosticID { get; set; }
 

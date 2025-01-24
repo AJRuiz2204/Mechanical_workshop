@@ -88,7 +88,7 @@ const EstimateList = () => {
             <th>Subtotal</th>
             <th>Tax</th>
             <th>Total</th>
-            <th>Authorization</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
