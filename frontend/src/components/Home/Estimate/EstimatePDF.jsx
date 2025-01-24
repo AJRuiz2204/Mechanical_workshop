@@ -131,12 +131,6 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
   },
-  colNetRate: {
-    width: "10%",
-    textAlign: "right",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
-  },
   colQuantity: {
     // New column for Quantity
     width: "10%",
@@ -355,15 +349,6 @@ const EstimatePDF = ({ pdfData }) => {
             <Text
               style={[
                 styles.tableCol,
-                styles.colNetRate,
-                styles.tableHeaderText,
-              ]}
-            >
-              Net / Rate
-            </Text>
-            <Text
-              style={[
-                styles.tableCol,
                 styles.colQuantity,
                 styles.tableHeaderText,
               ]}
@@ -412,11 +397,6 @@ const EstimatePDF = ({ pdfData }) => {
                   : item.type === "Labor"
                   ? `${item.quantity} hrs`
                   : "-"}
-              </Text>
-              <Text
-                style={[styles.tableCol, styles.colNetRate, styles.tableText]}
-              >
-                ${parseFloat(item.price || 0).toFixed(2)}
               </Text>
               <Text
                 style={[styles.tableCol, styles.colQuantity, styles.tableText]}
