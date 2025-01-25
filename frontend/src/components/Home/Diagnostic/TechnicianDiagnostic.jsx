@@ -1,9 +1,14 @@
 /* eslint-disable no-unused-vars */
 // Frontend: src/components/Diagnostic/TechnicianDiagnostic.jsx
 import React, { useEffect, useState } from "react";
-import { Form, Button, Container, Row, Col, Alert, Spinner } from "react-bootstrap";
+import { Form, Button, Container, Row, Col, Alert, Spinner, Modal } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
-import { createTechnicianDiagnostic, getTechnicianDiagnostic, updateTechnicianDiagnostic, deleteTechnicianDiagnostic } from "../../../services/TechnicianDiagnosticService";
+import {
+  createTechnicianDiagnostic,
+  getTechnicianDiagnostic,
+  updateTechnicianDiagnostic,
+  deleteTechnicianDiagnostic,
+} from "../../../services/TechnicianDiagnosticService";
 import { getDiagnosticById } from "../../../services/DiagnosticService";
 import "./Diagnostic.css";
 
@@ -19,7 +24,7 @@ const TechnicianDiagnostic = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    mileage: "",
+    mileage: "", // Initialize as empty string
     extendedDiagnostic: "",
   });
 
@@ -29,6 +34,9 @@ const TechnicianDiagnostic = () => {
 
   // Loading state
   const [loading, setLoading] = useState(true);
+
+  // State for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Fetch diagnostic information when the component mounts
   useEffect(() => {
@@ -41,13 +49,14 @@ const TechnicianDiagnostic = () => {
         const diag = await getDiagnosticById(diagnosticId);
         setDiagnostic(diag);
 
-        // Si ya existe al menos un TechnicianDiagnostic
+        // If there's at least one TechnicianDiagnostic
         if (diag.technicianDiagnostics?.length) {
           setIsEditMode(true);
-          // Llenar formData con el primer TechnicianDiagnostic
+          // Populate formData with the first TechnicianDiagnostic
           const existingTechDiag = diag.technicianDiagnostics[0];
+          const formattedMileage = formatMileage(existingTechDiag.mileage);
           setFormData({
-            mileage: existingTechDiag.mileage,
+            mileage: formattedMileage,
             extendedDiagnostic: existingTechDiag.extendedDiagnostic,
           });
         }
@@ -61,10 +70,52 @@ const TechnicianDiagnostic = () => {
     fetchData();
   }, [diagnosticId]);
 
+  /**
+   * Formats a number into "xxx,xxx" format.
+   *
+   * @param {number} num - The number to format.
+   * @returns {string} - The formatted mileage string.
+   */
+  const formatMileage = (num) => {
+    if (isNaN(num)) return "";
+    return num.toLocaleString("en-US", { minimumIntegerDigits: 1, useGrouping: true });
+  };
+
+  /**
+   * Parses a formatted mileage string "xxx,xxx" back to a number.
+   *
+   * @param {string} str - The formatted mileage string.
+   * @returns {number} - The numeric mileage.
+   */
+  const parseMileage = (str) => {
+    const num = parseInt(str.replace(/,/g, ""), 10);
+    return isNaN(num) ? 0 : num;
+  };
+
   // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  // Handle mileage input changes with formatting
+  const handleMileageChange = (e) => {
+    let val = e.target.value.replace(/\D/g, ""); // Remove non-digits
+
+    if (val.length > 6) val = val.slice(0, 6); // Limit to 6 digits
+
+    if (val.length === 0) {
+      setFormData({ ...formData, mileage: "" });
+      return;
+    }
+
+    let numericVal = parseInt(val, 10);
+    if (isNaN(numericVal)) numericVal = 0;
+    if (numericVal > 999999) numericVal = 999999; // Cap at 999,999
+
+    // Format as "xxx,xxx"
+    val = numericVal.toLocaleString("en-US", { minimumIntegerDigits: 1, useGrouping: true });
+    setFormData({ ...formData, mileage: val });
   };
 
   // Handle form submission
@@ -73,9 +124,12 @@ const TechnicianDiagnostic = () => {
     setErrorMessage("");
     setSuccessMessage("");
 
+    // Parse mileage
+    const mileageNumber = parseMileage(formData.mileage);
+
     // Basic validations
-    if (!formData.mileage) {
-      setErrorMessage("Mileage is required.");
+    if (!formData.mileage || mileageNumber === 0) {
+      setErrorMessage("Mileage is required and cannot be zero.");
       return;
     }
 
@@ -84,10 +138,8 @@ const TechnicianDiagnostic = () => {
       return;
     }
 
-    // Convert mileage to number
-    const mileageNumber = parseInt(formData.mileage, 10);
-    if (isNaN(mileageNumber)) {
-      setErrorMessage("Mileage must be a valid number.");
+    if (mileageNumber < 1 || mileageNumber > 999999) {
+      setErrorMessage("Mileage must be between 1 and 999,999.");
       return;
     }
 
@@ -112,22 +164,24 @@ const TechnicianDiagnostic = () => {
         setSuccessMessage("Technician Diagnostic created successfully.");
       }
       // Redirect to the diagnostics list after saving
-      navigate("/diagnostic-list");
+      navigate("/technicianDiagnosticList");
     } catch (error) {
       setErrorMessage("Error saving the Technician Diagnostic: " + error.message);
     }
   };
 
+  // Handle delete confirmation
   const handleDelete = async () => {
     try {
       await deleteTechnicianDiagnostic(diagnostic.technicianDiagnostics[0]?.id);
       setSuccessMessage("Technician Diagnostic deleted successfully.");
-      navigate("/diagnostic-list");
+      navigate("/technicianDiagnosticList");
     } catch (error) {
       setErrorMessage("Error deleting the Technician Diagnostic: " + error.message);
     }
   };
 
+  // Render loading spinner
   if (loading) {
     return (
       <Container className="p-4 border rounded">
@@ -140,11 +194,12 @@ const TechnicianDiagnostic = () => {
     );
   }
 
+  // Render error if diagnostic not found
   if (!diagnostic) {
     return (
       <Container className="p-4 border rounded">
         <Alert variant="danger">Could not load diagnostic information.</Alert>
-        <Button variant="secondary" onClick={() => navigate("/diagnostic-list")}>
+        <Button variant="secondary" onClick={() => navigate("/technicianDiagnosticList")}>
           Back to Diagnostics List
         </Button>
       </Container>
@@ -221,12 +276,13 @@ const TechnicianDiagnostic = () => {
             <Form.Group controlId="mileage">
               <Form.Label>Vehicle Mileage</Form.Label>
               <Form.Control
-                type="number"
+                type="text"
                 placeholder="Enter mileage"
                 name="mileage"
                 value={formData.mileage}
-                onChange={handleChange}
+                onChange={handleMileageChange}
                 required
+                maxLength={7} // "999,999" has 7 characters
               />
             </Form.Group>
           </Col>
@@ -248,11 +304,19 @@ const TechnicianDiagnostic = () => {
 
         {/* Buttons */}
         <div className="d-flex justify-content-end">
-          <Button variant="secondary" className="me-2" onClick={() => navigate("/diagnostic-list")}>
+          <Button
+            variant="secondary"
+            className="me-2"
+            onClick={() => navigate("/technicianDiagnosticList")}
+          >
             Cancel
           </Button>
           {isEditMode && (
-            <Button variant="danger" className="me-2" onClick={handleDelete}>
+            <Button
+              variant="danger"
+              className="me-2"
+              onClick={() => setShowDeleteModal(true)}
+            >
               Delete
             </Button>
           )}
@@ -261,6 +325,22 @@ const TechnicianDiagnostic = () => {
           </Button>
         </div>
       </Form>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Technician Diagnostic</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this Technician Diagnostic?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };

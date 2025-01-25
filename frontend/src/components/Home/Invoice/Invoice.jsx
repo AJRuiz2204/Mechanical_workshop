@@ -16,7 +16,7 @@ import { getEstimateById } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import EstimatePDF from "../Estimate/EstimatePDF"; // Ensure the path is correct
+import EstimatePDF from "../Estimate/EstimatePDF";
 
 /**
  * Invoice Component
@@ -37,6 +37,7 @@ const Invoice = () => {
   const [estimate, setEstimate] = useState(null);
   const [settings, setSettings] = useState(null);
   const [workshopSettings, setWorkshopSettings] = useState(null);
+  const [techDiagnostic, setTechDiagnostic] = useState(null);
 
   // States for totals
   const [subtotal, setSubtotal] = useState(0);
@@ -70,6 +71,14 @@ const Invoice = () => {
         setEstimate(estimateData);
         setSettings(cfg);
         setWorkshopSettings(shopData);
+        console.log("Received estimate from backend:", estimateData);
+        console.log("Owner Info:", estimateData.owner);
+        console.log("Vehicle Info:", estimateData.vehicle);
+        
+        // Asignar techDiagnostic directamente desde estimateData
+        if (estimateData.technicianDiagnostic) {
+          setTechDiagnostic(estimateData.technicianDiagnostic);
+        }
       } catch (err) {
         setError(`Error fetching data: ${err.message}`);
       } finally {
@@ -181,6 +190,7 @@ const Invoice = () => {
       items: itemsForPDF,
       totals: pdfTotals,
       customerNote: estimate.customerNote || "",
+      mileage: techDiagnostic?.mileage || 0, // Agregar mileage al payload
     };
     setGeneratedPdfData(payload);
   };
@@ -242,8 +252,13 @@ const Invoice = () => {
         <Col md={8}>
           <strong>Customer:</strong>
           <p>
-            {owner.name} {owner.lastName} <br />
+            {owner.name} {owner.lastName}
+            <br />
             {owner.email || ""}
+            <br />
+            {owner.primaryNumber || ""}
+            <br />
+            {owner.secondaryNumber || ""}
           </p>
           <strong>Vehicle:</strong>
           <p>
@@ -251,6 +266,8 @@ const Invoice = () => {
             <br />
             VIN: {vehicle.vin}
           </p>
+          <strong>Mileage:</strong>
+          <p>{techDiagnostic?.mileage || ""}</p>
         </Col>
       </Row>
 
