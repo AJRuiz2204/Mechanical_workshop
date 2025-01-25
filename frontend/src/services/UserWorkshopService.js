@@ -1,6 +1,6 @@
 // src/services/UserWorkshopService.js
 
-// FUNCTIONS FOR USERWORKSHOPS (MECHANICAL WORKSHOPS)
+// FUNCTIONS FOR USER WORKSHOPS (MECHANICAL WORKSHOPS)
 
 const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Ensure this is the correct URL
 
@@ -120,9 +120,9 @@ export const updateUserWorkshop = async (id, userWorkshopData, token) => {
         message: "Error updating the mechanical workshop.",
       }));
       console.error("Error details:", errorData.errors || errorData.message); // Detailed error log
-      // Manejar errores de validación
+      // Handle validation errors
       if (errorData.errors) {
-        // Extraer mensajes de error
+        // Extract error messages
         const messages = Object.values(errorData.errors)
           .flat()
           .join(" ");
@@ -168,15 +168,16 @@ export const deleteUserWorkshop = async (id) => {
 // FUNCTIONS FOR MANAGING VEHICLES WITHIN THE WORKSHOP
 
 /**
- * Searches for vehicles based on a search term (VIN, client name, etc.).
+ * Searches for vehicles based on a search term (VIN, Make, Model, Owner Name).
  * @param {string} searchTerm - Search term
  */
 export const searchVehicles = async (searchTerm) => {
   try {
     const encodedTerm = encodeURIComponent(searchTerm);
+    const searchByFields = ['vin', 'make', 'model', 'ownerName'].join(',');
     const response = await fetch(
-      `${API_BASE_URL}/searchVehicles?searchTerm=${encodedTerm}`
-    );
+      `${API_BASE_URL}/searchVehicles?searchTerm=${encodedTerm}&searchBy=${searchByFields}`
+    ); // Updated to include multiple fields in searchBy
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);

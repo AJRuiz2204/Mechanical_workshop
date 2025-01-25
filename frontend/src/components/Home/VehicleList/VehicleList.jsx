@@ -8,6 +8,7 @@ import {
   Spinner,
   Alert,
   Modal,
+  Pagination,
 } from "react-bootstrap";
 import {
   getAllVehicles,
@@ -31,6 +32,9 @@ const VehicleList = () => {
   const [showReceptionModal, setShowReceptionModal] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1); // New state for the current page
+  const itemsPerPage = 10; // Number of items per page
 
   // 1. Load all vehicles at the beginning
   const fetchAllVehicles = async () => {
@@ -65,15 +69,22 @@ const VehicleList = () => {
       const performSearch = async () => {
         setLoadingSearch(true);
         try {
-          const results = await searchVehicles(searchTerm);
-          if (results.message) {
-            // If the backend returns { message: "..." }
-            setVehicles([]);
-            setSearchMessage(results.message);
+          const allVehicles = await getAllVehicles(); // Get all vehicles
+          // Filter locally
+          const filteredVehicles = allVehicles.filter((vehicle) =>
+            Object.values(vehicle).some((value) =>
+              value
+                .toString()
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+            )
+          );
+          if (filteredVehicles.length === 0) {
+            setSearchMessage("No vehicles found with that term.");
           } else {
-            setVehicles(results);
             setSearchMessage("");
           }
+          setVehicles(filteredVehicles);
         } catch (error) {
           setVehicles([]);
           setSearchMessage("Error performing the search.");
@@ -103,7 +114,7 @@ const VehicleList = () => {
   // (C) After saving or closing in the modal, refresh the list if necessary
   const closeReceptionModal = (shouldRefresh = false) => {
     setShowReceptionModal(false);
-    setEditingId(null); // clear the edit ID
+    setEditingId(null); // Clear the edit ID
     if (shouldRefresh) {
       fetchAllVehicles();
     }
@@ -132,6 +143,17 @@ const VehicleList = () => {
     }
   };
 
+  // Calculate the vehicles to display on the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentVehicles = vehicles.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   return (
     <Container className="p-4 border rounded mt-4 bg-light">
       <h3>VEHICLE LIST</h3>
@@ -140,7 +162,7 @@ const VehicleList = () => {
         {/* Search Field */}
         <Form.Control
           type="text"
-          placeholder="Search by VIN or Customer Name"
+          placeholder="Search by VIN, Make, Model or Owner Name"
           value={searchTerm}
           onChange={handleSearchChange}
           className="me-3"
@@ -171,52 +193,65 @@ const VehicleList = () => {
         </div>
       ) : (
         <>
-          {vehicles.length > 0 ? (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>VIN</th>
-                  <th>Make</th>
-                  <th>Model</th>
-                  <th>Owner</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vehicles.map((vehicle) => (
-                  <tr key={vehicle.id}>
-                    <td>{vehicle.vin}</td>
-                    <td>{vehicle.make}</td>
-                    <td>{vehicle.model}</td>
-                    <td>{vehicle.ownerName || "Unknown"}</td>
-                    <td>
-                      <Button
-                        variant="warning"
-                        className="me-2"
-                        onClick={() => handleEdit(vehicle.id)}
-                      >
-                        Edit
-                      </Button>
-
-                      <Button
-                        variant="info"
-                        className="me-2"
-                        onClick={() => handleReception(vehicle.id)}
-                      >
-                        Receive Diagnostic
-                      </Button>
-
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDelete(vehicle.vin)}
-                      >
-                        Delete
-                      </Button>
-                    </td>
+          {currentVehicles.length > 0 ? (
+            <>
+              <Table striped bordered hover responsive>
+                <thead>
+                  <tr>
+                    <th>VIN</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Owner</th>
+                    <th>Actions</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {currentVehicles.map((vehicle) => (
+                    <tr key={vehicle.id}> {/* Use vehicle.id if unique */}
+                      <td>{vehicle.vin}</td>
+                      <td>{vehicle.make}</td>
+                      <td>{vehicle.model}</td>
+                      <td>{vehicle.ownerName || "Unknown"}</td>
+                      <td>
+                        <Button
+                          variant="warning"
+                          className="me-2"
+                          onClick={() => handleEdit(vehicle.id)}
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="info"
+                          className="me-2"
+                          onClick={() => handleReception(vehicle.id)}
+                        >
+                          Receive Diagnostic
+                        </Button>
+
+                        <Button
+                          variant="danger"
+                          onClick={() => handleDelete(vehicle.vin)}
+                        >
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <Pagination>
+                {[...Array(totalPages)].map((_, index) => (
+                  <Pagination.Item
+                    key={index + 1}
+                    active={index + 1 === currentPage}
+                    onClick={() => handlePageChange(index + 1)}
+                  >
+                    {index + 1}
+                  </Pagination.Item>
                 ))}
-              </tbody>
-            </Table>
+              </Pagination>
+            </>
           ) : (
             <p>No vehicles found. Try another search term.</p>
           )}
