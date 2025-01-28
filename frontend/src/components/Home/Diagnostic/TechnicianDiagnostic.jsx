@@ -20,6 +20,7 @@ import {
 } from "../../../services/TechnicianDiagnosticService";
 import { getDiagnosticById } from "../../../services/DiagnosticService";
 import "./Diagnostic.css";
+import NotesSection from "../../NotesSection/NotesSection";
 
 const TechnicianDiagnostic = () => {
   const navigate = useNavigate();
@@ -387,6 +388,8 @@ const TechnicianDiagnostic = () => {
           </Button>
         </div>
       </Form>
+
+      <NotesSection diagId={diagnostic.id} techDiagId={techDiagId} />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>

@@ -15,6 +15,21 @@ export const getNotesByTechDiag = async (techDiagId) => {
     }
   };
   
+  // Get notes by Diagnostic ID
+  export const getNotesByDiagnostic = async (diagId) => {
+    try {
+      const response = await fetch(`/api/notes/diagnostic/${diagId}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Error fetching notes.");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error in getNotesByDiagnostic:", error);
+      throw error;
+    }
+  };
+
   // Create a new note
   export const createNote = async (noteData) => {
     try {
@@ -50,4 +65,3 @@ export const getNotesByTechDiag = async (techDiagId) => {
       throw error;
     }
   };
-  

@@ -48,10 +48,10 @@ namespace Mechanical_workshop.Data
                 .HasForeignKey(td => td.DiagnosticId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<TechnicianDiagnostic>()
-                .HasMany(td => td.Notes)
-                .WithOne(n => n.TechnicianDiagnostic)
-                .HasForeignKey(n => n.TechnicianDiagnosticId)
+            modelBuilder.Entity<Diagnostic>()
+                .HasMany(d => d.Notes)
+                .WithOne(n => n.Diagnostic)
+                .HasForeignKey(n => n.DiagnosticId)
                 .OnDelete(DeleteBehavior.Cascade);
 
         }

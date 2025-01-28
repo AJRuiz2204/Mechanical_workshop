@@ -5,12 +5,13 @@
 import React, { useEffect, useState } from "react";
 import { Form, Button, Alert, Spinner, ListGroup, Modal } from "react-bootstrap";
 import {
-  getNotesByTechDiag,
+  getNotesByDiagnostic,
   createNote,
   deleteNote,
+  getNotesByTechDiag,
 } from "../../services/NotesService";
 
-const NotesSection = ({ techDiagId }) => {
+const NotesSection = ({ diagId, techDiagId }) => {
   const [notes, setNotes] = useState([]);
   const [noteText, setNoteText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,12 @@ const NotesSection = ({ techDiagId }) => {
     const fetchNotes = async () => {
       try {
         setLoading(true);
-        const fetchedNotes = await getNotesByTechDiag(techDiagId);
+        let fetchedNotes = [];
+        if (techDiagId) {
+          fetchedNotes = await getNotesByTechDiag(techDiagId);
+        } else if (diagId) {
+          fetchedNotes = await getNotesByDiagnostic(diagId);
+        }
         setNotes(fetchedNotes);
       } catch (error) {
         setErrorMessage(error.message || "Error fetching notes.");
@@ -33,7 +39,7 @@ const NotesSection = ({ techDiagId }) => {
     };
 
     fetchNotes();
-  }, [techDiagId]);
+  }, [diagId, techDiagId]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -47,7 +53,9 @@ const NotesSection = ({ techDiagId }) => {
 
     try {
       const newNote = await createNote({
-        TechnicianDiagnosticId: techDiagId,
+        ...(techDiagId
+          ? { TechnicianDiagnosticId: techDiagId }
+          : { DiagnosticId: diagId }),
         Content: noteText.trim(),
       });
       setNotes((prev) => [...prev, newNote]);

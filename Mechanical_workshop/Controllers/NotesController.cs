@@ -21,12 +21,12 @@ namespace Mechanical_workshop.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/notes/techniciandiagnostic/5
-        [HttpGet("techniciandiagnostic/{techDiagId}")]
-        public async Task<ActionResult<IEnumerable<NoteReadDto>>> GetNotesByTechDiag(int techDiagId)
+        // GET: api/notes/diagnostic/5
+        [HttpGet("diagnostic/{diagId}")]
+        public async Task<ActionResult<IEnumerable<NoteReadDto>>> GetNotesByDiagnostic(int diagId)
         {
             var notes = await _context.Notes
-                .Where(n => n.TechnicianDiagnosticId == techDiagId)
+                .Where(n => n.DiagnosticId == diagId)
                 .ToListAsync();
 
             return Ok(_mapper.Map<IEnumerable<NoteReadDto>>(notes));
@@ -46,9 +46,9 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<NoteReadDto>> CreateNote(NoteCreateDto dto)
         {
-            // Validate TechnicianDiagnostic exists
-            var techDiag = await _context.TechnicianDiagnostics.FindAsync(dto.TechnicianDiagnosticId);
-            if (techDiag == null) return BadRequest("Invalid Technician Diagnostic ID");
+            // Validate Diagnostic exists
+            var diagnostic = await _context.Diagnostics.FindAsync(dto.DiagnosticId);
+            if (diagnostic == null) return BadRequest("Invalid Diagnostic ID");
 
             var note = _mapper.Map<Note>(dto);
             _context.Notes.Add(note);

@@ -1,4 +1,3 @@
-
 using System.ComponentModel.DataAnnotations;
 
 namespace Mechanical_workshop.Dtos
@@ -12,7 +11,7 @@ namespace Mechanical_workshop.Dtos
             public string Content { get; set; } = string.Empty;
 
             [Required]
-            public int TechnicianDiagnosticId { get; set; }
+            public int DiagnosticId { get; set; }
         }
 
         public class NoteReadDto
@@ -21,7 +20,7 @@ namespace Mechanical_workshop.Dtos
             public string Content { get; set; } = string.Empty;
             public DateTime CreatedAt { get; set; }
             public DateTime? UpdatedAt { get; set; }
-            public int TechnicianDiagnosticId { get; set; }
+            public int DiagnosticId { get; set; }
         }
 
         public class NoteUpdateDto

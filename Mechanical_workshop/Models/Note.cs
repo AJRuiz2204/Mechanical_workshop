@@ -19,8 +19,8 @@ namespace Mechanical_workshop.Models
         public DateTime? UpdatedAt { get; set; }
 
         [Required]
-        [ForeignKey("TechnicianDiagnostic")]
-        public int TechnicianDiagnosticId { get; set; }
-        public TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
+        [ForeignKey("Diagnostic")]
+        public int DiagnosticId { get; set; }
+        public Diagnostic? Diagnostic { get; set; }
     }
 }
