@@ -10,7 +10,7 @@ import VehicleList from "./components/Home/VehicleList/VehicleList";
 import Diagnostic from "./components/Home/Diagnostic/Diagnostic";
 import TechnicianDiagnostic from "./components/Home/Diagnostic/TechnicianDiagnostic";
 import DiagnosticList from "./components/Home/Diagnostic/DiagnosticList";
-import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDiagnosticEdit";
+// import TechnicianDiagnosticEdit from "./components/Home/Diagnostic/TechnicianDiagnosticEdit";
 import EstimateList from "./components/Home/Estimate/EstimateList";
 import Estimate from "./components/Home/Estimate/Estimate";
 import MainLayout from "./components/Layout/MainLayout";
@@ -90,7 +90,7 @@ const App = () => {
             path="/technicianDiagnostic/edit/:techDiagId"
             element={
               <ProtectedRoute requiredRole="Technician">
-                <TechnicianDiagnosticEdit />
+                <TechnicianDiagnostic />
               </ProtectedRoute>
             }
           />

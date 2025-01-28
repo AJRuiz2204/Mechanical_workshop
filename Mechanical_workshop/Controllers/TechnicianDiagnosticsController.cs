@@ -112,15 +112,14 @@ namespace Mechanical_workshop.Controllers
             return Ok(readDto);
         }
 
-        // DELETE: api/TechnicianDiagnostics/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTechnicianDiagnostic(int id)
         {
-            var td = await _context.TechnicianDiagnostics.FindAsync(id);
-            if (td == null)
-            {
-                return NotFound(new { message = "Technician Diagnostic to delete was not found." });
-            }
+            var td = await _context.TechnicianDiagnostics
+                .Include(td => td.Notes) // Include notes for cascade delete
+                .FirstOrDefaultAsync(td => td.Id == id);
+
+            if (td == null) return NotFound();
 
             _context.TechnicianDiagnostics.Remove(td);
             await _context.SaveChangesAsync();
@@ -142,6 +141,21 @@ namespace Mechanical_workshop.Controllers
             var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(techDiag);
             return Ok(readDto);
         }
+
+        // Añadir este endpoint para búsqueda eficiente
+        [HttpGet("byDiagnostics")]
+        public async Task<ActionResult<IEnumerable<TechnicianDiagnosticReadDto>>> GetByDiagnosticIds(
+            [FromQuery] List<int> diagnosticIds)
+        {
+            var techDiags = await _context.TechnicianDiagnostics
+                .Include(td => td.Diagnostic)
+                .Where(td => diagnosticIds.Contains(td.DiagnosticId))
+                .ToListAsync();
+
+            return Ok(_mapper.Map<IEnumerable<TechnicianDiagnosticReadDto>>(techDiags));
+        }
+
+        
 
     }
 }

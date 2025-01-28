@@ -20,5 +20,6 @@ namespace Mechanical_workshop.Models
         [Required]
         [StringLength(1000)]
         public string ExtendedDiagnostic { get; set; } = string.Empty;
+        public List<Note> Notes { get; set; } = new List<Note>();
     }
 }

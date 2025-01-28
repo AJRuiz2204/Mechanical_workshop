@@ -1,4 +1,4 @@
-// src/services/TechnicianDiagnosticService.js
+// Frontend: src/services/TechnicianDiagnosticService.js
 
 // Create TechnicianDiagnostic
 export const createTechnicianDiagnostic = async (techDiagData) => {
@@ -82,6 +82,53 @@ export const deleteTechnicianDiagnostic = async (id) => {
     return;
   } catch (error) {
     console.error("Error in deleteTechnicianDiagnostic:", error);
+    throw error;
+  }
+};
+
+// Get TechnicianDiagnostic by Diagnostic ID
+export const getTechnicianDiagnosticByDiagId = async (diagnosticId) => {
+  try {
+    const response = await fetch(
+      `/api/TechnicianDiagnostics/byDiagnostic/${diagnosticId}`
+    );
+
+    if (response.status === 404) {
+      throw new Error("Not found");
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || "Error fetching technician diagnostic"
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.message !== "Not found") {
+      console.error("Error in getTechnicianDiagnosticByDiagId:", error);
+    }
+    throw error;
+  }
+};
+
+// Get TechnicianDiagnostics Batch
+export const getTechnicianDiagnosticsBatch = async (diagnosticIds) => {
+  try {
+    const idsParam = diagnosticIds.join("&diagnosticIds=");
+    const response = await fetch(
+      `/api/TechnicianDiagnostics/byDiagnostics?diagnosticIds=${idsParam}`
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error fetching batch diagnostics");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in getTechnicianDiagnosticsBatch:", error);
     throw error;
   }
 };

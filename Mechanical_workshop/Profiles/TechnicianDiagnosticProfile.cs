@@ -10,8 +10,11 @@ namespace Mechanical_workshop.Profiles
     {
         public TechnicianDiagnosticProfile()
         {
-            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>();
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>()
+                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes));
             CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();
+
+
         }
     }
 }

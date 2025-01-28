@@ -24,7 +24,7 @@ namespace Mechanical_workshop.Data
         public DbSet<EstimateFlatFee> EstimateFlatFees { get; set; }
         public DbSet<WorkshopSettings> WorkshopSettings { get; set; }
         public DbSet<LaborTaxMarkupSettings> LaborTaxMarkupSettings { get; set; }
-
+        public DbSet<Note> Notes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -46,6 +46,12 @@ namespace Mechanical_workshop.Data
                 .HasMany(d => d.TechnicianDiagnostics)
                 .WithOne(td => td.Diagnostic)
                 .HasForeignKey(td => td.DiagnosticId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TechnicianDiagnostic>()
+                .HasMany(td => td.Notes)
+                .WithOne(n => n.TechnicianDiagnostic)
+                .HasForeignKey(n => n.TechnicianDiagnosticId)
                 .OnDelete(DeleteBehavior.Cascade);
 
         }

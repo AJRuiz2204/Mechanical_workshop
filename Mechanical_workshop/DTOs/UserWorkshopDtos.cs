@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Mechanical_workshop.Models;
+using static Mechanical_workshop.Dtos.NoteDto;
 
 namespace Mechanical_workshop.Dtos
 {
@@ -98,5 +99,6 @@ namespace Mechanical_workshop.Dtos
         public int Mileage { get; set; }
         public string ExtendedDiagnostic { get; set; } = string.Empty;
         public int VehicleId { get; set; }
+        public List<NoteReadDto> Notes { get; set; } = new List<NoteReadDto>();
     }
 }

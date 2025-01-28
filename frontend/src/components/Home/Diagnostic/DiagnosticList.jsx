@@ -1,137 +1,159 @@
 /* eslint-disable no-unused-vars */
-// Frontend: src/components/Diagnostic/DiagnosticList.jsx
-
 import React, { useEffect, useState } from "react";
-import { Table, Button, Container, Alert, Spinner } from "react-bootstrap";
+import {
+  Table,
+  Button,
+  Container,
+  Alert,
+  Spinner,
+  Badge,
+} from "react-bootstrap";
 import { getDiagnostics } from "../../../services/DiagnosticService";
 import { useNavigate } from "react-router-dom";
-import { deleteTechnicianDiagnostic } from "../../../services/TechnicianDiagnosticService";
+import {
+  deleteTechnicianDiagnostic,
+  getTechnicianDiagnosticByDiagId,
+} from "../../../services/TechnicianDiagnosticService";
 
 const DiagnosticList = () => {
   const navigate = useNavigate();
   const [diagnostics, setDiagnostics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [techDiagMap, setTechDiagMap] = useState({});
 
-  const fetchDiagnostics = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError("");
-      const data = await getDiagnostics();
-      setDiagnostics(data);
+
+      // Obtener diagnósticos
+      const diagData = await getDiagnostics();
+      setDiagnostics(diagData);
+
+      // Obtener TechnicianDiagnostics
+      const newTechDiagMap = {};
+      await Promise.all(
+        diagData.map(async (diag) => {
+          try {
+            const techDiag = await getTechnicianDiagnosticByDiagId(diag.id);
+            newTechDiagMap[diag.id] = techDiag.id;
+          } catch (error) {
+            if (error.message !== "Not found") console.error(error);
+            newTechDiagMap[diag.id] = null;
+          }
+        })
+      );
+
+      setTechDiagMap(newTechDiagMap);
     } catch (error) {
-      setError(error.message || "Error fetching the diagnostics list.");
+      setError(error.message || "Error loading data");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDiagnostics();
+    fetchData();
   }, []);
 
-  const handleDeleteTechDiag = async (techDiagId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this Technician Diagnostic?"
-    );
+  const handleDelete = async (diagnosticId) => {
+    const techDiagId = techDiagMap[diagnosticId];
+    if (!techDiagId) return;
+
+    const confirmDelete = window.confirm("Delete this Technician Diagnostic?");
     if (!confirmDelete) return;
 
     try {
       await deleteTechnicianDiagnostic(techDiagId);
-      alert("Technician Diagnostic successfully deleted.");
-      setDiagnostics((prevDiagnostics) =>
-        prevDiagnostics.map((diag) =>
-          diag.techDiagnosticId === techDiagId
-            ? { ...diag, techDiagnosticId: null }
-            : diag
-        )
-      );
+      setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
+      alert("Successfully deleted!");
     } catch (error) {
-      alert(
-        "Error deleting the Technician Diagnostic: " + (error.message || error)
-      );
+      alert(`Delete failed: ${error.message}`);
     }
   };
 
   return (
     <Container className="p-4 border rounded">
       <h3>Diagnostic List</h3>
-
       {error && <Alert variant="danger">{error}</Alert>}
 
       {loading ? (
-        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
+        <div className="text-center py-5">
+          <Spinner animation="border" />
         </div>
+      ) : diagnostics.length === 0 ? (
+        <Alert variant="info">No diagnostics found</Alert>
       ) : (
-        <>
-          {diagnostics.length === 0 ? (
-            <Alert variant="info">There are no registered diagnostics.</Alert>
-          ) : (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>VIN</th>
-                  <th>Make</th>
-                  <th>Model</th>
-                  <th>Reason for Visit</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {diagnostics.map((diag) => (
-                  <tr key={diag.id}>
-                    <td>{diag.id}</td>
-                    <td>{diag.vehicle?.vin || "N/A"}</td>
-                    <td>{diag.vehicle?.make || "N/A"}</td>
-                    <td>{diag.vehicle?.model || "N/A"}</td>
-                    <td>{diag.reasonForVisit}</td>
-                    <td>
-                      {diag.techDiagnosticId ? (
-                        <>
-                          <Button
-                            variant="warning"
-                            size="sm"
-                            className="me-2"
-                            onClick={() =>
-                              navigate(
-                                `/technicianDiagnostic/edit/${diag.techDiagnosticId}`
-                              )
-                            }
-                          >
-                            Edit Technician Diagnostic
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() =>
-                              handleDeleteTechDiag(diag.techDiagnosticId)
-                            }
-                          >
-                            Delete Technician Diagnostic
-                          </Button>
-                        </>
-                      ) : (
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>VIN</th>
+              <th>Make</th>
+              <th>Model</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {diagnostics.map((diag) => {
+              const hasTechDiag = !!techDiagMap[diag.id];
+              return (
+                <tr key={diag.id}>
+                  <td>{diag.id}</td>
+                  <td>{diag.vehicle?.vin || "N/A"}</td>
+                  <td>{diag.vehicle?.make || "N/A"}</td>
+                  <td>{diag.vehicle?.model || "N/A"}</td>
+                  <td>{diag.reasonForVisit}</td>
+                  <td>
+                    <Badge bg={hasTechDiag ? "success" : "danger"}>
+                      {hasTechDiag ? "With Diagnostic" : "Without Diagnostic"}
+                    </Badge>
+                  </td>
+                  <td>
+                    {hasTechDiag ? (
+                      <>
                         <Button
-                          variant="primary"
+                          variant="warning"
                           size="sm"
+                          className="me-2"
                           onClick={() =>
-                            navigate(`/technicianDiagnostic/create/${diag.id}`)
+                            navigate(
+                              `/technicianDiagnostic/edit/${
+                                techDiagMap[diag.id]
+                              }`
+                            )
                           }
                         >
-                          Create Technician Diagnostic
+                          Edit
                         </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(diag.id)}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() =>
+                          navigate(`/technicianDiagnostic/create/${diag.id}`)
+                        }
+                      >
+                        Create
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
       )}
     </Container>
   );

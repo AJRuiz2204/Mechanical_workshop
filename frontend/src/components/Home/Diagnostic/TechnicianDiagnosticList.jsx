@@ -1,9 +1,20 @@
 /* eslint-disable no-unused-vars */
 // src/components/Diagnostic/TechnicianDiagnosticList.jsx
 import React, { useEffect, useState } from "react";
-import { Table, Button, Container, Alert, Spinner } from "react-bootstrap";
+import {
+  Table,
+  Button,
+  Container,
+  Alert,
+  Spinner,
+  Badge,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getDiagnosticsByTechnician } from "../../../services/DiagnosticService";
+import {
+  deleteTechnicianDiagnostic,
+  getTechnicianDiagnosticByDiagId,
+} from "../../../services/TechnicianDiagnosticService";
 
 /**
  * Component that displays the list of diagnostics assigned to a technician.
@@ -14,6 +25,7 @@ const TechnicianDiagnosticList = () => {
   const [diagnostics, setDiagnostics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [techDiagMap, setTechDiagMap] = useState({});
 
   useEffect(() => {
     const fetchTechnicianDiagnostics = async () => {
@@ -37,8 +49,24 @@ const TechnicianDiagnosticList = () => {
           return;
         }
 
+        // Obtener diagnósticos asignados al técnico
         const data = await getDiagnosticsByTechnician(name, lastName);
         setDiagnostics(data);
+
+        // Obtener TechnicianDiagnostics para cada diagnóstico
+        const newTechDiagMap = {};
+        await Promise.all(
+          data.map(async (diag) => {
+            try {
+              const techDiag = await getTechnicianDiagnosticByDiagId(diag.id);
+              newTechDiagMap[diag.id] = techDiag.id;
+            } catch (error) {
+              if (error.message !== "Not found") console.error(error);
+              newTechDiagMap[diag.id] = null;
+            }
+          })
+        );
+        setTechDiagMap(newTechDiagMap);
       } catch (error) {
         setError(error.message || "Error fetching diagnostics.");
       } finally {
@@ -49,6 +77,21 @@ const TechnicianDiagnosticList = () => {
     fetchTechnicianDiagnostics();
   }, []);
 
+  const handleDelete = async (diagnosticId) => {
+    const techDiagId = techDiagMap[diagnosticId];
+    if (!techDiagId) return;
+
+    const confirmDelete = window.confirm("Delete this Technician Diagnostic?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteTechnicianDiagnostic(techDiagId);
+      setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
+      alert("Successfully deleted!");
+    } catch (error) {
+      alert(`Delete failed: ${error.message}`);
+    }
+  };
 
   return (
     <Container className="p-4 border rounded bg-light">
@@ -57,53 +100,88 @@ const TechnicianDiagnosticList = () => {
       {error && <Alert variant="danger">{error}</Alert>}
 
       {loading ? (
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{ height: "200px" }}
-        >
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
+        <div className="text-center py-5">
+          <Spinner animation="border" />
         </div>
+      ) : diagnostics.length === 0 ? (
+        <Alert variant="info">You have no assigned diagnostics.</Alert>
       ) : (
-        <>
-          {diagnostics.length === 0 ? (
-            <Alert variant="info">You have no assigned diagnostics.</Alert>
-          ) : (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>VIN</th>
-                  <th>Make</th>
-                  <th>Model</th>
-                  <th>Reason for Visit</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {diagnostics.map((diag) => (
-                  <tr key={diag.id}>
-                    <td>{diag.id}</td>
-                    <td>{diag.vehicle?.vin || "N/A"}</td>
-                    <td>{diag.vehicle?.make || "N/A"}</td>
-                    <td>{diag.vehicle?.model || "N/A"}</td>
-                    <td>{diag.reasonForVisit}</td>
-                    <td>
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>VIN</th>
+              <th>Make</th>
+              <th>Model</th>
+              <th>Reason for Visit</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {diagnostics.map((diag) => {
+              const hasTechDiag = !!techDiagMap[diag.id];
+              return (
+                <tr key={diag.id}>
+                  <td>{diag.id}</td>
+                  <td>{diag.vehicle?.vin || "N/A"}</td>
+                  <td>{diag.vehicle?.make || "N/A"}</td>
+                  <td>{diag.vehicle?.model || "N/A"}</td>
+                  <td>{diag.reasonForVisit}</td>
+                  <td>
+                    <Badge bg={hasTechDiag ? "success" : "danger"}>
+                      {hasTechDiag ? "With Diagnostic" : "Without Diagnostic"}
+                    </Badge>
+                  </td>
+                  <td>
+                    {hasTechDiag ? (
+                      <>
+                        <Button
+                          variant="warning"
+                          size="sm"
+                          className="me-2"
+                          onClick={() =>
+                            navigate(
+                              `/technicianDiagnostic/edit/${
+                                techDiagMap[diag.id]
+                              }`,
+                              {
+                                state: {
+                                  vehicle: diag.vehicle,
+                                  diagnosticId: diag.id,
+                                },
+                              }
+                            )
+                          }
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(diag.id)}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => navigate(`/technicianDiagnostic/create/${diag.id}`)}
+                        onClick={() =>
+                          navigate(`/technicianDiagnostic/create/${diag.id}`)
+                        }
                       >
-                        View Details
+                        Create
                       </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
       )}
     </Container>
   );
