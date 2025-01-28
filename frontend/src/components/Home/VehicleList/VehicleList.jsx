@@ -73,10 +73,7 @@ const VehicleList = () => {
           // Filter locally
           const filteredVehicles = allVehicles.filter((vehicle) =>
             Object.values(vehicle).some((value) =>
-              value
-                .toString()
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
+              value.toString().toLowerCase().includes(searchTerm.toLowerCase())
             )
           );
           if (filteredVehicles.length === 0) {
@@ -98,6 +95,25 @@ const VehicleList = () => {
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
+
+  const performSearch = async () => {
+    setLoadingSearch(true);
+    try {
+      const results = await searchVehicles(searchTerm);
+      if (!results.success || results.data.length === 0) {
+        setVehicles([]);
+        setSearchMessage(results.message || "No vehicles found.");
+      } else {
+        setVehicles(results.data);
+        setSearchMessage("");
+      }
+    } catch (error) {
+      setVehicles([]);
+      setSearchMessage("Error performing the search.");
+    } finally {
+      setLoadingSearch(false);
+    }
+  };
 
   // (A) Show the empty modal (create a new Customer/Workshop/Vehicle)
   const handleAddCustomer = () => {
@@ -162,7 +178,7 @@ const VehicleList = () => {
         {/* Search Field */}
         <Form.Control
           type="text"
-          placeholder="Search by VIN, Make, Model or Owner Name"
+          placeholder="Search by VIN or Customer Name"
           value={searchTerm}
           onChange={handleSearchChange}
           className="me-3"
@@ -207,7 +223,9 @@ const VehicleList = () => {
                 </thead>
                 <tbody>
                   {currentVehicles.map((vehicle) => (
-                    <tr key={vehicle.id}> {/* Use vehicle.id if unique */}
+                    <tr key={vehicle.id}>
+                      {" "}
+                      {/* Use vehicle.id if unique */}
                       <td>{vehicle.vin}</td>
                       <td>{vehicle.make}</td>
                       <td>{vehicle.model}</td>

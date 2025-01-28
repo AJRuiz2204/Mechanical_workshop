@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 import loginImage from "../../images/login-image.jpg";
-import { loginUser } from "../../services/UserLoginServices"; // Ensure correct import
+import { loginUser } from "../../services/UserLoginServices";
 
 /**
  * Login Component

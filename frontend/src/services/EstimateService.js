@@ -169,3 +169,4 @@ export const getDiagnosticByVehicleId = async (vehicleId) => {
     throw error;
   }
 };
+

@@ -64,6 +64,29 @@ namespace Mechanical_workshop.Controllers
             return Ok(estimateDto);
         }
 
+        // GET: api/Estimates/WithUserWorkshop/{id}
+        [HttpGet("WithUserWorkshop/{id}")]
+        public async Task<ActionResult<EstimateFullDto>> GetEstimateWithUserWorkshop(int id)
+        {
+            var estimate = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .FirstOrDefaultAsync(e => e.ID == id);
+
+            if (estimate == null)
+            {
+                return NotFound(new { message = $"Estimate with ID {id} not found." });
+            }
+
+            var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
+            return Ok(estimateDto);
+        }
+
         // POST: api/Estimates
         [HttpPost]
         public async Task<ActionResult<EstimateFullDto>> CreateEstimate(EstimateCreateDto estimateCreateDto)

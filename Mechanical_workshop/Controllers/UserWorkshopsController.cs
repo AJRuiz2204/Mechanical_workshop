@@ -390,47 +390,48 @@ namespace Mechanical_workshop.Controllers
         }
 
         /// <summary>
-        /// Searches for Vehicles based on a search term.
+        /// Searches for vehicles by VIN number or client name in real-time.
         /// </summary>
-        /// <param name="searchTerm">The term to search for.</param>
-        /// <returns>A list of VehicleSearchDto objects.</returns>
+        /// <param name="searchTerm">Search term (VIN or client name)</param>
+        /// <returns>List of VehicleSearchDto that match the search term</returns>
         [HttpGet("searchVehicles")]
-        public async Task<ActionResult<List<VehicleSearchDto>>> SearchVehicles([FromQuery] string searchTerm)
+        public async Task<ActionResult> SearchVehicles([FromQuery] string searchTerm)
         {
-            _logger.LogInformation("GET: searchVehicles endpoint called with searchTerm = {SearchTerm}", searchTerm);
-
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                _logger.LogWarning("GET: searchVehicles called with empty or whitespace searchTerm.");
-                return BadRequest("Search term cannot be empty.");
+                return BadRequest(new { success = false, message = "The search term cannot be empty." });
             }
 
-            var searchTermLower = searchTerm.ToLower();
-
-            var vehicles = await _context.UserWorkshops
-                .Include(uw => uw.Vehicles)
-                .Where(uw => uw.Name.ToLower().Contains(searchTermLower) || uw.LastName.ToLower().Contains(searchTermLower))
-                .SelectMany(uw => uw.Vehicles, (uw, v) => new { Workshop = uw, Vehicle = v })
-                .Where(wv => wv.Vehicle.Vin.ToLower().Contains(searchTermLower) ||
-                             wv.Workshop.Name.ToLower().Contains(searchTermLower) ||
-                             wv.Workshop.LastName.ToLower().Contains(searchTermLower))
-                .Select(wv => new VehicleSearchDto
-                {
-                    Vin = wv.Vehicle.Vin,
-                    Make = wv.Vehicle.Make,
-                    Model = wv.Vehicle.Model,
-                    OwnerName = $"{wv.Workshop.Name} {wv.Workshop.LastName}"
-                })
-                .ToListAsync();
-
-            if (vehicles.Count == 0)
+            try
             {
-                _logger.LogInformation("GET: searchVehicles found 0 matches for {SearchTerm}.", searchTerm);
-                return Ok(new { message = "No vehicles matching the search were found." });
-            }
+                var searchTermLower = searchTerm.ToLower();
 
-            _logger.LogInformation("GET: searchVehicles found {Count} matches for {SearchTerm}.", vehicles.Count, searchTerm);
-            return Ok(vehicles);
+                var vehicles = await _context.UserWorkshops
+                    .Include(uw => uw.Vehicles)
+                    .Where(uw => EF.Functions.Like(uw.Name, $"%{searchTerm}%") ||
+                                 EF.Functions.Like(uw.LastName, $"%{searchTerm}%") ||
+                                 uw.Vehicles.Any(v => EF.Functions.Like(v.Vin, $"%{searchTerm}%")))
+                    .SelectMany(uw => uw.Vehicles, (uw, v) => new { Workshop = uw, Vehicle = v })
+                    .Select(wv => new VehicleSearchDto
+                    {
+                        Vin = wv.Vehicle.Vin,
+                        Make = wv.Vehicle.Make,
+                        Model = wv.Vehicle.Model,
+                        OwnerName = $"{wv.Workshop.Name} {wv.Workshop.LastName}"
+                    })
+                    .ToListAsync();
+
+                if (!vehicles.Any())
+                {
+                    return Ok(new { success = false, message = "No vehicles were found that match your search." });
+                }
+
+                return Ok(new { success = true, data = vehicles });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "An error occurred while processing your request.", error = ex.Message });
+            }
         }
 
         /// <summary>
