@@ -57,8 +57,17 @@ const Home = () => {
       label: "MY DIAGNOSTICS",
       route: "/technicianDiagnosticList",
       roles: ["Technician"],
+    },
+    {
+      label: "ACCOUNTS RECEIVABLE",
+      route: "/accounts-receivable",
+      roles: ["Manager"],
+    },
+    {
+      label: "PAYMENT LIST",
+      route: "/payment-list",
+      roles: ["Manager"],
     }
-
   ];
 
   /**

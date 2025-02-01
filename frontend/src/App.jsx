@@ -17,11 +17,14 @@ import MainLayout from "./components/Layout/MainLayout";
 import Home from "./components/Home/index";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 import Settings from "./components/Home/Settings/Settings";
-import ShopReports from "./components/Home/Reports/ShopReports";
 import Invoice from "./components/Home/Invoice/Invoice";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRouteComponent";
 import ErrorBoundary from "./components/ProtectedRoute/ErrorBoundary";
 import TechnicianDiagnosticList from "./components/Home/Diagnostic/TechnicianDiagnosticList";
+import AccountsReceivableView from "./components/Home/Accounting/AccountsReceivableView";
+import PaymentList from "./components/Home/Accounting/PaymentList";
+import PaymentPDFViewer from "./components/Home/Accounting/PaymentPDFViewer";
+import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPDFViewer";
 
 const App = () => {
   return (
@@ -175,14 +178,6 @@ const App = () => {
             }
           />
           <Route
-            path="/reports"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <ShopReports />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/wsettings"
             element={
               <ProtectedRoute requiredRole="Manager">
@@ -212,6 +207,38 @@ const App = () => {
             element={
               <ProtectedRoute requiredRoles={"Manager"}>
                 <RegisterUser />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts-receivable"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <AccountsReceivableView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-list"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <PaymentList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-pdf"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <PaymentPDFViewer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/client-payment-pdf/:customerId"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <ClientPaymentPDFViewer />
               </ProtectedRoute>
             }
           />

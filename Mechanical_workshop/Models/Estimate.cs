@@ -58,5 +58,8 @@ namespace Mechanical_workshop.Models
         public virtual ICollection<EstimateLabor> Labors { get; set; } = new List<EstimateLabor>();
 
         public virtual ICollection<EstimateFlatFee> FlatFees { get; set; } = new List<EstimateFlatFee>();
+
+        // Relación 1:1 con AccountReceivable
+        public virtual AccountReceivable AccountReceivable { get; set; }
     }
 }

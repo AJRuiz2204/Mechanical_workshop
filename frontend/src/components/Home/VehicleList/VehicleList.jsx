@@ -224,8 +224,6 @@ const VehicleList = () => {
                 <tbody>
                   {currentVehicles.map((vehicle) => (
                     <tr key={vehicle.id}>
-                      {" "}
-                      {/* Use vehicle.id if unique */}
                       <td>{vehicle.vin}</td>
                       <td>{vehicle.make}</td>
                       <td>{vehicle.model}</td>

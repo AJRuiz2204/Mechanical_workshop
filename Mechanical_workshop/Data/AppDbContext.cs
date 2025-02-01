@@ -5,8 +5,15 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Mechanical_workshop.Data
 {
+    /// <summary>
+    /// Represents the application's database context.
+    /// </summary>
     public class AppDbContext : DbContext
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AppDbContext"/> class.
+        /// </summary>
+        /// <param name="options">The options to be used by the DbContext.</param>
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
@@ -25,6 +32,8 @@ namespace Mechanical_workshop.Data
         public DbSet<WorkshopSettings> WorkshopSettings { get; set; }
         public DbSet<LaborTaxMarkupSettings> LaborTaxMarkupSettings { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<AccountReceivable> AccountsReceivable { get; set; }
+        public DbSet<Payment> Payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +63,26 @@ namespace Mechanical_workshop.Data
                 .HasForeignKey(n => n.DiagnosticId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<AccountReceivable>(entity =>
+            {
+                entity.HasOne(ar => ar.Customer)
+                    .WithMany(u => u.AccountsReceivable)
+                    .HasForeignKey(ar => ar.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(ar => ar.Estimate)
+                    .WithOne(e => e.AccountReceivable)
+                    .HasForeignKey<AccountReceivable>(ar => ar.EstimateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasOne(p => p.AccountReceivable)
+                    .WithMany(ar => ar.Payments)
+                    .HasForeignKey(p => p.AccountReceivableId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }
