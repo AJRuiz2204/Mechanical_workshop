@@ -25,6 +25,9 @@ import AccountsReceivableView from "./components/Home/Accounting/AccountsReceiva
 import PaymentList from "./components/Home/Accounting/PaymentList";
 import PaymentPDFViewer from "./components/Home/Accounting/PaymentPDFViewer";
 import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPDFViewer";
+import SalesReportView from "./components/Home/Reports/SalesReportsListView";
+import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
+import SalesReportAllPreviewView from "./components/Home/Reports/SalesReportAllPreviewView";
 
 const App = () => {
   return (
@@ -239,6 +242,30 @@ const App = () => {
             element={
               <ProtectedRoute requiredRoles={"Manager"}>
                 <ClientPaymentPDFViewer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <SalesReportView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales-report-pdf/:salesReportId"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <SalesReportPDFViewer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales-report-preview"
+            element={
+              <ProtectedRoute requiredRoles={"Manager"}>
+                <SalesReportAllPreviewView />
               </ProtectedRoute>
             }
           />

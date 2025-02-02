@@ -34,23 +34,13 @@ const Home = () => {
       roles: ["Manager"],
     },
     {
+      label: "CREATE REPORTS",
+      route: "/sales-report-preview",
+      roles: ["Manager"],
+    },
+    {
       label: "REPORTS",
       route: "/reports",
-      roles: ["Manager"],
-    },
-    {
-      label: "SETTINGS",
-      route: "/settings",
-      roles: ["Manager"],
-    },
-    {
-      label: "ADD USER",
-      route: "/register-user",
-      roles: ["Manager"],
-    },
-    {
-      label: "CHANGE PASSWORD",
-      route: "/change-password",
       roles: ["Manager"],
     },
     {
@@ -66,6 +56,16 @@ const Home = () => {
     {
       label: "PAYMENT LIST",
       route: "/payment-list",
+      roles: ["Manager"],
+    },
+    {
+      label: "SETTINGS",
+      route: "/settings",
+      roles: ["Manager"],
+    },
+    {
+      label: "ADD USER",
+      route: "/register-user",
       roles: ["Manager"],
     }
   ];

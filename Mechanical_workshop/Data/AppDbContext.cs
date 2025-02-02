@@ -34,6 +34,8 @@ namespace Mechanical_workshop.Data
         public DbSet<Note> Notes { get; set; }
         public DbSet<AccountReceivable> AccountsReceivable { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<SalesReport> SalesReports { get; set; }
+        public DbSet<SalesReportDetail> SalesReportDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -83,6 +85,12 @@ namespace Mechanical_workshop.Data
                     .HasForeignKey(p => p.AccountReceivableId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<SalesReport>()
+                .HasMany(sr => sr.Details)
+                .WithOne(d => d.SalesReport)
+                .HasForeignKey(d => d.SalesReportId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
