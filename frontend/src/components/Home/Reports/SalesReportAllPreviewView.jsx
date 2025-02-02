@@ -7,70 +7,91 @@ import {
   createSalesReport,
 } from "../../../services/salesReportService";
 
+// SalesReportAllPreviewView component: Displays a preview of the sales report,
+// allows filtering by start and end dates, and provides functionality to save the report.
 const SalesReportAllPreviewView = () => {
+  // State to store the sales report preview data
   const [preview, setPreview] = useState(null);
+  // State to control loading status during data fetching
   const [loading, setLoading] = useState(true);
+  // State to store any error messages
   const [error, setError] = useState(null);
+  // State to store success messages when saving the report
   const [success, setSuccess] = useState(null);
 
-  // Estados para las fechas: startDate opcional y endDate por defecto hoy
+  // State for date filters: startDate is optional, endDate defaults to today
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState(
     new Date().toISOString().substring(0, 10)
   );
 
+  // useEffect to fetch the sales report preview when the component mounts
   useEffect(() => {
     fetchPreview();
   }, []);
 
+  // fetchPreview: Asynchronously fetches the sales report preview based on the start and end dates
   const fetchPreview = async () => {
     setLoading(true);
     setError(null);
     try {
+      // Call the getSalesReport service with the provided date filters
       const data = await getSalesReport(
         startDate === "" ? null : startDate,
         endDate === "" ? null : endDate
       );
-      console.log("Preview obtenido:", data);
+      console.log("Preview obtained:", data);
+      // Update the preview state with the fetched data
       setPreview(data);
     } catch (err) {
-      console.error("Error obteniendo preview:", err);
+      console.error("Error getting preview:", err);
+      // Set error state with a message from the error response or a default message
       setError(
-        err.response?.data?.message || err.message || "Error obteniendo preview"
+        err.response?.data?.message || err.message || "Error getting preview"
       );
     }
     setLoading(false);
   };
 
+  // handleSave: Asynchronously saves the current sales report preview as a finalized report
   const handleSave = async () => {
     setError(null);
     setSuccess(null);
     try {
-      // Extraer y eliminar la propiedad "Details" para enviar solo el resumen
+      // Destructure the preview to remove 'details' and 'salesReportId', keeping the summary
       const { details, salesReportId, ...restPreview } = preview;
+      // Prepare the report payload by including an empty 'Details' array
       const reportToSave = { ...restPreview, Details: [] };
 
+      // Call the createSalesReport service with the prepared payload
       const savedReport = await createSalesReport(reportToSave);
-      console.log("Reporte guardado:", savedReport);
-      setSuccess("Reporte guardado exitosamente.");
+      console.log("Report saved:", savedReport);
+      // Set a success message upon successful save
+      setSuccess("Report saved successfully.");
     } catch (err) {
-      console.error("Error guardando reporte:", err);
+      console.error("Error saving report:", err);
+      // Set error state with a message from the error response or a default message
       setError(
-        err.response?.data?.message || err.message || "Error guardando reporte"
+        err.response?.data?.message || err.message || "Error saving report"
       );
     }
   };
 
-  if (loading) return <div>Cargando preview del reporte...</div>;
+  // Render loading message while fetching data
+  if (loading) return <div>Loading report preview...</div>;
+  // Render error message if there is an error
   if (error) return <Alert variant="danger">{error}</Alert>;
+  // Return null if preview data is not available
   if (!preview) return null;
 
   return (
     <div className="container py-5">
-      <h1>Previsualización de Reporte de Ventas</h1>
+      {/* Title of the Sales Report Preview View */}
+      <h1>Sales Report Preview</h1>
+      {/* Form to filter the report by start and end dates */}
       <Form className="mb-4">
         <Form.Group controlId="startDate" className="mb-3">
-          <Form.Label>Fecha de Inicio (opcional)</Form.Label>
+          <Form.Label>Start Date (optional)</Form.Label>
           <Form.Control
             type="date"
             value={startDate}
@@ -78,7 +99,7 @@ const SalesReportAllPreviewView = () => {
           />
         </Form.Group>
         <Form.Group controlId="endDate" className="mb-3">
-          <Form.Label>Fecha de Fin</Form.Label>
+          <Form.Label>End Date</Form.Label>
           <Form.Control
             type="date"
             value={endDate}
@@ -86,21 +107,23 @@ const SalesReportAllPreviewView = () => {
             required
           />
         </Form.Group>
+        {/* Button to refresh the preview with the current date filters */}
         <Button variant="primary" onClick={fetchPreview}>
-          Actualizar Preview
+          Update Preview
         </Button>
       </Form>
 
+      {/* Table displaying the summary of the sales report preview */}
       <Table striped bordered hover responsive className="mt-4">
         <thead>
           <tr>
             <th>Total Estimates</th>
-            <th>Total Ingresos Parts</th>
-            <th>Total Ingresos Labor</th>
-            <th>Total Ingresos Flat Fee</th>
-            <th>Total Impuestos</th>
-            <th>Total Pagado</th>
-            <th>Total Deuda</th>
+            <th>Total Parts Revenue</th>
+            <th>Total Labor Revenue</th>
+            <th>Total Flat Fee Revenue</th>
+            <th>Total Tax Collected</th>
+            <th>Total Payments</th>
+            <th>Total Outstanding</th>
           </tr>
         </thead>
         <tbody>
@@ -115,9 +138,11 @@ const SalesReportAllPreviewView = () => {
           </tr>
         </tbody>
       </Table>
+      {/* Button to save the report */}
       <Button variant="success" onClick={handleSave} className="mt-3">
-        Guardar Reporte
+        Save Report
       </Button>
+      {/* Display success message if the report was saved successfully */}
       {success && (
         <Alert variant="success" className="mt-3">
           {success}

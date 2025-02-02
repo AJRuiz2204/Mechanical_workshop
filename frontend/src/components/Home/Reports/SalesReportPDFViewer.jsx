@@ -5,16 +5,24 @@ import SalesReportPDF from "./SalesReportPDF";
 import { useParams } from "react-router-dom";
 import { getSalesReportById } from "../../../services/salesReportService";
 
+// SalesReportPDFViewer component: fetches a sales report by its ID and renders it
+// in a PDFViewer using the SalesReportPDF component.
 const SalesReportPDFViewer = () => {
-  const { salesReportId } = useParams(); // Se espera que la ruta sea: /sales-report-pdf/:salesReportId
+  // Extract the salesReportId parameter from the URL.
+  // The expected route format is: /sales-report-pdf/:salesReportId
+  const { salesReportId } = useParams();
+  
+  // State to store the fetched report data.
   const [reportData, setReportData] = useState(null);
 
+  // useEffect hook to fetch the report data when the salesReportId changes.
   useEffect(() => {
     if (salesReportId) {
       fetchReport(salesReportId);
     }
   }, [salesReportId]);
 
+  // fetchReport: Asynchronously fetches the sales report data by its ID.
   const fetchReport = async (id) => {
     try {
       const data = await getSalesReportById(id);
@@ -24,10 +32,12 @@ const SalesReportPDFViewer = () => {
     }
   };
 
+  // If the report data is not yet loaded, display a loading message.
   if (!reportData) {
-    return <div>Cargando Reporte...</div>;
+    return <div>Loading Report...</div>;
   }
 
+  // Render the PDFViewer with the SalesReportPDF component displaying the report.
   return (
     <PDFViewer width="100%" height="1000">
       <SalesReportPDF pdfData={reportData} />

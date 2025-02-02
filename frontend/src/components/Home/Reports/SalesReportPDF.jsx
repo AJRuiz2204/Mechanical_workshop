@@ -12,6 +12,7 @@ import {
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
+// Define styles for the PDF document using @react-pdf/renderer StyleSheet
 const styles = StyleSheet.create({
   page: {
     padding: 20,
@@ -89,13 +90,10 @@ const styles = StyleSheet.create({
   },
 });
 
+// SalesReportPDF component: Renders a PDF document for a sales report using @react-pdf/renderer.
+// The pdfData prop is expected to have the structure defined in SalesReportDto.
 const SalesReportPDF = ({ pdfData }) => {
-  // pdfData se espera que tenga el siguiente formato (SalesReportDto):
-  // {
-  //   startDate, endDate, totalEstimates, totalPartsRevenue, totalLaborRevenue,
-  //   totalFlatFeeRevenue, totalTaxCollected, totalPaymentsCollected, totalOutstanding,
-  //   createdDate, details: [ { salesReportDetailId, estimateId, estimateDate, subtotal, tax, total, originalAmount, totalPayments, remainingBalance, customerName, vehicleInfo, Estimate: { ...EstimateFullDto } }, ... ]
-  // }
+  // Destructure the sales report data from the pdfData prop
   const {
     startDate,
     endDate,
@@ -109,141 +107,149 @@ const SalesReportPDF = ({ pdfData }) => {
     createdDate,
     details,
   } = pdfData;
+
+  // Format the dates using dayjs
   const formattedStartDate = dayjs(startDate).format("YYYY-MM-DD");
   const formattedEndDate = dayjs(endDate).format("YYYY-MM-DD");
   const formattedCreatedDate = dayjs(createdDate).format("YYYY-MM-DD HH:mm:ss");
 
   return (
     <Document>
+      {/* Define a page in the PDF document */}
       <Page size="A4" style={styles.page}>
-        {/* Encabezado */}
+        {/* Header section with logo and company information */}
         <View style={styles.headerContainer}>
           <View style={styles.logoSection}>
+            {/* Display the logo image */}
             <Image src={logo} style={{ width: "100%", height: "100%" }} />
           </View>
           <View style={styles.headerInfoContainer}>
-            <Text style={styles.textLine}>Mi Taller Mecánico</Text>
-            <Text style={styles.textLine}>Calle Falsa 123</Text>
+            <Text style={styles.textLine}>My Mechanic Workshop</Text>
+            <Text style={styles.textLine}>Fake Street 123</Text>
             <Text style={styles.textLine}>(100) 000-0000</Text>
-            <Text style={styles.textLine}>contacto@mitaller.com</Text>
+            <Text style={styles.textLine}>contact@myworkshop.com</Text>
             <Text style={styles.textLine}>
-              Reporte generado: {formattedCreatedDate}
+              Report generated: {formattedCreatedDate}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Reporte de Ventas</Text>
+        {/* Title and period information */}
+        <Text style={styles.sectionTitle}>Sales Report</Text>
         <Text style={{ fontSize: 9 }}>
-          Periodo: {formattedStartDate} - {formattedEndDate}
+          Period: {formattedStartDate} - {formattedEndDate}
         </Text>
 
-        {/* Totales Generales */}
+        {/* General totals section */}
         <View style={{ marginVertical: 10 }}>
           <Text style={{ fontSize: 9 }}>
-            Total Estimados: ${Number(totalEstimates).toFixed(2)}
+            Total Estimates: ${Number(totalEstimates).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 9 }}>
-            Total Ingresos Partes: ${Number(totalPartsRevenue).toFixed(2)}
+            Total Parts Revenue: ${Number(totalPartsRevenue).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 9 }}>
-            Total Ingresos Labor: ${Number(totalLaborRevenue).toFixed(2)}
+            Total Labor Revenue: ${Number(totalLaborRevenue).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 9 }}>
-            Total Ingresos Flat Fee: ${Number(totalFlatFeeRevenue).toFixed(2)}
+            Total Flat Fee Revenue: ${Number(totalFlatFeeRevenue).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 9 }}>
-            Total Impuestos: ${Number(totalTaxCollected).toFixed(2)}
+            Total Tax Collected: ${Number(totalTaxCollected).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 9 }}>
-            Total Pagado: ${Number(totalPaymentsCollected).toFixed(2)}
+            Total Payments: ${Number(totalPaymentsCollected).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 9 }}>
-            Total Pendiente: ${Number(totalOutstanding).toFixed(2)}
+            Total Outstanding: ${Number(totalOutstanding).toFixed(2)}
           </Text>
         </View>
 
-        {/* Detalle por cada Estimate */}
+        {/* Details section for each Estimate */}
         {details && details.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Detalles por Estimate</Text>
+            <Text style={styles.sectionTitle}>Estimate Details</Text>
             {details.map((detail) => (
               <View
                 key={detail.salesReportDetailId}
                 style={styles.detailSection}
               >
+                {/* Display basic information for the estimate */}
                 <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                  Estimado #{detail.estimateId} -{" "}
+                  Estimate #{detail.estimateId} -{" "}
                   {new Date(detail.estimateDate).toLocaleDateString()}
                 </Text>
                 <Text style={{ fontSize: 9 }}>
-                  Subtotal: ${Number(detail.subtotal).toFixed(2)} | Impuestos: $
+                  Subtotal: ${Number(detail.subtotal).toFixed(2)} | Tax: $
                   {Number(detail.tax).toFixed(2)} | Total: $
                   {Number(detail.total).toFixed(2)}
                 </Text>
                 <Text style={{ fontSize: 9 }}>
-                  Cuenta: Saldo Inicial: $
-                  {Number(detail.originalAmount).toFixed(2)} - Total Pagado: $
-                  {Number(detail.totalPayments).toFixed(2)} - Saldo Pendiente: $
+                  Account: Initial Balance: $
+                  {Number(detail.originalAmount).toFixed(2)} - Total Paid: $
+                  {Number(detail.totalPayments).toFixed(2)} - Remaining Balance: $
                   {Number(detail.remainingBalance).toFixed(2)}
                 </Text>
                 <Text style={{ fontSize: 9 }}>
-                  Cliente: {detail.customerName} | Vehículo:{" "}
+                  Customer: {detail.customerName} | Vehicle:{" "}
                   {detail.vehicleInfo}
                 </Text>
 
-                {/* Sección opcional: Información completa del Estimate */}
+                {/* Optional section: Full Estimate details */}
                 {detail.Estimate && (
                   <View style={styles.subSection}>
                     <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                      Detalles Completos del Estimate
+                      Complete Estimate Details
                     </Text>
                     <Text style={{ fontSize: 9 }}>
-                      Nota del Cliente: {detail.Estimate.customerNote}
+                      Customer Note: {detail.Estimate.customerNote}
                     </Text>
                     <Text style={{ fontSize: 9 }}>
-                      Estado: {detail.Estimate.authorizationStatus}
+                      Status: {detail.Estimate.authorizationStatus}
                     </Text>
                     <Text style={{ fontSize: 9 }}>
-                      Fecha del Estimate:{" "}
+                      Estimate Date:{" "}
                       {new Date(detail.Estimate.date).toLocaleDateString()}
                     </Text>
 
-                    {/* Si se requieren secciones adicionales para Partes, Labors y FlatFees */}
+                    {/* Section for parts details if available */}
                     {detail.Estimate.parts &&
                       detail.Estimate.parts.length > 0 && (
                         <View style={styles.subSection}>
                           <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            Partes:
+                            Parts:
                           </Text>
                           {detail.Estimate.parts.map((part) => (
                             <Text key={part.id} style={{ fontSize: 9 }}>
-                              - {part.description} (Cantidad: {part.quantity}) -
+                              - {part.description} (Quantity: {part.quantity}) -
                               ${Number(part.extendedPrice).toFixed(2)}
                             </Text>
                           ))}
                         </View>
                       )}
 
+                    {/* Section for labors details if available */}
                     {detail.Estimate.labors &&
                       detail.Estimate.labors.length > 0 && (
                         <View style={styles.subSection}>
                           <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            Mano de Obra:
+                            Labor:
                           </Text>
                           {detail.Estimate.labors.map((labor) => (
                             <Text key={labor.id} style={{ fontSize: 9 }}>
-                              - {labor.description} (Duración: {labor.duration}{" "}
-                              hs) - ${Number(labor.extendedPrice).toFixed(2)}
+                              - {labor.description} (Duration: {labor.duration}{" "}
+                              hrs) - ${Number(labor.extendedPrice).toFixed(2)}
                             </Text>
                           ))}
                         </View>
                       )}
 
+                    {/* Section for flat fee details if available */}
                     {detail.Estimate.flatFees &&
                       detail.Estimate.flatFees.length > 0 && (
                         <View style={styles.subSection}>
                           <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            Tarifas Planas:
+                            Flat Fees:
                           </Text>
                           {detail.Estimate.flatFees.map((fee) => (
                             <Text key={fee.id} style={{ fontSize: 9 }}>
@@ -260,9 +266,10 @@ const SalesReportPDF = ({ pdfData }) => {
           </View>
         )}
 
+        {/* Footer section displaying the report generation date */}
         <View style={styles.footer}>
           <Text style={{ textAlign: "center" }}>
-            Reporte generado el {formattedCreatedDate}
+            Report generated on {formattedCreatedDate}
           </Text>
         </View>
       </Page>

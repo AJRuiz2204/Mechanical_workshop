@@ -28,15 +28,19 @@ namespace Mechanical_workshop.Controllers
         }
 
         // GET: api/SalesReport?startDate=...&endDate=...
+        // Retrieves a sales report for a given period.
         [HttpGet]
         public async Task<ActionResult<SalesReportDto>> GetSalesReport([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
-            // Para la consulta: si StartDate no se suministra, usamos DateTime.MinValue; si EndDate no se suministra, usamos Today.
+            // If startDate is not provided, use DateTime.MinValue.
+            // If endDate is not provided, use DateTime.Today.
+            // To include all records on the end date, add one day to endDate and compare using '<'
             DateTime queryStart = startDate ?? DateTime.MinValue;
-            DateTime queryEnd = endDate ?? DateTime.Today;
+            DateTime queryEnd = (endDate ?? DateTime.Today).AddDays(1);
 
-            _logger.LogInformation("Generando reporte de ventas para el periodo {StartDate} - {EndDate}", queryStart, queryEnd);
+            _logger.LogInformation("Generating sales report for the period {StartDate} - {EndDate}", queryStart, queryEnd.AddDays(-1));
 
+            // Retrieve estimates within the specified date range with all necessary related entities.
             var estimates = await _context.Estimates
                 .Include(e => e.Vehicle)
                 .Include(e => e.UserWorkshop)
@@ -45,17 +49,19 @@ namespace Mechanical_workshop.Controllers
                 .Include(e => e.Parts)
                 .Include(e => e.Labors)
                 .Include(e => e.FlatFees)
-                .Where(e => e.Date >= queryStart && e.Date <= queryEnd)
+                .Where(e => e.Date >= queryStart && e.Date < queryEnd)
                 .ToListAsync();
 
+            // Create a new SalesReport instance
             var report = new SalesReport
             {
-                // En el reporte se guarda StartDate tal como viene (puede ser null)
+                // Keep the original value of startDate (which may be null) and adjust endDate to display the original date.
                 StartDate = startDate,
-                EndDate = queryEnd,
+                EndDate = queryEnd.AddDays(-1),
                 CreatedDate = DateTime.UtcNow,
             };
 
+            // Process each estimate and add its details to the sales report.
             foreach (var e in estimates)
             {
                 decimal totalPayments = 0;
@@ -79,13 +85,14 @@ namespace Mechanical_workshop.Controllers
                     OriginalAmount = originalAmount,
                     RemainingBalance = remainingBalance,
                     TotalPayments = totalPayments,
-                    // No se asignan CustomerName ni VehicleInfo
+                    // Include the full Estimate if mapping is needed.
                     Estimate = e
                 };
 
                 report.Details.Add(detail);
             }
 
+            // Calculate aggregate totals for the report.
             report.TotalEstimates = report.Details.Sum(d => d.Total);
             report.TotalPaymentsCollected = report.Details.Sum(d => d.TotalPayments);
             report.TotalOutstanding = report.Details.Sum(d => d.RemainingBalance);
@@ -94,11 +101,13 @@ namespace Mechanical_workshop.Controllers
             report.TotalFlatFeeRevenue = estimates.Sum(e => e.FlatFees.Sum(f => f.ExtendedPrice));
             report.TotalTaxCollected = estimates.Sum(e => e.Tax);
 
+            // Map the report entity to a DTO and return it.
             var reportDto = _mapper.Map<SalesReportDto>(report);
             return Ok(reportDto);
         }
 
         // GET: api/SalesReport/{id}
+        // Retrieves a sales report by its ID.
         [HttpGet("{id}")]
         public async Task<ActionResult<SalesReportDto>> GetSalesReportById(int id)
         {
@@ -115,17 +124,17 @@ namespace Mechanical_workshop.Controllers
         }
 
         // POST: api/SalesReport
+        // Creates a new sales report based on the provided SalesReportDto.
         [HttpPost]
         public async Task<ActionResult<SalesReportDto>> CreateSalesReport([FromBody] SalesReportDto reportDto)
         {
             if (reportDto == null)
             {
-                _logger.LogError("No se proporcionó información para el reporte.");
-                return BadRequest("No se proporcionó información para el reporte.");
+                _logger.LogError("No report information provided.");
+                return BadRequest("No report information provided.");
             }
 
-            // Se elimina la validación de detalles, ya que se quiere guardar solo el resumen
-            // Rellenar valores nulos en los detalles (si existieran)
+            // Fill in null values in the details (if any), because only the summary is to be saved.
             if (reportDto.Details != null)
             {
                 foreach (var detail in reportDto.Details)
@@ -139,6 +148,7 @@ namespace Mechanical_workshop.Controllers
                 }
             }
 
+            // Map the DTO to a SalesReport entity.
             var salesReport = _mapper.Map<SalesReport>(reportDto);
 
             _context.SalesReports.Add(salesReport);
@@ -149,6 +159,7 @@ namespace Mechanical_workshop.Controllers
         }
 
         // GET: api/SalesReport/all
+        // Retrieves all sales reports.
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<SalesReportDto>>> GetAllSalesReports()
         {
