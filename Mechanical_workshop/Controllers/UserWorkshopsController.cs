@@ -247,14 +247,12 @@ namespace Mechanical_workshop.Controllers
         {
             _logger.LogInformation("PUT: Updating UserWorkshop with ID = {Id}. Incoming DTO: {@Dto}", id, userWorkshopUpdateDto);
 
-            // 1. Verify if the ID in the route matches the ID in the DTO
             if (id != userWorkshopUpdateDto.Id)
             {
                 _logger.LogWarning("PUT: ID mismatch. Route ID: {RouteId}, DTO ID: {DtoId}", id, userWorkshopUpdateDto.Id);
                 return BadRequest(new { message = "The ID in the route does not match the ID in the request body." });
             }
 
-            // 2. Retrieve the existing UserWorkshop including Vehicles
             var userWorkshop = await _context.UserWorkshops
                 .Include(uw => uw.Vehicles)
                 .FirstOrDefaultAsync(uw => uw.Id == id);
@@ -265,28 +263,21 @@ namespace Mechanical_workshop.Controllers
                 return NotFound(new { message = $"UserWorkshop with ID {id} not found." });
             }
 
-            // 3. Map the main fields from the DTO to the existing UserWorkshop
+            // Mapear los campos principales del UserWorkshop (AutoMapper ignorará el Id de los vehículos gracias a la configuración)
             _mapper.Map(userWorkshopUpdateDto, userWorkshop);
 
-            // 4. Handle Vehicle updates
-            // 4.1. Identify existing VINs in the database
-            var existingVins = userWorkshop.Vehicles.Select(v => v.Vin).ToList();
-
-            // 4.2. Identify VINs in the DTO
+            // Manejar vehículos: remover los que ya no estén en el DTO y agregar o actualizar los existentes
             var dtoVins = userWorkshopUpdateDto.Vehicles.Select(v => v.Vin).ToList();
 
-            // 4.3. Identify vehicles to remove (present in the database but not in the DTO)
-            var vehiclesToRemove = userWorkshop.Vehicles
-                .Where(v => !dtoVins.Contains(v.Vin))
-                .ToList();
-
+            // Remover vehículos que ya no están presentes en el DTO
+            var vehiclesToRemove = userWorkshop.Vehicles.Where(v => !dtoVins.Contains(v.Vin)).ToList();
             if (vehiclesToRemove.Any())
             {
                 _logger.LogInformation("PUT: Removing {Count} vehicles not present in the DTO.", vehiclesToRemove.Count);
                 _context.Vehicles.RemoveRange(vehiclesToRemove);
             }
 
-            // 4.4. Process each vehicle in the DTO
+            // Procesar cada vehículo del DTO
             foreach (var vehicleDto in userWorkshopUpdateDto.Vehicles)
             {
                 if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
@@ -296,43 +287,30 @@ namespace Mechanical_workshop.Controllers
                 }
 
                 var existingVehicle = userWorkshop.Vehicles.FirstOrDefault(v => v.Vin == vehicleDto.Vin);
-
                 if (existingVehicle != null)
                 {
-                    // Update the fields of the existing vehicle
+                    // Actualiza los campos del vehículo existente (el Id no se modifica por la configuración de AutoMapper)
                     _mapper.Map(vehicleDto, existingVehicle);
                     _logger.LogInformation("PUT: Updated existing vehicle with VIN = {Vin}.", vehicleDto.Vin);
                 }
                 else
                 {
-                    // Check if the vehicle already exists in another entity (if VIN is unique)
-                    var vehicleExists = await _context.Vehicles.AnyAsync(v => v.Vin == vehicleDto.Vin);
-                    if (!vehicleExists)
-                    {
-                        // Create a new vehicle and add it to the UserWorkshop
-                        var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
-                        userWorkshop.Vehicles.Add(newVehicle);
-                        _logger.LogInformation("PUT: Added new vehicle with VIN = {Vin}.", vehicleDto.Vin);
-                    }
-                    else
-                    {
-                        // If the VIN already exists in another entity, handle according to business logic
-                        _logger.LogWarning("PUT: Vehicle with VIN = {Vin} already exists in another entity. It will be skipped or handled according to business logic.", vehicleDto.Vin);
-                        // Optional: You can throw an exception or handle it differently based on your requirements
-                    }
+                    // Si no existe, agrega el vehículo
+                    // Nota: Si se requiere lógica adicional para evitar duplicados en la DB, se puede hacer aquí.
+                    var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
+                    userWorkshop.Vehicles.Add(newVehicle);
+                    _logger.LogInformation("PUT: Added new vehicle with VIN = {Vin}.", vehicleDto.Vin);
                 }
             }
 
             try
             {
-                // 5. Save changes to the database
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("PUT: UserWorkshop with ID = {Id} updated successfully.", id);
             }
             catch (DbUpdateConcurrencyException ex)
             {
                 _logger.LogError(ex, "PUT: Concurrency error updating UserWorkshop with ID = {Id}", id);
-
                 if (!UserWorkshopExists(id))
                 {
                     _logger.LogWarning("PUT: UserWorkshop with ID {Id} no longer exists after concurrency error.", id);
@@ -350,9 +328,9 @@ namespace Mechanical_workshop.Controllers
                 return StatusCode(500, new { message = "Unexpected error while updating the UserWorkshop." });
             }
 
-            // 6. Return a successful response
             return NoContent();
         }
+
 
         /// <summary>
         /// Deletes a UserWorkshop by its ID.

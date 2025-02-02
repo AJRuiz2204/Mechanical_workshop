@@ -1,7 +1,5 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-// src/components/VehicleReception/VehicleReception.jsx
-
 import React, { useState, useEffect } from "react";
 import {
   Form,
@@ -14,21 +12,57 @@ import {
 } from "react-bootstrap";
 import {
   createUserWorkshop,
-  getUserWorkshopByIdWithVehicles, // Import the corrected service
+  getUserWorkshopByIdWithVehicles,
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
+import { useNavigate } from "react-router-dom";
 
-const VehicleReception = ({
-  onClose, // Function to close the modal
-  afterSubmit, // Optional function to refresh data in the parent component
-  editingId, // ID to edit a specific record
-}) => {
+/**
+ * Formats a phone number string.
+ * This function removes all non-numeric characters and limits the input to 10 digits.
+ * It then formats the number as:
+ *   - (XXX when less than 4 digits
+ *   - (XXX) XXX when between 4 and 6 digits
+ *   - (XXX) XXX - XXXX when 7 or more digits
+ *
+ * @param {string} input - The input string containing a phone number.
+ * @returns {string} The formatted phone number.
+ */
+const formatPhoneNumber = (input) => {
+  // Remove non-numeric characters and limit to 10 digits
+  const digits = input.replace(/\D/g, "").slice(0, 10);
+  if (digits.length === 0) return "";
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0,3)}) ${digits.slice(3,6)} - ${digits.slice(6)}`;
+};
+
+/**
+ * VehicleReception Component
+ *
+ * This component renders a form for creating or editing a mechanical workshop along with its vehicles.
+ *
+ * Props:
+ * - onClose: Function to be called when the form is cancelled.
+ * - afterSubmit: Function to be called after successful form submission.
+ * - editingId: The ID of the workshop to edit. If provided, the form loads existing data.
+ */
+const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
+  // useNavigate hook to programmatically navigate if needed
+  const navigate = useNavigate();
+
+  // Retrieve stored username and profile from localStorage or set default values
+  const storedUsername = localStorage.getItem("username") || "defaultUser";
+  const storedProfile = localStorage.getItem("profile") || "Manager";
+
+  // Define initial state for the user workshop including default fields and vehicles list
   const [userWorkshop, setUserWorkshop] = useState({
-    id: null, // Initialize the ID
+    id: null,
     email: "",
     name: "",
     lastName: "",
-    profile: "",
+    username: storedUsername,
+    profile: storedProfile,
     address: "",
     city: "",
     state: "",
@@ -49,69 +83,66 @@ const VehicleReception = ({
     ],
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // State to manage loading, submission error, and form submission state
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Function to get the user's profile from localStorage
-  const getProfileFromLocalStorage = () => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        return user.profile || "";
-      } catch (error) {
-        console.error("Error parsing user from localStorage:", error);
-        return "";
-      }
-    }
-    return "";
-  };
+  /**
+   * Retrieves the authentication token from localStorage.
+   *
+   * @returns {string} The authentication token.
+   */
+  const getToken = () => localStorage.getItem("token") || "";
 
-  // Load data if editingId exists
+  /**
+   * useEffect hook to load workshop data when in editing mode.
+   * It fetches the data for the provided editingId, formats it, and populates the state.
+   */
   useEffect(() => {
     const loadData = async () => {
       if (editingId) {
         setLoading(true);
         try {
-          const token = localStorage.getItem("token"); // Get the token
-          const data = await getUserWorkshopByIdWithVehicles(editingId, token); // Pass the token
-          console.log("DATA RECEIVED =>", data);
-
-          if (!data) {
-            throw new Error("No data found for the provided ID");
+          const token = getToken();
+          if (!token) {
+            throw new Error("Authentication token is missing.");
           }
+          // Fetch the workshop data along with its vehicles
+          const data = await getUserWorkshopByIdWithVehicles(editingId, token);
+          console.log("Workshop data for editing:", data);
 
-          const storedProfile = getProfileFromLocalStorage();
-          if (!storedProfile) {
-            throw new Error("User profile not found");
-          }
-
-          // Ensure data exists before assigning
+          // Set the state with retrieved data, using stored username and profile if necessary
           setUserWorkshop({
-            id: data.id, // Ensure the ID is included
-            email: data?.email ?? "",
-            name: data?.name ?? "",
-            lastName: data?.lastName ?? "",
-            profile: storedProfile,
-            address: data?.address ?? "",
-            city: data?.city ?? "",
-            state: data?.state ?? "",
-            zip: data?.zip ?? "",
-            primaryNumber: data?.primaryNumber ?? "",
-            secondaryNumber: data?.secondaryNumber ?? null, // Set to null if not provided
-            noTax: data?.noTax ?? false,
+            id: data.id,
+            email: data.email || "",
+            name: data.name || "",
+            lastName: data.lastName || "",
+            username:
+              data.username && data.username.trim() !== ""
+                ? data.username
+                : storedUsername,
+            profile:
+              data.profile && data.profile.trim() !== ""
+                ? data.profile
+                : storedProfile,
+            address: data.address || "",
+            city: data.city || "",
+            state: data.state || "",
+            zip: data.zip || "",
+            primaryNumber: data.primaryNumber || "",
+            secondaryNumber: data.secondaryNumber || "",
+            noTax: data.noTax || false,
             vehicles:
-              Array.isArray(data?.vehicles) && data.vehicles.length > 0
+              data.vehicles && data.vehicles.length > 0
                 ? data.vehicles.map((v) => ({
-                    vin: v?.vin ?? "",
-                    make: v?.make ?? "",
-                    model: v?.model ?? "",
-                    year: v?.year ?? "",
-                    engine: v?.engine ?? "",
-                    plate: v?.plate ?? "",
-                    state: v?.state ?? "",
+                    vin: v.vin || "",
+                    make: v.make || "",
+                    model: v.model || "",
+                    year: v.year || "",
+                    engine: v.engine || "",
+                    plate: v.plate || "",
+                    state: v.state || "",
                   }))
                 : [
                     {
@@ -126,125 +157,45 @@ const VehicleReception = ({
                   ],
           });
         } catch (error) {
-          console.error("Error loading data:", error);
+          console.error("Error loading workshop data:", error);
           setSubmitError(error.message);
-          // If there's an error, set default values
-          const storedProfile = getProfileFromLocalStorage();
+          // If there's an error, ensure username and profile remain set to stored values
           setUserWorkshop((prev) => ({
             ...prev,
-            profile: storedProfile ?? "",
+            username: storedUsername,
+            profile: storedProfile,
           }));
         } finally {
           setLoading(false);
-        }
-      } else {
-        const storedProfile = getProfileFromLocalStorage();
-        if (storedProfile) {
-          setUserWorkshop((prev) => ({
-            ...prev,
-            profile: storedProfile,
-          }));
-        } else {
-          setSubmitError("User profile not found");
         }
       }
     };
 
     loadData();
-  }, [editingId]);
+  }, [editingId, storedUsername, storedProfile]);
 
-  // ========== VALIDATIONS ==========
-  const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
-  const validateEmail = (email) =>
-    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email);
-  const validatePhoneNumber = (number) =>
-    /^\(\d{3}\)\s\d{3}-\d{4}$/.test(number);
-  const validateYear = (year) => /^\d{4}$/.test(year);
-  const validateNotEmpty = (value) => {
-    if (typeof value === "string") {
-      return value.trim() !== "";
-    }
-    return true;
-  };
-
-  // ========== HANDLE FORM INPUT CHANGES ==========
+  /**
+   * Handles changes for input fields in the form.
+   *
+   * @param {string} field - The name of the field being updated.
+   * @param {any} value - The new value for the field.
+   */
   const handleInputChange = (field, value) => {
-    let error = "";
-    switch (field) {
-      case "name":
-      case "lastName":
-        if (!validateNotEmpty(value)) {
-          error = "This field is required.";
-        } else if (!validateName(value)) {
-          error = "Only letters and spaces are allowed.";
-        }
-        break;
-
-      case "email":
-        if (!validateNotEmpty(value)) {
-          error = "This field is required.";
-        } else if (!validateEmail(value)) {
-          error = "Invalid email address.";
-        }
-        break;
-
-      case "primaryNumber":
-      case "secondaryNumber":
-        if (validateNotEmpty(value) && !validatePhoneNumber(value)) {
-          error = "Invalid phone number. Format: (000) 000-0000";
-        }
-        break;
-
-      case "noTax":
-        // Assign the value directly without toggling
-        setUserWorkshop((prev) => ({
-          ...prev,
-          noTax: value,
-        }));
-        setErrors((prev) => ({ ...prev, [field]: error }));
-        return;
-
-      default:
-        // If not a specific field, check that it's not empty
-        if (field !== "noTax" && !validateNotEmpty(value)) {
-          error = "This field is required.";
-        }
-        break;
+    // Format phone numbers appropriately
+    if (field === "primaryNumber" || field === "secondaryNumber") {
+      value = formatPhoneNumber(value);
     }
-
-    setErrors((prev) => ({ ...prev, [field]: error }));
-    setUserWorkshop((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setUserWorkshop((prev) => ({ ...prev, [field]: value }));
   };
 
-  // ========== HANDLE VEHICLE INPUT CHANGES ==========
+  /**
+   * Handles changes for vehicle input fields.
+   *
+   * @param {number} index - The index of the vehicle being updated.
+   * @param {string} field - The name of the vehicle field.
+   * @param {any} value - The new value for the vehicle field.
+   */
   const handleVehicleChange = (index, field, value) => {
-    let error = "";
-    if (field === "year") {
-      if (!validateNotEmpty(value)) {
-        error = "This field is required.";
-      } else if (!validateYear(value)) {
-        error = "Must be a valid 4-digit year.";
-      }
-    } else if (field === "vin") {
-      if (!validateNotEmpty(value)) {
-        error = "This field is required.";
-      } else if (value.length !== 17) {
-        error = "The VIN must be exactly 17 characters.";
-      }
-    } else {
-      if (!validateNotEmpty(value)) {
-        error = "This field is required.";
-      }
-    }
-
-    setErrors((prev) => ({
-      ...prev,
-      [`vehicle_${field}_${index}`]: error,
-    }));
-
     setUserWorkshop((prev) => {
       const updatedVehicles = [...prev.vehicles];
       updatedVehicles[index][field] = value;
@@ -252,26 +203,9 @@ const VehicleReception = ({
     });
   };
 
-  // ========== FORMAT PHONE NUMBER ==========
-  const formatPhoneNumber = (value) => {
-    const cleaned = value.replace(/\D/g, "");
-    const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-    if (match) {
-      let formatted = "";
-      if (match[1]) formatted += `(${match[1]}`;
-      if (match[2]) formatted += `) ${match[2]}`;
-      if (match[3]) formatted += `-${match[3]}`;
-      return formatted;
-    }
-    return value;
-  };
-
-  const handlePhoneNumberChange = (field, value) => {
-    const formatted = formatPhoneNumber(value);
-    handleInputChange(field, formatted);
-  };
-
-  // ========== ADD VEHICLE ==========
+  /**
+   * Adds a new vehicle object to the vehicles array in the state.
+   */
   const addVehicle = () => {
     setUserWorkshop((prev) => ({
       ...prev,
@@ -290,7 +224,11 @@ const VehicleReception = ({
     }));
   };
 
-  // ========== REMOVE VEHICLE ==========
+  /**
+   * Removes a vehicle from the vehicles array by its index.
+   *
+   * @param {number} index - The index of the vehicle to remove.
+   */
   const removeVehicle = (index) => {
     setUserWorkshop((prev) => ({
       ...prev,
@@ -298,153 +236,41 @@ const VehicleReception = ({
     }));
   };
 
-  // ========== RESET FORM ==========
-  const resetForm = () => {
-    setUserWorkshop({
-      id: null, // Reset the ID
-      email: "",
-      name: "",
-      lastName: "",
-      profile: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-      primaryNumber: "",
-      secondaryNumber: "",
-      noTax: false,
-      vehicles: [
-        {
-          vin: "",
-          make: "",
-          model: "",
-          year: "",
-          engine: "",
-          plate: "",
-          state: "",
-        },
-      ],
-    });
-    setErrors({});
-    setSubmitError(null);
-    console.log("Form has been reset.");
-  };
-
-  // ========== CLEAN PAYLOAD ==========
-  const cleanPayload = (payload) => ({
-    ...payload,
-    id: payload.id,
-    secondaryNumber:
-      payload.secondaryNumber.trim() === "" ? null : payload.secondaryNumber,
-    vehicles: payload.vehicles.filter((v) => v.vin.trim() !== ""), // Solo incluir vehículos con VIN válido
-  });
-
-  // ========== HANDLE FORM SUBMISSION ==========
+  /**
+   * Handles the form submission.
+   * It prepares the payload, validates data, and calls the appropriate service
+   * function to create or update the workshop.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-
     setSubmitError(null);
-
-    // Basic frontend validation before sending
-    let valid = true;
-    const newErrors = {};
-
-    // Validate owner fields
-    ["email", "name", "lastName", "primaryNumber"].forEach((field) => {
-      if (!validateNotEmpty(userWorkshop[field])) {
-        newErrors[field] = "This field is required.";
-        valid = false;
-      }
-    });
-
-    // Validate email
-    if (userWorkshop.email && !validateEmail(userWorkshop.email)) {
-      newErrors.email = "Invalid email address.";
-      valid = false;
-    }
-
-    // Validate phone numbers
-    ["primaryNumber", "secondaryNumber"].forEach((field) => {
-      if (userWorkshop[field] && !validatePhoneNumber(userWorkshop[field])) {
-        newErrors[field] = "Invalid phone number. Format: (000) 000-0000";
-        valid = false;
-      }
-    });
-
-    // Validate vehicles
-    userWorkshop.vehicles.forEach((vehicle, index) => {
-      ["vin", "make", "model", "year", "engine", "plate", "state"].forEach(
-        (field) => {
-          if (!validateNotEmpty(vehicle[field])) {
-            newErrors[`vehicle_${field}_${index}`] = "This field is required.";
-            valid = false;
-          }
-        }
-      );
-
-      // Specific validation for year
-      if (vehicle.year && !validateYear(vehicle.year)) {
-        newErrors[`vehicle_year_${index}`] = "Must be a valid 4-digit year.";
-        valid = false;
-      }
-
-      // Specific validation for VIN
-      if (vehicle.vin && vehicle.vin.length !== 17) {
-        newErrors[`vehicle_vin_${index}`] =
-          "The VIN must be exactly 17 characters.";
-        valid = false;
-      }
-    });
-
-    if (!valid) {
-      setErrors(newErrors);
-      alert("Please correct the errors in the form before submitting.");
-      return;
-    }
-
     setIsSubmitting(true);
-
-    // Prepare the payload according to your backend
-    const payload = {
-      id: userWorkshop.id, // Ensure the ID is included
-      email: userWorkshop.email,
-      name: userWorkshop.name,
-      lastName: userWorkshop.lastName,
-      profile: userWorkshop.profile,
-      address: userWorkshop.address,
-      city: userWorkshop.city,
-      state: userWorkshop.state,
-      zip: userWorkshop.zip,
-      primaryNumber: userWorkshop.primaryNumber,
-      secondaryNumber: userWorkshop.secondaryNumber,
-      noTax: userWorkshop.noTax,
-      vehicles: userWorkshop.vehicles,
-    };
-
-    console.log("Payload to send:", payload);
-
     try {
-      const cleanedPayload = cleanPayload(payload);
-      const token = localStorage.getItem("token"); // Get the token
+      const token = getToken();
+      // Ensure username and profile have values; if not, use stored values
+      let payload = { ...userWorkshop };
+      if (!payload.username || payload.username.trim() === "") {
+        payload.username = storedUsername;
+      }
+      if (!payload.profile || payload.profile.trim() === "") {
+        payload.profile = storedProfile;
+      }
+      // Filter out vehicles that have an empty VIN
+      payload.vehicles = payload.vehicles.filter((v) => v.vin.trim() !== "");
 
+      // Decide between update or create based on whether editingId is provided
       if (editingId) {
-        // Edit mode
-        await updateUserWorkshop(editingId, cleanedPayload, token); // Pass the token
+        await updateUserWorkshop(editingId, payload, token);
         alert("Mechanical workshop updated successfully.");
       } else {
-        // Create mode
-        await createUserWorkshop(cleanedPayload);
+        await createUserWorkshop(payload);
         alert("Mechanical workshop created successfully.");
       }
-
-      // Reset the form
-      resetForm();
-
-      // Refresh data in the parent component if necessary
+      // Execute any post-submit callbacks
       if (afterSubmit) afterSubmit();
-
-      // Close the modal
       if (onClose) onClose();
     } catch (error) {
       console.error("Error submitting the form:", error);
@@ -455,10 +281,10 @@ const VehicleReception = ({
     }
   };
 
-  // ======= RENDER =======
   return (
-    <Container className="p-3">
+    <Container className="p-4">
       {loading ? (
+        // Show a loading spinner while data is being fetched
         <div
           className="d-flex justify-content-center align-items-center"
           style={{ height: "50vh" }}
@@ -466,17 +292,17 @@ const VehicleReception = ({
           <Spinner animation="border" />
         </div>
       ) : (
+        // Render the form for workshop and vehicle information
         <Form onSubmit={handleSubmit}>
           <h4 className="mb-3">
             {editingId
               ? "Edit Mechanical Workshop"
               : "Register Mechanical Workshop"}
           </h4>
-
-          {/* Display submission error */}
+          {/* Display any submission errors */}
           {submitError && <Alert variant="danger">{submitError}</Alert>}
 
-          {/* Email, First Name, and Last Name */}
+          {/* Owner Information */}
           <Row className="mb-3">
             <Col md={4}>
               <Form.Group controlId="email">
@@ -485,12 +311,8 @@ const VehicleReception = ({
                   type="email"
                   value={userWorkshop.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  isInvalid={!!errors.email}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.email}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={4}>
@@ -500,12 +322,8 @@ const VehicleReception = ({
                   type="text"
                   value={userWorkshop.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  isInvalid={!!errors.name}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.name}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={4}>
@@ -517,32 +335,13 @@ const VehicleReception = ({
                   onChange={(e) =>
                     handleInputChange("lastName", e.target.value)
                   }
-                  isInvalid={!!errors.lastName}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.lastName}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
 
-          {/* Profile */}
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Group controlId="profile">
-                <Form.Label>Profile</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={userWorkshop.profile}
-                  readOnly
-                  plaintext
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Address */}
+          {/* Address Information */}
           <Row className="mb-3">
             <Col md={6}>
               <Form.Group controlId="address">
@@ -551,12 +350,8 @@ const VehicleReception = ({
                   type="text"
                   value={userWorkshop.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
-                  isInvalid={!!errors.address}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.address}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={3}>
@@ -566,12 +361,8 @@ const VehicleReception = ({
                   type="text"
                   value={userWorkshop.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
-                  isInvalid={!!errors.city}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.city}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={3}>
@@ -581,17 +372,11 @@ const VehicleReception = ({
                   type="text"
                   value={userWorkshop.state}
                   onChange={(e) => handleInputChange("state", e.target.value)}
-                  isInvalid={!!errors.state}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.state}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
-
-          {/* Zip Code */}
           <Row className="mb-3">
             <Col md={3}>
               <Form.Group controlId="zip">
@@ -600,12 +385,8 @@ const VehicleReception = ({
                   type="text"
                   value={userWorkshop.zip}
                   onChange={(e) => handleInputChange("zip", e.target.value)}
-                  isInvalid={!!errors.zip}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.zip}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
@@ -620,14 +401,10 @@ const VehicleReception = ({
                   placeholder="(000) 000-0000"
                   value={userWorkshop.primaryNumber}
                   onChange={(e) =>
-                    handlePhoneNumberChange("primaryNumber", e.target.value)
+                    handleInputChange("primaryNumber", e.target.value)
                   }
-                  isInvalid={!!errors.primaryNumber}
                   required
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.primaryNumber}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
             <Col md={6}>
@@ -638,24 +415,20 @@ const VehicleReception = ({
                   placeholder="(000) 000-0000"
                   value={userWorkshop.secondaryNumber || ""}
                   onChange={(e) =>
-                    handlePhoneNumberChange("secondaryNumber", e.target.value)
+                    handleInputChange("secondaryNumber", e.target.value)
                   }
-                  isInvalid={!!errors.secondaryNumber}
                 />
-                <Form.Control.Feedback type="invalid">
-                  {errors.secondaryNumber}
-                </Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>
 
           {/* Tax Exemption */}
           <Row className="mb-3">
-            <Col md={6} className="d-flex align-items-center">
+            <Col md={6}>
               <Form.Group controlId="noTax">
                 <Form.Check
                   type="checkbox"
-                  label="Tax Exempt (noTax)"
+                  label="Tax Exempt"
                   checked={userWorkshop.noTax}
                   onChange={(e) => handleInputChange("noTax", e.target.checked)}
                 />
@@ -668,7 +441,6 @@ const VehicleReception = ({
           <div className="border rounded p-2 mb-2 bg-white">
             {userWorkshop.vehicles.map((vehicle, index) => (
               <div key={index}>
-                {/* First Row of the Vehicle */}
                 <Row>
                   <Col md={3}>
                     <Form.Group controlId={`vin_${index}`}>
@@ -680,13 +452,10 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "vin", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_vin_${index}`]}
                         required
-                        disabled={editingId && vehicle.vin} // Disable VIN if it already exists
+                        // When editing, disable VIN if it already exists
+                        disabled={editingId && vehicle.vin}
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_vin_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                   <Col md={3}>
@@ -698,12 +467,8 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "make", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_make_${index}`]}
                         required
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_make_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                   <Col md={3}>
@@ -715,26 +480,21 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "model", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_model_${index}`]}
                         required
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_model_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                   <Col md={3} className="d-flex align-items-end">
                     <Button
                       variant="danger"
                       onClick={() => removeVehicle(index)}
+                      // Disable removal if there is only one vehicle in the list
                       disabled={userWorkshop.vehicles.length === 1}
                     >
                       Remove Vehicle
                     </Button>
                   </Col>
                 </Row>
-
-                {/* Second Row of the Vehicle */}
                 <Row className="mt-2">
                   <Col md={3}>
                     <Form.Group controlId={`year_${index}`}>
@@ -746,12 +506,8 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "year", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_year_${index}`]}
                         required
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_year_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                   <Col md={3}>
@@ -763,12 +519,8 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "engine", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_engine_${index}`]}
                         required
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_engine_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                   <Col md={3}>
@@ -780,12 +532,8 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "plate", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_plate_${index}`]}
                         required
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_plate_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                   <Col md={3}>
@@ -797,25 +545,20 @@ const VehicleReception = ({
                         onChange={(e) =>
                           handleVehicleChange(index, "state", e.target.value)
                         }
-                        isInvalid={!!errors[`vehicle_state_${index}`]}
                         required
                       />
-                      <Form.Control.Feedback type="invalid">
-                        {errors[`vehicle_state_${index}`]}
-                      </Form.Control.Feedback>
                     </Form.Group>
                   </Col>
                 </Row>
                 <hr />
               </div>
             ))}
-
             <Button variant="primary" onClick={addVehicle}>
               Add Vehicle
             </Button>
           </div>
 
-          {/* Submit and Cancel Buttons */}
+          {/* Form submission and cancellation buttons */}
           <div className="text-end">
             <Button
               type="submit"

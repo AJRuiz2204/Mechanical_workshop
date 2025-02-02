@@ -1,33 +1,45 @@
 /* eslint-disable no-unused-vars */
 // src/components/Home/Payment/PaymentPDFViewer.jsx
+
+/**
+ * Component for displaying a PDF viewer with payment information
+ * @module PaymentPDFViewer
+ */
+
 import React, { useEffect, useState } from "react";
 import { PDFViewer } from "@react-pdf/renderer";
 import PaymentPDF from "./PaymentPDF";
 import { getAllPayments } from "../../../services/accountReceivableService";
 
+/**
+ * Main component for rendering a PDF viewer with payment details
+ * @returns {JSX.Element} PDF viewer component
+ */
 const PaymentPDFViewer = () => {
   const [pdfData, setPdfData] = useState(null);
 
+  /**
+   * Fetches payment data and sets up PDF data when the component mounts
+   */
   useEffect(() => {
-    // Aquí podrías llamar a una API para obtener todos los datos necesarios (workshopData, customer, payments)
-    // Para este ejemplo, supongamos que usamos getAllPayments y definimos datos de taller y cliente fijos.
+    // Fetch payment data and define workshop and customer information
     const fetchData = async () => {
       try {
         const payments = await getAllPayments();
         const data = {
           workshopData: {
-            workshopName: "Mi Taller Mecánico",
-            address: "Calle Falsa 123",
+            workshopName: "My Auto Workshop",
+            address: "123 Fake Street",
             primaryPhone: "(100) 000-0000",
-            email: "contacto@mitaller.com",
+            email: "contact@myworkshop.com",
             quoteNumber: "001",
             lastUpdated: "2025-02-01T12:00:00Z",
             expiryDate: "2025-03-01",
-            disclaimer: "Este es un recibo de pagos.",
+            disclaimer: "This is a payment receipt.",
           },
           customer: {
-            fullName: "Juan Pérez",
-            email: "juanperez@example.com",
+            fullName: "John Doe",
+            email: "johndoe@example.com",
             primaryPhone: "(200) 123-4567",
           },
           payments: payments,
@@ -40,8 +52,9 @@ const PaymentPDFViewer = () => {
     fetchData();
   }, []);
 
+  // Show loading message while data is being fetched
   if (!pdfData) {
-    return <div>Cargando PDF...</div>;
+    return <div>Loading PDF...</div>;
   }
 
   return (

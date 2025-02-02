@@ -61,10 +61,8 @@ namespace Mechanical_workshop.Models
 
         public bool NoTax { get; set; } = false;
 
-        // Relación con Vehicles
         public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
         
-        // Nueva relación con cuentas por cobrar
         public virtual ICollection<AccountReceivable> AccountsReceivable { get; set; } = new List<AccountReceivable>();
     }
 }

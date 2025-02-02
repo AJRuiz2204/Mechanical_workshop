@@ -1,17 +1,19 @@
 import axios from "axios";
 
-// Se actualiza API_URL para usar la variable de entorno VITE_API_URL o '' en caso de no estar definida.
+// Update API_URL to use VITE_API_URL environment variable or '' if it's not defined.
 const API_URL = `${import.meta.env.VITE_API_URL || ''}/api/SalesReport`;
 
 /**
- * Obtiene todos los reportes de ventas almacenados, incluyendo la información completa
- * del Estimate en cada detalle.
- * @returns {Promise<Array<Object>>} Array de SalesReportDto.
+ * Retrieves all stored sales reports, including complete Estimate information in each detail.
+ * @async
+ * @function getAllSalesReports
+ * @returns {Promise<Array<Object>>} An array of SalesReportDto objects.
+ * @throws Will throw an error if the request fails.
  */
 export const getAllSalesReports = async () => {
   try {
     const response = await axios.get(`${API_URL}/all`);
-    console.log("Respuesta del servicio:", response.data);
+    console.log("Service response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error in getAllSalesReports:", error);
@@ -20,11 +22,14 @@ export const getAllSalesReports = async () => {
 };
 
 /**
- * Obtiene el reporte de ventas.
- * Si se pasan fechas, se obtiene por rango; de lo contrario, se obtienen TODOS los registros.
- * @param {string} [startDate] - Fecha de inicio (opcional).
- * @param {string} [endDate] - Fecha de fin (opcional).
- * @returns {Promise<Object>} SalesReportDto.
+ * Retrieves a sales report. If startDate and endDate are provided, returns only the data for that range;
+ * otherwise, it returns all records.
+ * @async
+ * @function getSalesReport
+ * @param {string} [startDate] - The start date (optional).
+ * @param {string} [endDate] - The end date (optional).
+ * @returns {Promise<Object>} A SalesReportDto object.
+ * @throws Will throw an error if the request fails.
  */
 export const getSalesReport = async (startDate, endDate) => {
   try {
@@ -34,7 +39,7 @@ export const getSalesReport = async (startDate, endDate) => {
       params.endDate = endDate;
     }
     const response = await axios.get(API_URL, { params });
-    console.log("Respuesta del servicio:", response.data);
+    console.log("Service response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error in getSalesReport:", error);
@@ -43,9 +48,12 @@ export const getSalesReport = async (startDate, endDate) => {
 };
 
 /**
- * Obtiene un reporte de ventas por su ID.
- * @param {number} id - ID del reporte de ventas.
- * @returns {Promise<Object>} SalesReportDto.
+ * Retrieves a sales report by its ID.
+ * @async
+ * @function getSalesReportById
+ * @param {number} id - The ID of the sales report.
+ * @returns {Promise<Object>} A SalesReportDto object.
+ * @throws Will throw an error if the request fails.
  */
 export const getSalesReportById = async (id) => {
   try {
@@ -58,9 +66,12 @@ export const getSalesReportById = async (id) => {
 };
 
 /**
- * Crea un nuevo reporte de ventas.
- * @param {Object} reportData - Datos del reporte (SalesReportDto).
- * @returns {Promise<Object>} SalesReportDto creado.
+ * Creates a new sales report.
+ * @async
+ * @function createSalesReport
+ * @param {Object} reportData - The SalesReportDto containing the new report data.
+ * @returns {Promise<Object>} The created SalesReportDto.
+ * @throws Will throw an error if the request fails.
  */
 export const createSalesReport = async (reportData) => {
   try {

@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 // src/components/Diagnostic/TechnicianDiagnostic.jsx
+
 import React, { useEffect, useState } from "react";
 import {
   Form,
@@ -22,38 +23,58 @@ import { getDiagnosticById } from "../../../services/DiagnosticService";
 import "./Diagnostic.css";
 import NotesSection from "../../NotesSection/NotesSection";
 
+/**
+ * TechnicianDiagnostic Component
+ * This component allows a technician to create or edit a diagnostic associated with a vehicle.
+ * It uses a mileage field with formatting, an extended diagnostic description,
+ * and provides the ability to delete an existing diagnostic.
+ *
+ * Features:
+ *  - Displays vehicle information tied to a diagnostic.
+ *  - Allows mileage input with validation (1 to 999,999) and formatting.
+ *  - Allows entering an extended diagnostic description.
+ *  - Provides the option to save or delete the diagnostic.
+ *  - Integrates a notes section for additional technician notes.
+ *  - Navigates back to the TechnicianDiagnosticList after saving or deleting.
+ *
+ * @returns {JSX.Element}
+ */
 const TechnicianDiagnostic = () => {
   const navigate = useNavigate();
   const { diagnosticId, techDiagId } = useParams();
   const location = useLocation();
   const { vehicle } = location.state || {};
 
-  // State para determinar el modo: creación o edición
+  // Determines if the component is in edit or create mode
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Estado para el diagnóstico relacionado
+  // Holds the diagnostic data retrieved from the server
   const [diagnostic, setDiagnostic] = useState(null);
 
-  // Estado para el TechnicianDiagnostic (solo en modo edición)
+  // Holds the technician diagnostic data when editing
   const [technicianDiagnostic, setTechnicianDiagnostic] = useState(null);
 
-  // Estado del formulario
+  // Form state for mileage and extended diagnostic
   const [formData, setFormData] = useState({
     mileage: "",
     extendedDiagnostic: "",
   });
 
-  // Estados para mensajes de error y éxito
+  // Error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Estado de carga
+  // Loading indicator
   const [loading, setLoading] = useState(true);
 
-  // Estado para el modal de confirmación de eliminación
+  // Modal state for delete confirmation
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Funciones auxiliares para formatear y parsear la milla
+  /**
+   * Formats the mileage with grouping separators.
+   * @param {number} num - The numeric mileage.
+   * @returns {string} The formatted mileage.
+   */
   const formatMileage = (num) => {
     if (isNaN(num)) return "";
     return num.toLocaleString("en-US", {
@@ -62,33 +83,40 @@ const TechnicianDiagnostic = () => {
     });
   };
 
+  /**
+   * Parses the formatted mileage back into a number.
+   * @param {string} str - The formatted mileage.
+   * @returns {number} The numeric mileage.
+   */
   const parseMileage = (str) => {
     const num = parseInt(str.replace(/,/g, ""), 10);
     return isNaN(num) ? 0 : num;
   };
 
-  // Manejar cambios en el formulario
+  /**
+   * Handles changes in the form fields for extendedDiagnostic.
+   * @param {Object} e - The event object.
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Manejar cambios en el campo de milla con formateo
+  /**
+   * Handles changes in the mileage field, ensuring only numeric input up to 6 digits.
+   * Applies formatting.
+   * @param {Object} e - The event object.
+   */
   const handleMileageChange = (e) => {
-    let val = e.target.value.replace(/\D/g, ""); // Eliminar no dígitos
-
-    if (val.length > 6) val = val.slice(0, 6); // Limitar a 6 dígitos
-
+    let val = e.target.value.replace(/\D/g, "");
+    if (val.length > 6) val = val.slice(0, 6);
     if (val.length === 0) {
       setFormData({ ...formData, mileage: "" });
       return;
     }
-
     let numericVal = parseInt(val, 10);
     if (isNaN(numericVal)) numericVal = 0;
-    if (numericVal > 999999) numericVal = 999999; // Máximo 999,999
-
-    // Formatear como "xxx,xxx"
+    if (numericVal > 999999) numericVal = 999999;
     val = numericVal.toLocaleString("en-US", {
       minimumIntegerDigits: 1,
       useGrouping: true,
@@ -96,32 +124,29 @@ const TechnicianDiagnostic = () => {
     setFormData({ ...formData, mileage: val });
   };
 
-  // Manejar el envío del formulario
+  /**
+   * Submits the form data to create or update the technician diagnostic.
+   * @param {Object} e - The form submit event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Parsear la milla
     const mileageNumber = parseMileage(formData.mileage);
-
-    // Validaciones básicas
     if (!formData.mileage || mileageNumber === 0) {
       setErrorMessage("Mileage is required and cannot be zero.");
       return;
     }
-
     if (!formData.extendedDiagnostic.trim()) {
       setErrorMessage("Extended diagnostic is required.");
       return;
     }
-
     if (mileageNumber < 1 || mileageNumber > 999999) {
       setErrorMessage("Mileage must be between 1 and 999,999.");
       return;
     }
 
-    // Payload para TechnicianDiagnostic
     const techDiagData = {
       mileage: mileageNumber,
       extendedDiagnostic: formData.extendedDiagnostic.trim(),
@@ -129,11 +154,11 @@ const TechnicianDiagnostic = () => {
 
     try {
       if (isEditMode) {
-        // Modo edición: actualizar el TechnicianDiagnostic existente
+        // Update existing technician diagnostic
         await updateTechnicianDiagnostic(technicianDiagnostic.id, techDiagData);
         setSuccessMessage("Technician Diagnostic updated successfully.");
       } else {
-        // Modo creación: crear un nuevo TechnicianDiagnostic
+        // Create a new technician diagnostic
         const payload = {
           diagnosticId: diagnostic.id,
           ...techDiagData,
@@ -141,7 +166,6 @@ const TechnicianDiagnostic = () => {
         await createTechnicianDiagnostic(payload);
         setSuccessMessage("Technician Diagnostic created successfully.");
       }
-      // Redirigir a la lista de diagnostics después de guardar
       navigate("/technicianDiagnosticList");
     } catch (error) {
       setErrorMessage(
@@ -150,7 +174,9 @@ const TechnicianDiagnostic = () => {
     }
   };
 
-  // Manejar la eliminación con confirmación
+  /**
+   * Handles deletion of the technician diagnostic.
+   */
   const handleDelete = async () => {
     try {
       await deleteTechnicianDiagnostic(technicianDiagnostic.id);
@@ -163,7 +189,10 @@ const TechnicianDiagnostic = () => {
     }
   };
 
-  // Efecto para cargar datos al montar el componente
+  /**
+   * Fetches diagnostic and technician diagnostic data if applicable,
+   * determining whether the component is in edit mode.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -171,11 +200,11 @@ const TechnicianDiagnostic = () => {
         setSuccessMessage("");
 
         if (diagnosticId) {
-          // Modo creación
+          // Retrieve diagnostic by ID
           const diag = await getDiagnosticById(diagnosticId);
           setDiagnostic(diag);
+          // Check if there's already a technician diagnostic
           if (diag.technicianDiagnostics?.length) {
-            // Si ya existe un TechnicianDiagnostic, cambiar a modo edición
             const existingTechDiag = diag.technicianDiagnostics[0];
             setIsEditMode(true);
             setTechnicianDiagnostic(existingTechDiag);
@@ -186,11 +215,11 @@ const TechnicianDiagnostic = () => {
             });
           }
         } else if (techDiagId) {
-          // Modo edición
+          // Edit mode with existing technician diagnostic
           setIsEditMode(true);
           const techDiag = await getTechnicianDiagnostic(techDiagId);
           setTechnicianDiagnostic(techDiag);
-          const diagId = techDiag.diagnosticId; // Asumiendo que existe este campo
+          const diagId = techDiag.diagnosticId;
           const diag = await getDiagnosticById(diagId);
           setDiagnostic(diag);
           setFormData({
@@ -210,7 +239,6 @@ const TechnicianDiagnostic = () => {
     fetchData();
   }, [diagnosticId, techDiagId]);
 
-  // Renderizar el spinner de carga
   if (loading) {
     return (
       <Container className="p-4 border rounded">
@@ -226,7 +254,6 @@ const TechnicianDiagnostic = () => {
     );
   }
 
-  // Renderizar error si no se encontró el diagnóstico
   if (!diagnostic) {
     return (
       <Container className="p-4 border rounded">
@@ -248,12 +275,10 @@ const TechnicianDiagnostic = () => {
           ? "Edit Technician Diagnostic"
           : "Assign Technician Diagnostic"}
       </h3>
-
-      {/* Mostrar mensajes de error o éxito */}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      {/* Información del vehículo (solo lectura) */}
+      {/* Vehicle Information */}
       <h5>Vehicle Information</h5>
       <Row className="mb-3">
         <Col md={3}>
@@ -331,7 +356,7 @@ const TechnicianDiagnostic = () => {
         </Col>
       </Row>
 
-      {/* Formulario de Technician Diagnostic */}
+      {/* Technician Diagnostic Form */}
       <Form onSubmit={handleSubmit}>
         <h5>Technician Diagnostic Information</h5>
         <Row className="mb-3">
@@ -345,7 +370,7 @@ const TechnicianDiagnostic = () => {
                 value={formData.mileage}
                 onChange={handleMileageChange}
                 required
-                maxLength={7} // "999,999" tiene 7 caracteres
+                maxLength={7}
               />
             </Form.Group>
           </Col>
@@ -365,7 +390,6 @@ const TechnicianDiagnostic = () => {
           </Col>
         </Row>
 
-        {/* Botones */}
         <div className="d-flex justify-content-end">
           <Button
             variant="secondary"
@@ -389,9 +413,12 @@ const TechnicianDiagnostic = () => {
         </div>
       </Form>
 
-      <NotesSection diagId={diagnostic.id} techDiagId={techDiagId} />
+      {/* Pass the correct TechnicianDiagnostic ID to the Notes section */}
+      <NotesSection
+        diagId={diagnostic.id}
+        techDiagId={technicianDiagnostic?.id}
+      />
 
-      {/* Modal de Confirmación de Eliminación */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Delete Technician Diagnostic</Modal.Title>

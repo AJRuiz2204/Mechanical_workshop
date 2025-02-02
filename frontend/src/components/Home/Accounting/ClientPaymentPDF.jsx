@@ -1,6 +1,12 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 // src/components/Home/Payment/ClientPaymentPDF.jsx
+
+/**
+ * Component for generating a client payment summary PDF document
+ * @module ClientPaymentPDF
+ */
+
 import React from "react";
 import {
   Page,
@@ -13,6 +19,10 @@ import {
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
+/**
+ * PDF document styles definition
+ * @constant {Object} styles
+ */
 const styles = StyleSheet.create({
   page: {
     padding: 20,
@@ -82,12 +92,24 @@ const styles = StyleSheet.create({
   },
 });
 
+/**
+ * Main component for generating client payment PDF
+ * @param {Object} props - Component props
+ * @param {Object} props.pdfData - Payment data to display in PDF
+ * @param {Object} props.pdfData.workshopData - Workshop information
+ * @param {Object} props.pdfData.customer - Client information
+ * @param {Object} props.pdfData.vehicle - Vehicle information
+ * @param {Array} props.pdfData.payments - List of payment records
+ * @returns {JSX.Element} PDF document structure
+ */
 const ClientPaymentPDF = ({ pdfData }) => {
-  // pdfData debe tener: workshopData, customer, vehicle, payments
+  // Destructure PDF data with fallback defaults
   const workshopData = pdfData?.workshopData || {};
   const customer = pdfData?.customer || {};
   const vehicle = pdfData?.vehicle || {};
   const payments = pdfData?.payments || [];
+  
+  // Calculate payment totals
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
   const remainingBalance = payments[0]?.remainingBalance || 0;
   const initialBalance = payments[0]?.initialBalance || 0;
@@ -96,7 +118,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Encabezado */}
+        {/* Document Header Section */}
         <View style={styles.headerContainer}>
           <View style={styles.logoSection}>
             <Image src={logo} style={{ width: "100%", height: "100%" }} />
@@ -106,10 +128,11 @@ const ClientPaymentPDF = ({ pdfData }) => {
             <Text style={styles.textLine}>{workshopData.address}</Text>
             <Text style={styles.textLine}>{workshopData.primaryPhone}</Text>
             <Text style={styles.textLine}>{workshopData.email}</Text>
-            <Text style={styles.textLine}>Fecha: {formattedDate}</Text>
+            <Text style={styles.textLine}>Date: {formattedDate}</Text>
           </View>
         </View>
 
+        {/* Divider Line */}
         <View
           style={{
             borderBottomWidth: 1,
@@ -118,43 +141,44 @@ const ClientPaymentPDF = ({ pdfData }) => {
           }}
         />
 
-        {/* Información del Cliente */}
+        {/* Client Information Section */}
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Cliente: {customer.fullName}</Text>
+          <Text style={styles.sectionTitle}>Client: {customer.fullName}</Text>
           <Text style={{ fontSize: 10 }}>Email: {customer.email}</Text>
           <Text style={{ fontSize: 10 }}>
-            Teléfono: {customer.primaryPhone}
+            Phone: {customer.primaryPhone}
           </Text>
         </View>
 
-        {/* Información del Vehículo */}
+        {/* Vehicle Information Section */}
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Vehículo:</Text>
+          <Text style={styles.sectionTitle}>Vehicle:</Text>
           {vehicle ? (
             <Text style={{ fontSize: 10 }}>
               {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.vin}
             </Text>
           ) : (
-            <Text style={{ fontSize: 10 }}>Sin información de vehículo</Text>
+            <Text style={{ fontSize: 10 }}>No vehicle information</Text>
           )}
         </View>
 
-        {/* Resumen de Pagos */}
+        {/* Payment Summary Section */}
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Resumen de Pagos</Text>
+          <Text style={styles.sectionTitle}>Payment Summary</Text>
           <Text style={{ fontSize: 10 }}>
-            Saldo Inicial: ${Number(initialBalance).toFixed(2)}
+            Initial Balance: ${Number(initialBalance).toFixed(2)}
           </Text>
           <Text style={{ fontSize: 10 }}>
-            Total Pagado: ${totalPaid.toFixed(2)}
+            Total Paid: ${totalPaid.toFixed(2)}
           </Text>
           <Text style={{ fontSize: 10 }}>
-            Saldo Pendiente: ${Number(remainingBalance).toFixed(2)}
+            Remaining Balance: ${Number(remainingBalance).toFixed(2)}
           </Text>
         </View>
 
-        {/* Tabla de Pagos */}
+        {/* Payments Table Section */}
         <View style={styles.table}>
+          {/* Table Header */}
           <View style={[styles.tableRow, { backgroundColor: "#f5f5f5" }]}>
             <Text
               style={[styles.tableCol, styles.tableHeaderText, { flex: 1 }]}
@@ -164,24 +188,26 @@ const ClientPaymentPDF = ({ pdfData }) => {
             <Text
               style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
             >
-              Monto
+              Amount
             </Text>
             <Text
               style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}
             >
-              Fecha
+              Date
             </Text>
             <Text
               style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
             >
-              Método
+              Method
             </Text>
             <Text
               style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}
             >
-              Referencia
+              Reference
             </Text>
           </View>
+
+          {/* Table Rows */}
           {payments.map((payment, index) => (
             <View key={index} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.tableText, { flex: 1 }]}>
@@ -203,10 +229,10 @@ const ClientPaymentPDF = ({ pdfData }) => {
           ))}
         </View>
 
-        {/* Footer */}
+        {/* Document Footer */}
         <View style={styles.footer}>
           <Text style={{ textAlign: "center" }}>
-            Impreso el {formattedDate}
+            Printed on {formattedDate}
           </Text>
         </View>
       </Page>

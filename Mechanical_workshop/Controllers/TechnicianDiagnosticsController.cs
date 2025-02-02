@@ -26,40 +26,48 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<TechnicianDiagnosticReadDto>> CreateTechnicianDiagnostic(TechnicianDiagnosticCreateDto dto)
         {
-            // Verify that the Diagnostic exists
-            var diagnostic = await _context.Diagnostics
-                .Include(d => d.Vehicle)
-                .FirstOrDefaultAsync(d => d.Id == dto.DiagnosticId);
-
+            var diagnostic = await _context.Diagnostics.FindAsync(dto.DiagnosticId);
             if (diagnostic == null)
-                return NotFound(new { message = "The specified Diagnostic was not found." });
+                return NotFound(new { message = "Diagnostic not found." });
 
-            // Map
             var entity = _mapper.Map<TechnicianDiagnostic>(dto);
-
-            // Optional: perform additional validations
-            // For example, if mileage < 0, etc.
-
             _context.TechnicianDiagnostics.Add(entity);
             await _context.SaveChangesAsync();
 
-            // Return a readDto with ReasonForVisit and VehicleId
-            var readDto = await _context.TechnicianDiagnostics
-                .Include(t => t.Diagnostic)
-                .Where(t => t.Id == entity.Id)
-                .Select(t => new TechnicianDiagnosticReadDto
-                {
-                    Id = t.Id,
-                    DiagnosticId = t.DiagnosticId,
-                    ReasonForVisit = t.Diagnostic != null ? t.Diagnostic.ReasonForVisit : "",
-                    VehicleId = t.Diagnostic != null ? t.Diagnostic.VehicleId : 0,
-                    Mileage = t.Mileage,
-                    ExtendedDiagnostic = t.ExtendedDiagnostic
-                })
-                .FirstOrDefaultAsync();
+            // 🔴 ACTUALIZAR NOTAS ASIGNÁNDOLES EL TechnicianDiagnosticId
+            var notes = await _context.Notes.Where(n => n.DiagnosticId == entity.DiagnosticId && n.TechnicianDiagnosticId == null).ToListAsync();
+            foreach (var note in notes)
+            {
+                note.TechnicianDiagnosticId = entity.Id;
+            }
+            await _context.SaveChangesAsync();
 
-            return Ok(readDto);
+            return CreatedAtAction(nameof(GetTechnicianDiagnostic), new { id = entity.Id }, _mapper.Map<TechnicianDiagnosticReadDto>(entity));
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTechnicianDiagnostic(int id, TechnicianDiagnosticCreateDto dto)
+        {
+            var existingTd = await _context.TechnicianDiagnostics.FindAsync(id);
+            if (existingTd == null)
+                return NotFound(new { message = "Technician Diagnostic to update was not found." });
+
+            existingTd.Mileage = dto.Mileage;
+            existingTd.ExtendedDiagnostic = dto.ExtendedDiagnostic;
+
+            await _context.SaveChangesAsync();
+
+            // 🔴 ACTUALIZAR NOTAS ASIGNÁNDOLES EL TechnicianDiagnosticId
+            var notes = await _context.Notes.Where(n => n.DiagnosticId == existingTd.DiagnosticId && n.TechnicianDiagnosticId == null).ToListAsync();
+            foreach (var note in notes)
+            {
+                note.TechnicianDiagnosticId = existingTd.Id;
+            }
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TechnicianDiagnosticReadDto>> GetTechnicianDiagnostic(int id)
@@ -75,23 +83,6 @@ namespace Mechanical_workshop.Controllers
 
             var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(td);
             return Ok(readDto);
-        }
-
-
-        // PUT api/TechnicianDiagnostics/
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTechnicianDiagnostic(int id, TechnicianDiagnosticCreateDto dto)
-        {
-            var existingTd = await _context.TechnicianDiagnostics.FindAsync(id);
-            if (existingTd == null)
-                return NotFound(new { message = "Technician Diagnostic to update was not found." });
-
-            // Update data
-            existingTd.Mileage = dto.Mileage;
-            existingTd.ExtendedDiagnostic = dto.ExtendedDiagnostic;
-
-            await _context.SaveChangesAsync();
-            return NoContent();
         }
 
 
@@ -155,7 +146,7 @@ namespace Mechanical_workshop.Controllers
             return Ok(_mapper.Map<IEnumerable<TechnicianDiagnosticReadDto>>(techDiags));
         }
 
-        
+
 
     }
 }

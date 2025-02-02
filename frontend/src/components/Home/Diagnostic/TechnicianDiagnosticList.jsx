@@ -17,7 +17,11 @@ import {
 } from "../../../services/TechnicianDiagnosticService";
 
 /**
- * Component that displays the list of diagnostics assigned to a technician.
+ * TechnicianDiagnosticList Component
+ * This component displays the list of diagnostics assigned to a technician.
+ * The technician can edit or delete assigned diagnostics or create a new one if missing.
+ *
+ * @returns {JSX.Element}
  */
 const TechnicianDiagnosticList = () => {
   const navigate = useNavigate();
@@ -49,11 +53,11 @@ const TechnicianDiagnosticList = () => {
           return;
         }
 
-        // Obtener diagnósticos asignados al técnico
+        // Retrieve diagnostics assigned to the technician
         const data = await getDiagnosticsByTechnician(name, lastName);
         setDiagnostics(data);
 
-        // Obtener TechnicianDiagnostics para cada diagnóstico
+        // Retrieve TechnicianDiagnostics for each diagnostic
         const newTechDiagMap = {};
         await Promise.all(
           data.map(async (diag) => {
@@ -77,6 +81,10 @@ const TechnicianDiagnosticList = () => {
     fetchTechnicianDiagnostics();
   }, []);
 
+  /**
+   * Handles the deletion of a technician diagnostic.
+   * @param {number} diagnosticId - ID of the diagnostic to delete
+   */
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
     if (!techDiagId) return;
@@ -144,19 +152,12 @@ const TechnicianDiagnosticList = () => {
                             navigate(
                               `/technicianDiagnostic/edit/${
                                 techDiagMap[diag.id]
-                              }`,
-                              {
-                                state: {
-                                  vehicle: diag.vehicle,
-                                  diagnosticId: diag.id,
-                                },
-                              }
+                              }`
                             )
                           }
                         >
                           Edit
                         </Button>
-
                         <Button
                           variant="danger"
                           size="sm"

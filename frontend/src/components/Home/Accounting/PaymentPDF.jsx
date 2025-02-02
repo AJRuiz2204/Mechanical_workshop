@@ -1,6 +1,12 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 // src/components/Home/Payment/PaymentPDF.jsx
+
+/**
+ * Component for generating a payment summary PDF document
+ * @module PaymentPDF
+ */
+
 import React from "react";
 import {
   Page,
@@ -8,38 +14,41 @@ import {
   View,
   Document,
   StyleSheet,
-  Image
+  Image,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
-// Definir estilos para el documento PDF
+/**
+ * PDF document styles definition
+ * @constant {Object} styles
+ */
 const styles = StyleSheet.create({
   page: {
     padding: 20,
     fontSize: 10,
     fontFamily: "Helvetica",
-    backgroundColor: "#ffffff"
+    backgroundColor: "#ffffff",
   },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 5
+    marginBottom: 5,
   },
   logoSection: {
     width: 100,
     height: 100,
-    marginRight: 10
+    marginRight: 10,
   },
   headerInfoContainer: {
     flex: 1,
     flexDirection: "column",
-    alignItems: "flex-end"
+    alignItems: "flex-end",
   },
   textLine: {
     fontSize: 9,
-    marginBottom: 1
+    marginBottom: 1,
   },
   infoSection: {
     flexDirection: "row",
@@ -47,12 +56,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     padding: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0"
+    borderBottomColor: "#e0e0e0",
   },
   sectionTitle: {
     fontSize: 10,
     fontWeight: "bold",
-    marginBottom: 2
+    marginBottom: 2,
   },
   table: {
     display: "table",
@@ -60,29 +69,29 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    marginTop: 5
+    marginTop: 5,
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     minHeight: 20,
-    alignItems: "center"
+    alignItems: "center",
   },
   tableHeaderText: {
     fontSize: 8,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   tableText: {
-    fontSize: 8
+    fontSize: 8,
   },
   tableCol: {
-    padding: 2
+    padding: 2,
   },
   totalsSection: {
     marginTop: 10,
     alignItems: "flex-end",
-    paddingRight: 5
+    paddingRight: 5,
   },
   footer: {
     position: "absolute",
@@ -92,17 +101,21 @@ const styles = StyleSheet.create({
     fontSize: 8,
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
-    paddingTop: 5
-  }
+    paddingTop: 5,
+  },
 });
 
+/**
+ * Main component for generating a payment PDF
+ * @param {Object} props - Component props
+ * @param {Object} props.pdfData - Payment data to display in PDF
+ * @param {Object} props.pdfData.workshopData - Workshop information
+ * @param {Object} props.pdfData.customer - Client information
+ * @param {Array} props.pdfData.payments - List of payment records
+ * @returns {JSX.Element} PDF document structure
+ */
 const PaymentPDF = ({ pdfData }) => {
-  // pdfData debe incluir:
-  // - workshopData: { workshopName, address, primaryPhone, email, ... }
-  // - customer: { fullName, email, primaryPhone }
-  // - payments: array de pagos (cada pago debe tener id, amount, paymentDate, method, transactionReference, notes)
-  // - (opcional) totals, etc.
-
+  // Destructure PDF data with fallback defaults
   const workshopData = pdfData?.workshopData || {};
   const customer = pdfData?.customer || {};
   const payments = pdfData?.payments || [];
@@ -111,7 +124,7 @@ const PaymentPDF = ({ pdfData }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Encabezado */}
+        {/* Document Header Section */}
         <View style={styles.headerContainer}>
           <View style={styles.logoSection}>
             <Image src={logo} style={{ width: "100%", height: "100%" }} />
@@ -123,51 +136,87 @@ const PaymentPDF = ({ pdfData }) => {
             {workshopData.email && (
               <Text style={styles.textLine}>{workshopData.email}</Text>
             )}
-            <Text style={styles.textLine}>Fecha: {formattedDate}</Text>
+            <Text style={styles.textLine}>Date: {formattedDate}</Text>
           </View>
         </View>
 
+        {/* Divider Line */}
         <View
-          style={{ borderBottomWidth: 1, borderBottomColor: "#e0e0e0", marginBottom: 5 }}
+          style={{
+            borderBottomWidth: 1,
+            borderBottomColor: "#e0e0e0",
+            marginBottom: 5,
+          }}
         />
 
-        {/* Información del Cliente */}
+        {/* Client Information Section */}
         <View style={styles.infoSection}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>Cliente</Text>
+            <Text style={styles.sectionTitle}>Client</Text>
             <Text style={styles.textLine}>{customer.fullName}</Text>
             <Text style={styles.textLine}>{customer.email}</Text>
             <Text style={styles.textLine}>{customer.primaryPhone}</Text>
           </View>
         </View>
 
-        {/* Tabla de Pagos */}
+        {/* Payments Table Section */}
         <View style={styles.table}>
+          {/* Table Header */}
           <View style={[styles.tableRow, { backgroundColor: "#f5f5f5" }]}>
-            <Text style={[styles.tableCol, styles.tableHeaderText, { flex: 1 }]}>ID</Text>
-            <Text style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}>Monto</Text>
-            <Text style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}>Fecha</Text>
-            <Text style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}>Método</Text>
-            <Text style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}>Referencia</Text>
+            <Text
+              style={[styles.tableCol, styles.tableHeaderText, { flex: 1 }]}
+            >
+              ID
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
+            >
+              Amount
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}
+            >
+              Date
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
+            >
+              Method
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}
+            >
+              Reference
+            </Text>
           </View>
+
+          {/* Table Rows */}
           {payments.map((payment, index) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 1 }]}>{payment.id}</Text>
+              <Text style={[styles.tableCol, styles.tableText, { flex: 1 }]}>
+                {payment.id}
+              </Text>
               <Text style={[styles.tableCol, styles.tableText, { flex: 2 }]}>
                 ${Number(payment.amount).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.tableText, { flex: 3 }]}>
                 {new Date(payment.paymentDate).toLocaleDateString()}
               </Text>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 2 }]}>{payment.method}</Text>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 3 }]}>{payment.transactionReference}</Text>
+              <Text style={[styles.tableCol, styles.tableText, { flex: 2 }]}>
+                {payment.method}
+              </Text>
+              <Text style={[styles.tableCol, styles.tableText, { flex: 3 }]}>
+                {payment.transactionReference}
+              </Text>
             </View>
           ))}
         </View>
 
-        {/* Footer */}
+        {/* Document Footer */}
         <View style={styles.footer}>
-          <Text style={{ textAlign: "center" }}>Impreso el {formattedDate}</Text>
+          <Text style={{ textAlign: "center" }}>
+            Printed on {formattedDate}
+          </Text>
         </View>
       </Page>
     </Document>

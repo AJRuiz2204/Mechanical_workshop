@@ -14,35 +14,35 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { createDiagnostic } from "../../../services/DiagnosticService";
 import { getVehicleById } from "../../../services/VehicleService";
-import technicianService from "../../../services/technicianService"; // Importa el service de técnicos
+import technicianService from "../../../services/technicianService"; // Import technician service
 import "./Diagnostic.css";
 
 const Diagnostic = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Asegúrate de que tu ruta es /diagnostic/:id
+  const { id } = useParams(); // Get vehicle ID from route parameters
 
-  // Estado para el vehículo
+  // State for storing vehicle information
   const [vehicle, setVehicle] = useState(null);
 
-  // Estado para técnicos
+  // State for storing technicians data
   const [technicians, setTechnicians] = useState([]);
   const [techLoading, setTechLoading] = useState(true);
   const [techError, setTechError] = useState("");
 
-  // Estado del formulario
+  // State for storing form data for diagnostic creation
   const [formData, setFormData] = useState({
     reasonForVisit: "",
-    assignedTechnician: "", // Incluye el técnico asignado
+    assignedTechnician: "", // Assigned technician information
   });
 
-  // Estado para mensajes de error y éxito
+  // State for storing error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Estado de carga para el vehículo
+  // State for loading vehicle data
   const [loading, setLoading] = useState(true);
 
-  // Fetch vehicle information when the component mounts
+  // useEffect to fetch vehicle information when component mounts
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
@@ -51,6 +51,7 @@ const Diagnostic = () => {
           setLoading(false);
           return;
         }
+        // Retrieve vehicle data using the vehicle ID
         const data = await getVehicleById(id);
         setVehicle(data);
       } catch (error) {
@@ -63,10 +64,11 @@ const Diagnostic = () => {
     fetchVehicle();
   }, [id]);
 
-  // Fetch technicians when the component mounts
+  // useEffect to fetch technicians information when component mounts
   useEffect(() => {
     const fetchTechnicians = async () => {
       try {
+        // Retrieve technicians data from the service
         const data = await technicianService.getTechnicians();
         setTechnicians(data);
       } catch (error) {
@@ -79,29 +81,32 @@ const Diagnostic = () => {
     fetchTechnicians();
   }, []);
 
-  // Handle form changes
+  // Handle changes in the form inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Update the formData state with new input value
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission
+  // Handle form submission for creating a new diagnostic
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Reset error and success messages
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Form validation
+    // Validate that a technician has been assigned
     if (!formData.assignedTechnician.trim()) {
       setErrorMessage("You must assign a technician.");
       return;
     }
+    // Validate that reason for visit is provided
     if (!formData.reasonForVisit.trim()) {
       setErrorMessage("Reason for visit is required.");
       return;
     }
 
-    // Payload to create the diagnostic
+    // Construct the diagnostic data payload
     const diagnosticData = {
       vehicleId: parseInt(id, 10),
       assignedTechnician: formData.assignedTechnician.trim(),
@@ -109,15 +114,18 @@ const Diagnostic = () => {
     };
 
     try {
+      // Call the service to create a diagnostic
       await createDiagnostic(diagnosticData);
       setSuccessMessage("Diagnostic created successfully.");
-      // Redirect to the diagnostics list after creation
+      // Redirect to diagnostics list after successful creation
       navigate("/diagnostic-list");
     } catch (error) {
+      // Set error message if diagnostic creation fails
       setErrorMessage("Error creating diagnostic: " + error.message);
     }
   };
 
+  // If either vehicle or technicians are still loading, display a spinner
   if (loading || techLoading) {
     return (
       <Container className="p-4 border rounded">
@@ -133,6 +141,7 @@ const Diagnostic = () => {
     );
   }
 
+  // If there is an error message, display it with a button to return to the diagnostics list
   if (errorMessage) {
     return (
       <Container className="p-4 border rounded">
@@ -151,7 +160,7 @@ const Diagnostic = () => {
     <Container className="p-4 border rounded bg-light">
       <h3>Create Diagnostic</h3>
 
-      {/* Display error or success messages */}
+      {/* Display success or technician error messages */}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
       {techError && <Alert variant="danger">{techError}</Alert>}
 
@@ -202,6 +211,7 @@ const Diagnostic = () => {
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
           <Col md={6}>
+            {/* Dropdown to select an assigned technician */}
             <Form.Group controlId="assignedTechnician">
               <Form.Label>Assign Technician</Form.Label>
               <Form.Select
@@ -227,6 +237,7 @@ const Diagnostic = () => {
             </Form.Group>
           </Col>
           <Col md={6}>
+            {/* Textarea for entering the reason for visit */}
             <Form.Group controlId="reasonForVisit">
               <Form.Label>Costumer State</Form.Label>
               <Form.Control
@@ -242,6 +253,7 @@ const Diagnostic = () => {
           </Col>
         </Row>
 
+        {/* Action buttons for cancelling or saving the diagnostic */}
         <div className="d-flex justify-content-end">
           <Button
             variant="secondary"

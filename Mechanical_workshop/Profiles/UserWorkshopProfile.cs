@@ -59,6 +59,11 @@ namespace Mechanical_workshop.Profiles
             CreateMap<VehicleDto, Vehicle>()
                 .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore()) // Ignore UserWorkshop to avoid circular references
                 .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore()); // Ignore UserWorkshopId to avoid circular references
+
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())  // Ignora el Id para no modificarlo
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore())
+                .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore());
         }
     }
 }

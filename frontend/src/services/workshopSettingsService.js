@@ -18,8 +18,14 @@ axios.interceptors.response.use(
 );
 
 /**
- * Retrieves the current workshop settings.
+ * getWorkshopSettings
+ * Obtiene la configuración actual del taller.
+ * This function retrieves the current workshop settings.
+ *
+ * @async
+ * @function
  * @returns {Promise<Object>} The workshop settings data.
+ * @throws Will throw an error if the request fails.
  */
 export const getWorkshopSettings = async () => {
   try {
@@ -34,9 +40,15 @@ export const getWorkshopSettings = async () => {
 };
 
 /**
- * Creates new workshop settings.
+ * createWorkshopSettings
+ * Crea una nueva configuración de taller.
+ * This function creates new workshop settings.
+ *
+ * @async
+ * @function
  * @param {Object} data - The workshop settings data to create.
  * @returns {Promise<Object>} The created workshop settings data.
+ * @throws Will throw an error if the request fails.
  */
 export const createWorkshopSettings = async (data) => {
   try {
@@ -74,10 +86,16 @@ export const createWorkshopSettings = async (data) => {
 };
 
 /**
- * Updates existing workshop settings.
+ * updateWorkshopSettings
+ * Actualiza la configuración de taller existente.
+ * This function updates existing workshop settings.
+ *
+ * @async
+ * @function
  * @param {number} id - The ID of the workshop settings to update.
  * @param {Object} data - The updated workshop settings data.
- * @returns {Promise<void>}
+ * @returns {Promise<void>} No return value.
+ * @throws Will throw an error if the request fails.
  */
 export const updateWorkshopSettings = async (id, data) => {
   try {
@@ -113,9 +131,15 @@ export const updateWorkshopSettings = async (id, data) => {
 };
 
 /**
- * Deletes workshop settings by ID.
+ * deleteWorkshopSettings
+ * Elimina la configuración de taller por su ID.
+ * This function deletes workshop settings by ID.
+ *
+ * @async
+ * @function
  * @param {number} id - The ID of the workshop settings to delete.
- * @returns {Promise<void>}
+ * @returns {Promise<void>} No return value.
+ * @throws Will throw an error if the request fails.
  */
 export const deleteWorkshopSettings = async (id) => {
   try {

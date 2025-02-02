@@ -15,6 +15,14 @@ import {
   getTechnicianDiagnosticByDiagId,
 } from "../../../services/TechnicianDiagnosticService";
 
+/**
+ * DiagnosticList Component.
+ * Displays a list of diagnostics with actions based on technician diagnostics.
+ *
+ * @component
+ * @example
+ * return (<DiagnosticList />)
+ */
 const DiagnosticList = () => {
   const navigate = useNavigate();
   const [diagnostics, setDiagnostics] = useState([]);
@@ -22,16 +30,22 @@ const DiagnosticList = () => {
   const [error, setError] = useState("");
   const [techDiagMap, setTechDiagMap] = useState({});
 
+  /**
+   * Fetch diagnostics and their corresponding technician diagnostics.
+   *
+   * @async
+   * @function fetchData
+   */
   const fetchData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // Obtener diagnósticos
+      // Retrieve diagnostics data.
       const diagData = await getDiagnostics();
       setDiagnostics(diagData);
 
-      // Obtener TechnicianDiagnostics
+      // Retrieve technician diagnostics for each diagnostic.
       const newTechDiagMap = {};
       await Promise.all(
         diagData.map(async (diag) => {
@@ -53,10 +67,18 @@ const DiagnosticList = () => {
     }
   };
 
+  // Run fetchData on component mount.
   useEffect(() => {
     fetchData();
   }, []);
 
+  /**
+   * Handle deletion of a technician diagnostic.
+   *
+   * @async
+   * @function handleDelete
+   * @param {number|string} diagnosticId - The id of the diagnostic to delete.
+   */
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
     if (!techDiagId) return;

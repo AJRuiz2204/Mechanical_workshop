@@ -1,6 +1,16 @@
 // Frontend: src/services/TechnicianDiagnosticService.js
 
-// Create TechnicianDiagnostic
+/**
+ * createTechnicianDiagnostic
+ * Crea un nuevo diagnóstico de técnico.
+ * This function creates a new technician diagnostic.
+ *
+ * @async
+ * @function
+ * @param {Object} techDiagData - The data for the new technician diagnostic.
+ * @returns {Promise<Object>} Returns the created TechnicianDiagnosticReadDto.
+ * @throws Will throw an error if the request fails.
+ */
 export const createTechnicianDiagnostic = async (techDiagData) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics`, {
@@ -23,7 +33,17 @@ export const createTechnicianDiagnostic = async (techDiagData) => {
   }
 };
 
-// Get TechnicianDiagnostic by ID
+/**
+ * getTechnicianDiagnostic
+ * Obtiene un diagnóstico de técnico por su ID.
+ * This function retrieves a technician diagnostic by its ID.
+ *
+ * @async
+ * @function
+ * @param {number|string} id - The ID of the technician diagnostic to retrieve.
+ * @returns {Promise<Object>} The technician diagnostic data.
+ * @throws Will throw an error if the request fails.
+ */
 export const getTechnicianDiagnostic = async (id) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics/${id}`);
@@ -42,7 +62,18 @@ export const getTechnicianDiagnostic = async (id) => {
   }
 };
 
-// Update TechnicianDiagnostic
+/**
+ * updateTechnicianDiagnostic
+ * Actualiza un diagnóstico de técnico existente.
+ * This function updates an existing technician diagnostic.
+ *
+ * @async
+ * @function
+ * @param {number|string} id - The ID of the technician diagnostic to update.
+ * @param {Object} techDiagData - The updated data for the technician diagnostic.
+ * @returns {Promise<void>} No return value.
+ * @throws Will throw an error if the request fails.
+ */
 export const updateTechnicianDiagnostic = async (id, techDiagData) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics/${id}`, {
@@ -65,7 +96,17 @@ export const updateTechnicianDiagnostic = async (id, techDiagData) => {
   }
 };
 
-// Delete TechnicianDiagnostic
+/**
+ * deleteTechnicianDiagnostic
+ * Elimina un diagnóstico de técnico por su ID.
+ * This function deletes a technician diagnostic by its ID.
+ *
+ * @async
+ * @function
+ * @param {number|string} id - The ID of the technician diagnostic to delete.
+ * @returns {Promise<void>} No return value.
+ * @throws Will throw an error if the request fails.
+ */
 export const deleteTechnicianDiagnostic = async (id) => {
   try {
     const response = await fetch(`/api/TechnicianDiagnostics/${id}`, {
@@ -86,7 +127,17 @@ export const deleteTechnicianDiagnostic = async (id) => {
   }
 };
 
-// Get TechnicianDiagnostic by Diagnostic ID
+/**
+ * getTechnicianDiagnosticByDiagId
+ * Obtiene un diagnóstico de técnico por el ID del diagnóstico.
+ * This function retrieves a technician diagnostic by the diagnostic ID.
+ *
+ * @async
+ * @function
+ * @param {number|string} diagnosticId - The ID of the diagnostic to retrieve the technician diagnostic for.
+ * @returns {Promise<Object>} The technician diagnostic data.
+ * @throws Will throw an error if not found or if the request fails.
+ */
 export const getTechnicianDiagnosticByDiagId = async (diagnosticId) => {
   try {
     const response = await fetch(
@@ -113,7 +164,17 @@ export const getTechnicianDiagnosticByDiagId = async (diagnosticId) => {
   }
 };
 
-// Get TechnicianDiagnostics Batch
+/**
+ * getTechnicianDiagnosticsBatch
+ * Obtiene varios diagnósticos de técnico usando un array de IDs de diagnóstico.
+ * This function retrieves multiple technician diagnostics using an array of diagnostic IDs.
+ *
+ * @async
+ * @function
+ * @param {Array<number|string>} diagnosticIds - An array of diagnostic IDs.
+ * @returns {Promise<Array>} An array of technician diagnostic objects.
+ * @throws Will throw an error if the request fails.
+ */
 export const getTechnicianDiagnosticsBatch = async (diagnosticIds) => {
   try {
     const idsParam = diagnosticIds.join("&diagnosticIds=");

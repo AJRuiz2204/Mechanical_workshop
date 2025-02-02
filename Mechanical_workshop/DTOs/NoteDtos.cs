@@ -12,6 +12,8 @@ namespace Mechanical_workshop.Dtos
 
             [Required]
             public int DiagnosticId { get; set; }
+
+            public int? TechnicianDiagnosticId { get; set; }
         }
 
         public class NoteReadDto
@@ -21,6 +23,7 @@ namespace Mechanical_workshop.Dtos
             public DateTime CreatedAt { get; set; }
             public DateTime? UpdatedAt { get; set; }
             public int DiagnosticId { get; set; }
+            public int? TechnicianDiagnosticId { get; set; }
         }
 
         public class NoteUpdateDto
@@ -28,6 +31,8 @@ namespace Mechanical_workshop.Dtos
             [Required]
             [StringLength(2000)]
             public string Content { get; set; } = string.Empty;
+
+            public int? TechnicianDiagnosticId { get; set; }
         }
     }
 }

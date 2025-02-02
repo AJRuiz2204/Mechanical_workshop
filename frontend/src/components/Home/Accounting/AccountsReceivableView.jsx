@@ -9,28 +9,39 @@ import {
 } from "../../../services/accountReceivableService";
 import { useLocation } from "react-router-dom";
 
+// AccountsReceivableView component: displays a list of accounts receivable,
+// allows selection of an account to view its details, and provides a form to register payments.
 const AccountsReceivableView = () => {
+  // State for storing the list of accounts receivable.
   const [accounts, setAccounts] = useState([]);
-  const [selectedAccount, setSelectedAccount] = useState(null); // Datos completos de la cuenta
+  // State for storing the complete details of the selected account.
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  // State for storing the list of payments for the selected account.
   const [payments, setPayments] = useState([]);
+  // State for storing the selected account ID.
   const [selectedAccountId, setSelectedAccountId] = useState(null);
+  // State for controlling whether the payment section is shown.
   const [showPayments, setShowPayments] = useState(false);
-  // Se agrega la propiedad 'notes' en el estado del formulario
+  // State for storing form data for creating a new payment.
+  // The formData includes amount, method, transactionReference, and notes.
   const [formData, setFormData] = useState({
     amount: "",
     method: "Cash",
     transactionReference: "",
-    notes: "", // Agregado: por defecto cadena vacía
+    notes: "",
   });
 
+  // useLocation hook to access the URL query parameters.
   const location = useLocation();
 
+  // useEffect to load the list of accounts receivable when the component mounts.
   useEffect(() => {
     loadAccounts();
   }, []);
 
+  // useEffect to check URL query parameters and select an account if accountId is provided.
   useEffect(() => {
-    // Si en la URL existe ?accountId=... seleccionamos esa cuenta
+    // Retrieve the accountId from the URL query parameters.
     const query = new URLSearchParams(location.search);
     const accountIdQuery = query.get("accountId");
     if (accountIdQuery) {
@@ -38,6 +49,7 @@ const AccountsReceivableView = () => {
     }
   }, [location.search]);
 
+  // loadAccounts: asynchronously fetches the list of accounts receivable and updates state.
   const loadAccounts = async () => {
     try {
       const data = await getAccountsReceivable();
@@ -49,12 +61,14 @@ const AccountsReceivableView = () => {
     }
   };
 
+  // selectAccount: selects an account by its ID, fetches its details and associated payments,
+  // then updates state accordingly.
   const selectAccount = async (accountId) => {
     try {
       setSelectedAccountId(accountId);
       setShowPayments(true);
 
-      // Se obtienen la cuenta y sus pagos
+      // Fetch both account details and payments concurrently.
       const [accountDetails, paymentsData] = await Promise.all([
         getAccountReceivableById(accountId),
         getPaymentsByAccount(accountId),
@@ -70,6 +84,9 @@ const AccountsReceivableView = () => {
     }
   };
 
+  // handlePaymentSubmit: handles the submission of the payment form.
+  // It validates the payment amount, ensures it does not exceed the account balance,
+  // constructs the payload, and calls createPayment to register the payment.
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     if (!selectedAccountId) return;
@@ -90,22 +107,23 @@ const AccountsReceivableView = () => {
       }
     }
 
-    // Construir el payload usando los nombres exactos que espera el DTO en el servidor
+    // Construct the payload with the exact property names expected by the server DTO.
     const payload = {
       AccountReceivableId: selectedAccountId,
       Amount: paymentAmount,
       Method: formData.method,
       TransactionReference: formData.transactionReference,
-      Notes: formData.notes, // Se agrega la propiedad 'Notes'
+      Notes: formData.notes,
     };
 
     console.log("Payload a enviar:", payload);
 
     try {
+      // Call the service to create a new payment.
       const response = await createPayment(payload);
       console.log("Respuesta de createPayment:", response);
 
-      // Actualizar el historial de pagos y la cuenta
+      // After successful payment creation, update the payment history and account details.
       const updatedPayments = await getPaymentsByAccount(selectedAccountId);
       setPayments(updatedPayments);
       console.log("Pagos actualizados:", updatedPayments);
@@ -114,6 +132,7 @@ const AccountsReceivableView = () => {
       setSelectedAccount(updatedAccount);
       console.log("Cuenta actualizada:", updatedAccount);
 
+      // Reset the form data to initial values.
       setFormData({
         amount: "",
         method: "Cash",
@@ -129,14 +148,16 @@ const AccountsReceivableView = () => {
 
   return (
     <div className="container py-5">
+      {/* Header for the Accounts Receivable Management view */}
       <h1 className="mb-4 text-center">Gestión de Cuentas por Cobrar</h1>
 
-      {/* Sección de Cuentas */}
+      {/* Accounts Section */}
       <Row className="mb-4">
         <Col>
           <Card className="shadow">
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Cuentas por Cobrar</h5>
+              {/* Button to refresh the accounts list */}
               <Button variant="primary" onClick={loadAccounts}>
                 Actualizar Listado
               </Button>
@@ -145,6 +166,7 @@ const AccountsReceivableView = () => {
               <Row className="row-cols-1 row-cols-md-2 g-4">
                 {accounts.map((account) => (
                   <Col key={account.id}>
+                    {/* Each account is displayed as a clickable card to select the account */}
                     <Card
                       className="account-card h-100"
                       onClick={() => selectAccount(account.id)}
@@ -180,13 +202,14 @@ const AccountsReceivableView = () => {
         </Col>
       </Row>
 
-      {/* Sección de Pagos */}
+      {/* Payments Section: displayed when an account is selected */}
       {showPayments && (
         <Row>
           <Col md={8}>
             <Card className="shadow mb-4">
               <Card.Header>
                 <h5 className="mb-0">Registro de Pagos</h5>
+                {/* Display the pending balance if an account is selected */}
                 {selectedAccount && (
                   <small className="text-muted">
                     Saldo pendiente: ${selectedAccount.balance.toFixed(2)}
@@ -194,6 +217,7 @@ const AccountsReceivableView = () => {
                 )}
               </Card.Header>
               <Card.Body>
+                {/* Payment form to register a new payment */}
                 <Form onSubmit={handlePaymentSubmit}>
                   <Row className="g-3">
                     <Col md={6}>
@@ -236,7 +260,7 @@ const AccountsReceivableView = () => {
                         }
                       />
                     </Col>
-                    {/* Puedes agregar un campo opcional para "Notes" si el usuario debe poder ingresarlo */}
+                    {/* Optional field for additional notes */}
                     <Col xs={12}>
                       <Form.Label>Notas</Form.Label>
                       <Form.Control
@@ -270,6 +294,7 @@ const AccountsReceivableView = () => {
                 className="payment-list"
                 style={{ maxHeight: "400px", overflowY: "auto" }}
               >
+                {/* Render each payment as a card in the payment history */}
                 {payments.map((payment) => (
                   <Card key={payment.id} className="mb-2">
                     <Card.Body className="p-3">

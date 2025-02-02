@@ -3,7 +3,14 @@
 // Frontend: src/components/NotesSection/NotesSection.jsx
 
 import React, { useEffect, useState } from "react";
-import { Form, Button, Alert, Spinner, ListGroup, Modal } from "react-bootstrap";
+import {
+  Form,
+  Button,
+  Alert,
+  Spinner,
+  ListGroup,
+  Modal,
+} from "react-bootstrap";
 import {
   getNotesByDiagnostic,
   createNote,
@@ -11,6 +18,29 @@ import {
   getNotesByTechDiag,
 } from "../../services/NotesService";
 
+/**
+ * NotesSection Component
+ * Este componente gestiona la creación, visualización y eliminación de notas
+ * asociadas a un diagnóstico o a un técnico-diagnóstico.
+ *
+ * Características:
+ * - Si se pasa un "techDiagId", carga y gestiona las notas asociadas al TechnicianDiagnostic.
+ * - Si se pasa un "diagId", carga y gestiona las notas asociadas al Diagnostic.
+ * - Permite agregar nuevas notas y eliminarlas.
+ *
+ * This component handles the creation, display, and deletion of notes
+ * related to either a diagnostic or a technician diagnostic.
+ *
+ * Features:
+ *  - If a "techDiagId" is provided, it loads and manages notes for the TechnicianDiagnostic.
+ *  - If a "diagId" is provided, it loads and manages notes for the Diagnostic.
+ *  - Allows adding new notes and deleting them.
+ *
+ * @component
+ * @param {number} diagId - The diagnostic ID to which notes are associated.
+ * @param {number} techDiagId - The technician diagnostic ID to which notes are associated.
+ * @returns {JSX.Element}
+ */
 const NotesSection = ({ diagId, techDiagId }) => {
   const [notes, setNotes] = useState([]);
   const [noteText, setNoteText] = useState("");
@@ -20,6 +50,12 @@ const NotesSection = ({ diagId, techDiagId }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
 
+  /**
+   * useEffect - Se encarga de cargar las notas dependiendo de si
+   * existe un techDiagId o un diagId.
+   *
+   * useEffect - Loads notes depending on whether techDiagId or diagId exists.
+   */
   useEffect(() => {
     const fetchNotes = async () => {
       try {
@@ -38,9 +74,20 @@ const NotesSection = ({ diagId, techDiagId }) => {
       }
     };
 
-    fetchNotes();
+    if (techDiagId || diagId) {
+      fetchNotes();
+    }
   }, [diagId, techDiagId]);
 
+  /**
+   * handleAddNote - Maneja la creación de una nueva nota.
+   * Se asigna el DiagnosticId o TechnicianDiagnosticId en función del ID disponible.
+   *
+   * handleAddNote - Handles the creation of a new note.
+   * Assigns either DiagnosticId or TechnicianDiagnosticId based on which ID is available.
+   *
+   * @param {Object} e - Evento de formulario.
+   */
   const handleAddNote = async (e) => {
     e.preventDefault();
     setErrorMessage("");
@@ -66,6 +113,11 @@ const NotesSection = ({ diagId, techDiagId }) => {
     }
   };
 
+  /**
+   * handleDeleteNote - Maneja la eliminación de una nota específica.
+   *
+   * handleDeleteNote - Handles deleting a specific note.
+   */
   const handleDeleteNote = async () => {
     if (!noteToDelete) return;
 
@@ -85,7 +137,6 @@ const NotesSection = ({ diagId, techDiagId }) => {
     <div className="mt-4">
       <h5>Notes</h5>
 
-      {/* Display error or success messages */}
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
@@ -107,7 +158,6 @@ const NotesSection = ({ diagId, techDiagId }) => {
         </Button>
       </Form>
 
-      {/* Loading Indicator */}
       {loading ? (
         <div className="d-flex justify-content-center my-3">
           <Spinner animation="border" role="status">
@@ -117,7 +167,10 @@ const NotesSection = ({ diagId, techDiagId }) => {
       ) : notes.length > 0 ? (
         <ListGroup className="mt-3">
           {notes.map((note) => (
-            <ListGroup.Item key={note.id} className="d-flex justify-content-between align-items-start">
+            <ListGroup.Item
+              key={note.id}
+              className="d-flex justify-content-between align-items-start"
+            >
               <div>
                 <strong>{new Date(note.createdAt).toLocaleString()}</strong>
                 <p>{note.content}</p>

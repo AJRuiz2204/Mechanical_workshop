@@ -121,14 +121,13 @@ const Estimate = () => {
         const vList = await getAllVehicles();
         setVehicles(vList);
 
-        // If in edit mode, fetch the existing estimate data
+        // If in edit mode, fetch the existing estimate data and transform the tax flag properties
         if (isEditMode) {
           const estimateData = await getEstimateById(id);
+
+          // Set basic fields
           setSelectedVehicle(estimateData.vehicle);
           setOwner(estimateData.owner);
-          setParts(estimateData.parts);
-          setLabors(estimateData.labors);
-          setFlatFees(estimateData.flatFees);
           setDiagnostic(estimateData.technicianDiagnostic);
           setExtendedDiagnostic(
             estimateData.technicianDiagnostic?.extendedDiagnostic || ""
@@ -139,6 +138,30 @@ const Estimate = () => {
           setTotal(estimateData.total || 0);
           setAuthorizationStatus(
             estimateData.authorizationStatus || "InReview"
+          );
+
+          // Transform parts: ensure each part has applyPartTax set from p.taxable if not already present
+          setParts(
+            estimateData.parts.map((p) => ({
+              ...p,
+              applyPartTax:
+                p.applyPartTax !== undefined ? p.applyPartTax : p.taxable,
+            }))
+          );
+          // Transform labors: ensure each labor has applyLaborTax set from l.taxable if not already present
+          setLabors(
+            estimateData.labors.map((l) => ({
+              ...l,
+              applyLaborTax:
+                l.applyLaborTax !== undefined ? l.applyLaborTax : l.taxable,
+            }))
+          );
+          // For flat fees, simply set the taxable property if needed (usually remains false)
+          setFlatFees(
+            estimateData.flatFees.map((f) => ({
+              ...f,
+              taxable: f.taxable,
+            }))
           );
         }
       } catch (err) {
@@ -371,7 +394,6 @@ const Estimate = () => {
    * Adds a new labor entry to the estimate after validating inputs.
    */
   const addLabor = () => {
-    // Validate description and duration
     if (!newLabor.description || newLabor.duration <= 0) {
       setError("Please fill out all labor fields correctly.");
       return;
@@ -395,7 +417,6 @@ const Estimate = () => {
    * Adds a new flat fee to the estimate after validating inputs.
    */
   const addFlatFee = () => {
-    // Validate description and flat fee price
     if (!newFlatFee.description || newFlatFee.flatFeePrice <= 0) {
       setError("Please fill out all flat fee fields correctly.");
       return;
@@ -442,13 +463,11 @@ const Estimate = () => {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    // Validate that a vehicle is selected only in create mode
     if (!isEditMode && (!selectedVehicleId || selectedVehicleId === "")) {
       setError("Please select a vehicle.");
       return;
     }
 
-    // Basic validations to ensure at least one item is added
     if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
       setError("Add at least one item to the Estimate.");
       return;
@@ -467,114 +486,68 @@ const Estimate = () => {
       return;
     }
 
-    // Create Mode: Prepare and send the create estimate payload
-    if (!isEditMode) {
-      const vehicleIdParsed = parseInt(selectedVehicleId, 10);
-      if (!vehicleIdParsed || vehicleIdParsed <= 0) {
-        setError("Vehicle ID must be greater than 0.");
-        return;
-      }
-      // Build the Create DTO object
-      const createDto = {
-        VehicleID: vehicleIdParsed,
-        TechnicianDiagnostic: extendedDiagnostic
-          ? {
-              DiagnosticId: diagnostic?.diagnosticId || 0,
-              Mileage: diagnostic?.mileage || 0,
-              ExtendedDiagnostic: extendedDiagnostic,
-            }
-          : null,
-        CustomerNote: customerNote,
-        Subtotal: subtotal,
-        Tax: tax,
-        Total: total,
-        AuthorizationStatus: authorizationStatus,
-        Parts: parts.map((p) => ({
-          Description: p.description,
-          PartNumber: p.partNumber,
-          Quantity: p.quantity,
-          NetPrice: p.netPrice,
-          ListPrice: p.listPrice,
-          ExtendedPrice: p.extendedPrice,
-          Taxable: p.applyPartTax,
-        })),
-        Labors: labors.map((l) => ({
-          Description: l.description,
-          Duration: l.duration,
-          LaborRate: l.laborRate,
-          ExtendedPrice: l.extendedPrice,
-          Taxable: l.applyLaborTax,
-        })),
-        FlatFees: flatFees.map((f) => ({
-          Description: f.description,
-          FlatFeePrice: f.flatFeePrice,
-          ExtendedPrice: f.extendedPrice,
-          Taxable: false,
-        })),
-      };
+    // Build the DTO (works for both create and edit modes)
+    const dto = {
+      VehicleID: !isEditMode
+        ? parseInt(selectedVehicleId, 10)
+        : parseInt(selectedVehicleId, 10) || 0,
+      CustomerNote: customerNote,
+      Subtotal: subtotal,
+      Tax: tax,
+      Total: total,
+      AuthorizationStatus: authorizationStatus,
+      TechnicianDiagnostic: extendedDiagnostic
+        ? {
+            DiagnosticId: diagnostic?.diagnosticId || 0,
+            Mileage: diagnostic?.mileage || 0,
+            ExtendedDiagnostic: extendedDiagnostic,
+          }
+        : null,
+      Parts: parts.map((p) => ({
+        Description: p.description,
+        PartNumber: p.partNumber,
+        Quantity: p.quantity,
+        NetPrice: p.netPrice,
+        ListPrice: p.listPrice,
+        ExtendedPrice: p.extendedPrice,
+        Taxable: p.applyPartTax,
+      })),
+      Labors: labors.map((l) => ({
+        Description: l.description,
+        Duration: l.duration,
+        LaborRate: l.laborRate,
+        ExtendedPrice: l.extendedPrice,
+        Taxable: l.applyLaborTax,
+      })),
+      FlatFees: flatFees.map((f) => ({
+        Description: f.description,
+        FlatFeePrice: f.flatFeePrice,
+        ExtendedPrice: f.extendedPrice,
+        Taxable: false,
+      })),
+    };
 
-      try {
-        setSaving(true);
-        const created = await createEstimate(createDto);
+    try {
+      setSaving(true);
+      if (!isEditMode) {
+        const created = await createEstimate(dto);
         setSuccess(`Estimate created successfully with ID: ${created.ID}`);
-        navigate("/estimates"); // Navigate to the estimates list page
-      } catch (err) {
-        setError(err.message || "Error creating the estimate.");
-      } finally {
-        setSaving(false);
-      }
-    }
-    // Edit Mode: Prepare and send the update estimate payload
-    else {
-      const updateDto = {
-        ID: parseInt(id, 10),
-        VehicleID: selectedVehicle ? parseInt(selectedVehicleId, 10) || 0 : 0, // Ensure it's a number
-        CustomerNote: customerNote,
-        Subtotal: subtotal,
-        Tax: tax,
-        Total: total,
-        AuthorizationStatus: authorizationStatus,
-        TechnicianDiagnostic: extendedDiagnostic
-          ? {
-              DiagnosticId: diagnostic?.diagnosticId || 0,
-              Mileage: diagnostic?.mileage || 0,
-              ExtendedDiagnostic: extendedDiagnostic,
-            }
-          : null,
-        Parts: parts.map((p) => ({
-          Description: p.description,
-          PartNumber: p.partNumber,
-          Quantity: p.quantity,
-          NetPrice: p.netPrice,
-          ListPrice: p.listPrice,
-          ExtendedPrice: p.extendedPrice,
-          Taxable: p.applyPartTax,
-        })),
-        Labors: labors.map((l) => ({
-          Description: l.description,
-          Duration: l.duration,
-          LaborRate: l.laborRate,
-          ExtendedPrice: l.extendedPrice,
-          Taxable: l.applyLaborTax,
-        })),
-        FlatFees: flatFees.map((f) => ({
-          Description: f.description,
-          FlatFeePrice: f.flatFeePrice,
-          ExtendedPrice: f.extendedPrice,
-          Taxable: false,
-        })),
-      };
-
-      try {
-        setSaving(true);
+        navigate("/estimates");
+      } else {
+        const updateDto = { ID: parseInt(id, 10), ...dto };
         const updated = await updateEstimate(id, updateDto);
         setSuccess(`Estimate with ID ${updated.ID} updated successfully.`);
-        navigate("/estimates"); // Navigate to the estimates list page
-      } catch (err) {
-        setError(err.message || "Error updating the estimate.");
-      } finally {
-        setSaving(false);
+        navigate("/estimates");
       }
+    } catch (err) {
+      setError(
+        err.message ||
+          (isEditMode
+            ? "Error updating the estimate."
+            : "Error creating the estimate.")
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -636,20 +609,17 @@ const Estimate = () => {
         {isEditMode ? "Edit Estimate" : "Create Estimate"}
       </h3>
 
-      {/* Display error alert if there's an error */}
       {error && (
         <Alert variant="danger" onClose={() => setError(null)} dismissible>
           {error}
         </Alert>
       )}
-      {/* Display success alert if there's a success message */}
       {success && (
         <Alert variant="success" onClose={() => setSuccess(null)} dismissible>
           {success}
         </Alert>
       )}
 
-      {/* Button to view Tax & Markup Settings */}
       <div className="text-end mb-3">
         <Button variant="info" onClick={handleShowTaxSettingsModal}>
           View Tax & Markup Settings
@@ -657,9 +627,7 @@ const Estimate = () => {
       </div>
 
       <Form onSubmit={handleSave}>
-        {/* ---------------------------------------------
-            CREATE MODE => Select Vehicle, etc.
-        --------------------------------------------- */}
+        {/* CREATE MODE: Select Vehicle */}
         {!isEditMode && (
           <Row>
             <Col md={6} className="mb-3">
@@ -680,7 +648,6 @@ const Estimate = () => {
                 </Form.Control>
               </Form.Group>
             </Col>
-
             <Col md={6} className="mb-3">
               <Form.Group controlId="authorizationStatus">
                 <Form.Label>Authorization Status</Form.Label>
@@ -699,9 +666,7 @@ const Estimate = () => {
           </Row>
         )}
 
-        {/* ---------------------------------------------
-            EDIT MODE => Display Vehicle and Owner Info
-        --------------------------------------------- */}
+        {/* EDIT MODE: Display Vehicle and Owner Info */}
         {isEditMode && (
           <Row className="mb-3">
             <Col md={6}>
@@ -734,7 +699,7 @@ const Estimate = () => {
           </Row>
         )}
 
-        {/* Display Owner and Tax Setting in Edit Mode */}
+        {/* Owner and Tax Setting display */}
         {isEditMode && selectedVehicle && owner && (
           <Row className="mb-3">
             <Col md={6}>
@@ -750,28 +715,6 @@ const Estimate = () => {
           </Row>
         )}
 
-        {/* Display Vehicle and Owner Info in Create Mode */}
-        {!isEditMode && selectedVehicle && owner && (
-          <div className="mb-3">
-            <Row>
-              <Col md={8}>
-                <strong>Vehicle:</strong>{" "}
-                {`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model} (${selectedVehicle.engine})`}
-                <br />
-                Plate: {selectedVehicle.plate}, State: {selectedVehicle.state},
-                Status: {selectedVehicle.status}
-              </Col>
-              <Col md={4}>
-                <strong>Owner:</strong> {owner.name} {owner.lastName}
-                <br />
-                Email: {owner.email}
-                <br />
-                <strong>{owner.noTax ? "No Tax" : "Taxable"}</strong>
-              </Col>
-            </Row>
-          </div>
-        )}
-
         {/* Technician Diagnostic */}
         <Form.Group controlId="diagnostic" className="mb-3">
           <Form.Label>Extended Diagnostic</Form.Label>
@@ -781,7 +724,7 @@ const Estimate = () => {
             value={extendedDiagnostic}
             onChange={(e) => setExtendedDiagnostic(e.target.value)}
             placeholder="Enter technician diagnostic..."
-            readOnly={isEditMode} // Consider removing if editing is desired
+            readOnly={isEditMode}
           />
         </Form.Group>
 
@@ -833,7 +776,6 @@ const Estimate = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* Render parts */}
                 {parts.map((p, idx) => (
                   <tr key={`p-${idx}`}>
                     <td>[PART]</td>
@@ -857,7 +799,6 @@ const Estimate = () => {
                     </td>
                   </tr>
                 ))}
-                {/* Render labors */}
                 {labors.map((l, idx) => (
                   <tr key={`l-${idx}`}>
                     <td>[LABOR]</td>
@@ -879,7 +820,6 @@ const Estimate = () => {
                     </td>
                   </tr>
                 ))}
-                {/* Render flat fees */}
                 {flatFees.map((f, idx) => (
                   <tr key={`f-${idx}`}>
                     <td>[FLATFEE]</td>
@@ -944,7 +884,6 @@ const Estimate = () => {
                 ? "Update Estimate"
                 : "Create Estimate"}
             </Button>
-
             <Button variant="secondary" onClick={() => navigate("/estimates")}>
               Cancel
             </Button>
@@ -1113,7 +1052,7 @@ const Estimate = () => {
                     newPart.extendedPrice === 0 ? "" : newPart.extendedPrice
                   }
                   readOnly
-                  placeholder="0" // Read-only field
+                  placeholder="0"
                 />
               </InputGroup>
             </Form.Group>
@@ -1232,7 +1171,7 @@ const Estimate = () => {
                     newLabor.extendedPrice === 0 ? "" : newLabor.extendedPrice
                   }
                   readOnly
-                  placeholder="0" // Read-only field
+                  placeholder="0"
                 />
               </InputGroup>
             </Form.Group>
@@ -1326,7 +1265,7 @@ const Estimate = () => {
                       : newFlatFee.extendedPrice
                   }
                   readOnly
-                  placeholder="0" // Read-only field
+                  placeholder="0"
                 />
               </InputGroup>
             </Form.Group>

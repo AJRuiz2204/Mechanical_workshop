@@ -4,19 +4,30 @@ import { Table, Alert } from "react-bootstrap";
 import { getAllPayments } from "../../../services/accountReceivableService";
 import { Link } from "react-router-dom";
 
+/**
+ * Component for displaying a list of payments grouped by customer
+ * @module PaymentList
+ */
+
 const PaymentList = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  /**
+   * Fetches all payments when the component mounts
+   */
   useEffect(() => {
     fetchPayments();
   }, []);
 
+  /**
+   * Fetches all payments from the server
+   */
   const fetchPayments = async () => {
     try {
       const data = await getAllPayments();
-      console.log("Pagos cargados:", data);
+      console.log("Payments loaded:", data);
       setPayments(data);
       setLoading(false);
     } catch (err) {
@@ -26,7 +37,9 @@ const PaymentList = () => {
     }
   };
 
-  // Agrupar pagos por cliente usando payment.customer.id
+  /**
+   * Groups payments by customer ID
+   */
   const groupedPayments = payments.reduce((groups, payment) => {
     const customerId = payment.customer ? payment.customer.id : "unknown";
     if (!groups[customerId]) {
@@ -36,34 +49,36 @@ const PaymentList = () => {
     return groups;
   }, {});
 
+  // Display loading message while data is being fetched
   if (loading) {
-    return <div>Cargando pagos...</div>;
+    return <div>Loading payments...</div>;
   }
 
+  // Display error message if there is an error
   if (error) {
     return <Alert variant="danger">{error}</Alert>;
   }
 
   return (
     <div className="container py-5">
-      <h1 className="mb-4">Historial de Pagos por Cliente</h1>
+      <h1 className="mb-4">Payment History by Customer</h1>
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Cliente</th>
-            <th>Vehículo</th>
-            <th>Saldo Inicial</th>
-            <th>Total Pagado</th>
-            <th>Saldo Pendiente</th>
-            <th>N° de Pagos</th>
-            <th>Acciones</th>
+            <th>Customer</th>
+            <th>Vehicle</th>
+            <th>Initial Balance</th>
+            <th>Total Paid</th>
+            <th>Remaining Balance</th>
+            <th>Number of Payments</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {Object.keys(groupedPayments).length === 0 ? (
             <tr>
               <td colSpan="7" className="text-center">
-                No se encontraron pagos.
+                No payments found.
               </td>
             </tr>
           ) : (
@@ -76,10 +91,10 @@ const PaymentList = () => {
               const remainingBalance = clientPayments[0].remainingBalance || 0;
               const initialBalance = clientPayments[0].initialBalance || 0;
               const clientName =
-                clientPayments[0].customer?.fullName || "Sin cliente";
+                clientPayments[0].customer?.fullName || "No customer";
               const vehicleInfo = clientPayments[0].vehicle
                 ? `${clientPayments[0].vehicle.make} ${clientPayments[0].vehicle.model} (${clientPayments[0].vehicle.year}) - ${clientPayments[0].vehicle.vin}`
-                : "Sin vehículo";
+                : "No vehicle";
 
               return (
                 <tr key={customerId}>
@@ -94,7 +109,7 @@ const PaymentList = () => {
                       to={`/client-payment-pdf/${customerId}`}
                       className="btn btn-primary btn-sm"
                     >
-                      Descargar PDF
+                      Download PDF
                     </Link>
                   </td>
                 </tr>

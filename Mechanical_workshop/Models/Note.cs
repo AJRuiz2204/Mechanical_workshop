@@ -22,5 +22,10 @@ namespace Mechanical_workshop.Models
         [ForeignKey("Diagnostic")]
         public int DiagnosticId { get; set; }
         public Diagnostic? Diagnostic { get; set; }
+
+        // Se añade la referencia a TechnicianDiagnostic (opcional)
+        [ForeignKey("TechnicianDiagnostic")]
+        public int? TechnicianDiagnosticId { get; set; }
+        public TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
     }
 }

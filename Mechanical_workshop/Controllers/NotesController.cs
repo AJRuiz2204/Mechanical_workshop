@@ -32,6 +32,26 @@ namespace Mechanical_workshop.Controllers
             return Ok(_mapper.Map<IEnumerable<NoteReadDto>>(notes));
         }
 
+        [HttpGet("techniciandiagnostic/{techDiagId}")]
+        public async Task<ActionResult<IEnumerable<NoteReadDto>>> GetNotesByTechDiag(int techDiagId)
+        {
+            // Buscar notas con TechnicianDiagnosticId o DiagnosticId vinculado
+            var notes = await _context.Notes
+                .Where(n => n.TechnicianDiagnosticId == techDiagId || n.DiagnosticId ==
+                            (_context.TechnicianDiagnostics.Where(td => td.Id == techDiagId)
+                            .Select(td => td.DiagnosticId)
+                            .FirstOrDefault()))
+                .ToListAsync();
+
+            if (!notes.Any())
+            {
+                return NotFound(new { message = "No notes found for Technician Diagnostic ID." });
+            }
+
+            return Ok(_mapper.Map<IEnumerable<NoteReadDto>>(notes));
+        }
+
+
         // GET: api/notes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<NoteReadDto>> GetNote(int id)
