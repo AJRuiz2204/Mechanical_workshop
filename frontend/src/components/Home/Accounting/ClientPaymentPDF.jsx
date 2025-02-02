@@ -1,12 +1,5 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-// src/components/Home/Payment/ClientPaymentPDF.jsx
-
-/**
- * Component for generating a client payment summary PDF document
- * @module ClientPaymentPDF
- */
-
 import React from "react";
 import {
   Page,
@@ -15,13 +8,13 @@ import {
   Document,
   StyleSheet,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
 /**
- * PDF document styles definition
- * @constant {Object} styles
+ * Styles for the document, including a unified header.
  */
 const styles = StyleSheet.create({
   page: {
@@ -33,21 +26,38 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 5,
   },
   logoSection: {
     width: 100,
     height: 100,
+    marginRight: 10,
   },
   headerInfoContainer: {
     flex: 1,
     flexDirection: "column",
     alignItems: "flex-end",
+    padding: 0,
+  },
+  workshopInfo: {
+    marginBottom: 3,
+    alignItems: "flex-end",
+  },
+  quoteInfo: {
+    alignItems: "flex-end",
+    padding: 0,
   },
   textLine: {
     fontSize: 9,
     marginBottom: 1,
   },
+  link: {
+    textDecoration: "underline",
+    color: "blue",
+    fontSize: 9,
+  },
+  // Custom styles for the rest of the content
   infoSection: {
     marginBottom: 10,
   },
@@ -93,42 +103,96 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Main component for generating client payment PDF
- * @param {Object} props - Component props
- * @param {Object} props.pdfData - Payment data to display in PDF
- * @param {Object} props.pdfData.workshopData - Workshop information
- * @param {Object} props.pdfData.customer - Client information
- * @param {Object} props.pdfData.vehicle - Vehicle information
- * @param {Array} props.pdfData.payments - List of payment records
- * @returns {JSX.Element} PDF document structure
+ * Formats the "Last Updated" date string.
+ * If no date string is provided, returns an empty string.
+ * Otherwise, subtracts 6 hours from the date and formats it as "YYYY-MM-DD HH:mm:ss".
+ *
+ * @param {string} dateString - The original date string.
+ * @returns {string} The formatted date string.
+ */
+const formatLastUpdated = (dateString) => {
+  if (!dateString) return "";
+  return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+};
+
+/**
+ * ClientPaymentPDF Component
+ *
+ * Main component to generate a client payment summary PDF.
+ *
+ * Expected pdfData structure:
+ * - workshopData: workshop details.
+ * - customer: customer details.
+ * - vehicle: vehicle details.
+ * - payments: array of payment objects.
+ *
+ * The component displays a unified header with workshop information,
+ * client information, vehicle information, payment summary, and a table listing individual payments.
+ *
+ * @param {Object} props - The component props.
+ * @param {Object} props.pdfData - The data for the PDF.
+ * @returns {JSX.Element} The rendered PDF document.
  */
 const ClientPaymentPDF = ({ pdfData }) => {
-  // Destructure PDF data with fallback defaults
+  // Destructure data with default empty objects/arrays
   const workshopData = pdfData?.workshopData || {};
   const customer = pdfData?.customer || {};
   const vehicle = pdfData?.vehicle || {};
   const payments = pdfData?.payments || [];
-  
-  // Calculate payment totals
+
+  // Calculate totals
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
   const remainingBalance = payments[0]?.remainingBalance || 0;
   const initialBalance = payments[0]?.initialBalance || 0;
+  // Format the current date for the footer
   const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Document Header Section */}
+        {/* Unified Header */}
         <View style={styles.headerContainer}>
           <View style={styles.logoSection}>
+            {/* Render the logo image */}
             <Image src={logo} style={{ width: "100%", height: "100%" }} />
           </View>
           <View style={styles.headerInfoContainer}>
-            <Text style={styles.textLine}>{workshopData.workshopName}</Text>
-            <Text style={styles.textLine}>{workshopData.address}</Text>
-            <Text style={styles.textLine}>{workshopData.primaryPhone}</Text>
-            <Text style={styles.textLine}>{workshopData.email}</Text>
-            <Text style={styles.textLine}>Date: {formattedDate}</Text>
+            {/* Workshop Information Section */}
+            <View style={styles.workshopInfo}>
+              <Text style={styles.textLine}>
+                {workshopData.workshopName || "Nombre del Taller"}
+              </Text>
+              <Text style={styles.textLine}>
+                {workshopData.address || "Dirección del Taller"}
+              </Text>
+              <Text style={styles.textLine}>
+                {workshopData.primaryPhone || "Teléfono Principal"}
+              </Text>
+              {workshopData.secondaryPhone && (
+                <Text style={styles.textLine}>
+                  {workshopData.secondaryPhone}
+                </Text>
+              )}
+              <Text style={styles.textLine}>Fax: {workshopData.fax || ""}</Text>
+              <Text style={styles.textLine}>{workshopData.email || ""}</Text>
+              {workshopData.websiteUrl && (
+                <Link src={workshopData.websiteUrl} style={styles.link}>
+                  {workshopData.websiteUrl}
+                </Link>
+              )}
+            </View>
+            {/* Quote Information Section */}
+            <View style={styles.quoteInfo}>
+              <Text style={styles.textLine}>
+                Quote # {workshopData.quoteNumber || ""}
+              </Text>
+              <Text style={styles.textLine}>
+                Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
+              </Text>
+              <Text style={styles.textLine}>
+                Expires: {workshopData.expiryDate || ""}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -145,9 +209,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>Client: {customer.fullName}</Text>
           <Text style={{ fontSize: 10 }}>Email: {customer.email}</Text>
-          <Text style={{ fontSize: 10 }}>
-            Phone: {customer.primaryPhone}
-          </Text>
+          <Text style={{ fontSize: 10 }}>Phone: {customer.primaryPhone}</Text>
         </View>
 
         {/* Vehicle Information Section */}
@@ -207,7 +269,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
             </Text>
           </View>
 
-          {/* Table Rows */}
+          {/* Table Rows for Each Payment */}
           {payments.map((payment, index) => (
             <View key={index} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.tableText, { flex: 1 }]}>
@@ -229,7 +291,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
           ))}
         </View>
 
-        {/* Document Footer */}
+        {/* Footer Section */}
         <View style={styles.footer}>
           <Text style={{ textAlign: "center" }}>
             Printed on {formattedDate}

@@ -1,12 +1,5 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-// src/components/Home/Payment/PaymentPDF.jsx
-
-/**
- * Component for generating a payment summary PDF document
- * @module PaymentPDF
- */
-
 import React from "react";
 import {
   Page,
@@ -15,13 +8,14 @@ import {
   Document,
   StyleSheet,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
 /**
- * PDF document styles definition
- * @constant {Object} styles
+ * Styles for the Payment PDF with a unified header.
+ * Includes styles for the page, header, client info section, table, and footer.
  */
 const styles = StyleSheet.create({
   page: {
@@ -45,11 +39,26 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "column",
     alignItems: "flex-end",
+    padding: 0,
+  },
+  workshopInfo: {
+    marginBottom: 3,
+    alignItems: "flex-end",
+  },
+  quoteInfo: {
+    alignItems: "flex-end",
+    padding: 0,
   },
   textLine: {
     fontSize: 9,
     marginBottom: 1,
   },
+  link: {
+    textDecoration: "underline",
+    color: "blue",
+    fontSize: 9,
+  },
+  // Styles for the rest of the content
   infoSection: {
     flexDirection: "row",
     marginTop: 5,
@@ -106,37 +115,88 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Main component for generating a payment PDF
- * @param {Object} props - Component props
- * @param {Object} props.pdfData - Payment data to display in PDF
- * @param {Object} props.pdfData.workshopData - Workshop information
- * @param {Object} props.pdfData.customer - Client information
- * @param {Array} props.pdfData.payments - List of payment records
- * @returns {JSX.Element} PDF document structure
+ * Formats the "Last Updated" date string.
+ * If the date string is not provided, returns an empty string.
+ * Otherwise, subtracts 6 hours from the date and formats it as "YYYY-MM-DD HH:mm:ss".
+ *
+ * @param {string} dateString - The original date string.
+ * @returns {string} The formatted date string.
+ */
+const formatLastUpdated = (dateString) => {
+  if (!dateString) return "";
+  return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+};
+
+/**
+ * PaymentPDF Component
+ *
+ * Generates a PDF document for a payment summary.
+ * Expected pdfData includes:
+ * - workshopData: Workshop information.
+ * - customer: Customer information.
+ * - payments: Array of payment records.
+ *
+ * The document contains a unified header with workshop details, a section for client information,
+ * a table displaying payment details, and a footer with the print date.
+ *
+ * @param {Object} props - The component props.
+ * @param {Object} props.pdfData - The payment summary data.
+ * @returns {JSX.Element} The rendered PDF document.
  */
 const PaymentPDF = ({ pdfData }) => {
-  // Destructure PDF data with fallback defaults
+  // Extract workshop, customer, and payments information from pdfData.
   const workshopData = pdfData?.workshopData || {};
   const customer = pdfData?.customer || {};
   const payments = pdfData?.payments || [];
+  // Format the current date for the footer.
   const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Document Header Section */}
+        {/* Unified Header */}
         <View style={styles.headerContainer}>
           <View style={styles.logoSection}>
+            {/* Render the workshop logo */}
             <Image src={logo} style={{ width: "100%", height: "100%" }} />
           </View>
           <View style={styles.headerInfoContainer}>
-            <Text style={styles.textLine}>{workshopData.workshopName}</Text>
-            <Text style={styles.textLine}>{workshopData.address}</Text>
-            <Text style={styles.textLine}>{workshopData.primaryPhone}</Text>
-            {workshopData.email && (
-              <Text style={styles.textLine}>{workshopData.email}</Text>
-            )}
-            <Text style={styles.textLine}>Date: {formattedDate}</Text>
+            {/* Workshop Information Section */}
+            <View style={styles.workshopInfo}>
+              <Text style={styles.textLine}>
+                {workshopData.workshopName || "Nombre del Taller"}
+              </Text>
+              <Text style={styles.textLine}>
+                {workshopData.address || "Dirección del Taller"}
+              </Text>
+              <Text style={styles.textLine}>
+                {workshopData.primaryPhone || "Teléfono Principal"}
+              </Text>
+              {workshopData.secondaryPhone && (
+                <Text style={styles.textLine}>
+                  {workshopData.secondaryPhone}
+                </Text>
+              )}
+              <Text style={styles.textLine}>Fax: {workshopData.fax || ""}</Text>
+              <Text style={styles.textLine}>{workshopData.email || ""}</Text>
+              {workshopData.websiteUrl && (
+                <Link src={workshopData.websiteUrl} style={styles.link}>
+                  {workshopData.websiteUrl}
+                </Link>
+              )}
+            </View>
+            {/* Quote Information Section */}
+            <View style={styles.quoteInfo}>
+              <Text style={styles.textLine}>
+                Quote # {workshopData.quoteNumber || ""}
+              </Text>
+              <Text style={styles.textLine}>
+                Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
+              </Text>
+              <Text style={styles.textLine}>
+                Expires: {workshopData.expiryDate || ""}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -159,7 +219,7 @@ const PaymentPDF = ({ pdfData }) => {
           </View>
         </View>
 
-        {/* Payments Table Section */}
+        {/* Payments Table */}
         <View style={styles.table}>
           {/* Table Header */}
           <View style={[styles.tableRow, { backgroundColor: "#f5f5f5" }]}>
@@ -189,8 +249,7 @@ const PaymentPDF = ({ pdfData }) => {
               Reference
             </Text>
           </View>
-
-          {/* Table Rows */}
+          {/* Render Payment Rows */}
           {payments.map((payment, index) => (
             <View key={index} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.tableText, { flex: 1 }]}>
@@ -212,7 +271,7 @@ const PaymentPDF = ({ pdfData }) => {
           ))}
         </View>
 
-        {/* Document Footer */}
+        {/* Footer Section */}
         <View style={styles.footer}>
           <Text style={{ textAlign: "center" }}>
             Printed on {formattedDate}

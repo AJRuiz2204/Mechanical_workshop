@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { PDFViewer } from "@react-pdf/renderer";
 import PaymentPDF from "./PaymentPDF";
 import { getAllPayments } from "../../../services/accountReceivableService";
+import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 
 /**
  * Main component for rendering a PDF viewer with payment details
@@ -26,17 +27,10 @@ const PaymentPDFViewer = () => {
     const fetchData = async () => {
       try {
         const payments = await getAllPayments();
+        const workshopData = await getWorkshopSettings();
+        
         const data = {
-          workshopData: {
-            workshopName: "My Auto Workshop",
-            address: "123 Fake Street",
-            primaryPhone: "(100) 000-0000",
-            email: "contact@myworkshop.com",
-            quoteNumber: "001",
-            lastUpdated: "2025-02-01T12:00:00Z",
-            expiryDate: "2025-03-01",
-            disclaimer: "This is a payment receipt.",
-          },
+          workshopData: workshopData,
           customer: {
             fullName: "John Doe",
             email: "johndoe@example.com",

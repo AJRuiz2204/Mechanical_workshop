@@ -1,13 +1,19 @@
-/* src/components/Home/Home.css */
-
+/* 
+  Main container that covers 100% of the window height.
+  This container holds both the side menu and the main content area.
+*/
 .home-container {
   display: flex;
   height: 100vh;
 }
 
+/* 
+  Side menu with blue tones.
+  This sidebar has a fixed width, a blue background, and occupies the full height of the viewport.
+*/
 .side-menu {
   width: 250px;
-  background-color: #f1f1f1;
+  background-color: #007bff; /* Primary blue */
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
@@ -16,6 +22,10 @@
   justify-content: space-between;
 }
 
+/* 
+  Container for the menu items.
+  Items are arranged in a vertical column and centered.
+*/
 .menu-items {
   display: flex;
   flex-direction: column;
@@ -24,6 +34,11 @@
   flex-grow: 1;
 }
 
+/* 
+  Styles for each menu item.
+  Each item has padding, a pointer cursor, a transition for the hover effect,
+  and is styled with white text.
+*/
 .side-menu-item {
   padding: 15px 20px;
   cursor: pointer;
@@ -33,23 +48,45 @@
   display: flex;
   align-items: center;
   margin: 10px 0;
-}
-
-.side-menu-item:hover {
-  background-color: #e6e6e6;
-}
-
-.side-menu-item.active {
-  background-color: #007bff;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
   color: white;
 }
 
+/* 
+  Hover state for menu items.
+  When hovered, the background becomes a darker blue.
+*/
+.side-menu-item:hover {
+  background-color: #0056b3; /* Slightly darker blue */
+}
+
+/* 
+  Active state for a menu item.
+  This applies a darker blue background and white text.
+*/
+.side-menu-item.active {
+  background-color: #0056b3;
+  color: white;
+}
+
+/* 
+  Main content area styles.
+  This area grows to fill available space, has padding, and a light background.
+*/
 .content-area {
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
+  background-color: #f8f9fa;
 }
 
+/* 
+  Styles for the content of the tabs.
+  Centered text with spacing for headings and paragraphs.
+*/
 .tab-content {
   text-align: center;
 }
@@ -62,14 +99,20 @@
   margin-bottom: 20px;
 }
 
-
-/* Diagnostic Sub-Tabs */
+/* 
+  Diagnostic Sub-Tabs styles.
+  Tabs are arranged horizontally with a bottom border.
+*/
 .diagnostic-tabs {
   display: flex;
   margin-bottom: 20px;
   border-bottom: 1px solid #ddd;
 }
 
+/* 
+  Individual diagnostic tab styles.
+  Each tab has padding, a border, and changes background on hover.
+*/
 .diagnostic-tab {
   padding: 10px 20px;
   cursor: pointer;
@@ -83,30 +126,99 @@
   background-color: #e6e6e6;
 }
 
+/* 
+  Active diagnostic tab.
+  The active tab uses the primary blue color with white text.
+*/
 .diagnostic-tab.active {
   background-color: #007bff;
   color: white;
 }
 
+/* 
+  Diagnostic content area.
+  This area has padding, a border, and a white background.
+*/
 .diagnostic-content {
   padding: 20px;
   border: 1px solid #ddd;
   background-color: #fff;
 }
 
+/* 
+  Welcome message styling.
+  Positioned at the bottom of the side menu with centered text and padding.
+*/
 .welcome-message {
   margin-top: auto;
   text-align: center;
   padding: 20px;
+  color: white;
 }
 
+/* 
+  Welcome section and logout button container.
+  The section displays the welcome message and logout button side by side.
+*/
 .welcome-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  padding: 10px;
 }
 
+/* 
+  Logout button styling.
+  The button has a white background, blue text, and rounded corners.
+  It changes background color on hover.
+*/
 .logout-button {
-  /* Estilos adicionales para el botón si es necesario */
   margin-left: 20px;
+  padding: 5px 10px;
+  background-color: #fff;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #e6e6e6;
+}
+
+/* 
+  Media query for small screens.
+  Adjusts layout for mobile devices.
+*/
+@media (max-width: 768px) {
+  .home-container {
+    flex-direction: column;
+  }
+  .side-menu {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .menu-items {
+    flex-direction: row;
+    overflow-x: auto;
+    width: 100%;
+  }
+  .side-menu-item {
+    margin: 5px;
+    height: auto;
+    padding: 10px;
+    white-space: nowrap;
+  }
+  .welcome-section {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+  }
+  .content-area {
+    padding: 10px;
+  }
 }

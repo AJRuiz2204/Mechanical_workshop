@@ -8,11 +8,15 @@ import {
   Document,
   StyleSheet,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
-// Define styles for the PDF document using @react-pdf/renderer StyleSheet
+/**
+ * Define the styles for the Sales Report PDF document.
+ * This includes styles for the page layout, header, tables, footer, and other sections.
+ */
 const styles = StyleSheet.create({
   page: {
     padding: 20,
@@ -23,20 +27,36 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 5,
   },
   logoSection: {
     width: 100,
     height: 100,
+    marginRight: 10,
   },
   headerInfoContainer: {
     flex: 1,
     flexDirection: "column",
     alignItems: "flex-end",
+    padding: 0,
+  },
+  workshopInfo: {
+    marginBottom: 3,
+    alignItems: "flex-end",
+  },
+  quoteInfo: {
+    alignItems: "flex-end",
+    padding: 0,
   },
   textLine: {
     fontSize: 9,
     marginBottom: 1,
+  },
+  link: {
+    textDecoration: "underline",
+    color: "blue",
+    fontSize: 9,
   },
   sectionTitle: {
     fontSize: 12,
@@ -90,10 +110,38 @@ const styles = StyleSheet.create({
   },
 });
 
-// SalesReportPDF component: Renders a PDF document for a sales report using @react-pdf/renderer.
-// The pdfData prop is expected to have the structure defined in SalesReportDto.
+/**
+ * Formats the "Last Updated" date string.
+ *
+ * If the provided date string is empty, returns an empty string.
+ * Otherwise, subtracts 6 hours from the date and formats it as "YYYY-MM-DD HH:mm:ss".
+ *
+ * @param {string} dateString - The original date string.
+ * @returns {string} The formatted date string.
+ */
+const formatLastUpdated = (dateString) => {
+  if (!dateString) return "";
+  return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
+};
+
+/**
+ * SalesReportPDF component.
+ *
+ * Generates a PDF document for a sales report using the provided pdfData.
+ * Expected pdfData includes:
+ * - startDate, endDate, totalEstimates, totalPartsRevenue, totalLaborRevenue,
+ *   totalFlatFeeRevenue, totalTaxCollected, totalPaymentsCollected, totalOutstanding,
+ *   createdDate, details, and workshopData.
+ *
+ * The component builds a unified header with workshop information,
+ * displays overall totals and detailed estimate information, and adds a footer.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.pdfData - The sales report data.
+ * @returns {JSX.Element} The generated PDF document.
+ */
 const SalesReportPDF = ({ pdfData }) => {
-  // Destructure the sales report data from the pdfData prop
+  // Destructure sales report summary data from pdfData
   const {
     startDate,
     endDate,
@@ -108,39 +156,80 @@ const SalesReportPDF = ({ pdfData }) => {
     details,
   } = pdfData;
 
-  // Format the dates using dayjs
+  // Format the dates for display
   const formattedStartDate = dayjs(startDate).format("YYYY-MM-DD");
   const formattedEndDate = dayjs(endDate).format("YYYY-MM-DD");
   const formattedCreatedDate = dayjs(createdDate).format("YYYY-MM-DD HH:mm:ss");
 
+  // Extract workshop information from pdfData (default to empty object if not provided)
+  const workshopData = pdfData?.workshopData || {};
+  const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
+
   return (
     <Document>
-      {/* Define a page in the PDF document */}
       <Page size="A4" style={styles.page}>
-        {/* Header section with logo and company information */}
+        {/* Unified Header */}
         <View style={styles.headerContainer}>
           <View style={styles.logoSection}>
-            {/* Display the logo image */}
+            {/* Render the logo image */}
             <Image src={logo} style={{ width: "100%", height: "100%" }} />
           </View>
           <View style={styles.headerInfoContainer}>
-            <Text style={styles.textLine}>My Mechanic Workshop</Text>
-            <Text style={styles.textLine}>Fake Street 123</Text>
-            <Text style={styles.textLine}>(100) 000-0000</Text>
-            <Text style={styles.textLine}>contact@myworkshop.com</Text>
-            <Text style={styles.textLine}>
-              Report generated: {formattedCreatedDate}
-            </Text>
+            {/* Workshop Information Section */}
+            <View style={styles.workshopInfo}>
+              <Text style={styles.textLine}>
+                {workshopData.workshopName || "Nombre del Taller"}
+              </Text>
+              <Text style={styles.textLine}>
+                {workshopData.address || "Dirección del Taller"}
+              </Text>
+              <Text style={styles.textLine}>
+                {workshopData.primaryPhone || "Teléfono Principal"}
+              </Text>
+              {workshopData.secondaryPhone && (
+                <Text style={styles.textLine}>
+                  {workshopData.secondaryPhone}
+                </Text>
+              )}
+              <Text style={styles.textLine}>Fax: {workshopData.fax || ""}</Text>
+              <Text style={styles.textLine}>{workshopData.email || ""}</Text>
+              {workshopData.websiteUrl && (
+                <Link src={workshopData.websiteUrl} style={styles.link}>
+                  {workshopData.websiteUrl}
+                </Link>
+              )}
+            </View>
+            {/* Quote Information Section */}
+            <View style={styles.quoteInfo}>
+              <Text style={styles.textLine}>
+                Quote # {workshopData.quoteNumber || ""}
+              </Text>
+              <Text style={styles.textLine}>
+                Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
+              </Text>
+              <Text style={styles.textLine}>
+                Expires: {workshopData.expiryDate || ""}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Title and period information */}
+        {/* Divider */}
+        <View
+          style={{
+            borderBottomWidth: 1,
+            borderBottomColor: "#e0e0e0",
+            marginBottom: 5,
+          }}
+        />
+
+        {/* Title and Period */}
         <Text style={styles.sectionTitle}>Sales Report</Text>
         <Text style={{ fontSize: 9 }}>
           Period: {formattedStartDate} - {formattedEndDate}
         </Text>
 
-        {/* General totals section */}
+        {/* General Totals Section */}
         <View style={{ marginVertical: 10 }}>
           <Text style={{ fontSize: 9 }}>
             Total Estimates: ${Number(totalEstimates).toFixed(2)}
@@ -165,7 +254,7 @@ const SalesReportPDF = ({ pdfData }) => {
           </Text>
         </View>
 
-        {/* Details section for each Estimate */}
+        {/* Details Section */}
         {details && details.length > 0 && (
           <View>
             <Text style={styles.sectionTitle}>Estimate Details</Text>
@@ -174,7 +263,7 @@ const SalesReportPDF = ({ pdfData }) => {
                 key={detail.salesReportDetailId}
                 style={styles.detailSection}
               >
-                {/* Display basic information for the estimate */}
+                {/* Basic Estimate Information */}
                 <Text style={{ fontSize: 9, fontWeight: "bold" }}>
                   Estimate #{detail.estimateId} -{" "}
                   {new Date(detail.estimateDate).toLocaleDateString()}
@@ -187,15 +276,15 @@ const SalesReportPDF = ({ pdfData }) => {
                 <Text style={{ fontSize: 9 }}>
                   Account: Initial Balance: $
                   {Number(detail.originalAmount).toFixed(2)} - Total Paid: $
-                  {Number(detail.totalPayments).toFixed(2)} - Remaining Balance: $
-                  {Number(detail.remainingBalance).toFixed(2)}
+                  {Number(detail.totalPayments).toFixed(2)} - Remaining Balance:
+                  ${Number(detail.remainingBalance).toFixed(2)}
                 </Text>
                 <Text style={{ fontSize: 9 }}>
                   Customer: {detail.customerName} | Vehicle:{" "}
                   {detail.vehicleInfo}
                 </Text>
 
-                {/* Optional section: Full Estimate details */}
+                {/* Optional Complete Estimate Details */}
                 {detail.Estimate && (
                   <View style={styles.subSection}>
                     <Text style={{ fontSize: 9, fontWeight: "bold" }}>
@@ -211,8 +300,7 @@ const SalesReportPDF = ({ pdfData }) => {
                       Estimate Date:{" "}
                       {new Date(detail.Estimate.date).toLocaleDateString()}
                     </Text>
-
-                    {/* Section for parts details if available */}
+                    {/* Parts Details */}
                     {detail.Estimate.parts &&
                       detail.Estimate.parts.length > 0 && (
                         <View style={styles.subSection}>
@@ -227,8 +315,7 @@ const SalesReportPDF = ({ pdfData }) => {
                           ))}
                         </View>
                       )}
-
-                    {/* Section for labors details if available */}
+                    {/* Labor Details */}
                     {detail.Estimate.labors &&
                       detail.Estimate.labors.length > 0 && (
                         <View style={styles.subSection}>
@@ -243,8 +330,7 @@ const SalesReportPDF = ({ pdfData }) => {
                           ))}
                         </View>
                       )}
-
-                    {/* Section for flat fee details if available */}
+                    {/* Flat Fees Details */}
                     {detail.Estimate.flatFees &&
                       detail.Estimate.flatFees.length > 0 && (
                         <View style={styles.subSection}>
@@ -266,7 +352,7 @@ const SalesReportPDF = ({ pdfData }) => {
           </View>
         )}
 
-        {/* Footer section displaying the report generation date */}
+        {/* Footer */}
         <View style={styles.footer}>
           <Text style={{ textAlign: "center" }}>
             Report generated on {formattedCreatedDate}

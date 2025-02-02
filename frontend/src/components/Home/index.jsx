@@ -1,22 +1,23 @@
 /* eslint-disable no-unused-vars */
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { logoutUser } from "../../services/UserLoginServices"; // New import
+import { logoutUser } from "../../services/UserLoginServices"; // Service for logging out
 import "./Home.css";
 
 /**
  * Home Component
- * Renders a side menu with navigation items based on the user's role.
- * Includes a logout button to allow users to sign out of the application.
  *
- * @returns {JSX.Element} The Home component.
+ * This component renders the main home page which includes a side menu and a content area.
+ * The side menu displays different navigation items based on the user's role,
+ * and includes a welcome message and a logout button.
+ *
+ * The main content area is used to display the content for the selected route.
  */
 const Home = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  // Define menu items with their corresponding roles
+  // Define the menu items with their labels, routes, and the roles that can view them.
   const menuItems = [
     {
       label: "VEHICLE RECEPTION",
@@ -31,11 +32,6 @@ const Home = () => {
     {
       label: "ESTIMATES",
       route: "/estimates",
-      roles: ["Manager"],
-    },
-    {
-      label: "CREATE REPORTS",
-      route: "/sales-report-preview",
       roles: ["Manager"],
     },
     {
@@ -67,12 +63,10 @@ const Home = () => {
       label: "ADD USER",
       route: "/register-user",
       roles: ["Manager"],
-    }
+    },
   ];
 
-  /**
-   * Fetches the user data from localStorage when the component mounts.
-   */
+  // When the component mounts, retrieve the user data from localStorage.
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -81,15 +75,12 @@ const Home = () => {
         setUser(parsedUser);
       } catch (error) {
         console.error("Error parsing user from localStorage:", error);
-        // Optional: handle the error, e.g., redirect to login
       }
-    } else {
-      // Optional: handle the case when there is no user, e.g., redirect to login
     }
   }, []);
 
   /**
-   * Handles the click event on a menu item by navigating to the specified route.
+   * Handles the click event on a menu item and navigates to the specified route.
    *
    * @param {string} route - The route to navigate to.
    */
@@ -98,7 +89,7 @@ const Home = () => {
   };
 
   /**
-   * Handles user logout by calling the logout service and navigating to the login page.
+   * Handles the logout action by calling the logout service and navigating to the login page.
    */
   const handleLogout = () => {
     logoutUser();
@@ -106,37 +97,44 @@ const Home = () => {
   };
 
   if (!user) {
-    // Optional: show a loader or message while fetching the user
+    // Display a loading message while the user information is being retrieved.
     return <div>Loading...</div>;
   }
 
-  const { profile, name, lastName } = user;
-
-  // Filter the menu items based on the user's profile
+  // Filter menu items based on the user's profile (role).
   const filteredMenuItems = menuItems.filter((item) =>
-    item.roles.includes(profile)
+    item.roles.includes(user.profile)
   );
 
   return (
-    <div className="side-menu">
-      <div className="menu-items">
-        {filteredMenuItems.map((item) => (
-          <div
-            key={item.route}
-            className="side-menu-item"
-            onClick={() => handleTabClick(item.route)}
-          >
-            {item.label}
-          </div>
-        ))}
-      </div>
-      <div className="welcome-section">
-        <div className="welcome-message">
-          Welcome {profile} {name} {lastName}
+    <div className="home-container">
+      {/* Side Menu */}
+      <div className="side-menu">
+        {/* Menu Items */}
+        <div className="menu-items">
+          {filteredMenuItems.map((item) => (
+            <button
+              key={item.route}
+              className="side-menu-item"
+              onClick={() => handleTabClick(item.route)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+        {/* Welcome Message and Logout Button */}
+        <div className="welcome-section">
+          <div className="welcome-message">
+            Welcome {user.profile} {user.name} {user.lastName}
+          </div>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
+      </div>
+      {/* Main Content Area */}
+      <div className="content-area">
+        {/* Additional components or routes can be included here */}
       </div>
     </div>
   );

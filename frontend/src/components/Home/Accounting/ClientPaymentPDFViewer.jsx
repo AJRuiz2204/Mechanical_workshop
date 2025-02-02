@@ -36,23 +36,21 @@ const ClientPaymentPDFViewer = () => {
    */
   const fetchData = async (customerId) => {
     try {
-      // Fetch payments for the customer
-      const payments = await getPaymentsByCustomer(customerId);
-      // Fetch workshop settings
-      const workshopData = await getWorkshopSettings();
+      // Fetch all required data in parallel
+      const [payments, workshopData] = await Promise.all([
+        getPaymentsByCustomer(customerId),
+        getWorkshopSettings()
+      ]);
 
       // Extract customer and vehicle information from the first payment
-      const customer =
-        payments.length > 0 && payments[0].customer ? payments[0].customer : {};
-      const vehicle =
-        payments.length > 0 && payments[0].vehicle ? payments[0].vehicle : {};
+      const customer = payments.length > 0 && payments[0].customer ? payments[0].customer : {};
+      const vehicle = payments.length > 0 && payments[0].vehicle ? payments[0].vehicle : {};
 
-      // Combine all data into a single object
       const data = {
-        workshopData: workshopData, // Workshop information from the database
-        customer: customer, // Customer information from the first payment
-        vehicle: vehicle, // Vehicle information from the first payment
-        payments: payments, // List of payments for the customer
+        workshopData: workshopData,
+        customer: customer,
+        vehicle: vehicle,
+        payments: payments,
       };
 
       console.log("PDF data:", data);

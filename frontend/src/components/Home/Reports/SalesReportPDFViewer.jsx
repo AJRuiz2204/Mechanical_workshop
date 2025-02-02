@@ -4,6 +4,7 @@ import { PDFViewer } from "@react-pdf/renderer";
 import SalesReportPDF from "./SalesReportPDF";
 import { useParams } from "react-router-dom";
 import { getSalesReportById } from "../../../services/salesReportService";
+import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 
 // SalesReportPDFViewer component: fetches a sales report by its ID and renders it
 // in a PDFViewer using the SalesReportPDF component.
@@ -25,8 +26,15 @@ const SalesReportPDFViewer = () => {
   // fetchReport: Asynchronously fetches the sales report data by its ID.
   const fetchReport = async (id) => {
     try {
-      const data = await getSalesReportById(id);
-      setReportData(data);
+      const [data, workshopData] = await Promise.all([
+        getSalesReportById(id),
+        getWorkshopSettings()
+      ]);
+      
+      setReportData({
+        ...data,
+        workshopData: workshopData
+      });
     } catch (error) {
       console.error("Error fetching sales report:", error);
     }
