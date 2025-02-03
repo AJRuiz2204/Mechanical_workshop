@@ -12,6 +12,8 @@ import "./Home.css";
  * and includes a welcome message and a logout button.
  *
  * The main content area is used to display the content for the selected route.
+ *
+ * @returns {JSX.Element} The Home component.
  */
 const Home = () => {
   const navigate = useNavigate();
@@ -80,7 +82,7 @@ const Home = () => {
   }, []);
 
   /**
-   * Handles the click event on a menu item and navigates to the specified route.
+   * handleTabClick - Handles the click event on a menu item and navigates to the specified route.
    *
    * @param {string} route - The route to navigate to.
    */
@@ -89,7 +91,7 @@ const Home = () => {
   };
 
   /**
-   * Handles the logout action by calling the logout service and navigating to the login page.
+   * handleLogout - Handles the logout action by calling the logout service and navigating to the login page.
    */
   const handleLogout = () => {
     logoutUser();

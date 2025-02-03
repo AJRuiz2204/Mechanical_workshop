@@ -1,0 +1,161 @@
+/*
+  WorkshopSettings.css
+  ======================
+  This stylesheet provides custom styling for the WorkshopSettingsForm and
+  WorkshopSettingsPreview components. It ensures that the components are
+  responsive and visually consistent with Bootstrap’s breakpoints:
+    - Extra small devices (xs): <576px
+    - Small devices (sm): ≥576px
+    - Medium devices (md): ≥768px
+    - Large devices (lg): ≥992px
+    - Extra large devices (xl): ≥1200px
+
+  The styles include:
+    - Base container and heading styles.
+    - Form control and label customizations.
+    - Alert and feedback styles.
+    - Card styles for the preview component.
+    - Responsive adjustments at the xs breakpoint.
+*/
+
+/* ---------------------------- */
+/* Base Container & Heading     */
+/* ---------------------------- */
+
+/* Container full width and centered */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Main heading style (e.g., form title) */
+h3 {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: #343a40;
+}
+
+/* Secondary heading style (e.g., card title) */
+h5 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #343a40;
+}
+
+/* ---------------------------- */
+/* Form Controls & Labels       */
+/* ---------------------------- */
+
+/* Input, textarea, and select controls */
+.form-control {
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+}
+
+/* Labels with increased weight */
+.form-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Feedback messages (error messages in invalid states) */
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+.form-control.is-invalid ~ .invalid-feedback {
+  font-size: 0.875rem;
+}
+
+/* ---------------------------- */
+/* Alerts & Feedback             */
+/* ---------------------------- */
+
+/* Alerts use a slightly smaller font size */
+.alert {
+  font-size: 0.9rem;
+}
+
+/* ---------------------------- */
+/* Card Styles (Preview)        */
+/* ---------------------------- */
+
+/* Card container for the preview component */
+.card {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Card header styling */
+.card-header {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #ddd;
+  padding: 0.75rem 1rem;
+}
+
+/* Card body paragraphs */
+.card-body p {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+/* Card body links */
+.card-body a {
+  color: #007bff;
+  text-decoration: none;
+}
+.card-body a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra Small Devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  /* Reduce main heading size */
+  h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Reduce secondary heading size */
+  h5 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Adjust form control size and padding */
+  .form-control {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* Adjust form label size */
+  .form-label {
+    font-size: 0.9rem;
+  }
+
+  /* Adjust alert font size */
+  .alert {
+    font-size: 0.8rem;
+  }
+
+  /* Card header adjustments */
+  .card-header {
+    font-size: 1rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* Card body text smaller for better fit */
+  .card-body p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Small devices (sm: ≥576px), Medium (md: ≥768px), Large (lg: ≥992px)
+   and Extra Large (xl: ≥1200px) inherit the default styles. */

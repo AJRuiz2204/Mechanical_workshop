@@ -9,18 +9,21 @@ import { loginUser } from "../../services/UserLoginServices";
 
 /**
  * Login Component
- * Handles user authentication by allowing users to enter their credentials and log into the application.
+ *
+ * This component handles user authentication by allowing users to enter
+ * their credentials and log into the application.
  *
  * @returns {JSX.Element} The Login component.
  */
 const Login = () => {
+  // State variables to manage username, password, and error messages.
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   /**
-   * Handles form submission for user login.
+   * handleSubmit - Handles the form submission for user login.
    *
    * @param {Event} e - The form submission event.
    */
@@ -28,27 +31,27 @@ const Login = () => {
     e.preventDefault();
     console.log("Attempting to log in with:", { username, password }); // Credential log
     const credentials = { username, password };
+
     try {
       const response = await loginUser(credentials); // Save the full response
       console.log("Response from loginUser:", response); // Response log
 
-      // Destructure with correct names
+      // Destructure the token and user from the response.
       const { token, user } = response;
 
       if (!token || !user) {
         throw new Error("Invalid login response.");
       }
 
-      // Store in localStorage
+      // Store token and user details in localStorage.
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       console.log("Data stored in localStorage."); // Storage confirmation
 
-      // Navigate to the home page
+      // Navigate to the home page after successful login.
       navigate("/home");
     } catch (err) {
       console.error("Error in handleSubmit:", err); // Error log
-      // Handle errors more specifically if possible
       setError(err.message || "Error logging in.");
     }
   };
@@ -90,7 +93,11 @@ const Login = () => {
               LOGIN
             </button>
           </form>
-          {/* <div className="text-center mt-3">
+          {/*
+          Uncomment the following lines if you wish to include links
+          for "Forgot Password" or "Register User".
+          
+          <div className="text-center mt-3">
             <Link to="/forgot-password" className="forgot-password-link">
               FORGOT PASSWORD?
             </Link>
@@ -100,7 +107,8 @@ const Login = () => {
             <Link to="/register-user" className="register-user-link">
               Register here
             </Link>
-          </div> */}
+          </div>
+          */}
         </div>
       </div>
     </div>

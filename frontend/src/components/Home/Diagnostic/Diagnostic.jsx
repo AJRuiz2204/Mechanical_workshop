@@ -14,9 +14,25 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { createDiagnostic } from "../../../services/DiagnosticService";
 import { getVehicleById } from "../../../services/VehicleService";
-import technicianService from "../../../services/technicianService"; // Import technician service
+import technicianService from "../../../services/technicianService"; // Technician service
 import "./Diagnostic.css";
 
+/**
+ * Diagnostic Component
+ *
+ * Description:
+ * This component is used to create a new diagnostic for a given vehicle.
+ * It fetches the vehicle information based on the provided vehicle ID from the URL,
+ * retrieves a list of technicians, and provides a form to enter diagnostic details.
+ * The form includes fields for selecting an assigned technician and entering the
+ * reason for the visit (or customer state). Upon submission, a diagnostic is created.
+ *
+ * Responsive Behavior:
+ * Uses Bootstrap’s grid and utility classes along with custom CSS to ensure that
+ * the layout and typography adjust properly on all devices.
+ *
+ * @returns {JSX.Element} The Diagnostic component.
+ */
 const Diagnostic = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get vehicle ID from route parameters
@@ -32,7 +48,7 @@ const Diagnostic = () => {
   // State for storing form data for diagnostic creation
   const [formData, setFormData] = useState({
     reasonForVisit: "",
-    assignedTechnician: "", // Assigned technician information
+    assignedTechnician: "",
   });
 
   // State for storing error and success messages
@@ -42,7 +58,9 @@ const Diagnostic = () => {
   // State for loading vehicle data
   const [loading, setLoading] = useState(true);
 
-  // useEffect to fetch vehicle information when component mounts
+  /**
+   * useEffect to fetch vehicle information when the component mounts.
+   */
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
@@ -51,7 +69,6 @@ const Diagnostic = () => {
           setLoading(false);
           return;
         }
-        // Retrieve vehicle data using the vehicle ID
         const data = await getVehicleById(id);
         setVehicle(data);
       } catch (error) {
@@ -60,15 +77,15 @@ const Diagnostic = () => {
         setLoading(false);
       }
     };
-
     fetchVehicle();
   }, [id]);
 
-  // useEffect to fetch technicians information when component mounts
+  /**
+   * useEffect to fetch technicians information when the component mounts.
+   */
   useEffect(() => {
     const fetchTechnicians = async () => {
       try {
-        // Retrieve technicians data from the service
         const data = await technicianService.getTechnicians();
         setTechnicians(data);
       } catch (error) {
@@ -77,36 +94,41 @@ const Diagnostic = () => {
         setTechLoading(false);
       }
     };
-
     fetchTechnicians();
   }, []);
 
-  // Handle changes in the form inputs
+  /**
+   * handleChange Function:
+   * Handles changes in the diagnostic form inputs.
+   *
+   * @param {Object} e - The event object from the input change.
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Update the formData state with new input value
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission for creating a new diagnostic
+  /**
+   * handleSubmit Function:
+   * Handles form submission to create a new diagnostic.
+   * Validates that a technician is assigned and a reason for visit is provided.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Reset error and success messages
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Validate that a technician has been assigned
     if (!formData.assignedTechnician.trim()) {
       setErrorMessage("You must assign a technician.");
       return;
     }
-    // Validate that reason for visit is provided
     if (!formData.reasonForVisit.trim()) {
       setErrorMessage("Reason for visit is required.");
       return;
     }
 
-    // Construct the diagnostic data payload
     const diagnosticData = {
       vehicleId: parseInt(id, 10),
       assignedTechnician: formData.assignedTechnician.trim(),
@@ -114,18 +136,15 @@ const Diagnostic = () => {
     };
 
     try {
-      // Call the service to create a diagnostic
       await createDiagnostic(diagnosticData);
       setSuccessMessage("Diagnostic created successfully.");
-      // Redirect to diagnostics list after successful creation
       navigate("/diagnostic-list");
     } catch (error) {
-      // Set error message if diagnostic creation fails
       setErrorMessage("Error creating diagnostic: " + error.message);
     }
   };
 
-  // If either vehicle or technicians are still loading, display a spinner
+  // Show a spinner while loading data
   if (loading || techLoading) {
     return (
       <Container className="p-4 border rounded">
@@ -141,7 +160,7 @@ const Diagnostic = () => {
     );
   }
 
-  // If there is an error message, display it with a button to return to the diagnostics list
+  // If there is an error, display it with a back button
   if (errorMessage) {
     return (
       <Container className="p-4 border rounded">
@@ -160,7 +179,7 @@ const Diagnostic = () => {
     <Container className="p-4 border rounded bg-light">
       <h3>Create Diagnostic</h3>
 
-      {/* Display success or technician error messages */}
+      {/* Display success and technician error messages */}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
       {techError && <Alert variant="danger">{techError}</Alert>}
 
@@ -211,7 +230,6 @@ const Diagnostic = () => {
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
           <Col md={6}>
-            {/* Dropdown to select an assigned technician */}
             <Form.Group controlId="assignedTechnician">
               <Form.Label>Assign Technician</Form.Label>
               <Form.Select
@@ -237,9 +255,8 @@ const Diagnostic = () => {
             </Form.Group>
           </Col>
           <Col md={6}>
-            {/* Textarea for entering the reason for visit */}
             <Form.Group controlId="reasonForVisit">
-              <Form.Label>Costumer State</Form.Label>
+              <Form.Label>Reason for Visit</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -253,7 +270,7 @@ const Diagnostic = () => {
           </Col>
         </Row>
 
-        {/* Action buttons for cancelling or saving the diagnostic */}
+        {/* Action Buttons */}
         <div className="d-flex justify-content-end">
           <Button
             variant="secondary"

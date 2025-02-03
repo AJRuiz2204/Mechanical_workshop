@@ -1,0 +1,103 @@
+/*
+  Estimate.css
+  ============
+  This stylesheet applies a blue color palette and responsive styling for the
+  Estimate component. It uses Bootstrap’s breakpoints to adjust spacing, fonts, and
+  layout for optimal display across all device sizes.
+
+  Breakpoints:
+    - xs: <576px
+    - sm: ≥576px
+    - md: ≥768px
+    - lg: ≥992px
+    - xl: ≥1200px
+*/
+
+/* ---------------------------- */
+/* Base Container Styles        */
+/* ---------------------------- */
+
+/* Main invoice container with a blue border and white background */
+.estimate-container {
+  background-color: #fff;
+  border: 1px solid #007bff; /* Blue border */
+  border-radius: 4px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+/* Invoice title using dark blue */
+.invoice-title {
+  color: #0056b3;
+  margin-bottom: 20px;
+}
+
+/* Table styling for the invoice */
+.invoice-table {
+  margin-top: 20px;
+}
+
+/* Totals section: right-aligned with dark blue accents */
+.invoice-totals p,
+.invoice-totals h5 {
+  margin: 0;
+  color: #0056b3;
+}
+
+/* Action buttons spacing */
+.invoice-actions {
+  margin-top: 20px;
+}
+
+/* Loading and error container background */
+.invoice-loading {
+  background-color: #f0f8ff; /* Light blue */
+}
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra small devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  .estimate-container {
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .invoice-title {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  .invoice-totals p,
+  .invoice-totals h5 {
+    font-size: 0.9rem;
+  }
+
+  .invoice-actions button {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small devices (sm: ≥576px and <768px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .estimate-container {
+    padding: 16px;
+  }
+
+  .invoice-title {
+    font-size: 1.75rem;
+  }
+
+  .invoice-totals p,
+  .invoice-totals h5 {
+    font-size: 0.95rem;
+  }
+}

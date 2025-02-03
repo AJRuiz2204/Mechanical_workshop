@@ -1,35 +1,118 @@
-/* src/components/Settings/Settings.css */
+/*
+  Settings.css
+  ============
+  This stylesheet styles the Settings component with a blue color palette.
+  It uses Bootstrap’s breakpoints to adjust the layout for:
+    - Extra small devices (xs): <576px
+    - Small devices (sm): ≥576px
+    - Medium devices (md): ≥768px
+    - Large devices (lg): ≥992px
+    - Extra large devices (xl): ≥1200px
 
-/* Contenedor principal */
+  The styles include:
+    - A blue-themed container background.
+    - A tabs bar with blue borders and active tab highlighting.
+    - A content area with blue borders.
+    - Responsive adjustments for smaller screens.
+*/
+
+/* ---------------------------- */
+/* Base Styles with Blue Colors */
+/* ---------------------------- */
+
+/* Main container with padding and a subtle light blue background */
 .settings-container {
   padding: 16px;
+  background-color: #f0f8ff; /* AliceBlue, a very light blue */
 }
 
-/* Barra de Tabs */
+/* Tabs bar: display as flex with spacing and a bottom margin */
 .settings-tabs {
   display: flex;
-  gap: 16px; /* Espacio entre pestañas */
+  gap: 16px; /* space between tabs */
   margin-bottom: 24px;
 }
 
+/* ---------------------------- */
+/* Tab Styles using Blue Palette*/
+/* ---------------------------- */
+
+/* Each tab has a light blue background, blue border, and blue text */
 .settings-tab {
   cursor: pointer;
   padding: 8px 12px;
-  border: 1px solid #ccc;
+  border: 1px solid #007bff; /* Bootstrap primary blue */
   border-radius: 4px 4px 0 0;
-  background-color: #f7f7f7;
+  background-color: #e9f2ff; /* Light blue background */
+  color: #007bff; /* Primary blue text */
+  transition: background-color 0.3s, font-weight 0.3s;
 }
 
+/* Active tab: uses primary blue background with white text */
 .settings-tab.active {
-  background-color: #fff;
+  background-color: #007bff;
+  color: #fff;
   font-weight: bold;
-  border-bottom: 1px solid white; /* Para 'levantar' la pestaña activa */
+  border-bottom: 1px solid #fff; /* creates a "lifted" effect */
 }
 
-/* Contenido */
+/* ---------------------------- */
+/* Content Area Styles          */
+/* ---------------------------- */
+
+/* Settings content area with blue border and white background */
 .settings-content {
-  border: 1px solid #ccc;
+  border: 1px solid #007bff;
   padding: 16px;
   border-radius: 0 4px 4px 4px;
   background-color: #fff;
 }
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra Small Devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  /* Reduce container padding */
+  .settings-container {
+    padding: 12px;
+  }
+
+  /* Stack tabs vertically on very small screens */
+  .settings-tabs {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* Tabs: center text and adjust padding when stacked */
+  .settings-tab {
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px; /* uniform radius when vertical */
+  }
+
+  /* Reduce content area padding */
+  .settings-content {
+    padding: 12px;
+  }
+}
+
+/* Small Devices (sm: ≥576px and <768px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .settings-tabs {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .settings-tab {
+    padding: 8px 10px;
+  }
+
+  .settings-content {
+    padding: 14px;
+  }
+}
+
+/* Medium devices (md: ≥768px) and larger use the default styles above. */

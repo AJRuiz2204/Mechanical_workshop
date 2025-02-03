@@ -1,0 +1,103 @@
+/*
+  EstimateList.css
+  =================
+  This stylesheet styles the EstimateList component using a blue color palette.
+  It leverages Bootstrap’s breakpoints for responsiveness:
+    - Extra small devices (xs): <576px
+    - Small devices (sm): ≥576px
+    - Medium devices (md): ≥768px
+    - Large devices (lg): ≥992px
+    - Extra large devices (xl): ≥1200px
+
+  The styles include:
+    - Blue-themed container, headings, and accents.
+    - Custom styles for the search input and table headers.
+    - Responsive adjustments for spacing and font sizes.
+*/
+
+/* ---------------------------- */
+/* Base Container & Headings    */
+/* ---------------------------- */
+
+/* Main container with padding and a light blue background */
+.estimate-list {
+  background-color: #e7f1ff; /* Light blue */
+}
+
+/* Headings in the container */
+.estimate-list h2 {
+  color: #0056b3; /* Dark blue */
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ---------------------------- */
+/* Search Input Styles          */
+/* ---------------------------- */
+
+/* Styling for the search input (using Bootstrap's default classes as well) */
+.form-control {
+  border: 1px solid #007bff; /* Blue border */
+  border-radius: 4px;
+}
+
+/* ---------------------------- */
+/* Table Styles                 */
+/* ---------------------------- */
+
+/* Table header: blue background with white text */
+.table thead th {
+  background-color: #0056b3;
+  color: #fff;
+}
+
+/* ---------------------------- */
+/* Action Buttons               */
+/* ---------------------------- */
+
+/* Add Estimate button margin */
+.mb-3.text-end {
+  margin-bottom: 20px;
+}
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra small devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  .estimate-list {
+    padding: 12px;
+  }
+
+  .estimate-list h2 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  .form-control {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small devices (sm: ≥576px and <768px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .estimate-list {
+    padding: 16px;
+  }
+
+  .estimate-list h2 {
+    font-size: 1.75rem;
+  }
+
+  .form-control {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+}

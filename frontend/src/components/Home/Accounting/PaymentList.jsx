@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Alert } from "react-bootstrap";
 import { getAllPayments } from "../../../services/accountReceivableService";
 import { Link } from "react-router-dom";
+import "./styles/PaymentList.css";
 
 /**
  * Component for displaying a list of payments grouped by customer

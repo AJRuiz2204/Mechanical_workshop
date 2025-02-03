@@ -1,0 +1,148 @@
+/*
+  AccountsReceivableView.css
+  ============================
+  This stylesheet provides responsive, blue-themed styling for the AccountsReceivableView
+  component. It uses Bootstrap’s breakpoints to adjust layout and typography for:
+    - Extra small devices (xs): <576px
+    - Small devices (sm): ≥576px
+    - Medium devices (md): ≥768px
+    - Large devices (lg): ≥992px
+    - Extra large devices (xl): ≥1200px
+
+  Color Palette:
+    - Primary Blue: #007bff
+    - Dark Blue: #0056b3
+    - Light Blue Background: #e7f1ff or #f0f8ff
+
+  The styles include:
+    - A light blue-themed container with padding, border, and rounded corners.
+    - Blue-accented headings.
+    - Table header styling with a dark blue background.
+    - Custom spacing for alerts and utility classes.
+    - Responsive adjustments for smaller devices.
+*/
+
+/* ---------------------------- */
+/* Base Container Styles        */
+/* ---------------------------- */
+
+/* Main container for the accounts receivable view */
+.accounts-receivable-container {
+  background-color: #e7f1ff; /* Light blue background */
+  padding: 16px;
+  border: 1px solid #007bff; /* Primary blue border */
+  border-radius: 4px;
+  margin-top: 20px;
+}
+
+/* Header styling for the view */
+.accounts-receivable-container h1,
+.accounts-receivable-container h3 {
+  color: #0056b3; /* Dark blue for headings */
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ---------------------------- */
+/* Card & Table Styles          */
+/* ---------------------------- */
+
+/* Card styling for account cards */
+.account-card {
+  transition: all 0.3s;
+}
+
+/* Table header: dark blue background with white text */
+.table thead th {
+  background-color: #0056b3;
+  color: #fff;
+}
+
+/* Badge styling (ensure font size is legible) */
+.badge {
+  font-size: 0.9rem;
+}
+
+/* ---------------------------- */
+/* Alert Styles                 */
+/* ---------------------------- */
+
+/* Custom alert styling with blue accents */
+.alert {
+  margin-top: 20px;
+  border: 1px solid #0056b3;
+  background-color: #f0f8ff; /* AliceBlue */
+  color: #0056b3;
+}
+
+/* ---------------------------- */
+/* Utility Spacing Overrides    */
+/* ---------------------------- */
+
+/* Utility classes to complement Bootstrap's spacing */
+.p-4 {
+  padding: 1.5rem !important;
+}
+.border {
+  border: 1px solid #ddd;
+}
+.rounded {
+  border-radius: 5px;
+}
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+.me-2 {
+  margin-right: 0.5rem !important;
+}
+.mt-3 {
+  margin-top: 1rem !important;
+}
+.mt-4 {
+  margin-top: 1.5rem !important;
+}
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra small devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  .accounts-receivable-container {
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .accounts-receivable-container h1,
+  .accounts-receivable-container h3 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .alert {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small devices (sm: ≥576px and <768px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .accounts-receivable-container {
+    padding: 16px;
+  }
+
+  .accounts-receivable-container h1,
+  .accounts-receivable-container h3 {
+    font-size: 1.75rem;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.85rem;
+  }
+}

@@ -17,16 +17,10 @@ import {
   deleteNote,
   getNotesByTechDiag,
 } from "../../services/NotesService";
+import "./NotesSection.css";
 
 /**
  * NotesSection Component
- * Este componente gestiona la creación, visualización y eliminación de notas
- * asociadas a un diagnóstico o a un técnico-diagnóstico.
- *
- * Características:
- * - Si se pasa un "techDiagId", carga y gestiona las notas asociadas al TechnicianDiagnostic.
- * - Si se pasa un "diagId", carga y gestiona las notas asociadas al Diagnostic.
- * - Permite agregar nuevas notas y eliminarlas.
  *
  * This component handles the creation, display, and deletion of notes
  * related to either a diagnostic or a technician diagnostic.
@@ -42,6 +36,7 @@ import {
  * @returns {JSX.Element}
  */
 const NotesSection = ({ diagId, techDiagId }) => {
+  // State variables for notes, form text, loading status, and messages
   const [notes, setNotes] = useState([]);
   const [noteText, setNoteText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -51,9 +46,6 @@ const NotesSection = ({ diagId, techDiagId }) => {
   const [noteToDelete, setNoteToDelete] = useState(null);
 
   /**
-   * useEffect - Se encarga de cargar las notas dependiendo de si
-   * existe un techDiagId o un diagId.
-   *
    * useEffect - Loads notes depending on whether techDiagId or diagId exists.
    */
   useEffect(() => {
@@ -80,13 +72,10 @@ const NotesSection = ({ diagId, techDiagId }) => {
   }, [diagId, techDiagId]);
 
   /**
-   * handleAddNote - Maneja la creación de una nueva nota.
-   * Se asigna el DiagnosticId o TechnicianDiagnosticId en función del ID disponible.
-   *
    * handleAddNote - Handles the creation of a new note.
    * Assigns either DiagnosticId or TechnicianDiagnosticId based on which ID is available.
    *
-   * @param {Object} e - Evento de formulario.
+   * @param {Object} e - The form submission event.
    */
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -114,8 +103,6 @@ const NotesSection = ({ diagId, techDiagId }) => {
   };
 
   /**
-   * handleDeleteNote - Maneja la eliminación de una nota específica.
-   *
    * handleDeleteNote - Handles deleting a specific note.
    */
   const handleDeleteNote = async () => {
@@ -134,7 +121,7 @@ const NotesSection = ({ diagId, techDiagId }) => {
   };
 
   return (
-    <div className="mt-4">
+    <div className="notes-section-container mt-4">
       <h5>Notes</h5>
 
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
@@ -169,15 +156,18 @@ const NotesSection = ({ diagId, techDiagId }) => {
           {notes.map((note) => (
             <ListGroup.Item
               key={note.id}
-              className="d-flex justify-content-between align-items-start"
+              className="d-flex justify-content-between align-items-start list-group-item-custom"
             >
               <div>
-                <strong>{new Date(note.createdAt).toLocaleString()}</strong>
-                <p>{note.content}</p>
+                <span className="note-timestamp">
+                  {new Date(note.createdAt).toLocaleString()}
+                </span>
+                <p className="note-content">{note.content}</p>
               </div>
               <Button
                 variant="danger"
                 size="sm"
+                className="delete-button"
                 onClick={() => {
                   setNoteToDelete(note);
                   setShowDeleteModal(true);

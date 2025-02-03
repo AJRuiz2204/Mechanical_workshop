@@ -1,0 +1,166 @@
+/*
+  AccountPaymentModal.css
+  ========================
+  This stylesheet provides responsive, blue-themed styling for the AccountPaymentModal
+  component. It ensures that modal elements such as the header, body, and footer,
+  as well as cards and form controls, adapt to different screen sizes using Bootstrap’s
+  standard breakpoints:
+    - xs: <576px
+    - sm: ≥576px
+    - md: ≥768px
+    - lg: ≥992px
+    - xl: ≥1200px
+  
+  Color Palette:
+    - Primary Blue: #007bff
+    - Dark Blue: #0056b3
+    - Light Blue Background: #f0f8ff or #e7f1ff
+*/
+
+/* ---------------------------- */
+/* Modal Base Styling           */
+/* ---------------------------- */
+
+/* Ensure modal content has rounded corners */
+.modal-content {
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+/* Modal Header: blue background with white text */
+.modal-header {
+  background-color: #007bff;
+  color: #fff;
+  padding: 1rem;
+}
+
+/* Modal Title: set font size */
+.modal-title {
+  font-size: 1.5rem;
+}
+
+/* Modal Body: light blue background and padding */
+.modal-body {
+  background-color: #f0f8ff; /* Light blue background */
+  padding: 1.5rem;
+}
+
+/* Modal Footer: matching background and border-top */
+.modal-footer {
+  background-color: #f0f8ff;
+  padding: 1rem;
+  border-top: 1px solid #007bff;
+}
+
+/* ---------------------------- */
+/* Card Styling                 */
+/* ---------------------------- */
+
+/* Card container for account details and payment history */
+.card {
+  border: 1px solid #007bff; /* Primary blue border */
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+/* Card Header: dark blue background with white text */
+.card-header {
+  background-color: #0056b3;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+}
+
+/* Card Body: padding for content */
+.card-body {
+  padding: 1rem;
+}
+
+/* Payment history card: limit height and allow scrolling */
+.payment-history {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* ---------------------------- */
+/* Form Controls & Labels       */
+/* ---------------------------- */
+
+/* Form labels with dark blue color */
+.form-label {
+  font-weight: 600;
+  color: #0056b3;
+}
+
+/* Form controls with blue border and consistent padding */
+.form-control {
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+}
+
+/* ---------------------------- */
+/* Badge Styling                */
+/* ---------------------------- */
+
+/* Badge: ensure font-size is legible */
+.badge {
+  font-size: 0.9rem;
+}
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra small devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  .modal-header,
+  .modal-footer {
+    padding: 0.75rem;
+  }
+  .modal-title {
+    font-size: 1.25rem;
+  }
+  .card-header {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .card-body {
+    padding: 0.75rem;
+  }
+  .form-control {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.5rem;
+  }
+  .form-label {
+    font-size: 0.9rem;
+  }
+  .badge {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small devices (sm: ≥576px and <768px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .modal-header,
+  .modal-footer {
+    padding: 0.85rem;
+  }
+  .modal-title {
+    font-size: 1.35rem;
+  }
+  .card-header {
+    font-size: 1.05rem;
+    padding: 0.65rem 0.85rem;
+  }
+  .card-body {
+    padding: 0.85rem;
+  }
+  .form-control {
+    font-size: 0.95rem;
+    padding: 0.45rem 0.6rem;
+  }
+  .form-label {
+    font-size: 0.95rem;
+  }
+}

@@ -15,6 +15,7 @@ import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
 } from "../../../services/TechnicianDiagnosticService";
+import "./TechnicianDiagnosticList.css";
 
 /**
  * TechnicianDiagnosticList Component

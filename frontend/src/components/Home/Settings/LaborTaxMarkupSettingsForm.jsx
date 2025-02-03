@@ -7,15 +7,16 @@ import {
   createSettings,
   patchSettings,
 } from "../../../services/laborTaxMarkupSettingsService";
+import "./LaborTaxMarkupSettingsForm.css";
 
 /**
  * LaborTaxMarkupSettingsForm Component
  *
  * Description:
  * This component manages the Labor, Tax, and Markup settings for the workshop.
- * It allows users to create new settings or edit existing ones. The form includes fields
- * for hourly rates, tax rates, and markup percentages. Additionally, it displays the current
- * settings fetched from the backend for reference.
+ * It allows users to create new settings or edit existing ones. The form includes
+ * fields for hourly rates, tax rates, and markup percentages. In addition, it displays
+ * the current settings fetched from the backend in a read-only format.
  *
  * Features:
  * - Fetch existing settings on mount.
@@ -23,10 +24,15 @@ import {
  * - Patch existing settings with updated values.
  * - Display success and error messages based on operations.
  * - Show a loading spinner while fetching data.
- * - Display current settings from the database in a read-only format.
+ * - Display current settings from the database.
+ *
+ * Dependencies:
+ * - React and React Hooks for state management.
+ * - Bootstrap classes for layout and responsiveness.
+ * - Custom CSS for additional responsive styling.
  */
 const LaborTaxMarkupSettingsForm = () => {
-  // State to manage form data inputs
+  // State to manage form inputs
   const [formData, setFormData] = useState({
     hourlyRate1: "",
     hourlyRate2: "",
@@ -39,45 +45,37 @@ const LaborTaxMarkupSettingsForm = () => {
     partMarkup: "",
   });
 
-  // State to hold data fetched from the database
+  // State to hold settings fetched from the database
   const [dbData, setDbData] = useState(null);
-
-  // State to manage the record ID from the database
+  // State to hold the record ID from the database
   const [recordId, setRecordId] = useState(null);
-
   // Determines if the form is in edit mode (patch) or create mode
   const [isEditMode, setIsEditMode] = useState(false);
-
-  // State to manage loading state while fetching data
+  // Loading state while fetching data
   const [loading, setLoading] = useState(true);
-
-  // State to manage saving state during create or patch operations
+  // Saving state during create or patch operations
   const [saving, setSaving] = useState(false);
-
-  // State to handle error messages
+  // Error message state
   const [error, setError] = useState(null);
-
-  // State to handle success messages
+  // Success message state
   const [success, setSuccess] = useState(null);
 
-  // Constant ID used to fetch specific settings; adjust if necessary
+  // Constant ID used to fetch specific settings (adjust as needed)
   const SETTINGS_ID = 1;
 
   /**
-   * useEffect Hook
-   *
+   * useEffect Hook:
    * Fetches existing settings from the backend when the component mounts.
-   * Determines if the form should be in edit mode or create mode based on the response.
+   * Sets the form into edit mode if settings are found, otherwise remains in create mode.
    */
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Attempt to fetch settings by ID
         const data = await getSettingsById(SETTINGS_ID);
         setDbData(data);
         setRecordId(data.id);
         setIsEditMode(true);
-        // Populate formData with fetched data, converting numerical zeros to empty strings
+        // Populate formData with fetched data. Convert numeric zeros to empty strings.
         setFormData({
           hourlyRate1: data.hourlyRate1 === 0 ? "" : String(data.hourlyRate1),
           hourlyRate2: data.hourlyRate2 === 0 ? "" : String(data.hourlyRate2),
@@ -92,26 +90,24 @@ const LaborTaxMarkupSettingsForm = () => {
           partMarkup: data.partMarkup === 0 ? "" : String(data.partMarkup),
         });
       } catch (err) {
+        // If the settings are not found (404), switch to create mode
         if (err?.status === 404 || err?.message?.includes("404")) {
-          // If no settings exist, switch to create mode
           setIsEditMode(false);
           setDbData(null);
         } else {
-          // Handle other errors
           setError(err.message || "Error loading settings.");
         }
       } finally {
-        setLoading(false); // Stop loading spinner
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
   /**
-   * handleChange Function
-   *
-   * Updates the formData state based on user input.
-   * Handles both text/number inputs and checkboxes.
+   * handleChange Function:
+   * Updates the formData state when the user inputs data.
+   * Handles both text/number fields and checkbox inputs.
    *
    * @param {Object} e - The event object from the input change.
    */
@@ -125,12 +121,11 @@ const LaborTaxMarkupSettingsForm = () => {
   };
 
   /**
-   * safeNumber Function
+   * safeNumber Function:
+   * Safely converts a string input to a float.
+   * Returns 0 if the input is empty or not a valid number.
    *
-   * Safely converts a string input to a float number.
-   * Returns 0 if the input is an empty string or not a valid number.
-   *
-   * @param {string} val - The input value to convert.
+   * @param {string} val - The value to convert.
    * @returns {number} - The parsed float or 0.
    */
   const safeNumber = (val) => {
@@ -140,13 +135,11 @@ const LaborTaxMarkupSettingsForm = () => {
   };
 
   /**
-   * handleSubmitCreate Function
+   * handleSubmitCreate Function:
+   * Handles the submission of the form when creating new settings.
+   * Prepares the payload, sends a create request to the backend, and updates the UI.
    *
-   * Handles the creation of new settings.
-   * Validates inputs, sends a create request to the backend,
-   * and updates the UI based on the response.
-   *
-   * @param {Object} e - The event object from form submission.
+   * @param {Object} e - The form submission event.
    */
   const handleSubmitCreate = async (e) => {
     e.preventDefault();
@@ -173,11 +166,11 @@ const LaborTaxMarkupSettingsForm = () => {
       setIsEditMode(true);
       setSuccess("Record created successfully.");
 
-      // Fetch the newly created data to display
+      // Fetch the newly created data for display
       const newDbData = await getSettingsById(created.id);
       setDbData(newDbData);
 
-      // Reset the form fields
+      // Reset form fields
       setFormData({
         hourlyRate1: "",
         hourlyRate2: "",
@@ -197,13 +190,11 @@ const LaborTaxMarkupSettingsForm = () => {
   };
 
   /**
-   * handleSubmitPatch Function
+   * handleSubmitPatch Function:
+   * Handles the submission of the form when patching (updating) existing settings.
+   * Prepares a patch document and sends a patch request to the backend.
    *
-   * Handles the patching (partial updating) of existing settings.
-   * Validates inputs, sends a patch request to the backend,
-   * and updates the UI based on the response.
-   *
-   * @param {Object} e - The event object from form submission.
+   * @param {Object} e - The form submission event.
    */
   const handleSubmitPatch = async (e) => {
     e.preventDefault();
@@ -212,7 +203,7 @@ const LaborTaxMarkupSettingsForm = () => {
     setSuccess(null);
 
     try {
-      // Prepare the patch document as per JSON Patch standards
+      // Prepare a patch document (JSON Patch format)
       const patchDoc = [
         {
           op: "replace",
@@ -264,11 +255,11 @@ const LaborTaxMarkupSettingsForm = () => {
       await patchSettings(recordId, patchDoc);
       setSuccess("Record patched successfully.");
 
-      // Fetch the updated data to display
+      // Fetch updated data for display
       const updatedData = await getSettingsById(recordId);
       setDbData(updatedData);
 
-      // Reset the form fields
+      // Reset form fields
       setFormData({
         hourlyRate1: "",
         hourlyRate2: "",
@@ -287,13 +278,10 @@ const LaborTaxMarkupSettingsForm = () => {
     }
   };
 
-  // Render a loading spinner while fetching data
+  // Show a full-page spinner while data is loading
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
+      <div className="d-flex justify-content-center align-items-center vh-100">
         <div className="spinner-border" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -301,18 +289,18 @@ const LaborTaxMarkupSettingsForm = () => {
     );
   }
 
-  // Determine which submit handler to use based on edit mode
+  // Choose the appropriate submit handler based on edit mode
   const handleSubmit = isEditMode ? handleSubmitPatch : handleSubmitCreate;
 
   return (
     <div className="container mt-4">
-      {/* Display error message if any */}
+      {/* Display error message */}
       {error && (
         <div className="alert alert-danger mt-3" role="alert">
           {error}
         </div>
       )}
-      {/* Display success message if any */}
+      {/* Display success message */}
       {success && (
         <div className="alert alert-success mt-3" role="alert">
           {success}
@@ -320,14 +308,13 @@ const LaborTaxMarkupSettingsForm = () => {
       )}
 
       <div className="row">
-        {/* Form Container */}
+        {/* Form Section */}
         <div className="col-md-6">
           <div className="card mb-3">
             <div className="card-body">
               <h3 className="card-title">
                 Labor & Tax Markup Settings ({isEditMode ? "Patch" : "Create"})
               </h3>
-
               <form onSubmit={handleSubmit} className="mt-3">
                 {/* Hourly Rate 1 */}
                 <div className="mb-3">
@@ -346,7 +333,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Hourly Rate 2 */}
                 <div className="mb-3">
                   <label htmlFor="hourlyRate2" className="form-label">
@@ -364,7 +350,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Hourly Rate 3 */}
                 <div className="mb-3">
                   <label htmlFor="hourlyRate3" className="form-label">
@@ -382,7 +367,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Default Hourly Rate */}
                 <div className="mb-3">
                   <label htmlFor="defaultHourlyRate" className="form-label">
@@ -400,7 +384,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Part Tax Rate */}
                 <div className="mb-3">
                   <label htmlFor="partTaxRate" className="form-label">
@@ -418,7 +401,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Part Tax By Default Checkbox */}
                 <div className="form-check mb-3">
                   <input
@@ -436,7 +418,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     Part Tax by Default
                   </label>
                 </div>
-
                 {/* Labor Tax Rate */}
                 <div className="mb-3">
                   <label htmlFor="laborTaxRate" className="form-label">
@@ -454,7 +435,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Labor Tax By Default Checkbox */}
                 <div className="form-check mb-3">
                   <input
@@ -472,7 +452,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     Labor Tax by Default
                   </label>
                 </div>
-
                 {/* Part Markup */}
                 <div className="mb-3">
                   <label htmlFor="partMarkup" className="form-label">
@@ -490,7 +469,6 @@ const LaborTaxMarkupSettingsForm = () => {
                     required
                   />
                 </div>
-
                 {/* Submit Button */}
                 <button
                   type="submit"
@@ -517,19 +495,18 @@ const LaborTaxMarkupSettingsForm = () => {
           </div>
         </div>
 
-        {/* Database Read Container */}
+        {/* Database Read Section */}
         <div className="col-md-6">
           <div className="card mb-3">
             <div className="card-body">
               <h5>Labor & Tax Markup Settings (DB Read)</h5>
-              {/* If no data exists, show an informational alert */}
               {!dbData ? (
                 <div className="alert alert-info mt-3" role="alert">
                   No record in DB yet.
                 </div>
               ) : (
                 <div className="row">
-                  {/* Display each setting in a read-only input field */}
+                  {/* Display settings in read-only inputs */}
                   <div className="col-md-6 mb-3">
                     <label className="form-label">DB Hourly Rate 1:</label>
                     <input
@@ -548,7 +525,6 @@ const LaborTaxMarkupSettingsForm = () => {
                       value={dbData.hourlyRate2}
                     />
                   </div>
-
                   <div className="col-md-6 mb-3">
                     <label className="form-label">DB Hourly Rate 3:</label>
                     <input
@@ -569,7 +545,6 @@ const LaborTaxMarkupSettingsForm = () => {
                       value={dbData.defaultHourlyRate}
                     />
                   </div>
-
                   <div className="col-md-6 mb-3">
                     <label className="form-label">DB Part Tax Rate:</label>
                     <input
@@ -592,7 +567,6 @@ const LaborTaxMarkupSettingsForm = () => {
                       />
                     </div>
                   </div>
-
                   <div className="col-md-6 mb-3">
                     <label className="form-label">DB Labor Tax Rate:</label>
                     <input
@@ -615,7 +589,6 @@ const LaborTaxMarkupSettingsForm = () => {
                       />
                     </div>
                   </div>
-
                   <div className="col-md-6 mb-3">
                     <label className="form-label">DB Part Markup:</label>
                     <input

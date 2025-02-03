@@ -19,24 +19,36 @@ import VehicleReception from "../VehicleReception/VehicleReception";
 import "./VehicleList.css";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * VehicleList Component
+ *
+ * This component renders a list of vehicles with search, pagination,
+ * and options to add, edit, receive diagnostics, or delete a vehicle.
+ * A modal is used to show the VehicleReception form for creating or editing records.
+ *
+ * @returns {JSX.Element} The VehicleList component.
+ */
 const VehicleList = () => {
   const navigate = useNavigate();
 
+  // States to hold vehicles, search term, loading flags, and messages
   const [vehicles, setVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [searchMessage, setSearchMessage] = useState("");
 
-  // State for the modal:
+  // State for showing the VehicleReception modal and managing edit mode
   const [showReceptionModal, setShowReceptionModal] = useState(false);
-
   const [editingId, setEditingId] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1); // New state for the current page
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Number of items per page
 
-  // 1. Load all vehicles at the beginning
+  /**
+   * fetchAllVehicles - Loads all vehicles from the service.
+   */
   const fetchAllVehicles = async () => {
     try {
       const data = await getAllVehicles();
@@ -48,19 +60,25 @@ const VehicleList = () => {
     }
   };
 
+  // Load vehicles on component mount
   useEffect(() => {
     fetchAllVehicles();
   }, []);
 
-  // 2. Real-time search (with debounce)
+  /**
+   * handleSearchChange - Handles changes to the search input.
+   *
+   * @param {Object} e - The change event from the search input.
+   */
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Debounce search effect: when the searchTerm changes, perform a search after a short delay.
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (!searchTerm.trim()) {
-        // If empty, reload all
+        // If search term is empty, reload all vehicles and clear any messages.
         fetchAllVehicles();
         setSearchMessage("");
         return;
@@ -69,8 +87,8 @@ const VehicleList = () => {
       const performSearch = async () => {
         setLoadingSearch(true);
         try {
-          const allVehicles = await getAllVehicles(); // Get all vehicles
-          // Filter locally
+          const allVehicles = await getAllVehicles(); // Retrieve all vehicles
+          // Filter vehicles locally based on any field containing the search term.
           const filteredVehicles = allVehicles.filter((vehicle) =>
             Object.values(vehicle).some((value) =>
               value.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -96,6 +114,9 @@ const VehicleList = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
+  /**
+   * performSearch - An alternative search function that uses the service directly.
+   */
   const performSearch = async () => {
     setLoadingSearch(true);
     try {
@@ -115,33 +136,51 @@ const VehicleList = () => {
     }
   };
 
-  // (A) Show the empty modal (create a new Customer/Workshop/Vehicle)
+  /**
+   * handleAddCustomer - Opens the modal to create a new customer/workshop/vehicle.
+   */
   const handleAddCustomer = () => {
-    setEditingId(null); // Indicates that it is a new record
+    setEditingId(null); // Indicate creation mode
     setShowReceptionModal(true);
   };
 
-  // (B) Open the modal in edit mode
+  /**
+   * handleEdit - Opens the modal in edit mode for a specific record.
+   *
+   * @param {number} id - The ID of the vehicle record to edit.
+   */
   const handleEdit = (id) => {
-    setEditingId(id); // Indicates which record you are going to edit
+    setEditingId(id);
     setShowReceptionModal(true);
   };
 
-  // (C) After saving or closing in the modal, refresh the list if necessary
+  /**
+   * closeReceptionModal - Closes the modal and refreshes the list if needed.
+   *
+   * @param {boolean} shouldRefresh - If true, reload the vehicles list.
+   */
   const closeReceptionModal = (shouldRefresh = false) => {
     setShowReceptionModal(false);
-    setEditingId(null); // Clear the edit ID
+    setEditingId(null);
     if (shouldRefresh) {
       fetchAllVehicles();
     }
   };
 
-  // Receive diagnosis (if you keep it in your flow; here only example)
+  /**
+   * handleReception - Navigates to the diagnostic page for the specified vehicle.
+   *
+   * @param {number} id - The ID of the vehicle to receive a diagnostic.
+   */
   const handleReception = (id) => {
     navigate(`/diagnostic/${id}`);
   };
 
-  // Delete vehicle
+  /**
+   * handleDelete - Deletes a vehicle record after confirmation.
+   *
+   * @param {string} vin - The VIN of the vehicle to delete.
+   */
   const handleDelete = async (vin) => {
     if (
       window.confirm(
@@ -150,7 +189,7 @@ const VehicleList = () => {
     ) {
       try {
         await deleteVehicle(vin);
-        // Filter the local list
+        // Remove the deleted vehicle from the local state.
         setVehicles((prev) => prev.filter((v) => v.vin !== vin));
         alert("Vehicle successfully deleted.");
       } catch (error) {
@@ -159,13 +198,17 @@ const VehicleList = () => {
     }
   };
 
-  // Calculate the vehicles to display on the current page
+  // Calculate indices for pagination.
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentVehicles = vehicles.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(vehicles.length / itemsPerPage);
 
-  // Handle page change
+  /**
+   * handlePageChange - Changes the current page.
+   *
+   * @param {number} pageNumber - The page number to navigate to.
+   */
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -274,7 +317,7 @@ const VehicleList = () => {
         </>
       )}
 
-      {/* Modal that contains the VehicleReception form */}
+      {/* Modal containing the VehicleReception form */}
       <Modal
         show={showReceptionModal}
         onHide={() => closeReceptionModal(false)}

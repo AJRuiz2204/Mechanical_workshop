@@ -8,6 +8,7 @@ import {
   getPaymentsByAccount,
 } from "../../../services/accountReceivableService";
 import { useLocation } from "react-router-dom";
+import "./styles/AccountsReceivableView.css";
 
 // AccountsReceivableView component: displays a list of accounts receivable,
 // allows selection of an account to view its details, and provides a form to register payments.

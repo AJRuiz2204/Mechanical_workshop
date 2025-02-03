@@ -1,0 +1,137 @@
+/*
+  TechnicianDiagnostic.css
+  ==========================
+  This stylesheet provides responsive styling for the TechnicianDiagnostic component.
+  It applies a blue-themed color palette and adjusts layout and typography based on
+  the following breakpoints:
+  
+    - Extra small devices (xs): <576px
+    - Small devices (sm): ≥576px
+    - Medium devices (md): ≥768px
+    - Large devices (lg): ≥992px
+    - Extra large devices (xl): ≥1200px
+
+  The styles include:
+    - Base container styling with a light blue background, blue borders, and padding.
+    - Blue-colored headings and alerts.
+    - Custom styles for form controls.
+    - Responsive adjustments for extra-small and small devices.
+*/
+
+/* ---------------------------- */
+/* Base Container & Headings    */
+/* ---------------------------- */
+
+/* Main container for the TechnicianDiagnostic component */
+.diagnostic-container {
+    background-color: #f0f8ff; /* AliceBlue: a light blue background */
+    border: 1px solid #007bff; /* Primary blue border */
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  /* Headings (h3, h5) within the diagnostic container */
+  .diagnostic-container h3,
+  .diagnostic-container h5 {
+    color: #0056b3; /* Dark blue for headings */
+  }
+  
+  /* ---------------------------- */
+  /* Alert Styling                */
+  /* ---------------------------- */
+  
+  /* Custom alert styles with blue accents */
+  .diagnostic-container .alert {
+    margin-top: 20px;
+    border: 1px solid #0056b3;
+    background-color: #e7f1ff; /* Very light blue */
+    color: #0056b3;
+  }
+  
+  /* ---------------------------- */
+  /* Form Control Overrides       */
+  /* ---------------------------- */
+  
+  /* Style form controls with a blue border and consistent padding */
+  .diagnostic-container .form-control {
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  /* ---------------------------- */
+  /* Utility Spacing Overrides    */
+  /* ---------------------------- */
+  
+  /* These classes complement Bootstrap's spacing utilities */
+  .p-4 {
+    padding: 1.5rem !important;
+  }
+  .border {
+    border: 1px solid #ddd;
+  }
+  .rounded {
+    border-radius: 5px;
+  }
+  .mb-3 {
+    margin-bottom: 1rem !important;
+  }
+  .me-3 {
+    margin-right: 1rem !important;
+  }
+  .me-2 {
+    margin-right: 0.5rem !important;
+  }
+  .mt-3 {
+    margin-top: 1rem !important;
+  }
+  .mt-4 {
+    margin-top: 1.5rem !important;
+  }
+  
+  /* ---------------------------- */
+  /* Responsive Adjustments       */
+  /* ---------------------------- */
+  
+  /* Extra small devices (xs: <576px) */
+  @media (max-width: 575.98px) {
+    .diagnostic-container {
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .diagnostic-container h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .diagnostic-container h5 {
+      font-size: 1.1rem;
+    }
+    .diagnostic-container .form-control {
+      font-size: 0.9rem;
+      padding: 0.4rem 0.6rem;
+    }
+    .diagnostic-container .alert {
+      font-size: 0.85rem;
+    }
+  }
+  
+  /* Small devices (sm: ≥576px and <768px) */
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    .diagnostic-container {
+      padding: 16px;
+    }
+    .diagnostic-container h3 {
+      font-size: 1.75rem;
+    }
+    .diagnostic-container h5 {
+      font-size: 1.25rem;
+    }
+    .diagnostic-container .form-control {
+      font-size: 1rem;
+      padding: 0.5rem 0.75rem;
+    }
+  }
+  
+  /* For medium (md) and larger devices, the default styles apply. */
+  

@@ -20,47 +20,51 @@ import {
   deleteTechnicianDiagnostic,
 } from "../../../services/TechnicianDiagnosticService";
 import { getDiagnosticById } from "../../../services/DiagnosticService";
-import "./Diagnostic.css";
+import "./TechnicianDiagnostic.css";
 import NotesSection from "../../NotesSection/NotesSection";
 
 /**
  * TechnicianDiagnostic Component
+ *
+ * Description:
  * This component allows a technician to create or edit a diagnostic associated with a vehicle.
- * It uses a mileage field with formatting, an extended diagnostic description,
- * and provides the ability to delete an existing diagnostic.
+ * It displays read-only vehicle information, provides a form to enter the mileage (with proper formatting)
+ * and an extended diagnostic description, and integrates a notes section for additional technician notes.
+ * It also allows deletion of an existing technician diagnostic.
  *
  * Features:
- *  - Displays vehicle information tied to a diagnostic.
- *  - Allows mileage input with validation (1 to 999,999) and formatting.
- *  - Allows entering an extended diagnostic description.
- *  - Provides the option to save or delete the diagnostic.
- *  - Integrates a notes section for additional technician notes.
- *  - Navigates back to the TechnicianDiagnosticList after saving or deleting.
+ * - Displays vehicle details passed via route state.
+ * - Provides a mileage input (numeric, formatted with grouping separators) and an extended diagnostic textarea.
+ * - In edit mode, pre-populates the form with existing technician diagnostic data.
+ * - Offers Save and Delete actions.
+ * - Includes a NotesSection component for technician notes.
+ * - Uses Bootstrap’s grid system, forms, modals, alerts, and spinners.
+ * - Responsive design is implemented via Bootstrap classes and custom CSS.
  *
- * @returns {JSX.Element}
+ * @returns {JSX.Element} The TechnicianDiagnostic component.
  */
 const TechnicianDiagnostic = () => {
   const navigate = useNavigate();
   const { diagnosticId, techDiagId } = useParams();
   const location = useLocation();
+  // Retrieve the vehicle information from route state (if provided)
   const { vehicle } = location.state || {};
 
-  // Determines if the component is in edit or create mode
+  // Determine mode: edit mode if an existing technician diagnostic is provided
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Holds the diagnostic data retrieved from the server
+  // Holds the diagnostic data retrieved from the server (parent diagnostic)
   const [diagnostic, setDiagnostic] = useState(null);
-
-  // Holds the technician diagnostic data when editing
+  // Holds the technician diagnostic data (if in edit mode)
   const [technicianDiagnostic, setTechnicianDiagnostic] = useState(null);
 
-  // Form state for mileage and extended diagnostic
+  // Form state for mileage and extended diagnostic description
   const [formData, setFormData] = useState({
     mileage: "",
     extendedDiagnostic: "",
   });
 
-  // Error and success messages
+  // State for error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -71,7 +75,10 @@ const TechnicianDiagnostic = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   /**
-   * Formats the mileage with grouping separators.
+   * formatMileage Function
+   *
+   * Formats a numeric mileage value using locale-specific grouping.
+   *
    * @param {number} num - The numeric mileage.
    * @returns {string} The formatted mileage.
    */
@@ -84,8 +91,11 @@ const TechnicianDiagnostic = () => {
   };
 
   /**
-   * Parses the formatted mileage back into a number.
-   * @param {string} str - The formatted mileage.
+   * parseMileage Function
+   *
+   * Converts a formatted mileage string (with grouping separators) back to a number.
+   *
+   * @param {string} str - The formatted mileage string.
    * @returns {number} The numeric mileage.
    */
   const parseMileage = (str) => {
@@ -94,8 +104,11 @@ const TechnicianDiagnostic = () => {
   };
 
   /**
-   * Handles changes in the form fields for extendedDiagnostic.
-   * @param {Object} e - The event object.
+   * handleChange Function
+   *
+   * Updates the form data state when the extended diagnostic input changes.
+   *
+   * @param {Object} e - The change event.
    */
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,9 +116,14 @@ const TechnicianDiagnostic = () => {
   };
 
   /**
-   * Handles changes in the mileage field, ensuring only numeric input up to 6 digits.
-   * Applies formatting.
-   * @param {Object} e - The event object.
+   * handleMileageChange Function
+   *
+   * Handles input in the mileage field:
+   * - Strips non-numeric characters.
+   * - Limits input to 6 digits.
+   * - Formats the numeric value with grouping separators.
+   *
+   * @param {Object} e - The change event.
    */
   const handleMileageChange = (e) => {
     let val = e.target.value.replace(/\D/g, "");
@@ -125,8 +143,12 @@ const TechnicianDiagnostic = () => {
   };
 
   /**
-   * Submits the form data to create or update the technician diagnostic.
-   * @param {Object} e - The form submit event.
+   * handleSubmit Function
+   *
+   * Validates the form and either creates a new technician diagnostic
+   * or updates an existing one based on the mode.
+   *
+   * @param {Object} e - The form submission event.
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -175,7 +197,9 @@ const TechnicianDiagnostic = () => {
   };
 
   /**
-   * Handles deletion of the technician diagnostic.
+   * handleDelete Function
+   *
+   * Deletes the current technician diagnostic after confirmation.
    */
   const handleDelete = async () => {
     try {
@@ -190,8 +214,9 @@ const TechnicianDiagnostic = () => {
   };
 
   /**
-   * Fetches diagnostic and technician diagnostic data if applicable,
-   * determining whether the component is in edit mode.
+   * Data Loading Effect:
+   * Fetches diagnostic data (by diagnosticId or techDiagId) and determines if the component
+   * is in edit mode. Pre-populates the form if data exists.
    */
   useEffect(() => {
     const fetchData = async () => {
@@ -200,22 +225,18 @@ const TechnicianDiagnostic = () => {
         setSuccessMessage("");
 
         if (diagnosticId) {
-          // Retrieve diagnostic by ID
           const diag = await getDiagnosticById(diagnosticId);
           setDiagnostic(diag);
-          // Check if there's already a technician diagnostic
           if (diag.technicianDiagnostics?.length) {
             const existingTechDiag = diag.technicianDiagnostics[0];
             setIsEditMode(true);
             setTechnicianDiagnostic(existingTechDiag);
-            const formattedMileage = formatMileage(existingTechDiag.mileage);
             setFormData({
-              mileage: formattedMileage,
+              mileage: formatMileage(existingTechDiag.mileage),
               extendedDiagnostic: existingTechDiag.extendedDiagnostic,
             });
           }
         } else if (techDiagId) {
-          // Edit mode with existing technician diagnostic
           setIsEditMode(true);
           const techDiag = await getTechnicianDiagnostic(techDiagId);
           setTechnicianDiagnostic(techDiag);
@@ -241,7 +262,7 @@ const TechnicianDiagnostic = () => {
 
   if (loading) {
     return (
-      <Container className="p-4 border rounded">
+      <Container className="p-4 border rounded diagnostic-container">
         <div
           className="d-flex justify-content-center align-items-center"
           style={{ height: "200px" }}
@@ -256,7 +277,7 @@ const TechnicianDiagnostic = () => {
 
   if (!diagnostic) {
     return (
-      <Container className="p-4 border rounded">
+      <Container className="p-4 border rounded diagnostic-container">
         <Alert variant="danger">Could not load diagnostic information.</Alert>
         <Button
           variant="secondary"
@@ -269,8 +290,8 @@ const TechnicianDiagnostic = () => {
   }
 
   return (
-    <Container className="p-4 border rounded bg-light">
-      <h3>
+    <Container className="p-4 border rounded diagnostic-container bg-light">
+      <h3 className="mb-4">
         {isEditMode
           ? "Edit Technician Diagnostic"
           : "Assign Technician Diagnostic"}
@@ -278,7 +299,7 @@ const TechnicianDiagnostic = () => {
       {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
       {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      {/* Vehicle Information */}
+      {/* Vehicle Information Section */}
       <h5>Vehicle Information</h5>
       <Row className="mb-3">
         <Col md={3}>
@@ -380,7 +401,7 @@ const TechnicianDiagnostic = () => {
               <Form.Control
                 as="textarea"
                 rows={3}
-                placeholder="Reported issues, tests performed, recommendations..."
+                placeholder="Enter detailed diagnostic information..."
                 name="extendedDiagnostic"
                 value={formData.extendedDiagnostic}
                 onChange={handleChange}
@@ -413,12 +434,13 @@ const TechnicianDiagnostic = () => {
         </div>
       </Form>
 
-      {/* Pass the correct TechnicianDiagnostic ID to the Notes section */}
+      {/* Integrate NotesSection for additional technician notes */}
       <NotesSection
         diagId={diagnostic.id}
         techDiagId={technicianDiagnostic?.id}
       />
 
+      {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Delete Technician Diagnostic</Modal.Title>

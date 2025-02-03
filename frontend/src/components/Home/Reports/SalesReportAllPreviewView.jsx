@@ -1,14 +1,39 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
+// src/components/Settings/SalesReportAllPreviewView.jsx
+
 import React, { useState, useEffect } from "react";
 import { Button, Table, Alert, Form } from "react-bootstrap";
 import {
   getSalesReport,
   createSalesReport,
 } from "../../../services/salesReportService";
+import "./SalesReportAllPreviewView.css";
 
-// SalesReportAllPreviewView component: Displays a preview of the sales report,
-// allows filtering by start and end dates, and provides functionality to save the report.
+/**
+ * SalesReportAllPreviewView Component
+ *
+ * Description:
+ * This component displays a preview of the sales report.
+ * It allows filtering by start and end dates, displays a summary in a table,
+ * and provides functionality to save the report.
+ *
+ * Features:
+ * - Fetches a sales report preview from the backend based on the provided date filters.
+ * - Displays a form for filtering the report by start and end dates.
+ * - Shows the preview data in a responsive table.
+ * - Allows the user to save the current preview as a finalized report.
+ * - Displays loading, error, and success messages.
+ *
+ * Dependencies:
+ * - React and React Hooks for state management.
+ * - React Bootstrap for layout and styling.
+ * - A sales report service for API interactions.
+ *
+ * Responsive Behavior:
+ * - Uses Bootstrap’s breakpoints to ensure the layout is optimized on all devices.
+ * - Custom CSS adjusts paddings, font sizes, and spacing for extra-small devices.
+ */
 const SalesReportAllPreviewView = () => {
   // State to store the sales report preview data
   const [preview, setPreview] = useState(null);
@@ -18,34 +43,39 @@ const SalesReportAllPreviewView = () => {
   const [error, setError] = useState(null);
   // State to store success messages when saving the report
   const [success, setSuccess] = useState(null);
-
   // State for date filters: startDate is optional, endDate defaults to today
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState(
     new Date().toISOString().substring(0, 10)
   );
 
-  // useEffect to fetch the sales report preview when the component mounts
+  /**
+   * useEffect Hook
+   *
+   * Fetches the sales report preview when the component mounts.
+   */
   useEffect(() => {
     fetchPreview();
   }, []);
 
-  // fetchPreview: Asynchronously fetches the sales report preview based on the start and end dates
+  /**
+   * fetchPreview Function
+   *
+   * Asynchronously fetches the sales report preview based on the current date filters.
+   */
   const fetchPreview = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Call the getSalesReport service with the provided date filters
+      // Call the getSalesReport service with date filters (null if empty)
       const data = await getSalesReport(
         startDate === "" ? null : startDate,
         endDate === "" ? null : endDate
       );
       console.log("Preview obtained:", data);
-      // Update the preview state with the fetched data
       setPreview(data);
     } catch (err) {
       console.error("Error getting preview:", err);
-      // Set error state with a message from the error response or a default message
       setError(
         err.response?.data?.message || err.message || "Error getting preview"
       );
@@ -53,43 +83,45 @@ const SalesReportAllPreviewView = () => {
     setLoading(false);
   };
 
-  // handleSave: Asynchronously saves the current sales report preview as a finalized report
+  /**
+   * handleSave Function
+   *
+   * Asynchronously saves the current sales report preview as a finalized report.
+   */
   const handleSave = async () => {
     setError(null);
     setSuccess(null);
     try {
-      // Destructure the preview to remove 'details' and 'salesReportId', keeping the summary
+      // Destructure preview to remove 'details' and 'salesReportId'
       const { details, salesReportId, ...restPreview } = preview;
-      // Prepare the report payload by including an empty 'Details' array
+      // Prepare the report payload with an empty Details array
       const reportToSave = { ...restPreview, Details: [] };
 
       // Call the createSalesReport service with the prepared payload
       const savedReport = await createSalesReport(reportToSave);
       console.log("Report saved:", savedReport);
-      // Set a success message upon successful save
       setSuccess("Report saved successfully.");
     } catch (err) {
       console.error("Error saving report:", err);
-      // Set error state with a message from the error response or a default message
       setError(
         err.response?.data?.message || err.message || "Error saving report"
       );
     }
   };
 
-  // Render loading message while fetching data
+  // Render a loading message while data is being fetched
   if (loading) return <div>Loading report preview...</div>;
-  // Render error message if there is an error
+  // Render an error alert if an error occurs
   if (error) return <Alert variant="danger">{error}</Alert>;
-  // Return null if preview data is not available
+  // Return null if there is no preview data available
   if (!preview) return null;
 
   return (
-    <div className="container py-5">
-      {/* Title of the Sales Report Preview View */}
-      <h1>Sales Report Preview</h1>
-      {/* Form to filter the report by start and end dates */}
-      <Form className="mb-4">
+    <div className="sales-report-container">
+      {/* Title */}
+      <h1 className="sales-report-title">Sales Report Preview</h1>
+      {/* Date Filters Form */}
+      <Form className="sales-report-form mb-4">
         <Form.Group controlId="startDate" className="mb-3">
           <Form.Label>Start Date (optional)</Form.Label>
           <Form.Control
@@ -107,13 +139,11 @@ const SalesReportAllPreviewView = () => {
             required
           />
         </Form.Group>
-        {/* Button to refresh the preview with the current date filters */}
         <Button variant="primary" onClick={fetchPreview}>
           Update Preview
         </Button>
       </Form>
-
-      {/* Table displaying the summary of the sales report preview */}
+      {/* Sales Report Summary Table */}
       <Table striped bordered hover responsive className="mt-4">
         <thead>
           <tr>
@@ -138,11 +168,11 @@ const SalesReportAllPreviewView = () => {
           </tr>
         </tbody>
       </Table>
-      {/* Button to save the report */}
+      {/* Save Report Button */}
       <Button variant="success" onClick={handleSave} className="mt-3">
         Save Report
       </Button>
-      {/* Display success message if the report was saved successfully */}
+      {/* Success Alert */}
       {success && (
         <Alert variant="success" className="mt-3">
           {success}

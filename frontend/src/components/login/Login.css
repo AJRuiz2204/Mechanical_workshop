@@ -1,47 +1,112 @@
-/* src/components/login/Login.css */
+/*
+  Login.css
+  This stylesheet defines custom styles for the Login component,
+  ensuring a responsive design and visual consistency with the brand colors.
+  Breakpoints used:
+  - xs: <576px
+  - sm: ≥576px
+  - md: ≥768px
+  - lg: ≥992px
+  - xl: ≥1200px
+*/
 
+/* Container styling for the entire login page */
 .login-container {
-    background-color: #f8f9fa;
-  }
-  
+  background-color: #f8f9fa;
+}
+
+/* Default: For xl and above (≥1200px), a fixed width is applied to the login row */
+.login-row {
+  width: 900px;
+}
+
+/* Styling for the image container with a dark background */
+.login-image-container {
+  background-color: #343a40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+/* Image styling with fixed dimensions, object-fit, and rounded corners */
+.login-image {
+  width: 355px;
+  height: 314px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Login box styling with rounded corners */
+.login-box {
+  border-radius: 8px;
+}
+
+/* Title styling within the login box */
+.login-title {
+  color: #343a40;
+}
+
+/* Link styling for "Forgot Password" (if used) */
+.forgot-password-link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+/* Link styling for "Register User" (if used) */
+.register-user-link {
+  color: #28a745;
+  text-decoration: none;
+}
+
+.register-user-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Adjustments */
+
+/* lg: For devices with width less than 1200px (lg and below) */
+@media (max-width: 1199.98px) {
   .login-row {
-    width: 900px;
+    width: 100%;
+    margin: 0 1rem;
   }
-  
-  .login-image-container {
-    background-color: #343a40;
+}
+
+/* md: For devices less than 992px (md and below) */
+@media (max-width: 991.98px) {
+  /* Stack the image and login box vertically */
+  .login-row {
+    flex-direction: column;
+    align-items: center;
   }
-  
-  .login-image {
-    width: 355px;
-    height: 314px;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  
+
+  .login-image-container,
   .login-box {
-    border-radius: 8px;
+    width: 100%;
   }
-  
+
+  .login-image {
+    width: 100%;
+    height: auto;
+  }
+
+  .login-box {
+    padding: 2rem;
+  }
+}
+
+/* xs: For extra-small devices (<576px) */
+@media (max-width: 575.98px) {
+  .login-box {
+    padding: 1.5rem;
+  }
+
   .login-title {
-    color: #343a40;
+    font-size: 1.5rem;
   }
-  
-  .forgot-password-link {
-    color: #007bff;
-    text-decoration: none;
-  }
-  
-  .forgot-password-link:hover {
-    text-decoration: underline;
-  }
-  
-  .register-user-link {
-    color: #28a745;
-    text-decoration: none;
-  }
-  
-  .register-user-link:hover {
-    text-decoration: underline;
-  }
-  
+}

@@ -1,0 +1,111 @@
+/*
+  Invoice.css
+  ===========
+  This stylesheet provides custom, blue-themed styling for the Invoice component,
+  and it uses Bootstrap’s responsive breakpoints to adjust the layout for:
+    - Extra small devices (xs): <576px
+    - Small devices (sm): ≥576px
+    - Medium devices (md): ≥768px
+    - Large devices (lg): ≥992px
+    - Extra large devices (xl): ≥1200px
+
+  The styles include:
+    - A blue color scheme for borders, headings, and accents.
+    - Custom spacing for the invoice container and totals.
+    - Responsive adjustments to ensure a good viewing experience on all devices.
+*/
+
+/* ---------------------------- */
+/* Base Styles for the Invoice  */
+/* ---------------------------- */
+
+/* Invoice container with padding, border, and a white background */
+.invoice-container {
+  background-color: #fff;
+  border: 1px solid #007bff; /* Blue border */
+  border-radius: 4px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+/* Invoice title in blue */
+.invoice-title {
+  color: #0056b3; /* Dark blue */
+  margin-bottom: 20px;
+}
+
+/* Table styling */
+.invoice-table {
+  margin-top: 20px;
+}
+
+/* Totals section: right-aligned with blue accents */
+.invoice-totals p,
+.invoice-totals h5 {
+  margin: 0;
+  color: #0056b3;
+}
+
+/* Action buttons: margin for spacing */
+.invoice-actions {
+  margin-top: 20px;
+}
+
+/* ---------------------------- */
+/* Loading and Error Styles     */
+/* ---------------------------- */
+
+/* Custom styles for loading spinner container */
+.invoice-loading {
+  background-color: #f0f8ff; /* Light blue background */
+}
+
+/* ---------------------------- */
+/* Responsive Adjustments       */
+/* ---------------------------- */
+
+/* Extra small devices (xs: <576px) */
+@media (max-width: 575.98px) {
+  .invoice-container {
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .invoice-title {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+
+  .invoice-totals p,
+  .invoice-totals h5 {
+    font-size: 0.9rem;
+  }
+
+  .invoice-actions button {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small devices (sm: ≥576px and <768px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .invoice-container {
+    padding: 16px;
+  }
+
+  .invoice-title {
+    font-size: 1.75rem;
+  }
+
+  .invoice-totals p,
+  .invoice-totals h5 {
+    font-size: 0.95rem;
+  }
+}
+
+/* For medium (md) and larger devices, the default styles apply */

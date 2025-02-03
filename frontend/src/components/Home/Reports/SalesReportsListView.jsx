@@ -1,5 +1,7 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
+// src/components/Settings/SalesReportsListView.jsx
+
 import React, { useState, useEffect } from "react";
 import { Table, Alert, Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -8,30 +10,53 @@ import {
   getSalesReport,
   createSalesReport,
 } from "../../../services/salesReportService";
+import "./SalesReportsListView.css";
 
-// Componente que muestra la vista previa y permite guardar el reporte
+/**
+ * SalesReportAllPreviewView Component
+ *
+ * Description:
+ * This component displays a preview of the sales report.
+ * It allows the user to filter the report by start and end dates,
+ * displays a summary in a responsive table, and provides functionality
+ * to save the report.
+ *
+ * Features:
+ * - Fetches the sales report preview based on date filters.
+ * - Displays a form for selecting start and end dates.
+ * - Shows a summary table with key report metrics.
+ * - Provides a button to save the report.
+ * - Displays loading, error, and success messages.
+ *
+ * Responsive Behavior:
+ * - Uses Bootstrap’s responsive utilities and custom CSS to adjust
+ *   layout and font sizes on smaller devices.
+ */
 const SalesReportAllPreviewView = () => {
-  // Estado para almacenar los datos del preview del reporte
+  // State for sales report preview data
   const [preview, setPreview] = useState(null);
-  // Estado para el indicador de carga al obtener el preview
+  // Loading state for fetching the preview
   const [loading, setLoading] = useState(true);
-  // Estado para almacenar mensajes de error
+  // Error and success messages
   const [error, setError] = useState(null);
-  // Estado para almacenar mensajes de éxito al guardar
   const [success, setSuccess] = useState(null);
-
-  // Estados para los filtros de fechas
+  // Date filter states; endDate defaults to today
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState(
     new Date().toISOString().substring(0, 10)
   );
 
-  // useEffect para obtener el preview al montar el componente
+  // Fetch the preview when the component mounts
   useEffect(() => {
     fetchPreview();
   }, []);
 
-  // Función para obtener el preview del reporte según los filtros
+  /**
+   * fetchPreview Function
+   *
+   * Asynchronously fetches the sales report preview using the current
+   * start and end dates. If a date is an empty string, it passes null to the API.
+   */
   const fetchPreview = async () => {
     setLoading(true);
     setError(null);
@@ -40,7 +65,7 @@ const SalesReportAllPreviewView = () => {
         startDate === "" ? null : startDate,
         endDate === "" ? null : endDate
       );
-      console.log("Preview obtenido:", data);
+      console.log("Preview obtained:", data);
       setPreview(data);
     } catch (err) {
       console.error("Error getting preview:", err);
@@ -51,19 +76,24 @@ const SalesReportAllPreviewView = () => {
     setLoading(false);
   };
 
-  // Función para guardar el reporte
+  /**
+   * handleSave Function
+   *
+   * Saves the current sales report preview as a finalized report.
+   * Prepares the payload by excluding unnecessary properties and calls
+   * the createSalesReport service.
+   */
   const handleSave = async () => {
     setError(null);
     setSuccess(null);
     try {
-      // Se extraen las propiedades del preview, excluyendo 'details' y 'salesReportId'
+      // Exclude 'details' and 'salesReportId' from preview
       const { details, salesReportId, ...restPreview } = preview;
-      // Se arma el objeto del reporte a guardar (con un array vacío para 'Details')
+      // Prepare the report payload with an empty Details array
       const reportToSave = { ...restPreview, Details: [] };
-
       const savedReport = await createSalesReport(reportToSave);
-      console.log("Reporte guardado:", savedReport);
-      setSuccess("Reporte guardado exitosamente.");
+      console.log("Report saved:", savedReport);
+      setSuccess("Report saved successfully.");
     } catch (err) {
       console.error("Error saving report:", err);
       setError(
@@ -72,17 +102,17 @@ const SalesReportAllPreviewView = () => {
     }
   };
 
-  // Renderizado condicional según el estado de carga y errores
   if (loading) return <div>Loading report preview...</div>;
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!preview) return null;
 
   return (
-    <div className="mt-5">
-      <h2>Vista Previa del Reporte</h2>
-      <Form className="mb-4">
+    <div className="sales-report-preview mt-5">
+      <h2 className="sales-report-title">Sales Report Preview</h2>
+      {/* Date Filters Form */}
+      <Form className="sales-report-form mb-4">
         <Form.Group controlId="startDate" className="mb-3">
-          <Form.Label>Fecha de Inicio (opcional)</Form.Label>
+          <Form.Label>Start Date (optional)</Form.Label>
           <Form.Control
             type="date"
             value={startDate}
@@ -90,7 +120,7 @@ const SalesReportAllPreviewView = () => {
           />
         </Form.Group>
         <Form.Group controlId="endDate" className="mb-3">
-          <Form.Label>Fecha de Fin</Form.Label>
+          <Form.Label>End Date</Form.Label>
           <Form.Control
             type="date"
             value={endDate}
@@ -99,10 +129,10 @@ const SalesReportAllPreviewView = () => {
           />
         </Form.Group>
         <Button variant="primary" onClick={fetchPreview}>
-          Actualizar Vista Previa
+          Update Preview
         </Button>
       </Form>
-
+      {/* Sales Report Summary Table */}
       <Table striped bordered hover responsive className="mt-4">
         <thead>
           <tr>
@@ -127,9 +157,9 @@ const SalesReportAllPreviewView = () => {
           </tr>
         </tbody>
       </Table>
-
+      {/* Save Report Button */}
       <Button variant="success" onClick={handleSave} className="mt-3">
-        Guardar Reporte
+        Save Report
       </Button>
       {success && (
         <Alert variant="success" className="mt-3">
@@ -140,25 +170,45 @@ const SalesReportAllPreviewView = () => {
   );
 };
 
-// Componente principal que muestra el listado de reportes y, además, la vista previa (SalesReportAllPreviewView)
+/**
+ * SalesReportsListView Component
+ *
+ * Description:
+ * This component displays the list of sales reports fetched from the backend.
+ * It includes the SalesReportAllPreviewView component to show the preview and allow
+ * saving of a new report, as well as a table listing all saved sales reports.
+ *
+ * Features:
+ * - Fetches all sales reports on mount.
+ * - Displays a responsive table of saved reports.
+ * - Uses Bootstrap components for layout and styling.
+ * - Provides a link to view each report as a PDF.
+ *
+ * Responsive Behavior:
+ * - The table and container adjust using Bootstrap’s responsive classes
+ *   and custom CSS for extra small devices.
+ */
 const SalesReportsListView = () => {
-  // Estado para almacenar la lista de reportes
+  // State to store the list of sales reports
   const [reports, setReports] = useState([]);
-  // Estado para el indicador de carga al obtener los reportes
+  // Loading and error states for fetching reports
   const [loading, setLoading] = useState(true);
-  // Estado para almacenar mensajes de error
   const [error, setError] = useState(null);
 
-  // useEffect para obtener los reportes al montar el componente
+  // Fetch all sales reports on component mount
   useEffect(() => {
     fetchReports();
   }, []);
 
-  // Función para obtener la lista de reportes
+  /**
+   * fetchReports Function
+   *
+   * Asynchronously fetches all sales reports from the backend.
+   */
   const fetchReports = async () => {
     try {
       const data = await getAllSalesReports();
-      console.log("Reportes cargados:", data);
+      console.log("Reports loaded:", data);
       setReports(data);
       setLoading(false);
     } catch (err) {
@@ -170,33 +220,25 @@ const SalesReportsListView = () => {
     }
   };
 
-  // Renderizado condicional según el estado de carga y errores
-  if (loading) {
-    return <div>Loading reports...</div>;
-  }
-
-  if (error) {
-    return <Alert variant="danger">{error}</Alert>;
-  }
+  if (loading) return <div>Loading reports...</div>;
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
-    <div className="container py-5">
-      <h1>Historial de Reportes de Ventas</h1>
-
-      {/* Se muestra la vista previa y guardado del reporte */}
+    <div className="sales-reports-list container py-5">
+      <h1 className="mb-4">Sales Reports History</h1>
+      {/* Sales Report Preview Component */}
       <SalesReportAllPreviewView />
-
-      {/* Se muestra el listado de reportes */}
+      {/* Reports List Table */}
       {reports.length === 0 ? (
         <Alert variant="info" className="mt-5">
-          No hay reportes almacenados.
+          No reports stored.
         </Alert>
       ) : (
         <Table striped bordered hover responsive className="mt-5">
           <thead>
             <tr>
               <th>Report ID</th>
-              <th>Periodo</th>
+              <th>Period</th>
               <th>Total Estimates</th>
               <th>Total Parts Revenue</th>
               <th>Total Labor Revenue</th>
@@ -205,7 +247,7 @@ const SalesReportsListView = () => {
               <th>Total Paid</th>
               <th>Total Outstanding</th>
               <th>Creation Date</th>
-              <th>Acciones</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>

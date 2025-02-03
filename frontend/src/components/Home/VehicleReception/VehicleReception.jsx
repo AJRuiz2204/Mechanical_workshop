@@ -33,8 +33,8 @@ const formatPhoneNumber = (input) => {
   const digits = input.replace(/\D/g, "").slice(0, 10);
   if (digits.length === 0) return "";
   if (digits.length < 4) return `(${digits}`;
-  if (digits.length < 7) return `(${digits.slice(0,3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0,3)}) ${digits.slice(3,6)} - ${digits.slice(6)}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
 };
 
 /**
@@ -46,9 +46,10 @@ const formatPhoneNumber = (input) => {
  * - onClose: Function to be called when the form is cancelled.
  * - afterSubmit: Function to be called after successful form submission.
  * - editingId: The ID of the workshop to edit. If provided, the form loads existing data.
+ *
+ * @returns {JSX.Element} The VehicleReception component.
  */
 const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
-  // useNavigate hook to programmatically navigate if needed
   const navigate = useNavigate();
 
   // Retrieve stored username and profile from localStorage or set default values

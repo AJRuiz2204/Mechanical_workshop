@@ -8,12 +8,12 @@ import { Register } from "../../services/userService";
 
 /**
  * RegisterUser Component
- * Handles the registration of new users by collecting user details and sending them to the backend service.
+ * Handles new user registration by collecting user details and sending them to the backend service.
  *
  * @returns {JSX.Element} The RegisterUser component.
  */
 const RegisterUser = () => {
-  // State variables to manage form inputs
+  // State variables for managing form inputs
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -39,7 +39,7 @@ const RegisterUser = () => {
   };
 
   /**
-   * Handles form submission for user registration.
+   * Handles the form submission for user registration.
    * Sends the user data to the backend service and manages the response.
    *
    * @param {Event} e - The form submission event.
@@ -74,6 +74,9 @@ const RegisterUser = () => {
     }
   };
 
+  /**
+   * Handles form cancellation by resetting all form fields.
+   */
   const handleCancel = () => {
     setEmail("");
     setName("");
@@ -184,7 +187,8 @@ const RegisterUser = () => {
               </button>
             </div>
             <div className="form-text">
-              The password must be at least 12 characters long, including uppercase letters, lowercase letters, numbers, and symbols.
+              The password must be at least 12 characters long, including
+              uppercase letters, lowercase letters, numbers, and symbols.
             </div>
           </div>
 
@@ -209,7 +213,11 @@ const RegisterUser = () => {
             <button type="submit" className="btn btn-primary">
               ADD USER
             </button>
-            <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleCancel}
+            >
               CANCEL
             </button>
           </div>

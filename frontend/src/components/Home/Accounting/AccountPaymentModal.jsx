@@ -7,6 +7,7 @@ import {
   createPayment,
   getPaymentsByAccount,
 } from "../../../services/accountReceivableService";
+import "./styles/AccountPaymentModal.css";
 
 // AccountPaymentModal component: renders a modal for viewing account details, making payments,
 // and displaying payment history for a given account receivable.

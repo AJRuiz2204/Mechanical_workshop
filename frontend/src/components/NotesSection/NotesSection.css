@@ -1,0 +1,73 @@
+/*
+  NotesSection.css
+  This stylesheet defines custom styles for the NotesSection component.
+  It ensures proper spacing, visual consistency, and responsive adjustments based on Bootstrap breakpoints:
+  - xs: <576px
+  - sm: ≥576px
+  - md: ≥768px
+  - lg: ≥992px
+  - xl: ≥1200px
+*/
+
+/* Container styling for the NotesSection */
+.notes-section-container {
+  padding: 1rem;
+  background-color: #f8f9fa; /* Light background to contrast notes */
+}
+
+/* Custom styling for note timestamps */
+.note-timestamp {
+  font-weight: bold;
+  color: #343a40;
+}
+
+/* Custom styling for note content */
+.note-content {
+  margin: 0.25rem 0 0 0;
+  color: #495057;
+}
+
+/* Custom styling for each ListGroup item */
+.list-group-item-custom {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+/* Custom styling for the Delete button in each note */
+.delete-button {
+  margin-left: 1rem;
+}
+
+/* Modal customizations */
+/* Adjust modal body font size for better readability */
+.modal-body {
+  font-size: 1rem;
+}
+
+/* Responsive Adjustments */
+
+/* xs: Extra small devices (less than 576px) */
+@media (max-width: 575.98px) {
+  .notes-section-container {
+    padding: 0.5rem;
+  }
+  .list-group-item-custom {
+    padding: 0.5rem;
+  }
+}
+
+/* sm: Small devices (576px to 767.98px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .notes-section-container {
+    padding: 0.75rem;
+  }
+  .list-group-item-custom {
+    padding: 0.65rem 0.85rem;
+  }
+}
+
+/* md and above: For medium (≥768px), large (≥992px), and extra-large (≥1200px) devices,
+   the default styling applies. Adjustments here can be made if needed for even larger screens. */

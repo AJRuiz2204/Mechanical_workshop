@@ -2,7 +2,7 @@
 // Frontend: src/components/Invoice/Invoice.jsx
 
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Container,
   Row,
@@ -12,17 +12,29 @@ import {
   Button,
   Spinner,
 } from "react-bootstrap";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 import { getEstimateById } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
-import { PDFDownloadLink } from "@react-pdf/renderer";
 import EstimatePDF from "../Estimate/EstimatePDF";
+import "./Invoice.css";
 
 /**
  * Invoice Component
- * 
+ *
  * This component fetches invoice data based on the provided ID,
  * calculates totals, and allows the user to download the invoice as a PDF.
+ *
+ * The component:
+ * - Retrieves estimate data, tax settings, and workshop settings in parallel.
+ * - Calculates totals for parts, labors, and flat fees (including tax).
+ * - Prepares payload data for PDF generation and automatically initiates a download.
+ * - Provides navigation back to the Estimates page.
+ *
+ * Responsive Behavior:
+ * - Uses Bootstrap’s grid and utility classes.
+ * - Custom CSS (Invoice.css) applies a blue color palette and adjusts spacing,
+ *   fonts, and layout based on device breakpoints.
  *
  * @returns {JSX.Element} The Invoice component.
  */
@@ -30,7 +42,7 @@ const Invoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // States to manage loading and errors
+  // State declarations for loading, errors, and fetched data
   const [loading, setLoading] = useState(true);
   const [loadingWorkshop, setLoadingWorkshop] = useState(true);
   const [error, setError] = useState(null);
@@ -39,7 +51,7 @@ const Invoice = () => {
   const [workshopSettings, setWorkshopSettings] = useState(null);
   const [techDiagnostic, setTechDiagnostic] = useState(null);
 
-  // States for totals
+  // States for calculated totals
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
@@ -52,13 +64,19 @@ const Invoice = () => {
     total: 0,
   });
 
-  // State for PDF download
+  // States for PDF download
   const [generatedPdfData, setGeneratedPdfData] = useState(null);
   const pdfContainerRef = useRef(null);
 
   /**
-   * Fetches data when the component mounts.
-   * Retrieves estimate data, settings, and workshop settings in parallel.
+   * useEffect Hook
+   *
+   * Fetches necessary data when the component mounts:
+   * - Estimate data by ID
+   * - Tax settings (via getSettingsById)
+   * - Workshop settings
+   *
+   * If technicianDiagnostic data is available in the estimate, it is stored.
    */
   useEffect(() => {
     const fetchData = async () => {
@@ -71,11 +89,7 @@ const Invoice = () => {
         setEstimate(estimateData);
         setSettings(cfg);
         setWorkshopSettings(shopData);
-        console.log("Received estimate from backend:", estimateData);
-        console.log("Owner Info:", estimateData.owner);
-        console.log("Vehicle Info:", estimateData.vehicle);
-        
-        // Asignar techDiagnostic directamente desde estimateData
+        console.log("Received estimate:", estimateData);
         if (estimateData.technicianDiagnostic) {
           setTechDiagnostic(estimateData.technicianDiagnostic);
         }
@@ -90,7 +104,10 @@ const Invoice = () => {
   }, [id]);
 
   /**
-   * Calculates totals whenever estimate or settings change.
+   * useEffect Hook
+   *
+   * Calculates invoice totals whenever the estimate or settings change.
+   * Totals are calculated for parts, labors, and flat fees, including applicable taxes.
    */
   useEffect(() => {
     if (!estimate || !settings) return;
@@ -142,7 +159,11 @@ const Invoice = () => {
   }, [estimate, settings]);
 
   /**
-   * Handles the PDF download by preparing the necessary data.
+   * handleDownloadPDF Function
+   *
+   * Prepares the data payload required for generating a PDF invoice.
+   * Verifies that all necessary data (workshop settings, vehicle, owner) is available.
+   * Once the payload is prepared, it is stored in state to trigger automatic download.
    */
   const handleDownloadPDF = () => {
     if (!workshopSettings || !estimate.vehicle || !estimate.owner) {
@@ -166,7 +187,7 @@ const Invoice = () => {
         description: l.description,
         quantity: l.duration,
         price: l.laborRate,
-        listPrice: "", // Labor does not have listPrice
+        listPrice: "", // Not applicable for labor
         extendedPrice: l.extendedPrice,
         taxable: l.taxable,
         partNumber: "",
@@ -174,9 +195,9 @@ const Invoice = () => {
       ...estimate.flatFees.map((f) => ({
         type: "Flat Fee",
         description: f.description,
-        quantity: "-", // Flat Fee does not have quantity
+        quantity: "-", // Not applicable for flat fee
         price: f.flatFeePrice,
-        listPrice: "", // Flat Fee does not have listPrice
+        listPrice: "",
         extendedPrice: f.extendedPrice,
         taxable: false,
         partNumber: "",
@@ -190,13 +211,16 @@ const Invoice = () => {
       items: itemsForPDF,
       totals: pdfTotals,
       customerNote: estimate.customerNote || "",
-      mileage: techDiagnostic?.mileage || 0, // Agregar mileage al payload
+      mileage: techDiagnostic?.mileage || 0,
     };
     setGeneratedPdfData(payload);
   };
 
   /**
-   * Automatically initiates the PDF download when PDF data is generated.
+   * useEffect Hook
+   *
+   * When generatedPdfData is available, automatically trigger the PDF download
+   * by programmatically clicking the hidden download link.
    */
   useEffect(() => {
     if (generatedPdfData && pdfContainerRef.current) {
@@ -207,11 +231,11 @@ const Invoice = () => {
     }
   }, [generatedPdfData]);
 
-  // Show loading spinner while data is being fetched
+  // Render a loading spinner while data is being fetched
   if (loading || loadingWorkshop) {
     return (
       <Container
-        className="d-flex justify-content-center align-items-center"
+        className="d-flex justify-content-center align-items-center invoice-loading"
         style={{ height: "80vh" }}
       >
         <Spinner animation="border" role="status">
@@ -221,24 +245,25 @@ const Invoice = () => {
     );
   }
 
-  // Display error message if there is an error
+  // Render error alert if an error occurred
   if (error) {
     return (
-      <Container className="p-4 border rounded">
+      <Container className="p-4 border rounded invoice-error">
         <Alert variant="danger">{error}</Alert>
       </Container>
     );
   }
 
-  // Display warning if no estimate data is found
+  // If no estimate data is available, display a warning message
   if (!estimate) {
     return (
-      <Container className="p-4 border rounded">
+      <Container className="p-4 border rounded invoice-warning">
         <Alert variant="warning">No invoice data found.</Alert>
       </Container>
     );
   }
 
+  // Destructure data for easier access
   const owner = estimate.owner || {};
   const vehicle = estimate.vehicle || {};
   const parts = estimate.parts || [];
@@ -246,8 +271,8 @@ const Invoice = () => {
   const flatFees = estimate.flatFees || [];
 
   return (
-    <Container className="p-4 border rounded">
-      <h3>Invoice</h3>
+    <Container className="p-4 border rounded invoice-container">
+      <h3 className="invoice-title">Invoice</h3>
       <Row className="mb-4">
         <Col md={8}>
           <strong>Customer:</strong>
@@ -271,7 +296,7 @@ const Invoice = () => {
         </Col>
       </Row>
 
-      <Table striped bordered>
+      <Table striped bordered hover responsive className="invoice-table">
         <thead>
           <tr>
             <th>Item</th>
@@ -338,13 +363,13 @@ const Invoice = () => {
         </tbody>
       </Table>
 
-      <div className="text-end mb-4">
+      <div className="text-end mb-4 invoice-totals">
         <p>Subtotal: ${subtotal.toFixed(2)}</p>
         <p>Tax: ${tax.toFixed(2)}</p>
         <h5>Total: ${total.toFixed(2)}</h5>
       </div>
 
-      <div className="text-end">
+      <div className="text-end invoice-actions">
         <Button variant="success" onClick={handleDownloadPDF} className="me-2">
           Download PDF
         </Button>
@@ -353,7 +378,7 @@ const Invoice = () => {
         </Button>
       </div>
 
-      {/* Hidden element to initiate download automatically */}
+      {/* Hidden container to trigger PDF download automatically */}
       <div style={{ display: "none" }} ref={pdfContainerRef}>
         {generatedPdfData && (
           <PDFDownloadLink

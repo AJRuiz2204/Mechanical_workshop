@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -8,44 +8,55 @@ import {
   Spinner,
   Badge,
 } from "react-bootstrap";
-import { getDiagnostics } from "../../../services/DiagnosticService";
 import { useNavigate } from "react-router-dom";
+import { getDiagnostics } from "../../../services/DiagnosticService";
 import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
 } from "../../../services/TechnicianDiagnosticService";
+import "./DiagnosticList.css";
 
 /**
- * DiagnosticList Component.
- * Displays a list of diagnostics with actions based on technician diagnostics.
+ * DiagnosticList Component
  *
- * @component
- * @example
- * return (<DiagnosticList />)
+ * Description:
+ * Displays a list of diagnostics along with actions for technician diagnostics.
+ * For each diagnostic, it shows basic vehicle and reason information and a badge
+ * indicating whether a technician diagnostic exists. Depending on that status,
+ * action buttons allow you to create a new technician diagnostic or edit/delete the existing one.
+ *
+ * Features:
+ * - Fetch diagnostics from the backend.
+ * - For each diagnostic, attempt to fetch the associated technician diagnostic.
+ * - Display a responsive table with the diagnostics data.
+ * - Provide actions (Create, Edit, Delete) for technician diagnostics.
+ * - Uses Bootstrap’s components and utility classes for layout and responsiveness.
+ *
+ * @returns {JSX.Element} The DiagnosticList component.
  */
 const DiagnosticList = () => {
   const navigate = useNavigate();
   const [diagnostics, setDiagnostics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // techDiagMap maps each diagnostic id to its corresponding technician diagnostic id (if any)
   const [techDiagMap, setTechDiagMap] = useState({});
 
   /**
-   * Fetch diagnostics and their corresponding technician diagnostics.
+   * fetchData Function
    *
-   * @async
-   * @function fetchData
+   * Asynchronously fetches diagnostics data and for each diagnostic,
+   * retrieves its associated technician diagnostic (if available).
    */
   const fetchData = async () => {
     try {
       setLoading(true);
       setError("");
-
-      // Retrieve diagnostics data.
+      // Retrieve diagnostics data
       const diagData = await getDiagnostics();
       setDiagnostics(diagData);
 
-      // Retrieve technician diagnostics for each diagnostic.
+      // Retrieve technician diagnostic IDs for each diagnostic
       const newTechDiagMap = {};
       await Promise.all(
         diagData.map(async (diag) => {
@@ -53,12 +64,12 @@ const DiagnosticList = () => {
             const techDiag = await getTechnicianDiagnosticByDiagId(diag.id);
             newTechDiagMap[diag.id] = techDiag.id;
           } catch (error) {
+            // If not found, simply map to null
             if (error.message !== "Not found") console.error(error);
             newTechDiagMap[diag.id] = null;
           }
         })
       );
-
       setTechDiagMap(newTechDiagMap);
     } catch (error) {
       setError(error.message || "Error loading data");
@@ -67,17 +78,17 @@ const DiagnosticList = () => {
     }
   };
 
-  // Run fetchData on component mount.
+  // Fetch data on component mount
   useEffect(() => {
     fetchData();
   }, []);
 
   /**
-   * Handle deletion of a technician diagnostic.
+   * handleDelete Function
    *
-   * @async
-   * @function handleDelete
-   * @param {number|string} diagnosticId - The id of the diagnostic to delete.
+   * Deletes the technician diagnostic associated with a given diagnostic.
+   *
+   * @param {number|string} diagnosticId - The diagnostic ID whose technician diagnostic should be deleted.
    */
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
@@ -95,16 +106,22 @@ const DiagnosticList = () => {
     }
   };
 
-  return (
-    <Container className="p-4 border rounded">
-      <h3>Diagnostic List</h3>
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      {loading ? (
+  // Render a loading spinner while fetching data
+  if (loading) {
+    return (
+      <Container className="p-4 diagnostic-list-container">
         <div className="text-center py-5">
           <Spinner animation="border" />
         </div>
-      ) : diagnostics.length === 0 ? (
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="p-4 border rounded diagnostic-list-container">
+      <h3>Diagnostic List</h3>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {diagnostics.length === 0 ? (
         <Alert variant="info">No diagnostics found</Alert>
       ) : (
         <Table striped bordered hover responsive>
@@ -121,6 +138,7 @@ const DiagnosticList = () => {
           </thead>
           <tbody>
             {diagnostics.map((diag) => {
+              // Determine if a technician diagnostic exists for this diagnostic
               const hasTechDiag = !!techDiagMap[diag.id];
               return (
                 <tr key={diag.id}>

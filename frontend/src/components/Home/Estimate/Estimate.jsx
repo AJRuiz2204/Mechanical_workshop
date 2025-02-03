@@ -30,56 +30,65 @@ import {
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
+import "./Estimate.css";
 
 /**
- * Component: Estimate
+ * Estimate Component
  *
  * Description:
- * Handles the creation and editing of estimates. Allows users to select vehicles,
- * add parts, labor, and flat fees, view calculated totals, and generate PDF versions of the estimates.
- * Operates in two modes:
+ * Handles the creation and editing of estimates. Users can select a vehicle,
+ * add parts, labor, and flat fees; view calculated totals; and generate a PDF version.
+ * The component operates in two modes:
  * - Create Mode: For creating new estimates.
- * - Edit Mode: For editing existing estimates based on the provided ID.
+ * - Edit Mode: For editing existing estimates (if an ID is provided in the URL).
+ *
+ * It uses Bootstrap’s grid system, forms, modals, and utility classes.
+ *
+ * Responsive Behavior:
+ * The layout adjusts using Bootstrap’s breakpoints and custom CSS (in Invoice.css)
+ * to provide an optimal viewing experience on all device sizes.
+ *
+ * @returns {JSX.Element} The Estimate component.
  */
 const Estimate = () => {
-  const { id } = useParams(); // Retrieve the estimate ID from URL parameters
-  const navigate = useNavigate(); // Hook for navigation
-  const isEditMode = Boolean(id); // Determine if the component is in edit mode
+  const { id } = useParams(); // Get estimate ID from URL parameters
+  const navigate = useNavigate();
+  const isEditMode = Boolean(id); // Determine mode based on the presence of an ID
 
-  // State variables for managing data and UI states
-  const [isLoading, setIsLoading] = useState(true); // Indicates if data is loading
-  const [vehicles, setVehicles] = useState([]); // List of all available vehicles
-  const [selectedVehicleId, setSelectedVehicleId] = useState(""); // ID of the selected vehicle
-  const [selectedVehicle, setSelectedVehicle] = useState(null); // Details of the selected vehicle
-  const [owner, setOwner] = useState(null); // Owner information of the selected vehicle
-  const [parts, setParts] = useState([]); // List of parts added to the estimate
-  const [labors, setLabors] = useState([]); // List of labor entries added to the estimate
-  const [flatFees, setFlatFees] = useState([]); // List of flat fees added to the estimate
-  const [customerNote, setCustomerNote] = useState(""); // Note for the customer
-  const [extendedDiagnostic, setExtendedDiagnostic] = useState(""); // Extended diagnostic information
-  const [diagnostic, setDiagnostic] = useState(null); // Diagnostic details fetched for the vehicle
-  const [authorizationStatus, setAuthorizationStatus] = useState("InReview"); // Authorization status of the estimate
-  const [subtotal, setSubtotal] = useState(0); // Calculated subtotal
-  const [tax, setTax] = useState(0); // Calculated tax
-  const [total, setTotal] = useState(0); // Calculated total amount
+  // Data and UI state variables
+  const [isLoading, setIsLoading] = useState(true);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [owner, setOwner] = useState(null);
+  const [parts, setParts] = useState([]);
+  const [labors, setLabors] = useState([]);
+  const [flatFees, setFlatFees] = useState([]);
+  const [customerNote, setCustomerNote] = useState("");
+  const [extendedDiagnostic, setExtendedDiagnostic] = useState("");
+  const [diagnostic, setDiagnostic] = useState(null);
+  const [authorizationStatus, setAuthorizationStatus] = useState("InReview");
+  const [subtotal, setSubtotal] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  const [settings, setSettings] = useState(null); // Tax and labor markup settings
-  const [noTax, setNoTax] = useState(false); // Indicates if tax should be applied
+  const [settings, setSettings] = useState(null);
+  const [noTax, setNoTax] = useState(false);
 
-  const [workshopSettings, setWorkshopSettings] = useState(null); // Workshop-specific settings
-  const [loadingWorkshop, setLoadingWorkshop] = useState(true); // Indicates if workshop settings are loading
+  const [workshopSettings, setWorkshopSettings] = useState(null);
+  const [loadingWorkshop, setLoadingWorkshop] = useState(true);
 
-  const [error, setError] = useState(null); // Error message state
-  const [success, setSuccess] = useState(null); // Success message state
-  const [saving, setSaving] = useState(false); // Indicates if the estimate is being saved
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  // State variables to control the visibility of modals
+  // Modal visibility states
   const [showTaxSettingsModal, setShowTaxSettingsModal] = useState(false);
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
 
-  // State variables for new items being added
+  // State for new items
   const [newPart, setNewPart] = useState({
     description: "",
     partNumber: "",
@@ -101,31 +110,30 @@ const Estimate = () => {
     flatFeePrice: 0,
     extendedPrice: 0,
   });
-  const [isAddingPart, setIsAddingPart] = useState(false); // Indicates if a part is being added
+  const [isAddingPart, setIsAddingPart] = useState(false);
+
+  // For PDF download (if needed)
+  const pdfContainerRef = useRef(null);
 
   /**
-   * Effect to load necessary data on component mount and when in edit mode.
+   * Data Loading Effect:
+   * Loads workshop settings, tax settings, and vehicles.
+   * If in edit mode, fetches the existing estimate and pre-populates state.
    */
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch workshop settings
         const shopData = await getWorkshopSettings();
         setWorkshopSettings(shopData);
 
-        // Fetch tax and labor markup settings
         const cfg = await getSettingsById(1);
         setSettings(cfg);
 
-        // Fetch all vehicles
         const vList = await getAllVehicles();
         setVehicles(vList);
 
-        // If in edit mode, fetch the existing estimate data and transform the tax flag properties
         if (isEditMode) {
           const estimateData = await getEstimateById(id);
-
-          // Set basic fields
           setSelectedVehicle(estimateData.vehicle);
           setOwner(estimateData.owner);
           setDiagnostic(estimateData.technicianDiagnostic);
@@ -139,8 +147,6 @@ const Estimate = () => {
           setAuthorizationStatus(
             estimateData.authorizationStatus || "InReview"
           );
-
-          // Transform parts: ensure each part has applyPartTax set from p.taxable if not already present
           setParts(
             estimateData.parts.map((p) => ({
               ...p,
@@ -148,7 +154,6 @@ const Estimate = () => {
                 p.applyPartTax !== undefined ? p.applyPartTax : p.taxable,
             }))
           );
-          // Transform labors: ensure each labor has applyLaborTax set from l.taxable if not already present
           setLabors(
             estimateData.labors.map((l) => ({
               ...l,
@@ -156,7 +161,6 @@ const Estimate = () => {
                 l.applyLaborTax !== undefined ? l.applyLaborTax : l.taxable,
             }))
           );
-          // For flat fees, simply set the taxable property if needed (usually remains false)
           setFlatFees(
             estimateData.flatFees.map((f) => ({
               ...f,
@@ -175,18 +179,17 @@ const Estimate = () => {
   }, [isEditMode, id]);
 
   /**
-   * Effect to calculate totals whenever parts, labors, flatFees, or settings change.
+   * Totals Calculation Effect:
+   * Re-calculates subtotal, tax, and total whenever parts, labors, flat fees, or settings change.
    */
   useEffect(() => {
     if (!settings) return;
-
     let partsTotal = 0;
     let taxParts = 0;
     let laborTotal = 0;
     let taxLabors = 0;
     let othersTotal = 0;
 
-    // Calculate parts total and tax
     parts.forEach((part) => {
       const partExt = parseFloat(part.extendedPrice) || 0;
       partsTotal += partExt;
@@ -194,8 +197,6 @@ const Estimate = () => {
         taxParts += partExt * (parseFloat(settings.partTaxRate) / 100);
       }
     });
-
-    // Calculate labors total and tax
     labors.forEach((labor) => {
       const laborExt = parseFloat(labor.extendedPrice) || 0;
       laborTotal += laborExt;
@@ -203,33 +204,28 @@ const Estimate = () => {
         taxLabors += laborExt * (parseFloat(settings.laborTaxRate) / 100);
       }
     });
-
-    // Calculate flat fees total
     flatFees.forEach((fee) => {
       othersTotal += parseFloat(fee.extendedPrice) || 0;
     });
-
-    const totalCalc =
-      partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
-
-    // Set the calculated totals for PDF and display
+    const totalCalc = partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
     setSubtotal(partsTotal + laborTotal + othersTotal);
     setTax(taxParts + taxLabors);
     setTotal(totalCalc);
   }, [parts, labors, flatFees, settings]);
 
   /**
-   * Handles the change event when a vehicle is selected.
-   * Fetches vehicle details and associated diagnostic information.
+   * handleVehicleChange Function:
+   * When a vehicle is selected, fetch its details and associated diagnostic info.
    */
   const handleVehicleChange = async (e) => {
-    const vehicleId = e.target.value; // Keep as string
+    const vehicleId = e.target.value;
     if (!vehicleId || parseInt(vehicleId, 10) <= 0) {
       setError("Select a valid vehicle (ID > 0).");
       setSelectedVehicleId("");
       return;
     }
     setSelectedVehicleId(vehicleId);
+    // Reset relevant fields for new vehicle selection
     setParts([]);
     setLabors([]);
     setFlatFees([]);
@@ -246,9 +242,7 @@ const Estimate = () => {
         setOwner(vehData.userWorkshop);
         setNoTax(vehData.userWorkshop.noTax);
       }
-      const fetchedDiagnostic = await getDiagnosticByVehicleId(
-        parseInt(vehicleId, 10)
-      );
+      const fetchedDiagnostic = await getDiagnosticByVehicleId(parseInt(vehicleId, 10));
       if (fetchedDiagnostic) {
         setDiagnostic(fetchedDiagnostic);
         setExtendedDiagnostic(fetchedDiagnostic.extendedDiagnostic);
@@ -261,14 +255,10 @@ const Estimate = () => {
     }
   };
 
-  // Handlers to show and hide the Tax Settings modal
+  // Modal handlers for Tax Settings, Part, Labor, and Flat Fee
   const handleShowTaxSettingsModal = () => setShowTaxSettingsModal(true);
   const handleCloseTaxSettingsModal = () => setShowTaxSettingsModal(false);
 
-  /**
-   * Handlers to show and hide the Part modal.
-   * Initializes the newPart state with default values.
-   */
   const handleShowPartModal = () => {
     const defaultTax = noTax ? false : true;
     setNewPart({
@@ -291,20 +281,13 @@ const Estimate = () => {
       netPrice: 0,
       listPrice: 0,
       extendedPrice: 0,
-      applyPartTax: noTax ? false : true, // Set based on noTax
+      applyPartTax: noTax ? false : true,
     });
   };
 
-  /**
-   * Handlers to show and hide the Labor modal.
-   * Initializes the newLabor state with default values.
-   */
   const handleShowLaborModal = () => {
     const defaultTax = noTax ? false : true;
-    let defaultRate = 0;
-    if (settings && settings.defaultHourlyRate) {
-      defaultRate = settings.defaultHourlyRate;
-    }
+    let defaultRate = settings?.defaultHourlyRate || 0;
     setNewLabor({
       description: "",
       duration: 0,
@@ -321,14 +304,10 @@ const Estimate = () => {
       duration: 0,
       laborRate: settings?.defaultHourlyRate || 0,
       extendedPrice: 0,
-      applyLaborTax: noTax ? false : true, // Set based on noTax
+      applyLaborTax: noTax ? false : true,
     });
   };
 
-  /**
-   * Handlers to show and hide the Flat Fee modal.
-   * Initializes the newFlatFee state with default values.
-   */
   const handleShowFlatFeeModal = () => {
     setNewFlatFee({
       description: "",
@@ -347,30 +326,24 @@ const Estimate = () => {
   };
 
   /**
-   * Adds a new part to the estimate after validating inputs.
+   * addPart Function:
+   * Validates and adds a new part to the estimate.
    */
   const addPart = async () => {
     if (isAddingPart) return;
     setIsAddingPart(true);
     try {
       // Check for duplicate part numbers
-      const duplicate = parts.find(
-        (part) => part.partNumber === newPart.partNumber
-      );
+      const duplicate = parts.find((part) => part.partNumber === newPart.partNumber);
       if (duplicate) {
-        setError(
-          `The part with Part Number ${newPart.partNumber} already exists in this estimate.`
-        );
+        setError(`The part with Part Number ${newPart.partNumber} already exists in this estimate.`);
         return;
       }
-      // Ensure description and part number are provided
       if (!newPart.description || !newPart.partNumber) {
         setError("Description and part number are required.");
         return;
       }
-      // Add the new part to the parts list
       setParts([...parts, { ...newPart }]);
-      // Reset the newPart state
       setNewPart({
         description: "",
         partNumber: "",
@@ -382,7 +355,7 @@ const Estimate = () => {
       });
       setSuccess("Part added successfully.");
       setShowPartModal(false);
-      setError(null); // Clear any existing errors
+      setError(null);
     } catch (err) {
       setError("Error adding the part.");
     } finally {
@@ -391,7 +364,8 @@ const Estimate = () => {
   };
 
   /**
-   * Adds a new labor entry to the estimate after validating inputs.
+   * addLabor Function:
+   * Validates and adds a new labor entry.
    */
   const addLabor = () => {
     if (!newLabor.description || newLabor.duration <= 0) {
@@ -414,7 +388,8 @@ const Estimate = () => {
   };
 
   /**
-   * Adds a new flat fee to the estimate after validating inputs.
+   * addFlatFee Function:
+   * Validates and adds a new flat fee.
    */
   const addFlatFee = () => {
     if (!newFlatFee.description || newFlatFee.flatFeePrice <= 0) {
@@ -429,9 +404,11 @@ const Estimate = () => {
   };
 
   /**
-   * Removes an item (part, labor, or flat fee) from the estimate based on its type and index.
-   * @param {string} type - The type of the item ("PART", "LABOR", "FLATFEE")
-   * @param {number} idx - The index of the item in its respective array
+   * removeItem Function:
+   * Removes an item (part, labor, or flat fee) from the estimate.
+   *
+   * @param {string} type - The type ("PART", "LABOR", "FLATFEE").
+   * @param {number} idx - The index of the item.
    */
   const removeItem = (type, idx) => {
     if (type === "PART") {
@@ -456,9 +433,11 @@ const Estimate = () => {
   };
 
   /**
-   * Handles the saving of the estimate, whether creating a new one or updating an existing one.
-   * Validates inputs before sending data to the backend services.
-   * @param {Event} e - The form submission event
+   * handleSave Function:
+   * Builds the DTO for the estimate and calls the appropriate service
+   * to create or update the estimate.
+   *
+   * @param {Event} e - The form submission event.
    */
   const handleSave = async (e) => {
     e.preventDefault();
@@ -473,9 +452,7 @@ const Estimate = () => {
       return;
     }
     const partNumbers = parts.map((p) => p.partNumber);
-    const hasDuplicates = partNumbers.some(
-      (item, idx) => partNumbers.indexOf(item) !== idx
-    );
+    const hasDuplicates = partNumbers.some((item, idx) => partNumbers.indexOf(item) !== idx);
     if (hasDuplicates) {
       setError("There are duplicate Part Numbers in the estimate.");
       return;
@@ -486,7 +463,7 @@ const Estimate = () => {
       return;
     }
 
-    // Build the DTO (works for both create and edit modes)
+    // Build the DTO
     const dto = {
       VehicleID: !isEditMode
         ? parseInt(selectedVehicleId, 10)
@@ -542,9 +519,7 @@ const Estimate = () => {
     } catch (err) {
       setError(
         err.message ||
-          (isEditMode
-            ? "Error updating the estimate."
-            : "Error creating the estimate.")
+          (isEditMode ? "Error updating the estimate." : "Error creating the estimate.")
       );
     } finally {
       setSaving(false);
@@ -552,7 +527,8 @@ const Estimate = () => {
   };
 
   /**
-   * Combines all items (parts, labors, flat fees) for PDF preview using useMemo for optimization.
+   * combinedItems Memo:
+   * Combines parts, labors, and flat fees for use in PDF preview or further processing.
    */
   const combinedItems = useMemo(() => {
     return [
@@ -571,7 +547,7 @@ const Estimate = () => {
         description: l.description,
         quantity: l.duration,
         price: l.laborRate,
-        listPrice: "", // Labor does not have a list price
+        listPrice: "", // Not applicable
         extendedPrice: l.extendedPrice,
         taxable: l.applyLaborTax,
         partNumber: "",
@@ -579,9 +555,9 @@ const Estimate = () => {
       ...flatFees.map((f) => ({
         type: "Flat Fee",
         description: f.description,
-        quantity: "-", // Flat Fee does not have a quantity
+        quantity: "-", // Not applicable
         price: f.flatFeePrice,
-        listPrice: "", // Flat Fee does not have a list price
+        listPrice: "", // Not applicable
         extendedPrice: f.extendedPrice,
         taxable: false,
         partNumber: "",
@@ -589,7 +565,6 @@ const Estimate = () => {
     ];
   }, [parts, labors, flatFees]);
 
-  // Render a loading spinner while data is being fetched
   if (isLoading || loadingWorkshop) {
     return (
       <Container
@@ -604,7 +579,7 @@ const Estimate = () => {
   }
 
   return (
-    <Container className="p-4 border rounded mt-4">
+    <Container className="p-4 border rounded mt-4 estimate-container">
       <h3 className="mb-4">
         {isEditMode ? "Edit Estimate" : "Create Estimate"}
       </h3>
@@ -620,6 +595,7 @@ const Estimate = () => {
         </Alert>
       )}
 
+      {/* Button to view Tax & Markup Settings */}
       <div className="text-end mb-3">
         <Button variant="info" onClick={handleShowTaxSettingsModal}>
           View Tax & Markup Settings
@@ -627,7 +603,7 @@ const Estimate = () => {
       </div>
 
       <Form onSubmit={handleSave}>
-        {/* CREATE MODE: Select Vehicle */}
+        {/* Create Mode: Select Vehicle */}
         {!isEditMode && (
           <Row>
             <Col md={6} className="mb-3">
@@ -666,7 +642,7 @@ const Estimate = () => {
           </Row>
         )}
 
-        {/* EDIT MODE: Display Vehicle and Owner Info */}
+        {/* Edit Mode: Display Vehicle and Owner Info */}
         {isEditMode && (
           <Row className="mb-3">
             <Col md={6}>
@@ -948,7 +924,6 @@ const Estimate = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* Description Field */}
             <Form.Group className="mb-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -961,7 +936,6 @@ const Estimate = () => {
                 required
               />
             </Form.Group>
-            {/* Part Number Field */}
             <Form.Group className="mb-3">
               <Form.Label>Part Number</Form.Label>
               <Form.Control
@@ -974,7 +948,6 @@ const Estimate = () => {
                 required
               />
             </Form.Group>
-            {/* Quantity Field */}
             <Form.Group className="mb-3">
               <Form.Label>Quantity</Form.Label>
               <Form.Control
@@ -994,7 +967,6 @@ const Estimate = () => {
                 required
               />
             </Form.Group>
-            {/* Net Price Field */}
             <Form.Group className="mb-3">
               <Form.Label>Net Price</Form.Label>
               <InputGroup>
@@ -1017,7 +989,6 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* List Price Field */}
             <Form.Group className="mb-3">
               <Form.Label>List Price</Form.Label>
               <InputGroup>
@@ -1040,7 +1011,6 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Extended Price Field */}
             <Form.Group className="mb-3">
               <Form.Label>Extended Price</Form.Label>
               <InputGroup>
@@ -1048,15 +1018,12 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={
-                    newPart.extendedPrice === 0 ? "" : newPart.extendedPrice
-                  }
+                  value={newPart.extendedPrice === 0 ? "" : newPart.extendedPrice}
                   readOnly
                   placeholder="0"
                 />
               </InputGroup>
             </Form.Group>
-            {/* Tax Checkbox */}
             <Form.Group className="mt-3">
               <Form.Check
                 type="checkbox"
@@ -1072,8 +1039,8 @@ const Estimate = () => {
               />
               <Form.Text className="text-muted">
                 {noTax
-                  ? "If you check this box, tax will be applied even if the profile has NoTax."
-                  : "If you check this box, tax will not be applied for this item."}
+                  ? "If checked, tax will be applied even if NoTax is set."
+                  : "If checked, tax will not be applied for this part."}
               </Form.Text>
             </Form.Group>
           </Form>
@@ -1095,7 +1062,6 @@ const Estimate = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* Description Field */}
             <Form.Group className="mb-2">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -1107,7 +1073,6 @@ const Estimate = () => {
                 placeholder="Labor description"
               />
             </Form.Group>
-            {/* Duration Field */}
             <Form.Group className="mb-2">
               <Form.Label>Duration (hours)</Form.Label>
               <Form.Control
@@ -1125,7 +1090,6 @@ const Estimate = () => {
                 placeholder="Hours"
               />
             </Form.Group>
-            {/* Labor Rate Field */}
             <Form.Group className="mb-2">
               <Form.Label>Labor Rate</Form.Label>
               <Form.Select
@@ -1159,7 +1123,6 @@ const Estimate = () => {
                 )}
               </Form.Select>
             </Form.Group>
-            {/* Extended Price Field */}
             <Form.Group className="mb-2">
               <Form.Label>Extended Price</Form.Label>
               <InputGroup>
@@ -1167,15 +1130,12 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={
-                    newLabor.extendedPrice === 0 ? "" : newLabor.extendedPrice
-                  }
+                  value={newLabor.extendedPrice === 0 ? "" : newLabor.extendedPrice}
                   readOnly
                   placeholder="0"
                 />
               </InputGroup>
             </Form.Group>
-            {/* Tax Checkbox */}
             <Form.Group className="mt-3">
               <Form.Check
                 type="checkbox"
@@ -1191,8 +1151,8 @@ const Estimate = () => {
               />
               <Form.Text className="text-muted">
                 {noTax
-                  ? "If you check this box, tax will be applied even if the profile has NoTax."
-                  : "If you check this box, tax will not be applied for this labor."}
+                  ? "If checked, tax will be applied even if NoTax is set."
+                  : "If checked, tax will not be applied for this labor."}
               </Form.Text>
             </Form.Group>
           </Form>
@@ -1214,7 +1174,6 @@ const Estimate = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* Description Field */}
             <Form.Group className="mb-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -1227,7 +1186,6 @@ const Estimate = () => {
                 required
               />
             </Form.Group>
-            {/* Flat Fee Price Field */}
             <Form.Group className="mb-3">
               <Form.Label>Flat Fee Price</Form.Label>
               <InputGroup>
@@ -1235,9 +1193,7 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={
-                    newFlatFee.flatFeePrice === 0 ? "" : newFlatFee.flatFeePrice
-                  }
+                  value={newFlatFee.flatFeePrice === 0 ? "" : newFlatFee.flatFeePrice}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value) || 0;
                     setNewFlatFee((prev) => ({
@@ -1251,7 +1207,6 @@ const Estimate = () => {
                 />
               </InputGroup>
             </Form.Group>
-            {/* Extended Price Field */}
             <Form.Group className="mb-3">
               <Form.Label>Extended Price</Form.Label>
               <InputGroup>
@@ -1259,11 +1214,7 @@ const Estimate = () => {
                 <FormControl
                   type="number"
                   step="0.01"
-                  value={
-                    newFlatFee.extendedPrice === 0
-                      ? ""
-                      : newFlatFee.extendedPrice
-                  }
+                  value={newFlatFee.extendedPrice === 0 ? "" : newFlatFee.extendedPrice}
                   readOnly
                   placeholder="0"
                 />
