@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ManagerProtectedRoute from "./components/ProtectedRoute/ManagerProtectedRoute";
 import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RegisterUser from "./components/RegisterUser/RegisterUser";
@@ -28,6 +29,9 @@ import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPD
 import SalesReportView from "./components/Home/Reports/SalesReportsListView";
 import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
 import SalesReportAllPreviewView from "./components/Home/Reports/SalesReportAllPreviewView";
+import EstimatePDFViewer from "./components/Home/Invoice/EstimatePDFViewer";
+import InvoicePDFViewer from "./components/Home/Invoice/InvoicePDFViewer";
+
 
 const App = () => {
   return (
@@ -36,6 +40,7 @@ const App = () => {
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route
           element={
@@ -124,6 +129,12 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/estimate-pdf/:id" element={
+            <ProtectedRoute requiredRole="Manager">
+              <EstimatePDFViewer />
+            </ProtectedRoute>
+          } />
+          <Route path="/invoice-pdf/:id" element={<InvoicePDFViewer />} />
           <Route
             path="/diagnostic-list"
             element={
@@ -196,9 +207,8 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
           <Route
-            path="/forgot-password"
+            path="/forgot-password" 
             element={
               <ProtectedRoute requiredRoles={"Manager"}>
                 <ForgotPassword />
@@ -208,9 +218,9 @@ const App = () => {
           <Route
             path="/register-user"
             element={
-              <ProtectedRoute requiredRoles={"Manager"}>
+              <ManagerProtectedRoute requiredRoles={"Manager"}>
                 <RegisterUser />
-              </ProtectedRoute>
+              </ManagerProtectedRoute>
             }
           />
           <Route

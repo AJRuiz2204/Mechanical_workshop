@@ -1,8 +1,6 @@
 /* eslint-disable no-unused-vars */
-// src/components/Settings/EstimateList.jsx
-
 import React, { useState, useEffect } from "react";
-import { Table, Alert, Button, Form } from "react-bootstrap";
+import { Table, Alert, Button, Form, Badge } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import {
   getEstimates,
@@ -15,17 +13,15 @@ import "./EstimateList.css";
 /**
  * EstimateList Component
  *
- * Description:
  * This component displays a list of estimates and provides functionality to:
- * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, or status)
- * - Edit, delete, or view an invoice for each estimate
+ * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, or authorization status)
+ * - Edit, delete, or view the invoice PDF for each estimate
  * - Generate or open an account receivable for the estimate
  *
- * It uses Bootstrap components for layout and responsive design.
- *
- * Responsive Behavior:
- * - Uses Bootstrap’s grid and utility classes.
- * - The custom CSS file adjusts paddings, fonts, and spacing for devices in the xs, sm, md, lg, and xl ranges.
+ * The authorization status is displayed using a Bootstrap Badge with color coding:
+ * - Approved: green (success)
+ * - Rejected: red (danger)
+ * - InReview or In Review: yellow (warning)
  *
  * @returns {JSX.Element} The EstimateList component.
  */
@@ -63,8 +59,7 @@ const EstimateList = () => {
 
   /**
    * Filters estimates based on the search term.
-   * The search is case-insensitive and checks the estimate ID, vehicle VIN,
-   * subtotal, tax, total, and authorization status.
+   * The search is case-insensitive and checks various fields.
    */
   const filteredEstimates = estimates.filter((estimate) => {
     const term = searchTerm.toLowerCase();
@@ -84,19 +79,17 @@ const EstimateList = () => {
   /**
    * handleGenerateAccount Function:
    * Generates an account receivable for the provided estimate.
-   * If the estimate already has an associated account, it opens the payment modal.
+   * If an account already exists, opens the payment modal.
    *
    * @param {Object} estimate - The estimate object.
    */
   const handleGenerateAccount = async (estimate) => {
-    // If an account already exists, open the payment modal
     if (estimate.accountReceivable && estimate.accountReceivable.id) {
       setModalAccountId(estimate.accountReceivable.id);
       setShowPaymentModal(true);
       return;
     }
 
-    // Confirm account generation
     if (
       !window.confirm(
         `An account receivable will be generated for estimate ${estimate.id}. Continue?`
@@ -120,13 +113,13 @@ const EstimateList = () => {
 
   /**
    * handleEdit Function:
-   * Placeholder function for editing the given estimate.
+   * Placeholder for editing an estimate.
    *
-   * @param {Object} estimate - The estimate object to be edited.
+   * @param {Object} estimate - The estimate object to edit.
    */
   const handleEdit = (estimate) => {
     console.log("Editing Estimate:", estimate);
-    // Navigation or modal handling for editing could be implemented here.
+    // You could implement navigation or modal editing here.
   };
 
   /**
@@ -150,7 +143,27 @@ const EstimateList = () => {
     }
   };
 
-  // Render a loading message while fetching estimates
+  /**
+   * getStatusVariant Function:
+   * Returns the Bootstrap variant for the Badge based on the authorization status.
+   *
+   * @param {string} status - The authorization status.
+   * @returns {string} The Bootstrap variant.
+   */
+  const getStatusVariant = (status) => {
+    switch (status.toLowerCase()) {
+      case "approved":
+        return "success";
+      case "rejected":
+        return "danger";
+      case "inreview":
+      case "in review":
+        return "warning";
+      default:
+        return "secondary";
+    }
+  };
+
   if (loading) {
     return <div>Loading estimates...</div>;
   }
@@ -159,7 +172,6 @@ const EstimateList = () => {
     <div className="estimate-list container p-4 border rounded">
       <h2 className="mb-4">Estimate List</h2>
 
-      {/* Display error and success messages */}
       {error && (
         <Alert variant="danger" onClose={() => setError(null)} dismissible>
           {error}
@@ -171,7 +183,6 @@ const EstimateList = () => {
         </Alert>
       )}
 
-      {/* Search input */}
       <Form.Group controlId="search" className="mb-3">
         <Form.Control
           type="text"
@@ -181,14 +192,12 @@ const EstimateList = () => {
         />
       </Form.Group>
 
-      {/* Add Estimate Button */}
       <div className="mb-3 text-end">
         <Link to="/estimate/create">
           <Button variant="primary">+ Add Estimate</Button>
         </Link>
       </div>
 
-      {/* Estimates Table */}
       <Table striped bordered hover responsive>
         <thead>
           <tr>
@@ -216,15 +225,18 @@ const EstimateList = () => {
                 <td>${estimate.subtotal?.toFixed(2)}</td>
                 <td>${estimate.tax?.toFixed(2)}</td>
                 <td>${estimate.total?.toFixed(2)}</td>
-                <td>{estimate.authorizationStatus}</td>
                 <td>
-                  {/* View Invoice */}
-                  <Link to={`/invoice/${estimate.id}`}>
+                  <Badge bg={getStatusVariant(estimate.authorizationStatus)}>
+                    {estimate.authorizationStatus}
+                  </Badge>
+                </td>
+                <td>
+                  {/* "View PDF" button: redirect to the Invoice PDF Viewer */}
+                  <Link to={`/invoice-pdf/${estimate.id}`}>
                     <Button variant="info" size="sm" className="me-2">
-                      View
+                      View PDF
                     </Button>
                   </Link>
-                  {/* Edit Estimate */}
                   <Link to={`/estimate/edit/${estimate.id}`}>
                     <Button
                       variant="warning"
@@ -235,7 +247,6 @@ const EstimateList = () => {
                       Edit
                     </Button>
                   </Link>
-                  {/* Delete Estimate */}
                   <Button
                     variant="danger"
                     size="sm"
@@ -244,7 +255,6 @@ const EstimateList = () => {
                   >
                     Delete
                   </Button>
-                  {/* Generate/Open Account */}
                   <Button
                     variant="success"
                     size="sm"
@@ -261,7 +271,6 @@ const EstimateList = () => {
         </tbody>
       </Table>
 
-      {/* Payment Modal for Account Receivable */}
       <AccountPaymentModal
         show={showPaymentModal}
         onHide={() => setShowPaymentModal(false)}

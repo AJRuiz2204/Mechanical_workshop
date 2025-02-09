@@ -1,103 +1,153 @@
-/*
-  Estimate.css
-  ============
-  This stylesheet applies a blue color palette and responsive styling for the
-  Estimate component. It uses Bootstrap’s breakpoints to adjust spacing, fonts, and
-  layout for optimal display across all device sizes.
+/* Translated Estimate.css */
 
-  Breakpoints:
-    - xs: <576px
-    - sm: ≥576px
-    - md: ≥768px
-    - lg: ≥992px
-    - xl: ≥1200px
-*/
-
-/* ---------------------------- */
-/* Base Container Styles        */
-/* ---------------------------- */
-
-/* Main invoice container with a blue border and white background */
+/* Main container with shading and adaptive padding */
 .estimate-container {
+  background-color: #f9f9f9;
+  padding: 2rem;
+  margin: 1rem auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 95%;
+}
+
+/* Titles and general text */
+.estimate-container h3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.estimate-container p,
+.estimate-container li,
+.estimate-container label {
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Cards and lists: improved presentation */
+.estimate-container .card {
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.estimate-container .card-title {
+  font-size: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.estimate-container .list-group-item {
+  border: none;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+/* Styles for the items table */
+.estimate-container table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.estimate-container th,
+.estimate-container td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.75rem;
   background-color: #fff;
-  border: 1px solid #007bff; /* Blue border */
-  border-radius: 4px;
-  padding: 20px;
-  margin-top: 20px;
+  border: 1px solid #ddd;
 }
 
-/* Invoice title using dark blue */
-.invoice-title {
-  color: #0056b3;
-  margin-bottom: 20px;
+/* Action buttons: better clarity and spacing */
+.estimate-container .btn {
+  margin-bottom: 0.5rem;
 }
 
-/* Table styling for the invoice */
-.invoice-table {
-  margin-top: 20px;
-}
+/* Responsiveness */
 
-/* Totals section: right-aligned with dark blue accents */
-.invoice-totals p,
-.invoice-totals h5 {
-  margin: 0;
-  color: #0056b3;
-}
-
-/* Action buttons spacing */
-.invoice-actions {
-  margin-top: 20px;
-}
-
-/* Loading and error container background */
-.invoice-loading {
-  background-color: #f0f8ff; /* Light blue */
-}
-
-/* ---------------------------- */
-/* Responsive Adjustments       */
-/* ---------------------------- */
-
-/* Extra small devices (xs: <576px) */
+/* Small screens (mobiles) */
 @media (max-width: 575.98px) {
   .estimate-container {
-    padding: 12px;
-    margin-top: 12px;
+    padding: 1rem;
   }
-
-  .invoice-title {
+  .estimate-container h3 {
     font-size: 1.5rem;
-    margin-bottom: 16px;
   }
-
-  .invoice-totals p,
-  .invoice-totals h5 {
-    font-size: 0.9rem;
-  }
-
-  .invoice-actions button {
-    font-size: 0.8rem;
-    padding: 6px 12px;
-  }
-
-  .invoice-table th,
-  .invoice-table td {
-    font-size: 0.8rem;
+  .estimate-container th,
+  .estimate-container td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
   }
 }
 
-/* Small devices (sm: ≥576px and <768px) */
-@media (min-width: 576px) and (max-width: 767.98px) {
+/* Medium screens (tablets and small desktops) */
+@media (min-width: 576px) and (max-width: 991.98px) {
   .estimate-container {
-    padding: 16px;
+    padding: 1.5rem;
   }
-
-  .invoice-title {
-    font-size: 1.75rem;
+  .estimate-container h3 {
+    font-size: 1.6rem;
   }
+}
 
-  .invoice-totals p,
-  .invoice-totals h5 {
-    font-size: 0.95rem;
+/* Standard desktops and large screens */
+@media (min-width: 992px) {
+  .estimate-container {
+    padding: 2rem;
+    max-width: 1140px;
+  }
+  .estimate-container h3 {
+    font-size: 1.8rem;
+  }
+}
+
+/* Extra large screens up to 1920px */
+@media (min-width: 1200px) {
+  .estimate-container {
+    padding: 2.5rem;
+    max-width: 1400px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .estimate-container {
+    padding: 3rem;
+    max-width: 1800px;
+  }
+}
+
+/* "Card" version for tables on very small devices */
+@media (max-width: 768px) {
+  .estimate-container table thead {
+    display: none;
+  }
+  .estimate-container table,
+  .estimate-container table tbody,
+  .estimate-container table tr,
+  .estimate-container table td {
+    display: block;
+    width: 100%;
+  }
+  .estimate-container table tr {
+    margin-bottom: 1rem;
+    border: none;
+    border-bottom: 1px solid #ddd;
+  }
+  .estimate-container table td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+  .estimate-container table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-left: 15px;
+    font-weight: bold;
+    text-align: left;
   }
 }

@@ -41,12 +41,12 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       // Update state with fetched data.
       setAccount(accountData);
       setPayments(paymentsData);
-      console.log("Modal - Cuenta cargada:", accountData);
-      console.log("Modal - Pagos cargados:", paymentsData);
+      console.log("Modal - Account loaded:", accountData);
+      console.log("Modal - Payments loaded:", paymentsData);
     } catch (error) {
       // Log and alert error if fetching fails.
-      console.error("Modal - Error cargando cuenta:", error);
-      alert("Error al cargar los datos de la cuenta: " + error.message);
+      console.error("Modal - Error loading account:", error);
+      alert("Error loading account data: " + error.message);
     }
   };
 
@@ -57,12 +57,12 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
     const paymentAmount = parseFloat(formData.amount);
     // Validate that the payment amount is a valid number and greater than zero.
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      alert("Ingrese un monto válido");
+      alert("Please enter a valid amount");
       return;
     }
     // Validate that the payment amount does not exceed the account balance.
     if (account && paymentAmount > account.balance) {
-      alert("El monto ingresado excede el saldo pendiente");
+      alert("The entered amount exceeds the pending balance");
       return;
     }
     // Build the payload for creating a payment.
@@ -73,11 +73,11 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       TransactionReference: formData.transactionReference,
       Notes: formData.notes,
     };
-    console.log("Modal - Payload a enviar:", payload);
+    console.log("Modal - Payload to send:", payload);
     try {
       // Call the createPayment service with the payload.
       const response = await createPayment(payload);
-      console.log("Modal - Respuesta de createPayment:", response);
+      console.log("Modal - createPayment response:", response);
       // Refresh the account data and payments after successful payment creation.
       await fetchAccountData(accountId);
       // Reset the form data to initial values.
@@ -87,11 +87,11 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
         transactionReference: "",
         notes: "",
       });
-      alert("¡Pago registrado exitosamente!");
+      alert("Payment successfully registered!");
     } catch (error) {
       // Log and alert error if payment creation fails.
-      console.error("Modal - Error en createPayment:", error);
-      alert("Error registrando pago: " + error.message);
+      console.error("Modal - Error in createPayment:", error);
+      alert("Error registering payment: " + error.message);
     }
   };
 
@@ -100,7 +100,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
     <Modal show={show} onHide={onHide} size="lg" centered>
       <Modal.Header closeButton>
         <Modal.Title>
-          Cuenta por Cobrar #{account ? account.id : accountId}
+          Account Receivable #{account ? account.id : accountId}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -109,14 +109,14 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
             {/* Display account details in a card. */}
             <Card className="mb-4">
               <Card.Body>
-                <Card.Title>Cliente: {account.customer.fullName}</Card.Title>
+                <Card.Title>Customer: {account.customer.fullName}</Card.Title>
                 <Card.Text>
-                  Vehículo: {account.vehicle.make} {account.vehicle.model}
+                  Vehicle: {account.vehicle.make} {account.vehicle.model}
                 </Card.Text>
                 <Card.Text>
                   Total: ${account.originalAmount.toFixed(2)}
                 </Card.Text>
-                <Card.Text>Saldo: ${account.balance.toFixed(2)}</Card.Text>
+                <Card.Text>Balance: ${account.balance.toFixed(2)}</Card.Text>
                 <Badge bg={account.status === "Paid" ? "success" : "warning"}>
                   {account.status}
                 </Badge>
@@ -125,14 +125,14 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
             {/* Card for payment registration form. */}
             <Card className="mb-4">
               <Card.Header>
-                <h5 className="mb-0">Registro de Pagos</h5>
+                <h5 className="mb-0">Payment Registration</h5>
               </Card.Header>
               <Card.Body>
                 <Form onSubmit={handlePaymentSubmit}>
                   <Row className="g-3">
                     {/* Input for payment amount */}
                     <Col md={6}>
-                      <Form.Label>Monto</Form.Label>
+                      <Form.Label>Amount</Form.Label>
                       <Form.Control
                         type="number"
                         step="0.01"
@@ -145,7 +145,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
                     </Col>
                     {/* Select input for payment method */}
                     <Col md={6}>
-                      <Form.Label>Método de Pago</Form.Label>
+                      <Form.Label>Payment Method</Form.Label>
                       <Form.Select
                         value={formData.method}
                         onChange={(e) =>
@@ -153,15 +153,15 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
                         }
                         required
                       >
-                        <option value="Cash">Efectivo</option>
-                        <option value="CreditCard">Tarjeta de Crédito</option>
-                        <option value="Transfer">Transferencia</option>
-                        <option value="Check">Cheque</option>
+                        <option value="Cash">Cash</option>
+                        <option value="CreditCard">Credit Card</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Check">Check</option>
                       </Form.Select>
                     </Col>
                     {/* Input for transaction reference */}
                     <Col xs={12}>
-                      <Form.Label>Referencia</Form.Label>
+                      <Form.Label>Reference</Form.Label>
                       <Form.Control
                         type="text"
                         value={formData.transactionReference}
@@ -175,7 +175,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
                     </Col>
                     {/* Input for additional notes */}
                     <Col xs={12}>
-                      <Form.Label>Notas</Form.Label>
+                      <Form.Label>Notes</Form.Label>
                       <Form.Control
                         type="text"
                         value={formData.notes}
@@ -190,7 +190,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
                     {/* Submit button for the payment form */}
                     <Col xs={12}>
                       <Button variant="success" type="submit" className="w-100">
-                        Registrar Pago
+                        Register Payment
                       </Button>
                     </Col>
                   </Row>
@@ -200,7 +200,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
             {/* Card for displaying payment history */}
             <Card>
               <Card.Header>
-                <h5 className="mb-0">Historial de Pagos</h5>
+                <h5 className="mb-0">Payment History</h5>
               </Card.Header>
               <Card.Body style={{ maxHeight: "400px", overflowY: "auto" }}>
                 {payments.map((payment) => (
@@ -232,13 +232,13 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
           </>
         ) : (
           // Display loading text if account details are not yet available.
-          <div>Cargando detalles de la cuenta...</div>
+          <div>Loading account details...</div>
         )}
       </Modal.Body>
       <Modal.Footer>
         {/* Button to close the modal */}
         <Button variant="secondary" onClick={onHide}>
-          Cerrar
+          Close
         </Button>
       </Modal.Footer>
     </Modal>

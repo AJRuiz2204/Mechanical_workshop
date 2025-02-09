@@ -7,7 +7,11 @@ interface ProtectedRouteProps {
   requiredRoles?: string[];
 }
 
-const ProtectedRoute = ({ children, requiredRole, requiredRoles }: ProtectedRouteProps) => {
+const ProtectedRoute = ({
+  children,
+  requiredRole,
+  requiredRoles,
+}: ProtectedRouteProps) => {
   const location = useLocation();
   let user: any = {};
 
@@ -16,7 +20,6 @@ const ProtectedRoute = ({ children, requiredRole, requiredRoles }: ProtectedRout
     user = userString ? JSON.parse(userString) : {};
   } catch (error) {
     console.error("Error al parsear el usuario desde localStorage:", error);
-    // Opcional: eliminar el dato inválido
     localStorage.removeItem("user");
   }
 

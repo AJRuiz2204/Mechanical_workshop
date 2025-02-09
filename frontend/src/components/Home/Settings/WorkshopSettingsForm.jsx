@@ -134,7 +134,7 @@ const WorkshopSettingsForm = () => {
           setSavedSettings(null);
         } else {
           // Handle other errors by setting the error state
-          setError(err.message || "Error al obtener los ajustes del taller.");
+          setError(err.message || "Error fetching workshop settings.");
         }
       } finally {
         setLoading(false); // Stop the loading spinner
@@ -189,12 +189,12 @@ const WorkshopSettingsForm = () => {
 
     // Validate workshop name
     if (!formData.workshopName.trim()) {
-      newErrors.workshopName = "El nombre del taller es obligatorio.";
+      newErrors.workshopName = "Workshop name is required.";
     }
 
     // Validate address
     if (!formData.address.trim()) {
-      newErrors.address = "La dirección es obligatoria.";
+      newErrors.address = "Address is required.";
     }
 
     // Regular expression for phone number validation: (XXX) XXX-XXXX
@@ -202,31 +202,31 @@ const WorkshopSettingsForm = () => {
 
     // Validate primary phone
     if (!formData.primaryPhone.trim()) {
-      newErrors.primaryPhone = "El teléfono principal es obligatorio.";
+      newErrors.primaryPhone = "Primary phone is required.";
     } else if (!phoneRegex.test(formData.primaryPhone)) {
       newErrors.primaryPhone =
-        "El teléfono principal debe tener el formato (000) 000-0000.";
+        "Primary phone must be in format (000) 000-0000.";
     }
 
     // Validate secondary phone (optional)
     if (formData.secondaryPhone && !phoneRegex.test(formData.secondaryPhone)) {
       newErrors.secondaryPhone =
-        "El teléfono secundario debe tener el formato (000) 000-0000.";
+        "Secondary phone must be in format (000) 000-0000.";
     }
 
     // Validate fax (optional)
     if (formData.fax && !phoneRegex.test(formData.fax)) {
-      newErrors.fax = "El fax debe tener el formato (000) 000-0000.";
+      newErrors.fax = "Fax must be in format (000) 000-0000.";
     }
 
     // Validate email (optional)
     if (formData.email && !validateEmail(formData.email)) {
-      newErrors.email = "La dirección de correo electrónico no es válida.";
+      newErrors.email = "Email address is not valid.";
     }
 
     // Validate website URL (optional)
     if (formData.websiteUrl && !validateURL(formData.websiteUrl)) {
-      newErrors.websiteUrl = "La URL del sitio web no es válida.";
+      newErrors.websiteUrl = "Website URL is not valid.";
     }
 
     return newErrors;
@@ -270,7 +270,7 @@ const WorkshopSettingsForm = () => {
       return;
     }
 
-    console.log("Enviando ajustes:", formData); // For debugging
+    console.log("Submitting settings:", formData); // For debugging
 
     // Generate a timestamp for 'lastUpdated' using dayjs in ISO 8601 format
     const timestamp = dayjs().format();
@@ -282,7 +282,7 @@ const WorkshopSettingsForm = () => {
           ...formData,
           lastUpdated: timestamp,
         });
-        setSuccess("Ajustes del taller actualizados exitosamente.");
+        setSuccess("Workshop settings updated successfully.");
 
         // Fetch the updated settings to display in the preview
         const updatedSettings = await getWorkshopSettings();
@@ -294,7 +294,7 @@ const WorkshopSettingsForm = () => {
           lastUpdated: timestamp,
         });
         setSavedSettings(createdSettings);
-        setSuccess("Ajustes del taller creados exitosamente.");
+        setSuccess("Workshop settings created successfully.");
         setIsEditMode(true);
       }
 
@@ -310,8 +310,8 @@ const WorkshopSettingsForm = () => {
         email: "",
       });
     } catch (err) {
-      console.error("Detalles del error:", err); // For debugging
-      setError(err.message || "Error al guardar los ajustes del taller.");
+      console.error("Error details:", err); // For debugging
+      setError(err.message || "Error saving workshop settings.");
     } finally {
       setSaving(false);
     }
@@ -325,7 +325,7 @@ const WorkshopSettingsForm = () => {
         style={{ height: "80vh" }}
       >
         <Spinner animation="border" role="status">
-          <span className="visually-hidden">Cargando...</span>
+          <span className="visually-hidden">Loading...</span>
         </Spinner>
       </Container>
     );
@@ -334,7 +334,7 @@ const WorkshopSettingsForm = () => {
   return (
     <Container className="p-4 border rounded mt-4">
       <h3 className="mb-4">
-        {isEditMode ? "Editar Ajustes del Taller" : "Crear Ajustes del Taller"}
+        {isEditMode ? "Edit Workshop Settings" : "Create Workshop Settings"}
       </h3>
 
       {/* Display Error Message */}
@@ -362,7 +362,7 @@ const WorkshopSettingsForm = () => {
           <Form onSubmit={handleSubmit}>
             {/* Workshop Name */}
             <Form.Group controlId="workshopName" className="mb-3">
-              <Form.Label>Nombre del Taller</Form.Label>
+              <Form.Label>Workshop Name</Form.Label>
               <Form.Control
                 type="text"
                 name="workshopName"
@@ -370,7 +370,7 @@ const WorkshopSettingsForm = () => {
                 onChange={handleChange}
                 isInvalid={!!errors.workshopName}
                 required
-                placeholder="Ingresa el nombre del taller"
+                placeholder="Enter workshop name"
               />
               <Form.Control.Feedback type="invalid">
                 {errors.workshopName}
@@ -379,7 +379,7 @@ const WorkshopSettingsForm = () => {
 
             {/* Address */}
             <Form.Group controlId="address" className="mb-3">
-              <Form.Label>Dirección</Form.Label>
+              <Form.Label>Address</Form.Label>
               <Form.Control
                 type="text"
                 name="address"
@@ -387,7 +387,7 @@ const WorkshopSettingsForm = () => {
                 onChange={handleChange}
                 isInvalid={!!errors.address}
                 required
-                placeholder="Ingresa la dirección del taller"
+                placeholder="Enter workshop address"
               />
               <Form.Control.Feedback type="invalid">
                 {errors.address}
@@ -396,7 +396,7 @@ const WorkshopSettingsForm = () => {
 
             {/* Primary Phone */}
             <Form.Group controlId="primaryPhone" className="mb-3">
-              <Form.Label>Teléfono Principal</Form.Label>
+              <Form.Label>Primary Phone</Form.Label>
               <Form.Control
                 type="text"
                 name="primaryPhone"
@@ -413,7 +413,7 @@ const WorkshopSettingsForm = () => {
 
             {/* Secondary Phone */}
             <Form.Group controlId="secondaryPhone" className="mb-3">
-              <Form.Label>Teléfono Secundario</Form.Label>
+              <Form.Label>Secondary Phone</Form.Label>
               <Form.Control
                 type="text"
                 name="secondaryPhone"
@@ -445,14 +445,14 @@ const WorkshopSettingsForm = () => {
 
             {/* Website URL */}
             <Form.Group controlId="websiteUrl" className="mb-3">
-              <Form.Label>URL del Sitio Web</Form.Label>
+              <Form.Label>Website URL</Form.Label>
               <Form.Control
                 type="text"
                 name="websiteUrl"
                 value={formData.websiteUrl}
                 onChange={handleChange}
                 isInvalid={!!errors.websiteUrl}
-                placeholder="https://tusitio.com"
+                placeholder="https://yourwebsite.com"
               />
               <Form.Control.Feedback type="invalid">
                 {errors.websiteUrl}
@@ -461,14 +461,14 @@ const WorkshopSettingsForm = () => {
 
             {/* Email Address */}
             <Form.Group controlId="email" className="mb-3">
-              <Form.Label>Dirección de Email</Form.Label>
+              <Form.Label>Email Address</Form.Label>
               <Form.Control
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 isInvalid={!!errors.email}
-                placeholder="Ingresa la dirección de email"
+                placeholder="Enter email address"
               />
               <Form.Control.Feedback type="invalid">
                 {errors.email}
@@ -484,7 +484,7 @@ const WorkshopSettingsForm = () => {
                 name="disclaimer"
                 value={formData.disclaimer}
                 onChange={handleChange}
-                placeholder="Ingresa cualquier disclaimer o nota adicional..."
+                placeholder="Enter any disclaimer or additional notes..."
               />
             </Form.Group>
 
@@ -492,10 +492,10 @@ const WorkshopSettingsForm = () => {
             <div className="text-end">
               <Button variant="primary" type="submit" disabled={saving}>
                 {saving
-                  ? "Guardando..."
+                  ? "Saving..."
                   : isEditMode
-                  ? "Actualizar Ajustes"
-                  : "Crear Ajustes"}
+                  ? "Update Settings"
+                  : "Create Settings"}
               </Button>
             </div>
           </Form>

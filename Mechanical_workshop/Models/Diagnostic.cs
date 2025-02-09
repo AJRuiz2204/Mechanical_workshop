@@ -11,7 +11,6 @@ namespace Mechanical_workshop.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        // Relación con Vehicle
         [Required]
         [ForeignKey("Vehicle")]
         public int VehicleId { get; set; }

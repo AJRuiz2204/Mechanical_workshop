@@ -54,11 +54,11 @@ const AccountsReceivableView = () => {
   const loadAccounts = async () => {
     try {
       const data = await getAccountsReceivable();
-      console.log("Cuentas cargadas:", data);
+      console.log("Loaded accounts:", data);
       setAccounts(data);
     } catch (error) {
-      console.error("Error cargando cuentas:", error);
-      alert("Error cargando cuentas: " + error.message);
+      console.error("Error loading accounts:", error);
+      alert("Error loading accounts: " + error.message);
     }
   };
 
@@ -77,11 +77,11 @@ const AccountsReceivableView = () => {
 
       setSelectedAccount(accountDetails);
       setPayments(paymentsData);
-      console.log("Cuenta seleccionada:", accountDetails);
-      console.log("Pagos actuales:", paymentsData);
+      console.log("Selected account:", accountDetails);
+      console.log("Current payments:", paymentsData);
     } catch (error) {
-      console.error("Error cargando detalles de la cuenta:", error);
-      alert("Error cargando detalles: " + error.message);
+      console.error("Error loading account details:", error);
+      alert("Error loading details: " + error.message);
     }
   };
 
@@ -94,16 +94,16 @@ const AccountsReceivableView = () => {
 
     const paymentAmount = parseFloat(formData.amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      console.log("Monto ingresado inválido:", formData.amount);
-      alert("Ingrese un monto válido");
+      console.log("Invalid amount entered:", formData.amount);
+      alert("Please enter a valid amount");
       return;
     }
 
     if (selectedAccount) {
-      console.log("Saldo de la cuenta:", selectedAccount.balance);
-      console.log("Monto ingresado:", paymentAmount);
+      console.log("Account balance:", selectedAccount.balance);
+      console.log("Amount entered:", paymentAmount);
       if (paymentAmount > selectedAccount.balance) {
-        alert("El monto ingresado excede el saldo pendiente de la cuenta");
+        alert("The entered amount exceeds the pending balance of the account");
         return;
       }
     }
@@ -117,21 +117,21 @@ const AccountsReceivableView = () => {
       Notes: formData.notes,
     };
 
-    console.log("Payload a enviar:", payload);
+    console.log("Payload to send:", payload);
 
     try {
       // Call the service to create a new payment.
       const response = await createPayment(payload);
-      console.log("Respuesta de createPayment:", response);
+      console.log("Response from createPayment:", response);
 
       // After successful payment creation, update the payment history and account details.
       const updatedPayments = await getPaymentsByAccount(selectedAccountId);
       setPayments(updatedPayments);
-      console.log("Pagos actualizados:", updatedPayments);
+      console.log("Updated payments:", updatedPayments);
 
       const updatedAccount = await getAccountReceivableById(selectedAccountId);
       setSelectedAccount(updatedAccount);
-      console.log("Cuenta actualizada:", updatedAccount);
+      console.log("Updated account:", updatedAccount);
 
       // Reset the form data to initial values.
       setFormData({
@@ -140,27 +140,27 @@ const AccountsReceivableView = () => {
         transactionReference: "",
         notes: "",
       });
-      alert("¡Pago registrado exitosamente!");
+      alert("Payment successfully registered!");
     } catch (error) {
-      console.error("Error en createPayment:", error);
-      alert("Error registrando pago: " + error.message);
+      console.error("Error in createPayment:", error);
+      alert("Error registering payment: " + error.message);
     }
   };
 
   return (
     <div className="container py-5">
       {/* Header for the Accounts Receivable Management view */}
-      <h1 className="mb-4 text-center">Gestión de Cuentas por Cobrar</h1>
+      <h1 className="mb-4 text-center">Accounts Receivable Management</h1>
 
       {/* Accounts Section */}
       <Row className="mb-4">
         <Col>
           <Card className="shadow">
             <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Cuentas por Cobrar</h5>
+              <h5 className="mb-0">Accounts Receivable</h5>
               {/* Button to refresh the accounts list */}
               <Button variant="primary" onClick={loadAccounts}>
-                Actualizar Listado
+                Refresh List
               </Button>
             </Card.Header>
             <Card.Body>
@@ -174,19 +174,19 @@ const AccountsReceivableView = () => {
                       style={{ cursor: "pointer", transition: "all 0.3s" }}
                     >
                       <Card.Body>
-                        <Card.Title>Cuenta #{account.id}</Card.Title>
+                        <Card.Title>Account #{account.id}</Card.Title>
                         <Card.Text className="mb-1">
-                          Cliente: {account.customer.fullName}
+                          Customer: {account.customer.fullName}
                         </Card.Text>
                         <Card.Text className="mb-1">
-                          Vehículo: {account.vehicle.make}{" "}
+                          Vehicle: {account.vehicle.make}{" "}
                           {account.vehicle.model}
                         </Card.Text>
                         <Card.Text className="mb-1">
                           Total: ${account.originalAmount.toFixed(2)}
                         </Card.Text>
                         <Card.Text className="mb-0">
-                          Saldo: ${account.balance.toFixed(2)}
+                          Balance: ${account.balance.toFixed(2)}
                         </Card.Text>
                         <Badge
                           bg={account.status === "Paid" ? "success" : "warning"}
@@ -209,11 +209,11 @@ const AccountsReceivableView = () => {
           <Col md={8}>
             <Card className="shadow mb-4">
               <Card.Header>
-                <h5 className="mb-0">Registro de Pagos</h5>
+                <h5 className="mb-0">Payment Record</h5>
                 {/* Display the pending balance if an account is selected */}
                 {selectedAccount && (
                   <small className="text-muted">
-                    Saldo pendiente: ${selectedAccount.balance.toFixed(2)}
+                    Pending balance: ${selectedAccount.balance.toFixed(2)}
                   </small>
                 )}
               </Card.Header>
@@ -222,7 +222,7 @@ const AccountsReceivableView = () => {
                 <Form onSubmit={handlePaymentSubmit}>
                   <Row className="g-3">
                     <Col md={6}>
-                      <Form.Label>Monto</Form.Label>
+                      <Form.Label>Amount</Form.Label>
                       <Form.Control
                         type="number"
                         step="0.01"
@@ -234,7 +234,7 @@ const AccountsReceivableView = () => {
                       />
                     </Col>
                     <Col md={6}>
-                      <Form.Label>Método de Pago</Form.Label>
+                      <Form.Label>Payment Method</Form.Label>
                       <Form.Select
                         value={formData.method}
                         onChange={(e) =>
@@ -242,14 +242,14 @@ const AccountsReceivableView = () => {
                         }
                         required
                       >
-                        <option value="Cash">Efectivo</option>
-                        <option value="CreditCard">Tarjeta de Crédito</option>
-                        <option value="Transfer">Transferencia</option>
-                        <option value="Check">Cheque</option>
+                        <option value="Cash">Cash</option>
+                        <option value="CreditCard">Credit Card</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Check">Check</option>
                       </Form.Select>
                     </Col>
                     <Col xs={12}>
-                      <Form.Label>Referencia</Form.Label>
+                      <Form.Label>Reference</Form.Label>
                       <Form.Control
                         type="text"
                         value={formData.transactionReference}
@@ -263,7 +263,7 @@ const AccountsReceivableView = () => {
                     </Col>
                     {/* Optional field for additional notes */}
                     <Col xs={12}>
-                      <Form.Label>Notas</Form.Label>
+                      <Form.Label>Notes</Form.Label>
                       <Form.Control
                         type="text"
                         value={formData.notes}
@@ -277,7 +277,7 @@ const AccountsReceivableView = () => {
                     </Col>
                     <Col xs={12}>
                       <Button variant="success" type="submit" className="w-100">
-                        Registrar Pago
+                        Register Payment
                       </Button>
                     </Col>
                   </Row>
@@ -289,7 +289,7 @@ const AccountsReceivableView = () => {
           <Col md={4}>
             <Card className="shadow">
               <Card.Header>
-                <h5 className="mb-0">Historial de Pagos</h5>
+                <h5 className="mb-0">Payment History</h5>
               </Card.Header>
               <Card.Body
                 className="payment-list"

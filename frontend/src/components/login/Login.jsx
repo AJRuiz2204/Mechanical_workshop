@@ -95,7 +95,7 @@ const Login = () => {
           </form>
           {/*
           Uncomment the following lines if you wish to include links
-          for "Forgot Password" or "Register User".
+          for "Forgot Password" or "Register User".*/}
           
           <div className="text-center mt-3">
             <Link to="/forgot-password" className="forgot-password-link">
@@ -108,7 +108,7 @@ const Login = () => {
               Register here
             </Link>
           </div>
-          */}
+          
         </div>
       </div>
     </div>
