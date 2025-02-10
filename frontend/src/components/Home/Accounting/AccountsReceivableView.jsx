@@ -10,8 +10,13 @@ import {
 import { useLocation } from "react-router-dom";
 import "./styles/AccountsReceivableView.css";
 
-// AccountsReceivableView component: displays a list of accounts receivable,
-// allows selection of an account to view its details, and provides a form to register payments.
+/**
+ * AccountsReceivableView component:
+ * - Displays a list of accounts receivable as a vertical list on the left.
+ * - Provides checkboxes to filter accounts by "Paid" and "Pending" status.
+ * - Allows selection of an account to view its details.
+ * - Displays a payment form and payment history on the right when an account is selected.
+ */
 const AccountsReceivableView = () => {
   // State for storing the list of accounts receivable.
   const [accounts, setAccounts] = useState([]);
@@ -24,13 +29,15 @@ const AccountsReceivableView = () => {
   // State for controlling whether the payment section is shown.
   const [showPayments, setShowPayments] = useState(false);
   // State for storing form data for creating a new payment.
-  // The formData includes amount, method, transactionReference, and notes.
   const [formData, setFormData] = useState({
     amount: "",
     method: "Cash",
     transactionReference: "",
     notes: "",
   });
+  // State for filtering accounts by their status.
+  const [filterPaid, setFilterPaid] = useState(true);
+  const [filterPending, setFilterPending] = useState(true);
 
   // useLocation hook to access the URL query parameters.
   const location = useLocation();
@@ -50,7 +57,10 @@ const AccountsReceivableView = () => {
     }
   }, [location.search]);
 
-  // loadAccounts: asynchronously fetches the list of accounts receivable and updates state.
+  /**
+   * loadAccounts:
+   * Asynchronously fetches the list of accounts receivable and updates state.
+   */
   const loadAccounts = async () => {
     try {
       const data = await getAccountsReceivable();
@@ -62,8 +72,12 @@ const AccountsReceivableView = () => {
     }
   };
 
-  // selectAccount: selects an account by its ID, fetches its details and associated payments,
-  // then updates state accordingly.
+  /**
+   * selectAccount:
+   * Selects an account by its ID, fetches its details and associated payments,
+   * then updates state accordingly.
+   * @param {number} accountId - The ID of the selected account.
+   */
   const selectAccount = async (accountId) => {
     try {
       setSelectedAccountId(accountId);
@@ -85,9 +99,12 @@ const AccountsReceivableView = () => {
     }
   };
 
-  // handlePaymentSubmit: handles the submission of the payment form.
-  // It validates the payment amount, ensures it does not exceed the account balance,
-  // constructs the payload, and calls createPayment to register the payment.
+  /**
+   * handlePaymentSubmit:
+   * Handles the submission of the payment form.
+   * Validates the payment amount, ensures it does not exceed the account balance,
+   * constructs the payload, and calls createPayment to register the payment.
+   */
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     if (!selectedAccountId) return;
@@ -147,14 +164,27 @@ const AccountsReceivableView = () => {
     }
   };
 
+  // Filter the accounts based on the checkbox selections.
+  const filteredAccounts = accounts.filter((account) => {
+    if (account.status === "Paid" && filterPaid) return true;
+    if (account.status !== "Paid" && filterPending) return true;
+    return false;
+  });
+
   return (
     <div className="container py-5">
       {/* Header for the Accounts Receivable Management view */}
       <h1 className="mb-4 text-center">Accounts Receivable Management</h1>
 
-      {/* Accounts Section */}
+      {/*
+        Modified Layout:
+        The layout is now divided into two columns:
+          - Left Column: Displays a vertical list of account cards with filtering options.
+          - Right Column: Displays the payment section when an account is selected.
+      */}
       <Row className="mb-4">
-        <Col>
+        {/* Left Column: Accounts List rendered as a vertical list */}
+        <Col md={6}>
           <Card className="shadow">
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Accounts Receivable</h5>
@@ -164,165 +194,193 @@ const AccountsReceivableView = () => {
               </Button>
             </Card.Header>
             <Card.Body>
-              <Row className="row-cols-1 row-cols-md-2 g-4">
-                {accounts.map((account) => (
-                  <Col key={account.id}>
-                    {/* Each account is displayed as a clickable card to select the account */}
-                    <Card
-                      className="account-card h-100"
-                      onClick={() => selectAccount(account.id)}
-                      style={{ cursor: "pointer", transition: "all 0.3s" }}
+              {/* Filter options for accounts based on status */}
+              <Form className="mb-3">
+                <Form.Check
+                  inline
+                  label="Paid"
+                  type="checkbox"
+                  id="filter-paid"
+                  checked={filterPaid}
+                  onChange={(e) => setFilterPaid(e.target.checked)}
+                />
+                <Form.Check
+                  inline
+                  label="Pending"
+                  type="checkbox"
+                  id="filter-pending"
+                  checked={filterPending}
+                  onChange={(e) => setFilterPending(e.target.checked)}
+                />
+              </Form>
+
+              {/*
+                Render each account as a full-width card with a bottom margin.
+                This creates a vertical list layout instead of a grid.
+                Only accounts that pass the filter (Paid or Pending) are displayed.
+              */}
+              {filteredAccounts.map((account) => (
+                <Card
+                  key={account.id}
+                  className="account-card mb-3"
+                  onClick={() => selectAccount(account.id)}
+                  style={{ cursor: "pointer", transition: "all 0.3s" }}
+                >
+                  <Card.Body>
+                    <Card.Title>Account #{account.id}</Card.Title>
+                    <Card.Text className="mb-1">
+                      Customer: {account.customer.fullName}
+                    </Card.Text>
+                    <Card.Text className="mb-1">
+                      Vehicle: {account.vehicle.make} {account.vehicle.model}
+                    </Card.Text>
+                    <Card.Text className="mb-1">
+                      Total: ${account.originalAmount.toFixed(2)}
+                    </Card.Text>
+                    <Card.Text className="mb-0">
+                      Balance: ${account.balance.toFixed(2)}
+                    </Card.Text>
+                    <Badge
+                      bg={account.status === "Paid" ? "success" : "warning"}
                     >
-                      <Card.Body>
-                        <Card.Title>Account #{account.id}</Card.Title>
-                        <Card.Text className="mb-1">
-                          Customer: {account.customer.fullName}
-                        </Card.Text>
-                        <Card.Text className="mb-1">
-                          Vehicle: {account.vehicle.make}{" "}
-                          {account.vehicle.model}
-                        </Card.Text>
-                        <Card.Text className="mb-1">
-                          Total: ${account.originalAmount.toFixed(2)}
-                        </Card.Text>
-                        <Card.Text className="mb-0">
-                          Balance: ${account.balance.toFixed(2)}
-                        </Card.Text>
-                        <Badge
-                          bg={account.status === "Paid" ? "success" : "warning"}
-                        >
-                          {account.status}
-                        </Badge>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
+                      {account.status}
+                    </Badge>
+                  </Card.Body>
+                </Card>
+              ))}
             </Card.Body>
           </Card>
         </Col>
-      </Row>
 
-      {/* Payments Section: displayed when an account is selected */}
-      {showPayments && (
-        <Row>
-          <Col md={8}>
-            <Card className="shadow mb-4">
-              <Card.Header>
-                <h5 className="mb-0">Payment Record</h5>
-                {/* Display the pending balance if an account is selected */}
-                {selectedAccount && (
-                  <small className="text-muted">
-                    Pending balance: ${selectedAccount.balance.toFixed(2)}
-                  </small>
-                )}
-              </Card.Header>
-              <Card.Body>
-                {/* Payment form to register a new payment */}
-                <Form onSubmit={handlePaymentSubmit}>
-                  <Row className="g-3">
-                    <Col md={6}>
-                      <Form.Label>Amount</Form.Label>
-                      <Form.Control
-                        type="number"
-                        step="0.01"
-                        required
-                        value={formData.amount}
-                        onChange={(e) =>
-                          setFormData({ ...formData, amount: e.target.value })
-                        }
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <Form.Label>Payment Method</Form.Label>
-                      <Form.Select
-                        value={formData.method}
-                        onChange={(e) =>
-                          setFormData({ ...formData, method: e.target.value })
-                        }
-                        required
-                      >
-                        <option value="Cash">Cash</option>
-                        <option value="CreditCard">Credit Card</option>
-                        <option value="Transfer">Transfer</option>
-                        <option value="Check">Check</option>
-                      </Form.Select>
-                    </Col>
-                    <Col xs={12}>
-                      <Form.Label>Reference</Form.Label>
-                      <Form.Control
-                        type="text"
-                        value={formData.transactionReference}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            transactionReference: e.target.value,
-                          })
-                        }
-                      />
-                    </Col>
-                    {/* Optional field for additional notes */}
-                    <Col xs={12}>
-                      <Form.Label>Notes</Form.Label>
-                      <Form.Control
-                        type="text"
-                        value={formData.notes}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            notes: e.target.value,
-                          })
-                        }
-                      />
-                    </Col>
-                    <Col xs={12}>
-                      <Button variant="success" type="submit" className="w-100">
-                        Register Payment
-                      </Button>
-                    </Col>
-                  </Row>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
+        {/* Right Column: Payment Section (displayed only when an account is selected) */}
+        <Col md={6}>
+          {showPayments && (
+            <>
+              <Card className="shadow mb-4">
+                <Card.Header>
+                  <h5 className="mb-0">Payment Record</h5>
+                  {selectedAccount && (
+                    <small className="text-muted">
+                      Pending balance: ${selectedAccount.balance.toFixed(2)}
+                    </small>
+                  )}
+                </Card.Header>
+                <Card.Body>
+                  <Form onSubmit={handlePaymentSubmit}>
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Label>Amount</Form.Label>
+                        <Form.Control
+                          type="number"
+                          step="0.01"
+                          required
+                          value={formData.amount}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              amount: e.target.value,
+                            })
+                          }
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label>Payment Method</Form.Label>
+                        <Form.Select
+                          value={formData.method}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              method: e.target.value,
+                            })
+                          }
+                          required
+                        >
+                          <option value="Cash">Cash</option>
+                          <option value="CreditCard">Credit Card</option>
+                          <option value="Transfer">Transfer</option>
+                          <option value="Check">Check</option>
+                        </Form.Select>
+                      </Col>
+                      <Col xs={12}>
+                        <Form.Label>Reference</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={formData.transactionReference}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              transactionReference: e.target.value,
+                            })
+                          }
+                        />
+                      </Col>
+                      <Col xs={12}>
+                        <Form.Label>Notes</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={formData.notes}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              notes: e.target.value,
+                            })
+                          }
+                        />
+                      </Col>
+                      <Col xs={12}>
+                        <Button
+                          variant="success"
+                          type="submit"
+                          className="w-100"
+                        >
+                          Register Payment
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Form>
+                </Card.Body>
+              </Card>
 
-          <Col md={4}>
-            <Card className="shadow">
-              <Card.Header>
-                <h5 className="mb-0">Payment History</h5>
-              </Card.Header>
-              <Card.Body
-                className="payment-list"
-                style={{ maxHeight: "400px", overflowY: "auto" }}
-              >
-                {/* Render each payment as a card in the payment history */}
-                {payments.map((payment) => (
-                  <Card key={payment.id} className="mb-2">
-                    <Card.Body className="p-3">
-                      <div className="d-flex justify-content-between">
-                        <div>
-                          <h6 className="mb-0">${payment.amount.toFixed(2)}</h6>
+              <Card className="shadow">
+                <Card.Header>
+                  <h5 className="mb-0">Payment History</h5>
+                </Card.Header>
+                <Card.Body
+                  className="payment-list"
+                  style={{ maxHeight: "400px", overflowY: "auto" }}
+                >
+                  {payments.map((payment) => (
+                    <Card key={payment.id} className="mb-2">
+                      <Card.Body className="p-3">
+                        <div className="d-flex justify-content-between">
+                          <div>
+                            <h6 className="mb-0">
+                              ${payment.amount.toFixed(2)}
+                            </h6>
+                            <small className="text-muted">
+                              {new Date(
+                                payment.paymentDate
+                              ).toLocaleDateString()}
+                            </small>
+                          </div>
+                          <div>
+                            <Badge bg="primary">{payment.method}</Badge>
+                          </div>
+                        </div>
+                        {payment.transactionReference && (
                           <small className="text-muted">
-                            {new Date(payment.paymentDate).toLocaleDateString()}
+                            Ref: {payment.transactionReference}
                           </small>
-                        </div>
-                        <div>
-                          <Badge bg="primary">{payment.method}</Badge>
-                        </div>
-                      </div>
-                      {payment.transactionReference && (
-                        <small className="text-muted">
-                          Ref: {payment.transactionReference}
-                        </small>
-                      )}
-                    </Card.Body>
-                  </Card>
-                ))}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
+                        )}
+                      </Card.Body>
+                    </Card>
+                  ))}
+                </Card.Body>
+              </Card>
+            </>
+          )}
+        </Col>
+      </Row>
     </div>
   );
 };

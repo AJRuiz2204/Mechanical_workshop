@@ -11,7 +11,7 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
-import logo from "../../../images/logo.png"; // Ensure the path to the logo is correct
+import logo from "../../../images/logo.png";
 
 // Define styles for the PDF document
 const styles = StyleSheet.create({
@@ -26,13 +26,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between", // Distribute space between logo and headerInfoContainer
     alignItems: "flex-start", // Align vertically at the start
-    marginBottom: 5, 
+    marginBottom: 5,
   },
   // Space for the logo on the left
   logoSection: {
     width: 100, // Adjusted for a more compact size
     height: 100,
-    marginRight: 10, 
+    marginRight: 10,
   },
   // Container for workshop and quote information
   headerInfoContainer: {
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   // Styles for text lines
   textLine: {
     fontSize: 9,
-    marginBottom: 1, 
+    marginBottom: 1,
   },
   // Styles for links
   link: {
@@ -65,9 +65,9 @@ const styles = StyleSheet.create({
   // Information section (Customer and Vehicle)
   infoSection: {
     flexDirection: "row",
-    marginTop: 5, 
-    marginBottom: 5, 
-    padding: 5, 
+    marginTop: 5,
+    marginBottom: 5,
+    padding: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
@@ -75,13 +75,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 10,
     fontWeight: "bold",
-    marginBottom: 2, 
+    marginBottom: 2,
   },
   // Customer notes section
   noteSection: {
-    marginTop: 5, 
-    marginBottom: 5, 
-    padding: 5, 
+    marginTop: 5,
+    marginBottom: 5,
+    padding: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
@@ -89,10 +89,10 @@ const styles = StyleSheet.create({
   table: {
     display: "table",
     width: "auto",
-    marginBottom: 15, 
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    marginTop: 5,  //Reduced to be closer to the upper container
+    marginTop: 5, //Reduced to be closer to the upper container
   },
   // Styles for the table header
   tableHeader: {
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   // Styles for table columns
   tableCol: {
-    padding: 2, 
+    padding: 2,
   },
   colType: {
     width: "8%",
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     flex: 2,
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
-    paddingLeft: 2, 
+    paddingLeft: 2,
   },
   colPart: {
     width: "12%",
@@ -164,20 +164,20 @@ const styles = StyleSheet.create({
   },
   // Totals section
   totalsSection: {
-    marginTop: 10, 
+    marginTop: 10,
     alignItems: "flex-end",
-    paddingRight: 5, 
+    paddingRight: 5,
   },
   // Individual total rows
   totalRow: {
     flexDirection: "row",
-    marginBottom: 2, 
+    marginBottom: 2,
   },
   // Total label
   totalLabel: {
     width: 120, // Adjusted
     textAlign: "right",
-    marginRight: 5, 
+    marginRight: 5,
     fontSize: 9,
   },
   // Total amount
@@ -188,8 +188,8 @@ const styles = StyleSheet.create({
   },
   // Styles for the grand total
   grandTotal: {
-    marginTop: 5, 
-    paddingTop: 5, 
+    marginTop: 5,
+    paddingTop: 5,
     borderTopWidth: 1,
     borderTopColor: "#000000",
   },
@@ -199,13 +199,13 @@ const styles = StyleSheet.create({
   // Styles for the footer
   footer: {
     position: "absolute",
-    bottom: 20, 
-    left: 20, 
-    right: 20, 
+    bottom: 20,
+    left: 20,
+    right: 20,
     fontSize: 8,
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
-    paddingTop: 5, 
+    paddingTop: 5,
   },
 });
 
@@ -323,7 +323,8 @@ const EstimatePDF = ({ pdfData }) => {
               {safeCustomer.email || "customer@email"}
             </Text>
             <Text style={styles.textLine}>
-              {safeCustomer.primaryNumber || "N/A"} {/* Mostrar primaryNumber */}
+              {safeCustomer.primaryNumber || "N/A"}{" "}
+              {/* Mostrar primaryNumber */}
             </Text>
           </View>
           <View style={{ flex: 1 }}>
@@ -358,12 +359,12 @@ const EstimatePDF = ({ pdfData }) => {
             <Text
               style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
             >
-              Type
+              Item
             </Text>
             <Text
               style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
             >
-              Description
+              description
             </Text>
             <Text
               style={[styles.tableCol, styles.colPart, styles.tableHeaderText]}
@@ -377,7 +378,7 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              Quantity / Hours
+              QTY
             </Text>
             <Text
               style={[
@@ -386,7 +387,7 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              List Price
+              net /rate
             </Text>
             <Text
               style={[
@@ -395,12 +396,12 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              Extended Price
+              list price
             </Text>
             <Text
               style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
             >
-              Tax?
+              extended
             </Text>
           </View>
 
@@ -416,13 +417,19 @@ const EstimatePDF = ({ pdfData }) => {
               <Text style={[styles.tableCol, styles.colPart, styles.tableText]}>
                 {item.type === "Part" ? item.partNumber : "-"}
               </Text>
-              <Text style={[styles.tableCol, styles.colQuantityHours, styles.tableText]}>
+              <Text
+                style={[
+                  styles.tableCol,
+                  styles.colQuantityHours,
+                  styles.tableText,
+                ]}
+              >
                 {item.type === "Labor" ? `${item.quantity} hrs` : item.quantity}
               </Text>
               <Text
                 style={[styles.tableCol, styles.colListPrice, styles.tableText]}
               >
-                ${parseFloat(item.listPrice || 0).toFixed(2)}
+                ${parseFloat(item.netRate || 0).toFixed(2)}
               </Text>
               <Text
                 style={[
@@ -431,10 +438,10 @@ const EstimatePDF = ({ pdfData }) => {
                   styles.tableText,
                 ]}
               >
-                ${parseFloat(item.extendedPrice || 0).toFixed(2)}
+                ${parseFloat(item.listPrice || 0).toFixed(2)}
               </Text>
               <Text style={[styles.tableCol, styles.colTax, styles.tableText]}>
-                {item.taxable ? "Yes" : "No"}
+                ${parseFloat(item.extendedPrice || 0).toFixed(2)}
               </Text>
             </View>
           ))}
@@ -458,18 +465,6 @@ const EstimatePDF = ({ pdfData }) => {
             <Text style={styles.totalLabel}>Others Total:</Text>
             <Text style={styles.totalAmount}>
               ${(totals?.othersTotal || 0).toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Parts Tax:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.partsTax || 0).toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Labor Tax:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.laborTax || 0).toFixed(2)}
             </Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
