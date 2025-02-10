@@ -1,7 +1,17 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { logoutUser } from "../../services/UserLoginServices"; // Service for logging out
+import { logoutUser } from "../../services/UserLoginServices";
+import vehicleIcon from "../../images/HomeImages/vehicle.svg";
+import diagnosticIcon from "../../images/HomeImages/diagnostic.svg";
+import estimatesIcon from "../../images/HomeImages/estimate.svg";
+import reportsIcon from "../../images/HomeImages/reports.svg";
+import technicianIcon from "../../images/HomeImages/technician.svg";
+import accountsReceivableIcon from "../../images/HomeImages/account.svg";
+import paymentListIcon from "../../images/HomeImages/payment.svg";
+import settingsIcon from "../../images/HomeImages/settings.svg";
+import addUserIcon from "../../images/HomeImages/users.svg";
+import '../../images/HomeImages/vehicle.svg';
 import "./Home.css";
 
 /**
@@ -25,46 +35,55 @@ const Home = () => {
       label: "VEHICLE RECEPTION",
       route: "/vehicle-list",
       roles: ["Manager"],
+      icon: vehicleIcon,
     },
     {
       label: "DIAGNOSTIC",
       route: "/diagnostic-list",
       roles: ["Manager"],
+      icon: diagnosticIcon,
     },
     {
       label: "ESTIMATES",
       route: "/estimates",
       roles: ["Manager"],
+      icon: estimatesIcon,
     },
     {
       label: "REPORTS",
       route: "/reports",
       roles: ["Manager"],
+      icon: reportsIcon,
     },
     {
       label: "MY DIAGNOSTICS",
       route: "/technicianDiagnosticList",
       roles: ["Technician"],
+      icon: technicianIcon,
     },
     {
       label: "ACCOUNTS RECEIVABLE",
       route: "/accounts-receivable",
       roles: ["Manager"],
+      icon: accountsReceivableIcon,
     },
     {
       label: "PAYMENT LIST",
       route: "/payment-list",
       roles: ["Manager"],
+      icon: paymentListIcon,
     },
     {
       label: "SETTINGS",
       route: "/settings",
       roles: ["Manager"],
+      icon: settingsIcon,
     },
     {
       label: "ADD USER",
       route: "/register-user",
       roles: ["Manager"],
+      icon: addUserIcon,
     },
   ];
 
@@ -120,6 +139,7 @@ const Home = () => {
               className="side-menu-item"
               onClick={() => handleTabClick(item.route)}
             >
+              <img src={item.icon} alt={item.label} style={{marginRight: 8}} />
               {item.label}
             </button>
           ))}

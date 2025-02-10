@@ -14,20 +14,21 @@
 */
 .home-container {
   display: flex;
-  height: 100vh;
+  min-height: 100vh; /* Cambiado de height:100vh */
+  align-items: stretch; /* Se estiran ambos elementos */
 }
 
 /* Side menu styling:
    - Fixed width and blue background on larger screens.
    - Contains the menu items, welcome message, and logout button.
-*/
+   Se reemplaza height fijo por una altura automática para que se adapte al contenido. */
 .side-menu {
   width: 250px;
   background-color: #007bff; /* Primary blue */
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* Actualizado de auto a 100vh */
   align-items: center;
   justify-content: space-between;
 }
@@ -60,6 +61,11 @@
   border: none;
   text-align: left;
   color: white;
+}
+
+.side-menu-item img {
+  width: 3em;
+  height: 3em;
 }
 
 /* Hover state for menu items. */
@@ -135,7 +141,7 @@
   }
   .side-menu {
     width: 100%;
-    height: auto;
+    height: 100vh;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
