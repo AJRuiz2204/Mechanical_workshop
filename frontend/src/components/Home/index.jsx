@@ -62,13 +62,13 @@ const Home = () => {
       icon: technicianIcon,
     },
     {
-      label: "ACCOUNTS RECEIVABLE",
+      label: "PENDING PAYMENTS",
       route: "/accounts-receivable",
       roles: ["Manager"],
       icon: accountsReceivableIcon,
     },
     {
-      label: "PAYMENT LIST",
+      label: "HISTORY",
       route: "/payment-list",
       roles: ["Manager"],
       icon: paymentListIcon,

@@ -380,15 +380,7 @@ const EstimatePDF = ({ pdfData }) => {
             >
               QTY
             </Text>
-            <Text
-              style={[
-                styles.tableCol,
-                styles.colListPrice,
-                styles.tableHeaderText,
-              ]}
-            >
-              net /rate
-            </Text>
+            {/* Se eliminó la columna de net /rate */}
             <Text
               style={[
                 styles.tableCol,
@@ -427,11 +419,6 @@ const EstimatePDF = ({ pdfData }) => {
                 {item.type === "Labor" ? `${item.quantity} hrs` : item.quantity}
               </Text>
               <Text
-                style={[styles.tableCol, styles.colListPrice, styles.tableText]}
-              >
-                ${parseFloat(item.netRate || 0).toFixed(2)}
-              </Text>
-              <Text
                 style={[
                   styles.tableCol,
                   styles.colExtendedPrice,
@@ -465,6 +452,18 @@ const EstimatePDF = ({ pdfData }) => {
             <Text style={styles.totalLabel}>Others Total:</Text>
             <Text style={styles.totalAmount}>
               ${(totals?.othersTotal || 0).toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Parts Tax:</Text>
+            <Text style={styles.totalAmount}>
+              ${(totals?.partsTax || 0).toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Labor Tax:</Text>
+            <Text style={styles.totalAmount}>
+              ${(totals?.laborTax || 0).toFixed(2)}
             </Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>

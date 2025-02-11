@@ -9,11 +9,11 @@ import "./styles/PaymentList.css";
  * Component for displaying a list of payments grouped by customer
  * @module PaymentList
  */
-
 const PaymentList = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState(""); // Estado para el buscador
 
   /**
    * Fetches all payments when the component mounts
@@ -50,6 +50,26 @@ const PaymentList = () => {
     return groups;
   }, {});
 
+  // Filtra los grupos de pagos según el término de búsqueda
+  const filteredGroupedPayments = Object.keys(groupedPayments).reduce(
+    (acc, customerId) => {
+      const clientPayments = groupedPayments[customerId];
+      const clientName = clientPayments[0].customer?.fullName || "";
+      const vehicleInfo = clientPayments[0].vehicle
+        ? `${clientPayments[0].vehicle.make} ${clientPayments[0].vehicle.model} (${clientPayments[0].vehicle.year}) - ${clientPayments[0].vehicle.vin}`
+        : "";
+      // Comprueba si alguno de los campos incluye el término de búsqueda (case-insensitive)
+      if (
+        clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicleInfo.toLowerCase().includes(searchTerm.toLowerCase())
+      ) {
+        acc[customerId] = clientPayments;
+      }
+      return acc;
+    },
+    {}
+  );
+
   // Display loading message while data is being fetched
   if (loading) {
     return <div>Loading payments...</div>;
@@ -63,6 +83,18 @@ const PaymentList = () => {
   return (
     <div className="container py-5">
       <h1 className="mb-4">Payment History by Customer</h1>
+
+      {/* Campo de búsqueda */}
+      <div className="mb-3">
+        <input
+          type="text"
+          placeholder="Buscar por cliente o vehículo"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="form-control"
+        />
+      </div>
+
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -76,15 +108,15 @@ const PaymentList = () => {
           </tr>
         </thead>
         <tbody>
-          {Object.keys(groupedPayments).length === 0 ? (
+          {Object.keys(filteredGroupedPayments).length === 0 ? (
             <tr>
               <td colSpan="7" className="text-center">
                 No payments found.
               </td>
             </tr>
           ) : (
-            Object.keys(groupedPayments).map((customerId) => {
-              const clientPayments = groupedPayments[customerId];
+            Object.keys(filteredGroupedPayments).map((customerId) => {
+              const clientPayments = filteredGroupedPayments[customerId];
               const totalPaid = clientPayments.reduce(
                 (sum, payment) => sum + Number(payment.amount),
                 0
