@@ -14,11 +14,20 @@ namespace Mechanical_workshop.Profiles
     {
         public EstimatesProfile()
         {
-            // Mapping from Estimate to EstimateFullDto
+            // Actualización del mapping de Estimate a EstimateFullDto con información completa
             CreateMap<Estimate, EstimateFullDto>()
+                .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.ID))
+                .ForMember(dest => dest.Parts, opt => opt.MapFrom(src => src.Parts))
+                .ForMember(dest => dest.Labors, opt => opt.MapFrom(src => src.Labors))
+                .ForMember(dest => dest.FlatFees, opt => opt.MapFrom(src => src.FlatFees))
                 .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
                 .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.UserWorkshop))
                 .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic));
+
+            // Mappings para los elementos internos
+            CreateMap<EstimatePartReadDto, EstimateFullDto>();
+            CreateMap<EstimateLaborReadDto, EstimateFullDto>();
+            CreateMap<EstimateFlatFeeReadDto, EstimateFullDto>();
 
             // Mapping from EstimateCreateDto to Estimate
             CreateMap<EstimateCreateDto, Estimate>()
@@ -78,6 +87,14 @@ namespace Mechanical_workshop.Profiles
 
             // Mapping for Diagnostic
             CreateMap<Diagnostic, DiagnosticReadDto>().ReverseMap();
+
+            // Mapping para Payment que incluye Estimate completo en PaymentResponseDto
+            CreateMap<Payment, PaymentResponseDto>()
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.AccountReceivable.Customer))
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.AccountReceivable.Estimate.Vehicle))
+                .ForMember(dest => dest.RemainingBalance, opt => opt.MapFrom(src => src.AccountReceivable.Balance))
+                .ForMember(dest => dest.InitialBalance, opt => opt.MapFrom(src => src.AccountReceivable.OriginalAmount))
+                .ForMember(dest => dest.Estimate, opt => opt.MapFrom(src => src.AccountReceivable.Estimate));
         }
     }
 }

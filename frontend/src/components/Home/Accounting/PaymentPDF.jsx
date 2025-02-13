@@ -1,6 +1,7 @@
-/* eslint-disable react/prop-types */
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-unused-vars */
-import React from "react";
+/* eslint-disable react/prop-types */
+import React, { useEffect, useState } from "react";
 import {
   Page,
   Text,
@@ -8,99 +9,107 @@ import {
   Document,
   StyleSheet,
   Image,
-  Link,
 } from "@react-pdf/renderer";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
+import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 
-/**
- * Styles for the Payment PDF with a unified header.
- * Includes styles for the page, header, client info section, table, and footer.
- */
+const formatDate = (date) => dayjs(date).format("MMM-DD-YYYY");
+const formatCurrency = (amount) => `$ ${Number(amount).toFixed(2)}`;
+
 const styles = StyleSheet.create({
   page: {
-    padding: 20,
-    fontSize: 10,
+    padding: 30,
     fontFamily: "Helvetica",
-    backgroundColor: "#ffffff",
+    fontSize: 10,
   },
-  headerContainer: {
+  header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 5,
+    marginBottom: 20,
   },
   logoSection: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
+    width: 150,
   },
-  headerInfoContainer: {
+  companyInfo: {
     flex: 1,
-    flexDirection: "column",
-    alignItems: "flex-end",
-    padding: 0,
+    textAlign: "right",
   },
-  workshopInfo: {
+  companyText: {
+    fontSize: 10,
     marginBottom: 3,
-    alignItems: "flex-end",
   },
-  quoteInfo: {
-    alignItems: "flex-end",
-    padding: 0,
-  },
-  textLine: {
-    fontSize: 9,
-    marginBottom: 1,
-  },
-  link: {
-    textDecoration: "underline",
-    color: "blue",
-    fontSize: 9,
-  },
-  // Styles for the rest of the content
-  infoSection: {
+  billSection: {
     flexDirection: "row",
-    marginTop: 5,
-    marginBottom: 5,
-    padding: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    marginBottom: 20,
+  },
+  billTo: {
+    flex: 1,
+  },
+  vehicleInfo: {
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 10,
+    marginBottom: 5,
     fontWeight: "bold",
+  },
+  infoText: {
+    fontSize: 10,
     marginBottom: 2,
   },
+  invoiceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
   table: {
-    display: "table",
-    width: "auto",
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    marginTop: 5,
+    marginTop: 10,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    paddingBottom: 5,
+    marginBottom: 5,
   },
   tableRow: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    minHeight: 20,
-    alignItems: "center",
+    paddingVertical: 3,
   },
-  tableHeaderText: {
-    fontSize: 8,
+  col1: { width: "10%" },
+  col2: { width: "40%" },
+  col3: { width: "25%" },
+  col4: { width: "25%" },
+  totalsSection: {
+    marginTop: 20,
+    alignItems: "flex-end",
+  },
+  totalRow: {
+    flexDirection: "row",
+    marginBottom: 3,
+  },
+  totalLabel: {
+    width: 80,
+  },
+  totalAmount: {
+    width: 80,
+    textAlign: "right",
+  },
+  grandTotal: {
+    marginTop: 5,
+    paddingTop: 5,
+    borderTopWidth: 1,
+    borderTopColor: "#000000",
+  },
+  grandTotalText: {
     fontWeight: "bold",
   },
-  tableText: {
+  signatureSection: {
+    marginTop: 30,
+  },
+  disclaimer: {
     fontSize: 8,
-  },
-  tableCol: {
-    padding: 2,
-  },
-  totalsSection: {
-    marginTop: 10,
-    alignItems: "flex-end",
-    paddingRight: 5,
+    marginTop: 20,
   },
   footer: {
     position: "absolute",
@@ -114,168 +123,225 @@ const styles = StyleSheet.create({
   },
 });
 
-/**
- * Formats the "Last Updated" date string.
- * If the date string is not provided, returns an empty string.
- * Otherwise, subtracts 6 hours from the date and formats it as "YYYY-MM-DD HH:mm:ss".
- *
- * @param {string} dateString - The original date string.
- * @returns {string} The formatted date string.
- */
-const formatLastUpdated = (dateString) => {
-  if (!dateString) return "";
-  return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
-};
-
-/**
- * PaymentPDF Component
- *
- * Generates a PDF document for a payment summary.
- * Expected pdfData includes:
- * - workshopData: Workshop information.
- * - customer: Customer information.
- * - payments: Array of payment records.
- *
- * The document contains a unified header with workshop details, a section for client information,
- * a table displaying payment details, and a footer with the print date.
- *
- * @param {Object} props - The component props.
- * @param {Object} props.pdfData - The payment summary data.
- * @returns {JSX.Element} The rendered PDF document.
- */
 const PaymentPDF = ({ pdfData }) => {
-  // Extract workshop, customer, and payments information from pdfData.
-  const workshopData = pdfData?.workshopData || {};
-  const customer = pdfData?.customer || {};
-  const payments = pdfData?.payments || [];
-  // Format the current date for the footer.
-  const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
+  // Si pdfData es un arreglo, se asume que es un array de PaymentResponseDto
+  // Si viene un objeto wrapper con workshopData, customer y payments, se usará esa estructura
+  let wrapper = {};
+  if (Array.isArray(pdfData)) {
+    // Si solo tenemos un array, lo envolvemos en un objeto para estandarizar el formato
+    wrapper = { payments: pdfData };
+  } else {
+    wrapper = pdfData;
+  }
+
+  // Extraer datos del wrapper:
+  // Si existe workshopData, lo usamos para el encabezado
+  const workshopData = wrapper.workshopData || null;
+  // Si existe customer en el wrapper, lo usamos; de lo contrario, usamos el de la primer payment
+  const customer =
+    wrapper.customer ||
+    (wrapper.payments && wrapper.payments[0]?.customer) ||
+    {};
+  // Extraemos la data del primer pago para la información común (suponiendo que todos los pagos del grupo son del mismo cliente)
+  const payment = wrapper.payments ? wrapper.payments[0] : wrapper;
+  const vehicle =
+    payment.vehicle || (payment.estimate && payment.estimate.vehicle) || {};
+  const estimate = payment.estimate || {};
+  const initialBalance = payment.initialBalance || 0;
+  const remainingBalance = payment.remainingBalance || 0;
+  const paymentDate = payment.paymentDate || new Date();
+
+  // Si no se envía workshopData, cargamos la configuración del taller
+  const [fetchedWorkshopSettings, setFetchedWorkshopSettings] = useState(null);
+  useEffect(() => {
+    if (!workshopData) {
+      const fetchSettings = async () => {
+        try {
+          const settings = await getWorkshopSettings();
+          setFetchedWorkshopSettings(settings);
+        } catch (error) {
+          console.error("Error fetching workshop settings:", error);
+        }
+      };
+      fetchSettings();
+    }
+  }, [workshopData]);
+
+  const usedWorkshopData = workshopData || fetchedWorkshopSettings;
+
+  // Construir la información del vehículo (se prefiere la del estimate si existe)
+  const finalVehicle = estimate.vehicle || vehicle;
+  const vehicleInfo = finalVehicle
+    ? `${finalVehicle.make || "N/A"} ${finalVehicle.model || "N/A"} ${
+        finalVehicle.year ? `(${finalVehicle.year})` : ""
+      } - VIN: ${finalVehicle.vin || "N/A"}${
+        finalVehicle.engine ? " - Engine: " + finalVehicle.engine : ""
+      }`
+    : "No vehicle information available";
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Unified Header */}
-        <View style={styles.headerContainer}>
-          <View style={styles.logoSection}>
-            {/* Render the workshop logo */}
-            <Image src={logo} style={{ width: "100%", height: "100%" }} />
+        {/* Encabezado */}
+        {usedWorkshopData ? (
+          <View style={styles.header}>
+            <View style={styles.logoSection}>
+              <Image src={logo} />
+            </View>
+            <View style={styles.companyInfo}>
+              <Text style={styles.companyText}>
+                {usedWorkshopData.workshopName || "Workshop Name"}
+              </Text>
+              <Text style={styles.companyText}>
+                {usedWorkshopData.address || "Workshop Address"}
+              </Text>
+              <Text style={styles.companyText}>
+                {usedWorkshopData.primaryPhone}
+                {usedWorkshopData.secondaryPhone
+                  ? `, ${usedWorkshopData.secondaryPhone}`
+                  : ""}
+                {usedWorkshopData.fax ? ` Fax ${usedWorkshopData.fax}` : ""}
+              </Text>
+              <Text style={styles.companyText}>
+                {usedWorkshopData.email || ""}
+              </Text>
+              <Text style={styles.companyText}>
+                {usedWorkshopData.websiteUrl || ""}
+              </Text>
+            </View>
           </View>
-          <View style={styles.headerInfoContainer}>
-            {/* Workshop Information Section */}
-            <View style={styles.workshopInfo}>
-              <Text style={styles.textLine}>
-                {workshopData.workshopName || "Nombre del Taller"}
-              </Text>
-              <Text style={styles.textLine}>
-                {workshopData.address || "Dirección del Taller"}
-              </Text>
-              <Text style={styles.textLine}>
-                {workshopData.primaryPhone || "Teléfono Principal"}
-              </Text>
-              {workshopData.secondaryPhone && (
-                <Text style={styles.textLine}>
-                  {workshopData.secondaryPhone}
+        ) : (
+          <View style={styles.header}>
+            <View style={styles.logoSection}>
+              <Image src={logo} />
+            </View>
+            <View style={styles.companyInfo}>
+              <Text style={styles.companyText}>Default Workshop Name</Text>
+              <Text style={styles.companyText}>Default Address</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Sección de Cliente y Vehículo */}
+        <View style={styles.billSection}>
+          <View style={styles.billTo}>
+            <Text style={styles.sectionTitle}>Bill To:</Text>
+            <Text style={styles.infoText}>{customer.fullName || "N/A"}</Text>
+            <Text style={styles.infoText}>
+              {customer.primaryPhone || "N/A"}
+            </Text>
+          </View>
+          <View style={styles.vehicleInfo}>
+            <Text style={styles.sectionTitle}>Vehicle Information:</Text>
+            <Text style={styles.infoText}>{vehicleInfo}</Text>
+          </View>
+        </View>
+
+        {/* Encabezado de la Factura */}
+        <View style={styles.invoiceHeader}>
+          <Text>Invoice #{estimate.id || "N/A"}</Text>
+          <Text>Date: {formatDate(paymentDate)}</Text>
+        </View>
+
+        {/* Tabla de Partes */}
+        {estimate.parts && estimate.parts.length > 0 && (
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.col1}>QTY</Text>
+              <Text style={styles.col2}>DESCRIPTION</Text>
+              <Text style={styles.col3}>UNIT PRICE</Text>
+              <Text style={styles.col4}>TOTAL</Text>
+            </View>
+            {estimate.parts.map((part, index) => (
+              <View key={index} style={styles.tableRow}>
+                <Text style={styles.col1}>{part.quantity}</Text>
+                <Text style={styles.col2}>{part.description}</Text>
+                <Text style={styles.col3}>{formatCurrency(part.netPrice)}</Text>
+                <Text style={styles.col4}>
+                  {formatCurrency(part.extendedPrice)}
                 </Text>
-              )}
-              <Text style={styles.textLine}>Fax: {workshopData.fax || ""}</Text>
-              <Text style={styles.textLine}>{workshopData.email || ""}</Text>
-              {workshopData.websiteUrl && (
-                <Link src={workshopData.websiteUrl} style={styles.link}>
-                  {workshopData.websiteUrl}
-                </Link>
-              )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Tabla de Labors (si existen) */}
+        {estimate.labors && estimate.labors.length > 0 && (
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.col1}>HRS</Text>
+              <Text style={styles.col2}>LABOR DESCRIPTION</Text>
+              <Text style={styles.col3}>RATE</Text>
+              <Text style={styles.col4}>TOTAL</Text>
             </View>
-            {/* Quote Information Section */}
-            <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>
-                Quote # {workshopData.quoteNumber || ""}
-              </Text>
-              <Text style={styles.textLine}>
-                Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
-              </Text>
-              <Text style={styles.textLine}>
-                Expires: {workshopData.expiryDate || ""}
-              </Text>
-            </View>
+            {estimate.labors.map((labor, index) => (
+              <View key={index} style={styles.tableRow}>
+                <Text style={styles.col1}>{labor.duration}</Text>
+                <Text style={styles.col2}>{labor.description}</Text>
+                <Text style={styles.col3}>
+                  {formatCurrency(labor.laborRate)}
+                </Text>
+                <Text style={styles.col4}>
+                  {formatCurrency(labor.extendedPrice)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Sección de Totales */}
+        <View style={styles.totalsSection}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Subtotal:</Text>
+            <Text style={styles.totalAmount}>
+              {formatCurrency(estimate.subtotal)}
+            </Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Tax:</Text>
+            <Text style={styles.totalAmount}>
+              {formatCurrency(estimate.tax)}
+            </Text>
+          </View>
+          <View style={[styles.totalRow, styles.grandTotal]}>
+            <Text style={[styles.totalLabel, styles.grandTotalText]}>
+              Total:
+            </Text>
+            <Text style={[styles.totalAmount, styles.grandTotalText]}>
+              {formatCurrency(estimate.total)}
+            </Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Deposit:</Text>
+            <Text style={styles.totalAmount}>
+              {formatCurrency(initialBalance - remainingBalance)}
+            </Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Balance:</Text>
+            <Text style={styles.totalAmount}>
+              {formatCurrency(remainingBalance)}
+            </Text>
           </View>
         </View>
 
-        {/* Divider Line */}
-        <View
-          style={{
-            borderBottomWidth: 1,
-            borderBottomColor: "#e0e0e0",
-            marginBottom: 5,
-          }}
-        />
-
-        {/* Client Information Section */}
-        <View style={styles.infoSection}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>Client</Text>
-            <Text style={styles.textLine}>{customer.fullName}</Text>
-            <Text style={styles.textLine}>{customer.email}</Text>
-            <Text style={styles.textLine}>{customer.primaryPhone}</Text>
-          </View>
-        </View>
-
-        {/* Payments Table */}
-        <View style={styles.table}>
-          {/* Table Header */}
-          <View style={[styles.tableRow, { backgroundColor: "#f5f5f5" }]}>
-            <Text
-              style={[styles.tableCol, styles.tableHeaderText, { flex: 1 }]}
-            >
-              ID
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
-            >
-              Amount
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}
-            >
-              Date
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
-            >
-              Method
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.tableHeaderText, { flex: 3 }]}
-            >
-              Reference
-            </Text>
-          </View>
-          {/* Render Payment Rows */}
-          {payments.map((payment, index) => (
-            <View key={index} style={styles.tableRow}>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 1 }]}>
-                {payment.id}
-              </Text>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 2 }]}>
-                ${Number(payment.amount).toFixed(2)}
-              </Text>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 3 }]}>
-                {new Date(payment.paymentDate).toLocaleDateString()}
-              </Text>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 2 }]}>
-                {payment.method}
-              </Text>
-              <Text style={[styles.tableCol, styles.tableText, { flex: 3 }]}>
-                {payment.transactionReference}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Footer Section */}
-        <View style={styles.footer}>
-          <Text style={{ textAlign: "center" }}>
-            Printed on {formattedDate}
+        {/* Sección de Firma */}
+        <View style={styles.signatureSection}>
+          <Text>Signature:</Text>
+          <Text style={{ marginTop: 20 }}>
+            X _________________________________
           </Text>
+          <Text style={{ marginTop: 10 }}>
+            Payment: cash ____ card __X__ check ____ credit ____
+          </Text>
+        </View>
+
+        {/* Footer / Disclaimer */}
+        <View style={styles.footer}>
+          <Text style={{ marginBottom: 5 }}>
+            {usedWorkshopData?.disclaimer || "Default disclaimer text."}
+          </Text>
+          <Text style={{ textAlign: "right" }}>Page 1/1</Text>
         </View>
       </Page>
     </Document>

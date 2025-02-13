@@ -23,7 +23,6 @@ import ErrorBoundary from "./components/ProtectedRoute/ErrorBoundary";
 import TechnicianDiagnosticList from "./components/Home/Diagnostic/TechnicianDiagnosticList";
 import AccountsReceivableView from "./components/Home/Accounting/AccountsReceivableView";
 import PaymentList from "./components/Home/Accounting/PaymentList";
-import PaymentPDFViewer from "./components/Home/Accounting/PaymentPDFViewer";
 import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPDFViewer";
 import SalesReportView from "./components/Home/Reports/SalesReportsListView";
 import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
@@ -211,14 +210,6 @@ const App = () => {
             element={
               <ProtectedRoute requiredRoles={"Manager"}>
                 <PaymentList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment-pdf"
-            element={
-              <ProtectedRoute requiredRoles={"Manager"}>
-                <PaymentPDFViewer />
               </ProtectedRoute>
             }
           />

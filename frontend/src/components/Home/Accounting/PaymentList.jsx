@@ -1,45 +1,62 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { Table, Alert } from "react-bootstrap";
-import { getAllPayments } from "../../../services/accountReceivableService";
+import { Table, Alert, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { getAllPayments } from "../../../services/accountReceivableService";
 import "./styles/PaymentList.css";
+import PaymentPDFModal from "./PaymentPDFModal"; // Adjust the path as needed
 
 /**
- * Component for displaying a list of payments grouped by customer
- * @module PaymentList
+ * PaymentList Component
+ *
+ * This component displays a list of payments grouped by customer and provides:
+ * - A search field to filter by customer or vehicle.
+ * - A table showing payment summary per customer.
+ * - An action button ("Download PDF") for each customer that opens a modal
+ *   to display a PDF with payment details.
+ *
+ * @returns {JSX.Element} The PaymentList component.
  */
 const PaymentList = () => {
+  // State to store the list of payments
   const [payments, setPayments] = useState([]);
+  // Loading and error states for fetching payments
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState(""); // Estado para el buscador
+  // State for the search term used to filter payments
+  const [searchTerm, setSearchTerm] = useState("");
+  // State to control the PaymentPDF modal visibility and store the selected customer payments
+  const [showPaymentPDFModal, setShowPaymentPDFModal] = useState(false);
+  const [selectedCustomerPayments, setSelectedCustomerPayments] =
+    useState(null);
 
   /**
-   * Fetches all payments when the component mounts
+   * useEffect Hook:
+   * Fetches all payments when the component mounts.
    */
   useEffect(() => {
     fetchPayments();
   }, []);
 
   /**
-   * Fetches all payments from the server
+   * fetchPayments:
+   * Fetches all payments from the server.
    */
   const fetchPayments = async () => {
     try {
       const data = await getAllPayments();
       console.log("Payments loaded:", data);
       setPayments(data);
-      setLoading(false);
     } catch (err) {
       console.error("Error fetching payments:", err);
       setError(err.message || "Error fetching payments");
+    } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Groups payments by customer ID
+   * Groups payments by customer ID.
    */
   const groupedPayments = payments.reduce((groups, payment) => {
     const customerId = payment.customer ? payment.customer.id : "unknown";
@@ -50,7 +67,9 @@ const PaymentList = () => {
     return groups;
   }, {});
 
-  // Filtra los grupos de pagos según el término de búsqueda
+  /**
+   * Filters the grouped payments based on the search term.
+   */
   const filteredGroupedPayments = Object.keys(groupedPayments).reduce(
     (acc, customerId) => {
       const clientPayments = groupedPayments[customerId];
@@ -58,7 +77,6 @@ const PaymentList = () => {
       const vehicleInfo = clientPayments[0].vehicle
         ? `${clientPayments[0].vehicle.make} ${clientPayments[0].vehicle.model} (${clientPayments[0].vehicle.year}) - ${clientPayments[0].vehicle.vin}`
         : "";
-      // Comprueba si alguno de los campos incluye el término de búsqueda (case-insensitive)
       if (
         clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicleInfo.toLowerCase().includes(searchTerm.toLowerCase())
@@ -69,6 +87,18 @@ const PaymentList = () => {
     },
     {}
   );
+
+  /**
+   * handleOpenPaymentPDF:
+   * Opens the PaymentPDF modal for the selected customer by setting the customer payments.
+   *
+   * @param {string} customerId - The customer's ID.
+   * @param {Array} clientPayments - The array of payments for that customer.
+   */
+  const handleOpenPaymentPDF = (customerId, clientPayments) => {
+    setSelectedCustomerPayments(clientPayments);
+    setShowPaymentPDFModal(true);
+  };
 
   // Display loading message while data is being fetched
   if (loading) {
@@ -84,11 +114,11 @@ const PaymentList = () => {
     <div className="container py-5">
       <h1 className="mb-4">Payment History by Customer</h1>
 
-      {/* Campo de búsqueda */}
+      {/* Search field */}
       <div className="mb-3">
         <input
           type="text"
-          placeholder="Buscar por cliente o vehículo"
+          placeholder="Search by customer or vehicle"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="form-control"
@@ -138,15 +168,16 @@ const PaymentList = () => {
                   <td>${Number(remainingBalance).toFixed(2)}</td>
                   <td>{clientPayments.length}</td>
                   <td>
-                    <Link
-                      to={`/client-payment-pdf/${customerId}`}
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        console.log("Información recibida del back:", clientPayments);
-                      }}
+                    {/* "Download PDF" button: opens the PDF modal */}
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() =>
+                        handleOpenPaymentPDF(customerId, clientPayments)
+                      }
                     >
                       Download PDF
-                    </Link>
+                    </Button>
                   </td>
                 </tr>
               );
@@ -154,6 +185,15 @@ const PaymentList = () => {
           )}
         </tbody>
       </Table>
+
+      {/* PaymentPDF Modal */}
+      {selectedCustomerPayments && (
+        <PaymentPDFModal
+          show={showPaymentPDFModal}
+          onHide={() => setShowPaymentPDFModal(false)}
+          customerPayments={selectedCustomerPayments}
+        />
+      )}
     </div>
   );
 };
