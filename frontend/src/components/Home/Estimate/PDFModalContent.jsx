@@ -1,38 +1,39 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { PDFViewer } from "@react-pdf/renderer";
-import { useParams } from "react-router-dom";
-import InvoicePDF from "../Estimate/EstimatePDF";
+import EstimatePDF from "./EstimatePDF"; // Adjust the path as needed
 import { getEstimateById } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 
 /**
- * InvoicePDFViewer Component
+ * PDFModalContent Component
  *
- * This component fetches the invoice data (derived from an estimate),
- * tax and markup settings, and workshop settings. It then builds a payload
- * and renders the InvoicePDF component inside a PDFViewer so that the PDF
- * is displayed in the browser, allowing the user to print or download it.
+ * This component fetches the data for a given estimate and renders the PDF
+ * using the EstimatePDF component inside a PDFViewer.
  *
- * @returns {JSX.Element} The PDF viewer for the invoice.
+ * @param {Object} props - Component props.
+ * @param {number|string} props.estimateId - The ID of the estimate.
+ * @returns {JSX.Element} The PDF viewer with the rendered EstimatePDF.
  */
-const InvoicePDFViewer = () => {
-  const { id } = useParams(); // Invoice/estimate ID from URL
+const PDFModalContent = ({ estimateId }) => {
   const [pdfData, setPdfData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * useEffect: Fetches the data for the specified estimate.
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch estimate data (used as invoice data), tax settings, and workshop settings
         const [estimateData, cfg, workshopData] = await Promise.all([
-          getEstimateById(id),
+          getEstimateById(estimateId),
           getSettingsById(1),
           getWorkshopSettings(),
         ]);
 
-        // Build the items array for the PDF from parts, labors, and flat fees
+        // Build the items array for the PDF
         const itemsForPDF = [
           ...estimateData.parts.map((p) => ({
             type: "Part",
@@ -66,12 +67,12 @@ const InvoicePDFViewer = () => {
           })),
         ];
 
-        // Calculate totals for parts, labors, and flat fees
-        let partsTotal = 0;
-        let taxParts = 0;
-        let laborTotal = 0;
-        let taxLabors = 0;
-        let othersTotal = 0;
+        // Calculate totals similar to the logic in EstimatePDFViewer
+        let partsTotal = 0,
+          taxParts = 0,
+          laborTotal = 0,
+          taxLabors = 0,
+          othersTotal = 0;
         estimateData.parts.forEach((p) => {
           const ext = parseFloat(p.extendedPrice) || 0;
           partsTotal += ext;
@@ -89,8 +90,7 @@ const InvoicePDFViewer = () => {
         estimateData.flatFees.forEach((f) => {
           othersTotal += parseFloat(f.extendedPrice) || 0;
         });
-        const totalCalc =
-          partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
+        const totalCalc = partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
         const totals = {
           partsTotal,
           laborTotal,
@@ -100,7 +100,7 @@ const InvoicePDFViewer = () => {
           total: totalCalc,
         };
 
-        // Build the final payload for InvoicePDF
+        // Build the payload for EstimatePDF
         const payload = {
           workshopData,
           vehicle: estimateData.vehicle,
@@ -112,25 +112,25 @@ const InvoicePDFViewer = () => {
         };
 
         setPdfData(payload);
-        setLoading(false);
       } catch (error) {
-        console.error("Error fetching Invoice PDF data:", error);
+        console.error("Error fetching PDF data:", error);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [estimateId]);
 
   if (loading) {
     return <div>Loading PDF...</div>;
   }
 
   return (
-    <PDFViewer width="100%" height="1000">
-      <InvoicePDF pdfData={pdfData} />
+    <PDFViewer width="100%" height="700">
+      <EstimatePDF pdfData={pdfData} />
     </PDFViewer>
   );
 };
 
-export default InvoicePDFViewer;
+export default PDFModalContent;

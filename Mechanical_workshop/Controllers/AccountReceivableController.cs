@@ -201,6 +201,15 @@ namespace Mechanical_workshop.Controllers
                 .Include(p => p.AccountReceivable)
                     .ThenInclude(a => a.Estimate)
                         .ThenInclude(e => e.Vehicle)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.Parts)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.Labors)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.FlatFees)
                 .ToListAsync();
 
             return _mapper.Map<List<PaymentResponseDto>>(payments);
@@ -216,6 +225,15 @@ namespace Mechanical_workshop.Controllers
                 .Include(p => p.AccountReceivable)
                     .ThenInclude(ar => ar.Estimate)
                         .ThenInclude(e => e.Vehicle)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.Parts)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.Labors)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.FlatFees)
                 .Where(p => p.AccountReceivable.Customer.Id == customerId)
                 .ToListAsync();
 

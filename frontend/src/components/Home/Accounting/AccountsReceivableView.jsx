@@ -64,7 +64,7 @@ const AccountsReceivableView = () => {
   const loadAccounts = async () => {
     try {
       const data = await getAccountsReceivable();
-      console.log("Loaded accounts:", data);
+      console.log("Información recibida por getAccountsReceivable:", data);
       setAccounts(data);
     } catch (error) {
       console.error("Error loading accounts:", error);

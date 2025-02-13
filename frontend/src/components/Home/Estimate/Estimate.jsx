@@ -273,6 +273,7 @@ const Estimate = () => {
     try {
       // Get details of the selected vehicle
       const vehData = await getVehicleById(parseInt(vehicleId, 10));
+      console.log("Payload recibido del back (usuario y vehiculo):", vehData);
       // Format vehicle data with default values
       const formattedVehicle = {
         vin: vehData.vin || vehData.VIN || "No VIN",

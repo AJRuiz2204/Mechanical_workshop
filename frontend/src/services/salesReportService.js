@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// Update API_URL to use VITE_API_URL environment variable or '' if it's not defined.
-const API_URL = `${import.meta.env.VITE_API_URL || ''}/api/SalesReport`;
+// Update API_URL to use the proxy route defined in vite.config.js.
+const API_URL = "/api/SalesReport";
 
 /**
  * Retrieves all stored sales reports, including complete Estimate information in each detail.

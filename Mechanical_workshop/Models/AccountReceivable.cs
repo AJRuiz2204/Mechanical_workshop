@@ -39,7 +39,7 @@ namespace Mechanical_workshop.Models
         public virtual Estimate Estimate { get; set; } = null!;
 
         [ForeignKey("CustomerId")]
-        public virtual UserWorkshop Customer { get; set; } = null!; // Cliente asociado
+        public virtual UserWorkshop Customer { get; set; } = null!;
 
         public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
@@ -70,8 +70,10 @@ namespace Mechanical_workshop.Models
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
 
-        // Relación
         [ForeignKey("AccountReceivableId")]
         public virtual AccountReceivable AccountReceivable { get; set; } = null!;
+
+        [NotMapped]
+        public Estimate? Estimate => AccountReceivable?.Estimate;
     }
 }

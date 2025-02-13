@@ -141,6 +141,9 @@ const PaymentList = () => {
                     <Link
                       to={`/client-payment-pdf/${customerId}`}
                       className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        console.log("Información recibida del back:", clientPayments);
+                      }}
                     >
                       Download PDF
                     </Link>

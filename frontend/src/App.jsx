@@ -18,7 +18,6 @@ import MainLayout from "./components/Layout/MainLayout";
 import Home from "./components/Home/index";
 import WorkshopSettingsForm from "./components/Home/Settings/WorkshopSettingsForm";
 import Settings from "./components/Home/Settings/Settings";
-import Invoice from "./components/Home/Invoice/Invoice";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRouteComponent";
 import ErrorBoundary from "./components/ProtectedRoute/ErrorBoundary";
 import TechnicianDiagnosticList from "./components/Home/Diagnostic/TechnicianDiagnosticList";
@@ -29,8 +28,6 @@ import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPD
 import SalesReportView from "./components/Home/Reports/SalesReportsListView";
 import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
 import SalesReportAllPreviewView from "./components/Home/Reports/SalesReportAllPreviewView";
-import EstimatePDFViewer from "./components/Home/Invoice/EstimatePDFViewer";
-import InvoicePDFViewer from "./components/Home/Invoice/InvoicePDFViewer";
 
 
 const App = () => {
@@ -114,28 +111,6 @@ const App = () => {
             }
           />
           <Route
-            path="/invoice"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <Invoice />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/invoice/:id"
-            element={
-              <ProtectedRoute requiredRole="Manager">
-                <Invoice />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/estimate-pdf/:id" element={
-            <ProtectedRoute requiredRole="Manager">
-              <EstimatePDFViewer />
-            </ProtectedRoute>
-          } />
-          <Route path="/invoice-pdf/:id" element={<InvoicePDFViewer />} />
-          <Route
             path="/diagnostic-list"
             element={
               <ProtectedRoute requiredRole="Manager">
@@ -208,7 +183,7 @@ const App = () => {
             }
           />
           <Route
-            path="/forgot-password" 
+            path="/forgot-password"
             element={
               <ProtectedRoute requiredRoles={"Manager"}>
                 <ForgotPassword />

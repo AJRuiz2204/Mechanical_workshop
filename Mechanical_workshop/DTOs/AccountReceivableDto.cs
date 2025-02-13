@@ -1,5 +1,6 @@
 // DTOs/AccountReceivableDto.cs
 using System.ComponentModel.DataAnnotations;
+using Mechanical_workshop.Dtos;
 
 public class AccountReceivableCreateDto
 {
@@ -8,7 +9,7 @@ public class AccountReceivableCreateDto
 
 public class AccountReceivableUpdateDto
 {
-    public string Status { get; set; }
+    public string? Status { get; set; }
 }
 
 public class AccountReceivableResponseDto
@@ -16,13 +17,12 @@ public class AccountReceivableResponseDto
     public int Id { get; set; }
     public decimal OriginalAmount { get; set; }
     public decimal Balance { get; set; }
-    public string Status { get; set; }
-    public DateTime CreatedDate { get; set; }
-    public DateTime? CompletedDate { get; set; }
-    public CustomerShortInfoDto Customer { get; set; }
-    public VehicleInfoDto Vehicle { get; set; }
-    public EstimateInfoDto Estimate { get; set; }
-    public List<PaymentResponseDto> Payments { get; set; }
+    public string? Status { get; set; }
+    public DateTime CreatedDate { get; set; }     public DateTime? CompletedDate { get; set; }
+    public CustomerShortInfoDto? Customer { get; set; }
+    public VehicleInfoDto? Vehicle { get; set; }
+    public EstimateInfoDto? Estimate { get; set; }
+    public List<PaymentResponseDto>? Payments { get; set; }
 }
 
 // DTOs/PaymentDto.cs
@@ -56,31 +56,29 @@ public class PaymentResponseDto
     public string? Method { get; set; }
     public string? TransactionReference { get; set; }
     public string? Notes { get; set; }
-
     public CustomerShortInfoDto? Customer { get; set; }
     public VehicleInfoDto? Vehicle { get; set; }
     public decimal RemainingBalance { get; set; }
     public decimal InitialBalance { get; set; }
+    public EstimateFullDto? Estimate { get; set; }
 }
-
-
 
 // DTOs/SupportingDtos.cs
 public class CustomerShortInfoDto
 {
     public int Id { get; set; }
-    public string FullName { get; set; }
-    public string Email { get; set; }
-    public string PrimaryPhone { get; set; }
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? PrimaryPhone { get; set; }
 }
 
 public class VehicleInfoDto
 {
     public int Id { get; set; }
-    public string Make { get; set; }
-    public string Model { get; set; }
-    public string Year { get; set; }
-    public string VIN { get; set; }
+    public string? Make { get; set; }
+    public string? Model { get; set; }
+    public string? Year { get; set; }
+    public string? VIN { get; set; }
 }
 
 public class EstimateInfoDto

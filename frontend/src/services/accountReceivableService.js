@@ -18,7 +18,9 @@ export const getAllPayments = async () => {
     if (!response.ok) {
       throw new Error("Error fetching all payments");
     }
-    return await response.json();
+    const payments = await response.json();
+    console.log("All payments fetched:", payments);
+    return payments;
   } catch (error) {
     console.error("Error in getAllPayments:", error);
     throw error;

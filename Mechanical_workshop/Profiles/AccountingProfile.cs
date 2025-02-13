@@ -22,7 +22,8 @@ namespace MechanicalWorkshop.Profiles
                 .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.AccountReceivable.Customer))
                 .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.AccountReceivable.Estimate.Vehicle))
                 .ForMember(dest => dest.RemainingBalance, opt => opt.MapFrom(src => src.AccountReceivable.Balance))
-                .ForMember(dest => dest.InitialBalance, opt => opt.MapFrom(src => src.AccountReceivable.OriginalAmount));
+                .ForMember(dest => dest.InitialBalance, opt => opt.MapFrom(src => src.AccountReceivable.OriginalAmount))
+                .ForMember(dest => dest.Estimate, opt => opt.MapFrom(src => src.AccountReceivable.Estimate));
             CreateMap<PaymentCreateDto, Payment>();
             CreateMap<PaymentUpdateDto, Payment>();
 
