@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
@@ -25,11 +26,14 @@ namespace Mechanical_workshop.Controllers
         public async Task<ActionResult<IEnumerable<AccountReceivableResponseDto>>> GetAccountsReceivable()
         {
             var accounts = await _context.AccountsReceivable
-                .Include(ar => ar.Estimate)
-                    .ThenInclude(e => e.Vehicle)
-                .Include(ar => ar.Customer)
-                .Include(ar => ar.Payments)
-                .ToListAsync();
+                            .Include(ar => ar.Estimate)
+                                .ThenInclude(e => e.Vehicle)
+                            .Include(ar => ar.Estimate)
+                                .ThenInclude(e => e.TechnicianDiagnostic)
+                            .Include(ar => ar.Customer)
+                            .Include(ar => ar.Payments)
+                            .ProjectTo<AccountReceivableResponseDto>(_mapper.ConfigurationProvider)
+                            .ToListAsync();
 
             return _mapper.Map<List<AccountReceivableResponseDto>>(accounts);
         }
@@ -41,6 +45,8 @@ namespace Mechanical_workshop.Controllers
             var account = await _context.AccountsReceivable
                 .Include(ar => ar.Estimate)
                     .ThenInclude(e => e.Vehicle)
+                .Include(ar => ar.Estimate)
+                    .ThenInclude(e => e.TechnicianDiagnostic)
                 .Include(ar => ar.Customer)
                 .Include(ar => ar.Payments)
                 .FirstOrDefaultAsync(ar => ar.Id == id);
@@ -52,6 +58,7 @@ namespace Mechanical_workshop.Controllers
 
             return _mapper.Map<AccountReceivableResponseDto>(account);
         }
+
 
         // POST: api/AccountReceivable
         [HttpPost]
@@ -194,7 +201,7 @@ namespace Mechanical_workshop.Controllers
         [HttpGet("Payment")]
         public async Task<ActionResult<IEnumerable<PaymentResponseDto>>> GetAllPayments()
         {
-            // Incluir AccountReceivable, y dentro de éste, incluir Customer y Estimate con su Vehicle
+            // Incluir AccountReceivable, y dentro de éste, incluir Customer, Estimate con su Vehicle, Parts, Labors, FlatFees y TechnicianDiagnostic
             var payments = await _context.Payments
                 .Include(p => p.AccountReceivable)
                     .ThenInclude(a => a.Customer)
@@ -210,6 +217,9 @@ namespace Mechanical_workshop.Controllers
                 .Include(p => p.AccountReceivable)
                     .ThenInclude(a => a.Estimate)
                         .ThenInclude(e => e.FlatFees)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.TechnicianDiagnostic)
                 .ToListAsync();
 
             return _mapper.Map<List<PaymentResponseDto>>(payments);
@@ -234,11 +244,15 @@ namespace Mechanical_workshop.Controllers
                 .Include(p => p.AccountReceivable)
                     .ThenInclude(ar => ar.Estimate)
                         .ThenInclude(e => e.FlatFees)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.TechnicianDiagnostic)
                 .Where(p => p.AccountReceivable.Customer.Id == customerId)
                 .ToListAsync();
 
             return _mapper.Map<List<PaymentResponseDto>>(payments);
         }
+
 
 
 

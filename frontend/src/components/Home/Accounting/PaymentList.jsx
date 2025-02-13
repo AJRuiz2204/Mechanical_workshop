@@ -4,7 +4,7 @@ import { Table, Alert, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getAllPayments } from "../../../services/accountReceivableService";
 import "./styles/PaymentList.css";
-import PaymentPDFModal from "./PaymentPDFModal"; // Adjust the path as needed
+import PaymentPDFModal from "./PaymentPDFModal";
 
 /**
  * PaymentList Component

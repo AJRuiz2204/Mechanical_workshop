@@ -18,10 +18,11 @@ public class AccountReceivableResponseDto
     public decimal OriginalAmount { get; set; }
     public decimal Balance { get; set; }
     public string? Status { get; set; }
-    public DateTime CreatedDate { get; set; }     public DateTime? CompletedDate { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public DateTime? CompletedDate { get; set; }
     public CustomerShortInfoDto? Customer { get; set; }
     public VehicleInfoDto? Vehicle { get; set; }
-    public EstimateInfoDto? Estimate { get; set; }
+    public EstimateFullDto? Estimate { get; set; }
     public List<PaymentResponseDto>? Payments { get; set; }
 }
 
@@ -31,13 +32,13 @@ public class PaymentCreateDto
     [Required]
     [Range(0.01, double.MaxValue)]
     public decimal Amount { get; set; }
-    
+
     [Required]
     public required string Method { get; set; }
-    
+
     public required string TransactionReference { get; set; }
     public required string Notes { get; set; }
-    
+
     [Required]
     public int AccountReceivableId { get; set; }
 }
@@ -61,6 +62,7 @@ public class PaymentResponseDto
     public decimal RemainingBalance { get; set; }
     public decimal InitialBalance { get; set; }
     public EstimateFullDto? Estimate { get; set; }
+    public TechnicianDiagnosticReadDto? TechnicianDiagnostic { get; set; }
 }
 
 // DTOs/SupportingDtos.cs
