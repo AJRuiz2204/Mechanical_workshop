@@ -8,12 +8,15 @@ namespace Mechanical_workshop.Profiles
     {
         public DiagnosticProfile()
         {
-            // Vehicle -> VehicleReadDto
+            // Mapeo de Vehicle a VehicleReadDto
             CreateMap<Vehicle, VehicleReadDto>();
+            // Mapeo de UserWorkshop a UserWorkshopReadDto (definido en UserWorkshopDtos.cs)
+            CreateMap<UserWorkshop, UserWorkshopReadDto>();
 
-            // Diagnostic -> DiagnosticReadDto
+            // Mapeo de Diagnostic a DiagnosticReadDto, incluyendo la propiedad UserWorkshop
             CreateMap<Diagnostic, DiagnosticReadDto>()
-                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle));
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
+                .ForMember(dest => dest.UserWorkshop, opt => opt.MapFrom(src => src.Vehicle.UserWorkshop));
         }
     }
-}   
+}

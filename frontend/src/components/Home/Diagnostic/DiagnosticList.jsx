@@ -54,6 +54,7 @@ const DiagnosticList = () => {
       setError("");
       // Retrieve diagnostics data
       const diagData = await getDiagnostics();
+      console.log("Payload diagnostic data:", diagData);
       setDiagnostics(diagData);
 
       // Retrieve technician diagnostic IDs for each diagnostic
@@ -129,6 +130,7 @@ const DiagnosticList = () => {
             <tr>
               <th>ID</th>
               <th>VIN</th>
+              <th>Owner</th> {/* Nueva columna para Owner */}
               <th>Make</th>
               <th>Model</th>
               <th>Reason</th>
@@ -138,12 +140,17 @@ const DiagnosticList = () => {
           </thead>
           <tbody>
             {diagnostics.map((diag) => {
-              // Determine if a technician diagnostic exists for this diagnostic
+              // Obtener si existe technician diagnostic
               const hasTechDiag = !!techDiagMap[diag.id];
+              // Nueva variable para concatenar name y lastName del userWorkshop
+              const workshopName = diag.vehicle?.userWorkshop 
+                ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}` 
+                : "N/A";
               return (
                 <tr key={diag.id}>
                   <td>{diag.id}</td>
                   <td>{diag.vehicle?.vin || "N/A"}</td>
+                  <td>{workshopName}</td>
                   <td>{diag.vehicle?.make || "N/A"}</td>
                   <td>{diag.vehicle?.model || "N/A"}</td>
                   <td>{diag.reasonForVisit}</td>
@@ -160,11 +167,7 @@ const DiagnosticList = () => {
                           size="sm"
                           className="me-2"
                           onClick={() =>
-                            navigate(
-                              `/technicianDiagnostic/edit/${
-                                techDiagMap[diag.id]
-                              }`
-                            )
+                            navigate(`/technicianDiagnostic/edit/${techDiagMap[diag.id]}`)
                           }
                         >
                           Edit

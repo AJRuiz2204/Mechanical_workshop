@@ -46,6 +46,7 @@ const EstimateList = () => {
     const fetchEstimates = async () => {
       try {
         const data = await getEstimates();
+        console.log("Payload recibido:", data);
         setEstimates(data);
       } catch (err) {
         setError(`Error loading estimates: ${err.message}`);
@@ -208,6 +209,7 @@ const EstimateList = () => {
           <tr>
             <th>ID</th>
             <th>Vehicle VIN</th>
+            <th>Owner</th>
             <th>Subtotal</th>
             <th>Tax</th>
             <th>Total</th>
@@ -218,7 +220,7 @@ const EstimateList = () => {
         <tbody>
           {filteredEstimates.length === 0 ? (
             <tr>
-              <td colSpan="7" className="text-center">
+              <td colSpan="8" className="text-center">
                 No estimates found.
               </td>
             </tr>
@@ -227,6 +229,9 @@ const EstimateList = () => {
               <tr key={estimate.id}>
                 <td>{estimate.id}</td>
                 <td>{estimate.vehicle?.vin || "No VIN"}</td>
+                <td>
+                  {estimate.owner ? `${estimate.owner.name} ${estimate.owner.lastName}` : "-"}
+                </td>
                 <td>${estimate.subtotal?.toFixed(2)}</td>
                 <td>${estimate.tax?.toFixed(2)}</td>
                 <td>${estimate.total?.toFixed(2)}</td>

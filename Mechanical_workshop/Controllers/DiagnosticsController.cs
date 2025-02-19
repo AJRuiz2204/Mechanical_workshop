@@ -39,8 +39,14 @@ namespace Mechanical_workshop.Controllers
             _context.Diagnostics.Add(diagnostic);
             await _context.SaveChangesAsync();
 
+            // Reconsulta el diagnóstico para incluir Vehicle y UserWorkshop
+            var diagnosticWithRelations = await _context.Diagnostics
+                .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .FirstOrDefaultAsync(d => d.Id == diagnostic.Id);
+
             // Map entity to ReadDto
-            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
+            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnosticWithRelations);
 
             return CreatedAtAction(nameof(GetDiagnostic), new { id = diagnostic.Id }, diagnosticReadDto);
         }
@@ -51,6 +57,7 @@ namespace Mechanical_workshop.Controllers
         {
             var diagnostics = await _context.Diagnostics
                 .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
                 .Include(d => d.TechnicianDiagnostics)
                 .ToListAsync();
 
@@ -64,6 +71,7 @@ namespace Mechanical_workshop.Controllers
         {
             var diagnostic = await _context.Diagnostics
                 .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
                 .Include(d => d.TechnicianDiagnostics)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
@@ -136,6 +144,7 @@ namespace Mechanical_workshop.Controllers
             var diagnostics = await _context.Diagnostics
                 .Where(d => d.AssignedTechnician == fullName)
                 .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
                 .Include(d => d.TechnicianDiagnostics)
                 .ToListAsync();
 
