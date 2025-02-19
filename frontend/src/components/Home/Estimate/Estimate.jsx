@@ -64,7 +64,7 @@ const Estimate = () => {
   const [customerNote, setCustomerNote] = useState("");
   const [extendedDiagnostic, setExtendedDiagnostic] = useState("");
   const [diagnostic, setDiagnostic] = useState(null);
-  const [authorizationStatus, setAuthorizationStatus] = useState("InReview");
+  const [authorizationStatus, setAuthorizationStatus] = useState("Pending");
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
@@ -737,9 +737,9 @@ const Estimate = () => {
                   onChange={(e) => setAuthorizationStatus(e.target.value)}
                   required
                 >
-                  <option value="InReview">In Review</option>
+                  <option value="Pending">Pending</option>
                   <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
+                  <option value="Not aproved">Not aproved</option>
                 </Form.Control>
               </Form.Group>
             </Col>
@@ -821,9 +821,9 @@ const Estimate = () => {
                   onChange={(e) => setAuthorizationStatus(e.target.value)}
                   required
                 >
-                  <option value="InReview">In Review</option>
+                  <option value="Pending">Pending</option>
                   <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
+                  <option value="Not aproved">Not aproved</option>
                 </Form.Control>
               </Form.Group>
             </Col>

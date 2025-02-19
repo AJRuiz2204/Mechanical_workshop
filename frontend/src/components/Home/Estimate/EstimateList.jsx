@@ -147,12 +147,26 @@ const EstimateList = () => {
       case "approved":
         return "success";
       case "rejected":
+      case "not aproved":
         return "danger";
       case "inreview":
       case "in review":
         return "warning";
       default:
         return "secondary";
+    }
+  };
+
+  // Nueva función para traducir los status
+  const getStatusLabel = (status) => {
+    switch (status.toLowerCase()) {
+      case "rejected":
+        return "Not aproved";
+      case "inreview":
+      case "in review":
+        return "pending";
+      default:
+        return status;
     }
   };
 
@@ -237,7 +251,7 @@ const EstimateList = () => {
                 <td>${estimate.total?.toFixed(2)}</td>
                 <td>
                   <Badge bg={getStatusVariant(estimate.authorizationStatus)}>
-                    {estimate.authorizationStatus}
+                    {getStatusLabel(estimate.authorizationStatus)}
                   </Badge>
                 </td>
                 <td>
