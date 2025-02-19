@@ -9,7 +9,7 @@ import {
   Badge,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { getDiagnostics } from "../../../services/DiagnosticService";
+import { getDiagnostics, deleteDiagnostic } from "../../../services/DiagnosticService";
 import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
@@ -19,34 +19,39 @@ import "./DiagnosticList.css";
 /**
  * DiagnosticList Component
  *
- * Description:
- * Displays a list of diagnostics along with actions for technician diagnostics.
- * For each diagnostic, it shows basic vehicle and reason information and a badge
- * indicating whether a technician diagnostic exists. Depending on that status,
- * action buttons allow you to create a new technician diagnostic or edit/delete the existing one.
+ * This component displays a list of diagnostics in a table format.
+ * For each diagnostic, it shows vehicle details, reason for visit, and the current status.
+ *
+ * Depending on whether a Technician Diagnostic exists:
+ * - If present, it displays "Edit" and "Delete" buttons for the Technician Diagnostic.
+ * - If absent, it displays a "Create" button to create a Technician Diagnostic and a "Delete" button to delete the Diagnostic.
  *
  * Features:
- * - Fetch diagnostics from the backend.
- * - For each diagnostic, attempt to fetch the associated technician diagnostic.
- * - Display a responsive table with the diagnostics data.
- * - Provide actions (Create, Edit, Delete) for technician diagnostics.
- * - Uses Bootstrap’s components and utility classes for layout and responsiveness.
+ * - Fetches diagnostics data from the backend.
+ * - Checks for associated Technician Diagnostics for each diagnostic.
+ * - Provides actions to create, edit, or delete Technician Diagnostics,
+ *   or to delete the diagnostic entirely if no Technician Diagnostic exists.
  *
  * @returns {JSX.Element} The DiagnosticList component.
  */
 const DiagnosticList = () => {
   const navigate = useNavigate();
+
+  // State to store diagnostics data retrieved from the backend.
   const [diagnostics, setDiagnostics] = useState([]);
+  // State to indicate if the data is still loading.
   const [loading, setLoading] = useState(true);
+  // State to store any error messages.
   const [error, setError] = useState("");
-  // techDiagMap maps each diagnostic id to its corresponding technician diagnostic id (if any)
+  // Mapping of diagnostic IDs to their associated Technician Diagnostic IDs (if any).
   const [techDiagMap, setTechDiagMap] = useState({});
 
   /**
-   * fetchData Function
+   * fetchData - Fetches diagnostics data and maps Technician Diagnostic IDs to each diagnostic.
    *
-   * Asynchronously fetches diagnostics data and for each diagnostic,
-   * retrieves its associated technician diagnostic (if available).
+   * This function retrieves all diagnostics and, for each diagnostic,
+   * attempts to fetch its associated Technician Diagnostic. If a Technician Diagnostic
+   * is found, its ID is stored in the techDiagMap; otherwise, a null value is stored.
    */
   const fetchData = async () => {
     try {
@@ -54,10 +59,10 @@ const DiagnosticList = () => {
       setError("");
       // Retrieve diagnostics data
       const diagData = await getDiagnostics();
-      console.log("Payload diagnostic data:", diagData);
+      console.log("Diagnostic data payload:", diagData);
       setDiagnostics(diagData);
 
-      // Retrieve technician diagnostic IDs for each diagnostic
+      // Build a map of diagnostic IDs to Technician Diagnostic IDs (if they exist)
       const newTechDiagMap = {};
       await Promise.all(
         diagData.map(async (diag) => {
@@ -65,7 +70,7 @@ const DiagnosticList = () => {
             const techDiag = await getTechnicianDiagnosticByDiagId(diag.id);
             newTechDiagMap[diag.id] = techDiag.id;
           } catch (error) {
-            // If not found, simply map to null
+            // If a Technician Diagnostic is not found, map to null
             if (error.message !== "Not found") console.error(error);
             newTechDiagMap[diag.id] = null;
           }
@@ -79,17 +84,19 @@ const DiagnosticList = () => {
     }
   };
 
-  // Fetch data on component mount
+  // Fetch data when the component mounts
   useEffect(() => {
     fetchData();
   }, []);
 
   /**
-   * handleDelete Function
+   * handleDelete - Deletes the associated Technician Diagnostic.
    *
-   * Deletes the technician diagnostic associated with a given diagnostic.
+   * This function is called when the "Delete" button for a Technician Diagnostic is clicked.
+   * It confirms the deletion with the user, calls the service to delete the Technician Diagnostic,
+   * and then updates the state to reflect the change.
    *
-   * @param {number|string} diagnosticId - The diagnostic ID whose technician diagnostic should be deleted.
+   * @param {number|string} diagnosticId - The ID of the diagnostic whose Technician Diagnostic should be deleted.
    */
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
@@ -100,14 +107,46 @@ const DiagnosticList = () => {
 
     try {
       await deleteTechnicianDiagnostic(techDiagId);
+      // Update the mapping to remove the Technician Diagnostic association
       setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
-      alert("Successfully deleted!");
+      alert("Successfully deleted Technician Diagnostic!");
     } catch (error) {
       alert(`Delete failed: ${error.message}`);
     }
   };
 
-  // Render a loading spinner while fetching data
+  /**
+   * handleDeleteDiagnostic - Deletes the diagnostic when no Technician Diagnostic exists.
+   *
+   * This function is called when the "Delete" button for a diagnostic without a Technician Diagnostic is clicked.
+   * It confirms the deletion with the user, calls the service to delete the diagnostic,
+   * and updates the state to remove the diagnostic from the list.
+   *
+   * @param {number|string} diagnosticId - The ID of the diagnostic to delete.
+   */
+  const handleDeleteDiagnostic = async (diagnosticId) => {
+    const confirmDelete = window.confirm("Delete this Diagnostic?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDiagnostic(diagnosticId);
+      // Remove the diagnostic from the state list
+      setDiagnostics((prevDiagnostics) =>
+        prevDiagnostics.filter((diag) => diag.id !== diagnosticId)
+      );
+      // Also remove any reference from the Technician Diagnostic map
+      setTechDiagMap((prev) => {
+        const newMap = { ...prev };
+        delete newMap[diagnosticId];
+        return newMap;
+      });
+      alert("Successfully deleted Diagnostic!");
+    } catch (error) {
+      alert(`Delete failed: ${error.message}`);
+    }
+  };
+
+  // If the data is still loading, display a spinner
   if (loading) {
     return (
       <Container className="p-4 diagnostic-list-container">
@@ -130,7 +169,7 @@ const DiagnosticList = () => {
             <tr>
               <th>ID</th>
               <th>VIN</th>
-              <th>Owner</th> {/* Nueva columna para Owner */}
+              <th>Owner</th>
               <th>Make</th>
               <th>Model</th>
               <th>Reason</th>
@@ -140,9 +179,9 @@ const DiagnosticList = () => {
           </thead>
           <tbody>
             {diagnostics.map((diag) => {
-              // Obtener si existe technician diagnostic
+              // Determine if a Technician Diagnostic exists for the current diagnostic
               const hasTechDiag = !!techDiagMap[diag.id];
-              // Nueva variable para concatenar name y lastName del userWorkshop
+              // Concatenate the first and last name of the workshop owner, if available
               const workshopName = diag.vehicle?.userWorkshop 
                 ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}` 
                 : "N/A";
@@ -181,15 +220,25 @@ const DiagnosticList = () => {
                         </Button>
                       </>
                     ) : (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/technicianDiagnostic/create/${diag.id}`)
-                        }
-                      >
-                        Create
-                      </Button>
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/technicianDiagnostic/create/${diag.id}`)
+                          }
+                        >
+                          Create
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="ms-2"
+                          onClick={() => handleDeleteDiagnostic(diag.id)}
+                        >
+                          Delete
+                        </Button>
+                      </>
                     )}
                   </td>
                 </tr>

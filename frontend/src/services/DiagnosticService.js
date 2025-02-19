@@ -134,11 +134,15 @@ export const deleteDiagnostic = async (id) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
+      let errorMessage = "Error deleting the diagnostic.";
       if (errorData && errorData.message) {
-        throw new Error(errorData.message);
+        errorMessage = errorData.message;
       } else {
-        throw new Error("Error deleting the diagnostic.");
+        // Fallback: intenta obtener texto del error para más detalles.
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
       }
+      throw new Error(errorMessage);
     }
     return;
   } catch (error) {
