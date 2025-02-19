@@ -16,7 +16,9 @@ namespace Mechanical_workshop.Profiles
             // Mapeo de Diagnostic a DiagnosticReadDto, incluyendo la propiedad UserWorkshop
             CreateMap<Diagnostic, DiagnosticReadDto>()
                 .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
-                .ForMember(dest => dest.UserWorkshop, opt => opt.MapFrom(src => src.Vehicle.UserWorkshop));
+                .ForMember(dest => dest.UserWorkshop, opt => opt.MapFrom(src => src.Vehicle.UserWorkshop))
+                // Nuevo mapeo para AssignedTechnician
+                .ForMember(dest => dest.AssignedTechnician, opt => opt.MapFrom(src => src.AssignedTechnician));
         }
     }
 }

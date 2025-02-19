@@ -12,4 +12,7 @@ public class DiagnosticReadDto
     
     // Nueva propiedad para incluir la información del owner
     public UserWorkshopReadDto? UserWorkshop { get; set; }
+
+    // Nueva propiedad para incluir AssignedTechnician
+    public string AssignedTechnician { get; set; } = string.Empty;
 }

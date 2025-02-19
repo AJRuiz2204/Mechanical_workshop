@@ -173,6 +173,7 @@ const DiagnosticList = () => {
               <th>Make</th>
               <th>Model</th>
               <th>Reason</th>
+              <th>Assigned Technician</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -193,6 +194,7 @@ const DiagnosticList = () => {
                   <td>{diag.vehicle?.make || "N/A"}</td>
                   <td>{diag.vehicle?.model || "N/A"}</td>
                   <td>{diag.reasonForVisit}</td>
+                  <td>{diag.assignedTechnician || "N/A"}</td>
                   <td>
                     <Badge bg={hasTechDiag ? "success" : "danger"}>
                       {hasTechDiag ? "With Diagnostic" : "Without Diagnostic"}
