@@ -172,7 +172,7 @@ const AccountsReceivableView = () => {
   });
 
   return (
-    <div className="container py-5">
+    <div className="container-fluid w-100 py-5">
       {/* Header for the Accounts Receivable Management view */}
       <h1 className="mb-4 text-center">Accounts Receivable Management</h1>
 

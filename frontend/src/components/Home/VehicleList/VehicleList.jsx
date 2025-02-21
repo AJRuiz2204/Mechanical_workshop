@@ -214,7 +214,7 @@ const VehicleList = () => {
   };
 
   return (
-    <Container className="p-4 border rounded mt-4 bg-light">
+    <Container fluid className="p-4 border rounded mt-4 bg-light">
       <h3>VEHICLE LIST</h3>
 
       <div className="d-flex justify-content-between align-items-center mb-3">

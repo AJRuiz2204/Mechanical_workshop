@@ -293,7 +293,7 @@ const LaborTaxMarkupSettingsForm = () => {
   const handleSubmit = isEditMode ? handleSubmitPatch : handleSubmitCreate;
 
   return (
-    <div className="container mt-4">
+    <div className="container-fluid mt-4">
       {/* Display error message */}
       {error && (
         <div className="alert alert-danger mt-3" role="alert">

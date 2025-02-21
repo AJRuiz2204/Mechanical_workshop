@@ -28,7 +28,7 @@
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Actualizado de auto a 100vh */
+  /* height: 100vh; */
   align-items: center;
   justify-content: space-between;
 }
@@ -141,7 +141,8 @@
   }
   .side-menu {
     width: 100%;
-    height: 100vh;
+    /* height: 100vh; */ /* Reemplazar por altura automática */
+    height: auto;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;

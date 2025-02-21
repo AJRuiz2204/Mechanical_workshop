@@ -13,6 +13,27 @@ const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) => `/api/TechnicianDiagnostics/${id}`
 const GET_DIAGNOSTIC_BY_VEHICLE_ID_URL = (vehicleId) =>
   `/api/TechnicianDiagnostics/vehicle/${vehicleId}`;
 const VEHICLE_DIAGNOSTIC_API_URL = "/api/VehicleDiagnostic";
+const API_URL_WITHACCOUNT = "/api/EstimateWithAccountReceivable";
+
+/**
+ * Fetches the list of estimates along with their account receivable information.
+ * @async
+ * @function getEstimatesWithAccounts
+ * @returns {Promise<Array>} An array of EstimateWithAccountReceivableDto objects.
+ * @throws Will throw an error if the request fails.
+ */
+export const getEstimatesWithAccounts = async () => {
+  try {
+    const response = await fetch(API_URL_WITHACCOUNT);
+    if (!response.ok) {
+      throw new Error("Error getting estimates with account receivable.");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error in getEstimatesWithAccounts:", error);
+    throw error;
+  }
+};
 
 /**
  * Fetches all vehicles with their diagnostics and technician diagnostics.

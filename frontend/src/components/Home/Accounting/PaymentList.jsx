@@ -111,7 +111,7 @@ const PaymentList = () => {
   }
 
   return (
-    <div className="container py-5">
+    <div className="container-fluid w-100 py-5">
       <h1 className="mb-4">Payment History by Customer</h1>
 
       {/* Search field */}

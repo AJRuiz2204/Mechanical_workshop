@@ -2,27 +2,26 @@
 import React, { useState, useEffect } from "react";
 import { Table, Alert, Button, Form, Badge, Modal } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { getEstimates, deleteEstimate } from "../../../services/EstimateService";
+import { deleteEstimate, getEstimatesWithAccounts } from "../../../services/EstimateService";
 import { createAccountReceivable } from "../../../services/accountReceivableService";
 import AccountPaymentModal from "../../Home/Accounting/AccountPaymentModal";
 import "./EstimateList.css";
-import PDFModalContent from "./PDFModalContent"; // Adjust the path as needed
+import PDFModalContent from "./PDFModalContent";
 
 /**
  * EstimateList Component
  *
- * This component displays a list of estimates and provides functionality to:
+ * This component displays a list of estimates with their associated account receivable data.
+ * It provides functionality to:
  * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, or authorization status)
+ * - Filter estimates by payment status using two comboboxes (Paid and Pending)
  * - Edit, delete, or view the PDF for each estimate
  * - Generate or open an account receivable for the estimate
- *
- * In addition to these features, it now integrates a modal to view the PDF
- * without navigating away from the list, thereby preserving the search state.
  *
  * @returns {JSX.Element} The EstimateList component.
  */
 const EstimateList = () => {
-  // State to store the list of estimates.
+  // State to store the list of estimates (with account receivable data).
   const [estimates, setEstimates] = useState([]);
   // Loading and error states for fetching estimates.
   const [loading, setLoading] = useState(true);
@@ -34,18 +33,22 @@ const EstimateList = () => {
   const [modalAccountId, setModalAccountId] = useState(null);
   // State for the search term used to filter estimates.
   const [searchTerm, setSearchTerm] = useState("");
+  // New states for filtering by payment status via two comboboxes.
+  // "all" means no filtering; "yes" means only show estimates matching that status.
+  const [paidFilter, setPaidFilter] = useState(false);
+  const [pendingFilter, setPendingFilter] = useState(false);
   // States for controlling the PDF modal and storing the selected estimate ID.
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
 
   /**
    * useEffect Hook:
-   * Fetches the list of estimates when the component mounts.
+   * Fetches the list of estimates with account receivable data when the component mounts.
    */
   useEffect(() => {
     const fetchEstimates = async () => {
       try {
-        const data = await getEstimates();
+        const data = await getEstimatesWithAccounts();
         console.log("Payload recibido:", data);
         setEstimates(data);
       } catch (err) {
@@ -58,46 +61,74 @@ const EstimateList = () => {
   }, []);
 
   /**
-   * Filters estimates based on the search term.
-   * The search is case-insensitive and checks various fields.
+   * Returns the payment status label.
+   * If no account receivable exists, returns "No Account".
+   * Otherwise, returns "Paid" if isPaid is true, or "Pending" if not.
    */
-  const filteredEstimates = estimates.filter((estimate) => {
+  const getPaymentStatus = (item) => {
+    if (!item.accountReceivable) return "No Account";
+    return item.isPaid ? "Paid" : "Pending";
+  };
+
+  /**
+   * Returns the Bootstrap badge variant for the payment status.
+   */
+  const getPaymentBadgeVariant = (item) => {
+    if (!item.accountReceivable) return "secondary";
+    return item.isPaid ? "success" : "warning";
+  };
+
+  /**
+   * Filters estimates based on the search term and payment filters.
+   */
+  const filteredEstimates = estimates.filter((item) => {
     const term = searchTerm.toLowerCase();
-    return (
-      String(estimate.id).toLowerCase().includes(term) ||
-      (estimate.vehicle?.vin && estimate.vehicle.vin.toLowerCase().includes(term)) ||
-      (estimate.subtotal && String(estimate.subtotal).toLowerCase().includes(term)) ||
-      (estimate.tax && String(estimate.tax).toLowerCase().includes(term)) ||
-      (estimate.total && String(estimate.total).toLowerCase().includes(term)) ||
-      (estimate.authorizationStatus && estimate.authorizationStatus.toLowerCase().includes(term))
-    );
+    const est = item.estimate;
+    const matchesSearch =
+      String(est.id).toLowerCase().includes(term) ||
+      (est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term)) ||
+      (est.subtotal && String(est.subtotal).toLowerCase().includes(term)) ||
+      (est.tax && String(est.tax).toLowerCase().includes(term)) ||
+      (est.total && String(est.total).toLowerCase().includes(term)) ||
+      (est.authorizationStatus &&
+        est.authorizationStatus.toLowerCase().includes(term));
+
+    const paymentStatus = getPaymentStatus(item); // "No Account", "Paid", "Pending"
+    let paymentMatches = true;
+    if (paidFilter || pendingFilter) {
+      if (paidFilter && !pendingFilter) {
+        paymentMatches = paymentStatus === "Paid";
+      } else if (pendingFilter && !paidFilter) {
+        paymentMatches = paymentStatus === "Pending";
+      } else if (paidFilter && pendingFilter) {
+        paymentMatches = paymentStatus === "Paid" || paymentStatus === "Pending";
+      }
+    }
+    return matchesSearch && paymentMatches;
   });
 
   /**
    * handleGenerateAccount:
    * Generates or opens the account receivable associated with the given estimate.
    *
-   * @param {Object} estimate - The estimate object.
+   * @param {Object} item - The object containing estimate and account receivable data.
    */
-  const handleGenerateAccount = async (estimate) => {
-    if (estimate.accountReceivable && estimate.accountReceivable.id) {
-      setModalAccountId(estimate.accountReceivable.id);
+  const handleGenerateAccount = async (item) => {
+    const estId = item.estimate.id;
+    if (item.accountReceivable && item.accountReceivable.id) {
+      setModalAccountId(item.accountReceivable.id);
       setShowPaymentModal(true);
       return;
     }
-
     if (
       !window.confirm(
-        `An account receivable will be generated for estimate ${estimate.id}. Continue?`
+        `An account receivable will be generated for estimate ${estId}. Continue?`
       )
     )
       return;
-
     try {
-      const newAccount = await createAccountReceivable({
-        estimateId: estimate.id,
-      });
-      setSuccess(`Account receivable successfully created for estimate ${estimate.id}.`);
+      const newAccount = await createAccountReceivable({ estimateId: estId });
+      setSuccess(`Account receivable successfully created for estimate ${estId}.`);
       setModalAccountId(newAccount.id);
       setShowPaymentModal(true);
     } catch (err) {
@@ -109,10 +140,10 @@ const EstimateList = () => {
    * handleEdit:
    * Placeholder function to handle editing an estimate.
    *
-   * @param {Object} estimate - The estimate object to edit.
+   * @param {Object} item - The object containing estimate and account receivable data.
    */
-  const handleEdit = (estimate) => {
-    console.log("Editing Estimate:", estimate);
+  const handleEdit = (item) => {
+    console.log("Editing Estimate:", item.estimate);
     // Implement navigation or modal editing here.
   };
 
@@ -125,19 +156,17 @@ const EstimateList = () => {
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this estimate?");
     if (!confirmDelete) return;
-
     try {
       await deleteEstimate(id);
       setSuccess(`Estimate with ID ${id} successfully deleted.`);
-      setEstimates((prev) => prev.filter((est) => est.id !== id));
+      setEstimates((prev) => prev.filter((item) => item.estimate.id !== id));
     } catch (err) {
       setError(`Error deleting estimate: ${err.message}`);
     }
   };
 
   /**
-   * getStatusVariant:
-   * Returns the Bootstrap variant for the Badge based on the authorization status.
+   * Returns the Bootstrap variant for the authorization status badge.
    *
    * @param {string} status - The authorization status.
    * @returns {string} The Bootstrap variant.
@@ -157,7 +186,12 @@ const EstimateList = () => {
     }
   };
 
-  // Nueva función para traducir los status
+  /**
+   * Translates the authorization status to a more readable label.
+   *
+   * @param {string} status - The authorization status.
+   * @returns {string} The translated label.
+   */
   const getStatusLabel = (status) => {
     switch (status.toLowerCase()) {
       case "rejected":
@@ -174,20 +208,19 @@ const EstimateList = () => {
    * handleOpenPDF:
    * Opens the PDF modal for the selected estimate.
    *
-   * @param {number|string} estimateId - The ID of the estimate whose PDF will be displayed.
+   * @param {number|string} id - The ID of the estimate whose PDF will be displayed.
    */
-  const handleOpenPDF = (estimateId) => {
-    setSelectedEstimateId(estimateId);
+  const handleOpenPDF = (id) => {
+    setSelectedEstimateId(id);
     setShowPDFModal(true);
   };
 
-  // If still loading estimates, show a loading message.
   if (loading) {
     return <div>Loading estimates...</div>;
   }
 
   return (
-    <div className="estimate-list container p-4 border rounded">
+    <div className="estimate-list container-fluid p-4 border rounded">
       <h2 className="mb-4">Estimate List</h2>
 
       {error && (
@@ -201,7 +234,7 @@ const EstimateList = () => {
         </Alert>
       )}
 
-      {/* Search input to filter estimates */}
+      {/* Search input */}
       <Form.Group controlId="search" className="mb-3">
         <Form.Control
           type="text"
@@ -210,6 +243,25 @@ const EstimateList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </Form.Group>
+
+      {/* Payment filter checkboxes */}
+      <div className="d-flex mb-3">
+        <Form.Check
+          type="checkbox"
+          id="filterPaid"
+          label="Only Paid"
+          checked={paidFilter}
+          onChange={(e) => setPaidFilter(e.target.checked)}
+          className="me-3"
+        />
+        <Form.Check
+          type="checkbox"
+          id="filterPending"
+          label="Only Pending"
+          checked={pendingFilter}
+          onChange={(e) => setPendingFilter(e.target.checked)}
+        />
+      </div>
 
       <div className="mb-3 text-end">
         <Link to="/estimate/create">
@@ -228,48 +280,55 @@ const EstimateList = () => {
             <th>Tax</th>
             <th>Total</th>
             <th>Status</th>
+            <th>Payment</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredEstimates.length === 0 ? (
             <tr>
-              <td colSpan="8" className="text-center">
+              <td colSpan="9" className="text-center">
                 No estimates found.
               </td>
             </tr>
           ) : (
-            filteredEstimates.map((estimate) => (
-              <tr key={estimate.id}>
-                <td>{estimate.id}</td>
-                <td>{estimate.vehicle?.vin || "No VIN"}</td>
+            filteredEstimates.map((item) => (
+              <tr key={item.estimate.id}>
+                <td>{item.estimate.id}</td>
+                <td>{item.estimate.vehicle?.vin || "No VIN"}</td>
                 <td>
-                  {estimate.owner ? `${estimate.owner.name} ${estimate.owner.lastName}` : "-"}
+                  {item.estimate.owner
+                    ? `${item.estimate.owner.name} ${item.estimate.owner.lastName}`
+                    : "-"}
                 </td>
-                <td>${estimate.subtotal?.toFixed(2)}</td>
-                <td>${estimate.tax?.toFixed(2)}</td>
-                <td>${estimate.total?.toFixed(2)}</td>
+                <td>${item.estimate.subtotal?.toFixed(2)}</td>
+                <td>${item.estimate.tax?.toFixed(2)}</td>
+                <td>${item.estimate.total?.toFixed(2)}</td>
                 <td>
-                  <Badge bg={getStatusVariant(estimate.authorizationStatus)}>
-                    {getStatusLabel(estimate.authorizationStatus)}
+                  <Badge bg={getStatusVariant(item.estimate.authorizationStatus)}>
+                    {getStatusLabel(item.estimate.authorizationStatus)}
                   </Badge>
                 </td>
                 <td>
-                  {/* "View PDF" button: opens the PDF modal without navigation */}
+                  <Badge bg={getPaymentBadgeVariant(item)}>
+                    {getPaymentStatus(item)}
+                  </Badge>
+                </td>
+                <td>
                   <Button
                     variant="info"
                     size="sm"
                     className="me-2"
-                    onClick={() => handleOpenPDF(estimate.id)}
+                    onClick={() => handleOpenPDF(item.estimate.id)}
                   >
                     View PDF
                   </Button>
-                  <Link to={`/estimate/edit/${estimate.id}`}>
+                  <Link to={`/estimate/edit/${item.estimate.id}`}>
                     <Button
                       variant="warning"
                       size="sm"
                       className="me-2"
-                      onClick={() => handleEdit(estimate)}
+                      onClick={() => handleEdit(item)}
                     >
                       Edit
                     </Button>
@@ -278,16 +337,16 @@ const EstimateList = () => {
                     variant="danger"
                     size="sm"
                     className="me-2"
-                    onClick={() => handleDelete(estimate.id)}
+                    onClick={() => handleDelete(item.estimate.id)}
                   >
                     Delete
                   </Button>
                   <Button
                     variant="success"
                     size="sm"
-                    onClick={() => handleGenerateAccount(estimate)}
+                    onClick={() => handleGenerateAccount(item)}
                   >
-                    {estimate.accountReceivable ? "Open Account" : "Generate Account"}
+                    {item.accountReceivable ? "Open Account" : "Generate Account"}
                   </Button>
                 </td>
               </tr>

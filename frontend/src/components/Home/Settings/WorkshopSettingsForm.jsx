@@ -332,7 +332,7 @@ const WorkshopSettingsForm = () => {
   }
 
   return (
-    <Container className="p-4 border rounded mt-4">
+    <Container fluid className="p-4 border rounded mt-4">
       <h3 className="mb-4">
         {isEditMode ? "Edit Workshop Settings" : "Create Workshop Settings"}
       </h3>

@@ -117,7 +117,7 @@ const SalesReportAllPreviewView = () => {
   if (!preview) return null;
 
   return (
-    <div className="sales-report-container">
+    <div className="container-fluid sales-report-container-fluid">
       {/* Title */}
       <h1 className="sales-report-title">Sales Report Preview</h1>
       {/* Date Filters Form */}

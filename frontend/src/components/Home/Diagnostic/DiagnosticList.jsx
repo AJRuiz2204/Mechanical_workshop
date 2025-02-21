@@ -149,7 +149,7 @@ const DiagnosticList = () => {
   // If the data is still loading, display a spinner
   if (loading) {
     return (
-      <Container className="p-4 diagnostic-list-container">
+      <Container fluid className="p-4 diagnostic-list-container">
         <div className="text-center py-5">
           <Spinner animation="border" />
         </div>
@@ -158,7 +158,7 @@ const DiagnosticList = () => {
   }
 
   return (
-    <Container className="p-4 border rounded diagnostic-list-container">
+    <Container fluid className="p-4 border rounded diagnostic-list-container">
       <h3>Diagnostic List</h3>
       {error && <Alert variant="danger">{error}</Alert>}
       {diagnostics.length === 0 ? (
@@ -184,7 +184,7 @@ const DiagnosticList = () => {
               const hasTechDiag = !!techDiagMap[diag.id];
               // Concatenate the first and last name of the workshop owner, if available
               const workshopName = diag.vehicle?.userWorkshop 
-                ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}` 
+                ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}`
                 : "N/A";
               return (
                 <tr key={diag.id}>

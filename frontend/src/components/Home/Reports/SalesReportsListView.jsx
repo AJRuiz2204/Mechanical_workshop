@@ -107,7 +107,7 @@ const SalesReportAllPreviewView = () => {
   if (!preview) return null;
 
   return (
-    <div className="sales-report-preview mt-5">
+    <div className="sales-report-preview container-fluid mt-5">
       <h2 className="sales-report-title">Sales Report Preview</h2>
       {/* Date Filters Form */}
       <Form className="sales-report-form mb-4">
@@ -224,7 +224,7 @@ const SalesReportsListView = () => {
   if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
-    <div className="sales-reports-list container py-5">
+    <div className="sales-reports-list container-fluid w-100 py-5">
       <h1 className="mb-4">Sales Reports History</h1>
       {/* Sales Report Preview Component */}
       <SalesReportAllPreviewView />

@@ -15,7 +15,7 @@ namespace Mechanical_workshop.Models
         public int EstimateId { get; set; }
 
         [Required]
-        public int CustomerId { get; set; } // Nueva relación directa con el cliente
+        public int CustomerId { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
