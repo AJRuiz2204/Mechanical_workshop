@@ -308,7 +308,7 @@ const EstimateList = () => {
         show={showPDFModal}
         onHide={() => setShowPDFModal(false)}
         size="xl"
-        dialogClassName="modal-90w"
+        dialogClassName="estimate-modal"
       >
         <Modal.Header closeButton>
           <Modal.Title>Estimate PDF</Modal.Title>

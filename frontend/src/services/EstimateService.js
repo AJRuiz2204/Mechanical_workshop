@@ -12,6 +12,27 @@ const TECH_DIAGNOSTIC_API_URL = "/api/TechnicianDiagnostics";
 const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) => `/api/TechnicianDiagnostics/${id}`;
 const GET_DIAGNOSTIC_BY_VEHICLE_ID_URL = (vehicleId) =>
   `/api/TechnicianDiagnostics/vehicle/${vehicleId}`;
+const VEHICLE_DIAGNOSTIC_API_URL = "/api/VehicleDiagnostic";
+
+/**
+ * Fetches all vehicles with their diagnostics and technician diagnostics.
+ * @async
+ * @function getVehicleDiagnostics
+ * @returns {Promise<Array>} An array of VehicleDiagnosticOwnerDto objects.
+ * @throws Will throw an error if the request fails.
+ */
+export const getVehicleDiagnostics = async () => {
+  try {
+    const response = await fetch(VEHICLE_DIAGNOSTIC_API_URL);
+    if (!response.ok) {
+      throw new Error("Error fetching the list of vehicle diagnostics.");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error in getVehicleDiagnostics:", error);
+    throw error;
+  }
+};
 
 /**
  * Fetches all estimates.

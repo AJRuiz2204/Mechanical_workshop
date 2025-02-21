@@ -62,9 +62,11 @@ const PaymentPDFModal = ({ show, onHide, customerPayments }) => {
         {loading ? (
           <div>Loading PDF...</div>
         ) : (
-          <PDFViewer width="100%" height="700">
-            <PaymentPDF pdfData={pdfData} />
-          </PDFViewer>
+          <div className="payment-modal-content">
+            <PDFViewer width="100%" height="700">
+              <PaymentPDF pdfData={pdfData} />
+            </PDFViewer>
+          </div>
         )}
       </Modal.Body>
     </Modal>

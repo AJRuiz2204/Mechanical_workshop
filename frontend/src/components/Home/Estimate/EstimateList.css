@@ -64,7 +64,7 @@
 /* Modal Styles                 */
 /* ---------------------------- */
 
-.modal-100w .modal-dialog {
+.estimate-modal .modal-dialog { /* Cambio de selector */
   max-width: 100% !important;
   width: 85%;
   height: 100%;

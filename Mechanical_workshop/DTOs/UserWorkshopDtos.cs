@@ -90,10 +90,8 @@ namespace Mechanical_workshop.Dtos
     public class TechnicianDiagnosticReadDto
     {
         public int Id { get; set; }
-
         public int DiagnosticId { get; set; }
         public string ReasonForVisit { get; set; } = string.Empty;
-
         public int Mileage { get; set; }
         public string ExtendedDiagnostic { get; set; } = string.Empty;
         public int VehicleId { get; set; }
