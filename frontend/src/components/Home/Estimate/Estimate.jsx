@@ -33,25 +33,37 @@ import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 import "./Estimate.css";
 
 /**
- * Estimate Component
- *
- * This component handles the creation and editing of estimates.
- * It allows you to:
- * - Select a vehicle (only those with an extended diagnostic and TechnicianDiagnostic).
- * - Add parts, labor, and fixed charges.
- * - Calculate totals (subtotal, taxes, total).
- * - Check tax and markup settings.
- *
- * @returns {JSX.Element} Rendered component.
+ * @component Estimate
+ * @description Main component for creating and editing estimates in the application.
+ * Features:
+ * - Vehicle selection with diagnostic information
+ * - Parts management with pricing and tax calculations
+ * - Labor charges with different rates
+ * - Flat fee additions
+ * - Total calculations including tax
+ * - PDF generation capability
+ */
+
+/**
+ * Main Estimate component handling estimate creation and editing
+ * @returns {JSX.Element} Rendered Estimate form
  */
 const Estimate = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
-  // Estados modificados
-  // Se eliminan los estados de vehicles y selectedVehicleId ya que usamos vehicleDiagnosticOptions
+  /**
+   * @state vehicleDiagnosticOptions 
+   * @description List of vehicles with their associated diagnostics
+   * @type {Array<{vehicle: Object, owner: Object, diagnostic: Object, technicianDiagnostics: Array}>}
+   */
   const [vehicleDiagnosticOptions, setVehicleDiagnosticOptions] = useState([]);
+  /**
+   * @state selectedOption
+   * @description Currently selected vehicle diagnostic option
+   * @type {Object|null}
+   */
   const [selectedOption, setSelectedOption] = useState(null);
   // Estos estados se asignan al seleccionar una opción
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -61,8 +73,41 @@ const Estimate = () => {
 
   // States for data, UI, and calculations
   const [isLoading, setIsLoading] = useState(true);
+  /**
+   * @state parts
+   * @description List of parts added to the estimate
+   * @type {Array<{
+   *   description: string,
+   *   partNumber: string,
+   *   quantity: number,
+   *   netPrice: number,
+   *   listPrice: number,
+   *   extendedPrice: number,
+   *   applyPartTax: boolean
+   * }>}
+   */
   const [parts, setParts] = useState([]);
+  /**
+   * @state labors
+   * @description List of labor charges added to the estimate
+   * @type {Array<{
+   *   description: string,
+   *   duration: number,
+   *   laborRate: number,
+   *   extendedPrice: number,
+   *   applyLaborTax: boolean
+   * }>}
+   */
   const [labors, setLabors] = useState([]);
+  /**
+   * @state flatFees
+   * @description List of flat fees added to the estimate
+   * @type {Array<{
+   *   description: string,
+   *   flatFeePrice: number,
+   *   extendedPrice: number
+   * }>}
+   */
   const [flatFees, setFlatFees] = useState([]);
   const [customerNote, setCustomerNote] = useState("");
   const [authorizationStatus, setAuthorizationStatus] = useState("Pending");
@@ -111,28 +156,29 @@ const Estimate = () => {
   const pdfContainerRef = useRef(null);
 
   /**
-   * useEffect: Initial data load when the component mounts.
-   *
-   * - Retrieves the workshop settings.
-   * - Retrieves the tax and markup settings.
-   * - Retrieves the list of vehicles with diagnostics using the new endpoint,
-   *   and filters only those diagnostics that have at least one TechnicianDiagnostic
-   *   with a non-empty extendedDiagnostic.
-   * - If in edit mode, loads the selected estimate information.
+   * @effect
+   * @description Loads initial data when component mounts:
+   * - Workshop settings
+   * - Tax and markup settings
+   * - Vehicle diagnostics
+   * - Existing estimate data (in edit mode)
    */
   useEffect(() => {
     const loadData = async () => {
       try {
         // Get workshop settings
         const shopData = await getWorkshopSettings();
+        console.log("Payload workshop settings:", shopData);
         setWorkshopSettings(shopData);
 
         // Get tax and markup settings
         const cfg = await getSettingsById(1);
+        console.log("Payload tax & markup settings:", cfg);
         setSettings(cfg);
 
         // Usar el endpoint que trae vehículos con sus diagnósticos
         const vDiagnostics = await getVehicleDiagnostics();
+        console.log("Payload vehicle diagnostics:", vDiagnostics);
         const options = [];
         vDiagnostics.forEach((vd) => {
           if (vd.diagnostics && vd.diagnostics.length > 0) {
@@ -158,6 +204,7 @@ const Estimate = () => {
 
         if (isEditMode) {
           const estimateData = await getEstimateById(id);
+          console.log("Payload estimate (edit mode):", estimateData);
           setSelectedVehicle(estimateData.vehicle);
           setOwner(estimateData.owner);
           setDiagnostic(estimateData.technicianDiagnostic);
@@ -168,6 +215,9 @@ const Estimate = () => {
           setSubtotal(estimateData.subtotal || 0);
           setTax(estimateData.tax || 0);
           setTotal(estimateData.total || 0);
+          setParts(estimateData.parts || []);
+          setLabors(estimateData.labors || []);
+          setFlatFees(estimateData.flatFees || []);
         }
       } catch (err) {
         setError("Error loading data: " + err.message);
@@ -180,8 +230,12 @@ const Estimate = () => {
   }, [isEditMode, id]);
 
   /**
-   * useEffect: Recalculates totals (subtotal, taxes, and total)
-   * whenever parts, labors, flat fees, or settings change.
+   * @effect
+   * @description Recalculates totals whenever parts, labors, or flat fees change
+   * Updates:
+   * - Subtotal
+   * - Tax amount
+   * - Total amount
    */
   useEffect(() => {
     if (!settings) return;
@@ -224,8 +278,9 @@ const Estimate = () => {
   }, [parts, labors, flatFees, settings]);
 
   /**
-   * handleOptionChange: Maneja la selección de opción del dropdown.
-   * Actualiza los estados de selectedVehicle, owner, diagnostic y extendedDiagnostic.
+   * @function handleOptionChange
+   * @description Handles selection of a vehicle diagnostic option
+   * @param {Event} e - Change event from select element
    */
   const handleOptionChange = (e) => {
     const optionIndex = e.target.value;
@@ -337,7 +392,9 @@ const Estimate = () => {
   };
 
   /**
-   * addPart: Valida y agrega una nueva parte al estimate.
+   * @function addPart
+   * @description Validates and adds a new part to the estimate
+   * @async
    */
   const addPart = async () => {
     if (isAddingPart) return;
@@ -385,7 +442,8 @@ const Estimate = () => {
   };
 
   /**
-   * addLabor: Valida y agrega una nueva labor al estimate.
+   * @function addLabor
+   * @description Validates and adds a new labor charge to the estimate
    */
   const addLabor = () => {
     if (!newLabor.description || newLabor.duration === "" || parseFloat(newLabor.duration) <= 0) {
@@ -408,7 +466,8 @@ const Estimate = () => {
   };
 
   /**
-   * addFlatFee: Valida y agrega un nuevo flat fee al estimate.
+   * @function addFlatFee
+   * @description Validates and adds a new flat fee to the estimate
    */
   const addFlatFee = () => {
     if (!newFlatFee.description || newFlatFee.flatFeePrice === "" || parseFloat(newFlatFee.flatFeePrice) <= 0) {
@@ -423,10 +482,10 @@ const Estimate = () => {
   };
 
   /**
-   * removeItem: Elimina un item (parte, labor o flat fee) del estimate basado en su tipo.
-   *
-   * @param {string} type - "PART", "LABOR" o "FLATFEE".
-   * @param {number} idx - Índice del item en su array.
+   * @function removeItem
+   * @description Removes an item from parts, labors, or flat fees
+   * @param {string} type - Type of item ("PART", "LABOR", or "FLATFEE")
+   * @param {number} idx - Index of item in its respective array
    */
   const removeItem = (type, idx) => {
     if (type === "PART") {
@@ -451,10 +510,10 @@ const Estimate = () => {
   };
 
   /**
-   * handleSave: Construye el DTO con la información del estimate y llama al servicio
-   * para crear o actualizar el estimate según corresponda.
-   *
-   * @param {Event} e - Evento del formulario.
+   * @function handleSave
+   * @description Validates and saves the estimate
+   * @param {Event} e - Form submission event
+   * @async
    */
   const handleSave = async (e) => {
     e.preventDefault();
@@ -526,11 +585,13 @@ const Estimate = () => {
       setSaving(true);
       if (!isEditMode) {
         const created = await createEstimate(dto);
+        console.log("Payload createEstimate:", created);
         setSuccess(`Estimate created successfully with ID: ${created.ID}`);
         navigate("/estimates");
       } else {
         const updateDto = { ID: parseInt(id, 10), ...dto };
         const updated = await updateEstimate(id, updateDto);
+        console.log("Payload updateEstimate:", updated);
         setSuccess(`Estimate with ID ${updated.ID} updated successfully.`);
         navigate("/estimates");
       }
@@ -547,7 +608,18 @@ const Estimate = () => {
   };
 
   /**
-   * combinedItems: Combina parts, labors y flatFees en un solo array (útil para generación de PDF, etc.)
+   * @computed combinedItems
+   * @description Combines parts, labors, and flat fees into a single array
+   * @type {Array<{
+   *   type: string,
+   *   description: string,
+   *   quantity: number|string,
+   *   price: number,
+   *   listPrice: string|number,
+   *   extendedPrice: number,
+   *   taxable: boolean,
+   *   partNumber: string
+   * }>}
    */
   const combinedItems = useMemo(() => {
     return [
@@ -1036,11 +1108,11 @@ const Estimate = () => {
                 onChange={(e) => {
                   const qty = e.target.value;
                   const parsedQty = qty === "" ? "" : parseInt(qty, 10);
-                  const net = newPart.netPrice === "" ? 0 : parseFloat(newPart.netPrice);
+                  const list = newPart.listPrice === "" ? 0 : parseFloat(newPart.listPrice);
                   setNewPart({
                     ...newPart,
                     quantity: qty,
-                    extendedPrice: qty === "" ? 0 : net * parsedQty,
+                    extendedPrice: qty === "" ? 0 : list * parsedQty,
                   });
                 }}
                 placeholder="Quantity"
@@ -1057,12 +1129,9 @@ const Estimate = () => {
                   value={newPart.netPrice}
                   onChange={(e) => {
                     const price = e.target.value;
-                    const parsedPrice = price === "" ? "" : parseFloat(price);
-                    const qty = newPart.quantity === "" ? 0 : parseInt(newPart.quantity, 10);
                     setNewPart({
                       ...newPart,
                       netPrice: price,
-                      extendedPrice: price === "" ? 0 : parsedPrice * qty,
                     });
                   }}
                   placeholder="Net Price"
@@ -1082,10 +1151,10 @@ const Estimate = () => {
                     const price = e.target.value;
                     const parsedPrice = price === "" ? "" : parseFloat(price);
                     const qty = newPart.quantity === "" ? 0 : parseInt(newPart.quantity, 10);
-                    // Se sigue usando extendedPrice calculado con netPrice, por lo que aquí solo guardamos listPrice
                     setNewPart({
                       ...newPart,
                       listPrice: price,
+                      extendedPrice: newPart.quantity === "" ? 0 : parsedPrice * qty,
                     });
                   }}
                   placeholder="List Price"

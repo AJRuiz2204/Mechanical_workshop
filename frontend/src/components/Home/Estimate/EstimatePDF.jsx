@@ -380,7 +380,6 @@ const EstimatePDF = ({ pdfData }) => {
             >
               QTY
             </Text>
-            {/* Se eliminó la columna de net /rate */}
             <Text
               style={[
                 styles.tableCol,
@@ -388,7 +387,7 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              list price
+              Price
             </Text>
             <Text
               style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}

@@ -21,27 +21,33 @@ const formatCurrency = (amount) => `$ ${Number(amount).toFixed(2)}`;
 // Define PDF styles with very small fonts for an A4 document
 const styles = StyleSheet.create({
   page: {
-    padding: 35,
+    padding: 15,
     fontFamily: "Helvetica",
-    fontSize: 6, // Overall font size reduced to 6
+    fontSize: 6,
     backgroundColor: "#ffffff",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 40,
-    paddingBottom: 15,
+    marginBottom: 10,
+    paddingBottom: 5,
     borderBottom: "1px solid #000",
   },
   logoSection: {
-    width: 200,
+    width: 150,
+  },
+  companyName: {
+    fontSize: 18,
+    marginBottom: 3,
+    color: "#2596be",
+    textAlign: "right",
   },
   companyInfo: {
     flex: 1,
     textAlign: "right",
   },
   companyText: {
-    fontSize: 6,
+    fontSize: 8,
     marginBottom: 3,
     color: "#000000",
   },
@@ -58,13 +64,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 6,
-    marginBottom: 8,
+    fontSize: 8,
+    marginBottom: 4,
     fontWeight: "bold",
   },
   infoText: {
-    fontSize: 6,
-    marginBottom: 3,
+    fontSize: 8,
+    marginBottom: 8,
   },
   // Service description with border-bottom; displays extendedDiagnostic if available
   serviceDescription: {
@@ -83,65 +89,42 @@ const styles = StyleSheet.create({
   },
   // Table styles for combined items (Parts, Labors, FlatFees)
   table: {
-    marginTop: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
+    marginTop: 10,
+    marginBottom: 10,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f5f5f5",
-    borderBottomWidth: 1,
-    borderBottomColor: "#000000",
     paddingBottom: 5,
     marginBottom: 8,
   },
   tableRow: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
     paddingVertical: 4,
     alignItems: "center",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#000",
   },
-  tableHeaderText: {
-    fontSize: 5, // Even smaller font size for table headers
-    fontWeight: "bold",
-  },
-  tableText: {
-    fontSize: 6,
-  },
-  // Define individual column styles for the items table
   colType: {
     width: "8%",
     textAlign: "left",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
     paddingLeft: 2,
   },
   colDesc: {
     width: "52%",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
     paddingLeft: 2,
   },
   colPart: {
     width: "12%",
     textAlign: "left",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
     paddingLeft: 2,
   },
   colQuantityHours: {
     width: "12%",
     textAlign: "center",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
   },
   colListPrice: {
     width: "20%",
     textAlign: "right",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
     paddingRight: 2,
   },
   colExtendedPrice: {
@@ -149,7 +132,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
     paddingRight: 2,
   },
-  // Payment History and Totals section arranged side-by-side
+
   historyAndTotals: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -170,19 +153,17 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   colDate: {
-    width: "30%",
+    width: "50%",
+    fontSize: 6,
   },
   colAmount: {
-    width: "70%",
+    width: "50%",
+    fontSize: 6,
     textAlign: "right",
   },
-  colMethod: {
-    width: "30%",
-  },
-  // Totals section style
   totalsSection: {
     marginLeft: "auto",
-    width: "40%",
+    width: "45%",
     marginTop: 20,
     alignItems: "flex-end",
   },
@@ -202,13 +183,14 @@ const styles = StyleSheet.create({
     width: 80,
     textAlign: "right",
   },
-  // Signature section with top border
-  signatureSection: {
-    marginTop: 40,
-    borderTopWidth: 1,
-    borderTopColor: "#000",
-    paddingTop: 20,
+  separator: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    alignSelf: "flex-end",
+    marginVertical: 4,
+    width: 120,
   },
+
   paymentOptions: {
     flexDirection: "row",
     justifyContent: "flex-start",
@@ -225,7 +207,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#000000",
     paddingTop: 10,
   },
-  boldText: {
+  boldContentText: {
     fontWeight: "bold",
   },
 });
@@ -284,26 +266,28 @@ const PaymentPDF = ({ pdfData }) => {
             <View style={styles.logoSection}>
               <Image src={logo} />
             </View>
-            <View style={styles.companyInfo}>
-              <Text style={styles.companyText}>
-                {usedWorkshopData.workshopName || "Workshop Name"}
-              </Text>
-              <Text style={styles.companyText}>
-                {usedWorkshopData.address || "Workshop Address"}
-              </Text>
-              <Text style={styles.companyText}>
-                {usedWorkshopData.primaryPhone}
-                {usedWorkshopData.secondaryPhone
-                  ? `, ${usedWorkshopData.secondaryPhone}`
-                  : ""}
-                {usedWorkshopData.fax ? ` Fax ${usedWorkshopData.fax}` : ""}
-              </Text>
-              <Text style={styles.companyText}>
-                {usedWorkshopData.email || ""}
-              </Text>
-              <Text style={styles.companyText}>
-                {usedWorkshopData.websiteUrl || ""}
-              </Text>
+            <View>
+              <View style={styles.companyInfo}>
+                <Text style={styles.companyName}>
+                  {usedWorkshopData.workshopName || "Workshop Name"}
+                </Text>
+                <Text style={styles.companyText}>
+                  {usedWorkshopData.address || "Workshop Address"}
+                </Text>
+                <Text style={styles.companyText}>
+                  {usedWorkshopData.primaryPhone}
+                  {usedWorkshopData.secondaryPhone
+                    ? `, ${usedWorkshopData.secondaryPhone}`
+                    : ""}
+                  {usedWorkshopData.fax ? ` Fax ${usedWorkshopData.fax}` : ""}
+                </Text>
+                <Text style={styles.companyText}>
+                  {usedWorkshopData.email || ""}
+                </Text>
+                <Text style={styles.companyText}>
+                  {usedWorkshopData.websiteUrl || ""}
+                </Text>
+              </View>
             </View>
           </View>
         ) : (
@@ -319,158 +303,102 @@ const PaymentPDF = ({ pdfData }) => {
         )}
 
         {/* Customer and Vehicle Info */}
-        <View style={styles.billSection}>
-          <View style={styles.billTo}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-evenly",
+            marginBottom: 10,
+            borderBottom: "1px solid #000",
+          }}
+        >
+          {/* Columna 1: Bill To */}
+          <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>Bill To:</Text>
             <Text style={styles.infoText}>{customer.fullName || "N/A"}</Text>
             <Text style={styles.infoText}>
               {customer.primaryPhone || "N/A"}
             </Text>
           </View>
-          <View style={styles.vehicleInfo}>
-            <Text style={styles.sectionTitle}>Vehicle Information:</Text>
-            <Text style={styles.infoText}>
-              {vehicle.make} {vehicle.model}{" "}
-              {vehicle.year ? `(${vehicle.year})` : ""}
+          {/* Columna 2: Información del vehículo (Make, Model, Year) */}
+          <View style={{ flex: 1, padding: 5 }}>
+            <Text style={styles.sectionTitle}>Vehicle</Text>
+            <Text style={styles.infoText}>Make: {vehicle.make || "N/A"}</Text>
+            <Text style={styles.infoText}>Model: {vehicle.model || "N/A"}</Text>
+            <Text style={styles.infoText}>Year: {vehicle.year || "N/A"}</Text>
+          </View>
+          {/* Columna 3: VIN, Engine, Mileage con encabezado Invoice # */}
+          <View style={{ flex: 1, padding: 5 }}>
+            <Text style={styles.sectionTitle}>
+              Invoice #{estimate.id || "N/A"}
             </Text>
             <Text style={styles.infoText}>VIN: {vehicle.vin || "N/A"}</Text>
-            {estimate.technicianDiagnostic &&
-              estimate.technicianDiagnostic.mileage && (
-                <Text style={styles.infoText}>
-                  Mileage: {estimate.technicianDiagnostic.mileage}
-                </Text>
-              )}
+            <Text style={styles.infoText}>
+              Engine: {vehicle.engine || estimate.vehicle?.engine || "N/A"}
+            </Text>
+            <Text style={styles.infoText}>
+              Mileage: {estimate.technicianDiagnostic?.mileage || "N/A"}
+            </Text>
+          </View>
+          {/* Columna 4: Fecha */}
+          <View style={{ flex: 1, padding: 5 }}>
+            <Text style={styles.sectionTitle}>Date</Text>
+            <Text style={styles.infoText}>
+              {formatDate(payment.paymentDate)}
+            </Text>
           </View>
         </View>
-
-        {/* Invoice Header */}
-        <View style={styles.invoiceHeader}>
-          <Text>Invoice #{estimate.id || "N/A"}</Text>
-          <Text>Date: {formatDate(payment.paymentDate)}</Text>
-        </View>
-
         {/* Service Description */}
         <View style={styles.serviceDescription}>
           <Text>
             DESCRIPTION OF LABOR OR SERVICE:{" "}
-            {estimate.technicianDiagnostic
-              ? estimate.technicianDiagnostic.extendedDiagnostic
-              : estimate.customerNote || ""}
+            <Text style={styles.boldContentText}>
+              {estimate.technicianDiagnostic
+                ? estimate.technicianDiagnostic.extendedDiagnostic
+                : estimate.customerNote || ""}
+            </Text>
           </Text>
         </View>
-
         {/* Items Table: Parts, Labors, FlatFees */}
-        {combinedItems.length > 0 && (
-          <View style={styles.table}>
-            <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colType,
-                  styles.tableHeaderText,
-                ]}
-              >
-                Item
+        {combinedItems.length > 0 ? (
+          combinedItems.map((item, idx) => (
+            <View key={idx} style={styles.tableRow}>
+              <Text style={[styles.colType, styles.tableText]}>
+                {item.type || "N/A"}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colDesc,
-                  styles.tableHeaderText,
-                ]}
-              >
-                Description
+              <Text style={[styles.colDesc, styles.tableText]}>
+                {item.description || ""}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colPart,
-                  styles.tableHeaderText,
-                ]}
-              >
-                Part#
+              <Text style={[styles.colPart, styles.tableText]}>
+                {item.type && item.type.toUpperCase().includes("PART")
+                  ? item.partNumber
+                  : "-"}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colQuantityHours,
-                  styles.tableHeaderText,
-                ]}
-              >
-                QTY
+              <Text style={[styles.colQuantityHours, styles.tableText]}>
+                {item.type && item.type.toUpperCase().includes("LABOR")
+                  ? `${item.quantity} hrs`
+                  : item.quantity}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colListPrice,
-                  styles.tableHeaderText,
-                ]}
-              >
-                List Price
+              <Text style={[styles.colListPrice, styles.tableText]}>
+                {formatCurrency(item.listPrice)}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colExtendedPrice,
-                  styles.tableHeaderText,
-                ]}
-              >
-                Extended
+              <Text style={[styles.colExtendedPrice, styles.tableText]}>
+                {formatCurrency(item.extendedPrice)}
               </Text>
             </View>
-            {combinedItems.map((item, idx) => (
-              <View key={idx} style={styles.tableRow}>
-                <Text
-                  style={[styles.tableCol, styles.colType, styles.tableText]}
-                >
-                  {item.type || "N/A"}
-                </Text>
-                <Text
-                  style={[styles.tableCol, styles.colDesc, styles.tableText]}
-                >
-                  {item.description || ""}
-                </Text>
-                <Text
-                  style={[styles.tableCol, styles.colPart, styles.tableText]}
-                >
-                  {item.type && item.type.toUpperCase().includes("PART")
-                    ? item.partNumber
-                    : "-"}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCol,
-                    styles.colQuantityHours,
-                    styles.tableText,
-                  ]}
-                >
-                  {item.type && item.type.toUpperCase().includes("LABOR")
-                    ? `${item.quantity} hrs`
-                    : item.quantity}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCol,
-                    styles.colListPrice,
-                    styles.tableText,
-                  ]}
-                >
-                  {formatCurrency(item.listPrice)}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCol,
-                    styles.colExtendedPrice,
-                    styles.tableText,
-                  ]}
-                >
-                  {formatCurrency(item.extendedPrice)}
-                </Text>
-              </View>
-            ))}
+          ))
+        ) : (
+          // Renderiza una fila vacía si no hay items
+          <View style={styles.tableRow}>
+            <Text style={[styles.colType, styles.tableText]}> </Text>
+            <Text style={[styles.colDesc, styles.tableText]}> </Text>
+            <Text style={[styles.colPart, styles.tableText]}> </Text>
+            <Text style={[styles.colQuantityHours, styles.tableText]}> </Text>
+            <Text style={[styles.colListPrice, styles.tableText]}> </Text>
+            <Text style={[styles.colExtendedPrice, styles.tableText]}> </Text>
           </View>
         )}
 
+        {/* Payment History and Totals Section */}
         {/* Payment History and Totals Section */}
         <View style={styles.historyAndTotals}>
           {/* Payment History Column */}
@@ -479,48 +407,40 @@ const PaymentPDF = ({ pdfData }) => {
             <View style={styles.historyHeader}>
               <Text style={styles.colDate}>Date</Text>
               <Text style={styles.colAmount}>Amount</Text>
-              <Text style={styles.colMethod}>Method</Text>
             </View>
             {payments.map((p, index) => (
               <View key={index} style={styles.historyRow}>
                 <Text style={styles.colDate}>{formatDate(p.paymentDate)}</Text>
                 <Text style={styles.colAmount}>{formatCurrency(p.amount)}</Text>
-                <Text style={styles.colMethod}>{p.method}</Text>
               </View>
             ))}
           </View>
           {/* Totals Column */}
           <View style={styles.totalsSection}>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Parts:</Text>
+              <Text style={styles.totalLabel}>Part :</Text>
               <Text style={styles.totalAmount}>
                 {formatCurrency(calculatePartsTotal(estimate.parts))}
               </Text>
             </View>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Labor:</Text>
+              <Text style={styles.totalLabel}>Labor :</Text>
               <Text style={styles.totalAmount}>
                 {formatCurrency(calculateLaborTotal(estimate.labors))}
               </Text>
             </View>
+            <View style={styles.separator} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tax:</Text>
               <Text style={styles.totalAmount}>
                 {formatCurrency(estimate.tax)}
               </Text>
             </View>
+            <View style={styles.separator} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount:</Text>
               <Text style={styles.totalAmount}>
                 {formatCurrency(estimate.total)}
-              </Text>
-            </View>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Deposit:</Text>
-              <Text style={styles.totalAmount}>
-                {formatCurrency(
-                  payment.initialBalance - payment.remainingBalance
-                )}
               </Text>
             </View>
             <View style={styles.totalRow}>
@@ -533,7 +453,7 @@ const PaymentPDF = ({ pdfData }) => {
         </View>
 
         {/* Signature Section */}
-        <View style={styles.signatureSection}>
+        <View>
           <Text>Signature:</Text>
           <Text style={{ marginTop: 20 }}>
             X _________________________________
@@ -546,7 +466,9 @@ const PaymentPDF = ({ pdfData }) => {
         {/* Disclaimer Section */}
         <View style={styles.disclaimer}>
           <Text>
-            {"Not responsible for damage caused by theft, fire or acts of nature. I authorize the above repairs, along with any necessary materials. I authorize you and your employees to operate my vehicle for the purpose of testing, inspection, and delivery at my risk. An express mechanic's lien is hereby acknowledged on the above vehicle to secure the amount of the repairs thereto. If canceled repairs prior to their completion for any reason, a tear-down and reassembly fee of $____ will be applied."}
+            {
+              "Not responsible for damage caused by theft, fire or acts of nature. I authorize the above repairs, along with any necessary materials. I authorize you and your employees to operate my vehicle for the purpose of testing, inspection, and delivery at my risk. An express mechanic's lien is hereby acknowledged on the above vehicle to secure the amount of the repairs thereto. If canceled repairs prior to their completion for any reason, a tear-down and reassembly fee of $____ will be applied."
+            }
           </Text>
         </View>
       </Page>

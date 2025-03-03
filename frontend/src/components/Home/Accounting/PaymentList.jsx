@@ -1,87 +1,77 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
-import { Table, Alert, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import { getAllPayments } from "../../../services/accountReceivableService";
-import "./styles/PaymentList.css";
-import PaymentPDFModal from "./PaymentPDFModal";
+import React, { useState, useEffect } from "react"; // Importing React and its hooks
+import { Table, Alert, Button } from "react-bootstrap"; // Importing components from react-bootstrap
+import { Link } from "react-router-dom"; // Importing Link for routing (unused in this file)
+import { getAllPayments } from "../../../services/accountReceivableService"; // Service to fetch payments
+import "./styles/PaymentList.css"; // Importing CSS styles
+import PaymentPDFModal from "./PaymentPDFModal"; // Modal component to display/download PDF
 
 /**
  * PaymentList Component
  *
- * This component displays a list of payments grouped by customer and provides:
+ * This component displays a list of payments grouped by account (using the estimate ID).
+ * It provides:
  * - A search field to filter by customer or vehicle.
- * - A table showing payment summary per customer.
- * - An action button ("Download PDF") for each customer that opens a modal
- *   to display a PDF with payment details.
- *
- * @returns {JSX.Element} The PaymentList component.
+ * - A table summarizing the payments for each account.
+ * - A "Download PDF" button for each account that opens a modal showing PDF details.
  */
 const PaymentList = () => {
-  // State to store the list of payments
-  const [payments, setPayments] = useState([]);
-  // Loading and error states for fetching payments
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  // State for the search term used to filter payments
-  const [searchTerm, setSearchTerm] = useState("");
-  // State to control the PaymentPDF modal visibility and store the selected customer payments
-  const [showPaymentPDFModal, setShowPaymentPDFModal] = useState(false);
-  const [selectedCustomerPayments, setSelectedCustomerPayments] =
-    useState(null);
+  // Setting state for payment data, loading status, error messages, search term,
+  // modal visibility, and selected account payments.
+  const [payments, setPayments] = useState([]); // Holds the list of payments
+  const [loading, setLoading] = useState(true); // Indicates loading state
+  const [error, setError] = useState(null); // Holds error message if data fetch fails
+  const [searchTerm, setSearchTerm] = useState(""); // Stores the current search query
+  const [showPaymentPDFModal, setShowPaymentPDFModal] = useState(false); // Controls PDF modal visibility
+  const [selectedAccountPayments, setSelectedAccountPayments] = useState(null); // Stores payments for the selected account
 
-  /**
-   * useEffect Hook:
-   * Fetches all payments when the component mounts.
-   */
+  // useEffect hook to fetch payments when the component mounts.
   useEffect(() => {
     fetchPayments();
-  }, []);
+  }, []); // Empty dependency array means this runs once after first render
 
   /**
    * fetchPayments:
-   * Fetches all payments from the server.
+   * Fetches all payment records from the server.
    */
   const fetchPayments = async () => {
     try {
       const data = await getAllPayments();
-      console.log("Payments loaded:", data);
-      setPayments(data);
+      console.log("Payments loaded:", data); // Log fetched payments
+      setPayments(data); // Save payments data into state
     } catch (err) {
-      console.error("Error fetching payments:", err);
-      setError(err.message || "Error fetching payments");
+      console.error("Error fetching payments:", err); // Log error if fetching fails
+      setError(err.message || "Error fetching payments"); // Set error message in state
     } finally {
-      setLoading(false);
+      setLoading(false); // End loading state regardless of outcome
     }
   };
 
-  /**
-   * Groups payments by customer ID.
-   */
+  // Group payments by the account (using the estimate.id property).
   const groupedPayments = payments.reduce((groups, payment) => {
-    const customerId = payment.customer ? payment.customer.id : "unknown";
-    if (!groups[customerId]) {
-      groups[customerId] = [];
+    // Determine account ID or use 'unknown' if not available.
+    const accountId = payment.estimate?.id || "unknown";
+    if (!groups[accountId]) {
+      groups[accountId] = [];
     }
-    groups[customerId].push(payment);
+    groups[accountId].push(payment);
     return groups;
   }, {});
 
-  /**
-   * Filters the grouped payments based on the search term.
-   */
+  // Filter grouped payments based on search term matching customer name or vehicle info.
   const filteredGroupedPayments = Object.keys(groupedPayments).reduce(
-    (acc, customerId) => {
-      const clientPayments = groupedPayments[customerId];
-      const clientName = clientPayments[0].customer?.fullName || "";
-      const vehicleInfo = clientPayments[0].vehicle
-        ? `${clientPayments[0].vehicle.make} ${clientPayments[0].vehicle.model} (${clientPayments[0].vehicle.year}) - ${clientPayments[0].vehicle.vin}`
+    (acc, accountId) => {
+      const accountPayments = groupedPayments[accountId];
+      const clientName = accountPayments[0].customer?.fullName || "";
+      const vehicleInfo = accountPayments[0].vehicle
+        ? `${accountPayments[0].vehicle.make} ${accountPayments[0].vehicle.model} (${accountPayments[0].vehicle.year}) - ${accountPayments[0].vehicle.vin}`
         : "";
+      // Check if client name or vehicle info includes the search term (case insensitive)
       if (
         clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicleInfo.toLowerCase().includes(searchTerm.toLowerCase())
       ) {
-        acc[customerId] = clientPayments;
+        acc[accountId] = accountPayments;
       }
       return acc;
     },
@@ -90,37 +80,37 @@ const PaymentList = () => {
 
   /**
    * handleOpenPaymentPDF:
-   * Opens the PaymentPDF modal for the selected customer by setting the customer payments.
+   * Opens the PDF modal and sets the payment data for the selected account.
    *
-   * @param {string} customerId - The customer's ID.
-   * @param {Array} clientPayments - The array of payments for that customer.
+   * @param {string} accountId - The unique account ID (estimate.id).
+   * @param {Array} accountPayments - The list of payments for that account.
    */
-  const handleOpenPaymentPDF = (customerId, clientPayments) => {
-    setSelectedCustomerPayments(clientPayments);
-    setShowPaymentPDFModal(true);
+  const handleOpenPaymentPDF = (accountId, accountPayments) => {
+    setSelectedAccountPayments(accountPayments); // Store selected account's payments
+    setShowPaymentPDFModal(true); // Open the PDF modal
   };
 
-  // Display loading message while data is being fetched
+  // Render a loading state if data is still being fetched
   if (loading) {
-    return <div>Loading payments...</div>;
+    return <div>Loading payments...</div>; // Display loading indicator
   }
 
-  // Display error message if there is an error
+  // Render an error message if fetching failed
   if (error) {
-    return <Alert variant="danger">{error}</Alert>;
+    return <Alert variant="danger">{error}</Alert>; // Display error alert
   }
 
   return (
     <div className="container-fluid w-100 py-5">
-      <h1 className="mb-4">Payment History by Customer</h1>
+      <h1 className="mb-4">Payment History by Account</h1>
 
-      {/* Search field */}
+      {/* Search field to filter payments by customer or vehicle */}
       <div className="mb-3">
         <input
           type="text"
           placeholder="Search by customer or vehicle"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)} // Update search term on input change
           className="form-control"
         />
       </div>
@@ -139,42 +129,44 @@ const PaymentList = () => {
         </thead>
         <tbody>
           {Object.keys(filteredGroupedPayments).length === 0 ? (
+            // If no payments match the filter, show a 'No payments found' row.
             <tr>
               <td colSpan="7" className="text-center">
                 No payments found.
               </td>
             </tr>
           ) : (
-            Object.keys(filteredGroupedPayments).map((customerId) => {
-              const clientPayments = filteredGroupedPayments[customerId];
-              const totalPaid = clientPayments.reduce(
+            Object.keys(filteredGroupedPayments).map((accountId) => {
+              const accountPayments = filteredGroupedPayments[accountId];
+              // Calculate the total amount paid for the current account.
+              const totalPaid = accountPayments.reduce(
                 (sum, payment) => sum + Number(payment.amount),
                 0
               );
-              const remainingBalance = clientPayments[0].remainingBalance || 0;
-              const initialBalance = clientPayments[0].initialBalance || 0;
+              // Retrieve balance and customer/vehicle info from the first payment in the group.
+              const remainingBalance = accountPayments[0].remainingBalance || 0;
+              const initialBalance = accountPayments[0].initialBalance || 0;
               const clientName =
-                clientPayments[0].customer?.fullName || "No customer";
-              const vehicleInfo = clientPayments[0].vehicle
-                ? `${clientPayments[0].vehicle.make} ${clientPayments[0].vehicle.model} (${clientPayments[0].vehicle.year}) - ${clientPayments[0].vehicle.vin}`
+                accountPayments[0].customer?.fullName || "No customer";
+              const vehicleInfo = accountPayments[0].vehicle
+                ? `${accountPayments[0].vehicle.make} ${accountPayments[0].vehicle.model} (${accountPayments[0].vehicle.year}) - ${accountPayments[0].vehicle.vin}`
                 : "No vehicle";
 
               return (
-                <tr key={customerId}>
+                <tr key={accountId}>
                   <td>{clientName}</td>
                   <td>{vehicleInfo}</td>
                   <td>${Number(initialBalance).toFixed(2)}</td>
                   <td>${totalPaid.toFixed(2)}</td>
                   <td>${Number(remainingBalance).toFixed(2)}</td>
-                  <td>{clientPayments.length}</td>
+                  <td>{accountPayments.length}</td>
                   <td>
-                    {/* "Download PDF" button: opens the PDF modal */}
                     <Button
                       variant="primary"
                       size="sm"
                       onClick={() =>
-                        handleOpenPaymentPDF(customerId, clientPayments)
-                      }
+                        handleOpenPaymentPDF(accountId, accountPayments)
+                      } // Open PDF modal for the selected account
                     >
                       Download PDF
                     </Button>
@@ -186,12 +178,12 @@ const PaymentList = () => {
         </tbody>
       </Table>
 
-      {/* PaymentPDF Modal */}
-      {selectedCustomerPayments && (
+      {/* Conditionally render the Payment PDF Modal if payments are selected */}
+      {selectedAccountPayments && (
         <PaymentPDFModal
-          show={showPaymentPDFModal}
-          onHide={() => setShowPaymentPDFModal(false)}
-          customerPayments={selectedCustomerPayments}
+          show={showPaymentPDFModal} // Controls modal visibility
+          onHide={() => setShowPaymentPDFModal(false)} // Function to hide the modal
+          customerPayments={selectedAccountPayments} // Payment data for the selected account
         />
       )}
     </div>
