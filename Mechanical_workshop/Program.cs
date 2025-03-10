@@ -72,6 +72,7 @@ builder.Services.AddAutoMapper(typeof(LaborTaxMarkupSettingsProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(TechnicianProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(AccountingProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(EstimateMappingProfile).Assembly);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();

@@ -7,6 +7,7 @@ import {
   Alert,
   Spinner,
   Badge,
+  Form,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getDiagnostics, deleteDiagnostic } from "../../../services/DiagnosticService";
@@ -45,6 +46,8 @@ const DiagnosticList = () => {
   const [error, setError] = useState("");
   // Mapping of diagnostic IDs to their associated Technician Diagnostic IDs (if any).
   const [techDiagMap, setTechDiagMap] = useState({});
+  // Agregado estado para el input de búsqueda
+  const [searchQuery, setSearchQuery] = useState("");
 
   /**
    * fetchData - Fetches diagnostics data and maps Technician Diagnostic IDs to each diagnostic.
@@ -146,6 +149,21 @@ const DiagnosticList = () => {
     }
   };
 
+  // Calcular diagnósticos filtrados según el valor de búsqueda
+  const filteredDiagnostics = diagnostics.filter((diag) => {
+    const workshopName = diag.vehicle?.userWorkshop
+      ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}`
+      : "";
+    const vin = diag.vehicle?.vin || "";
+    const reason = diag.reasonForVisit || "";
+    return (
+      diag.id.toString().includes(searchQuery) ||
+      vin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      workshopName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
   // If the data is still loading, display a spinner
   if (loading) {
     return (
@@ -159,9 +177,24 @@ const DiagnosticList = () => {
 
   return (
     <Container fluid className="p-4 border rounded diagnostic-list-container">
-      <h3>Diagnostic List</h3>
+      {/* Barra de título y exportación */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3>Diagnostic List</h3>
+        <Button variant="outline-primary" onClick={() => navigate('/VehicleXlsx')}>
+          Ver Excel
+        </Button>
+      </div>
+      {/* Nueva barra de búsqueda */}
+      <div className="mb-3">
+        <Form.Control
+          type="text"
+          placeholder="Buscar..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
       {error && <Alert variant="danger">{error}</Alert>}
-      {diagnostics.length === 0 ? (
+      {filteredDiagnostics.length === 0 ? (
         <Alert variant="info">No diagnostics found</Alert>
       ) : (
         <Table striped bordered hover responsive>
@@ -179,11 +212,11 @@ const DiagnosticList = () => {
             </tr>
           </thead>
           <tbody>
-            {diagnostics.map((diag) => {
+            {filteredDiagnostics.map((diag) => {
               // Determine if a Technician Diagnostic exists for the current diagnostic
               const hasTechDiag = !!techDiagMap[diag.id];
               // Concatenate the first and last name of the workshop owner, if available
-              const workshopName = diag.vehicle?.userWorkshop 
+              const workshopName = diag.vehicle?.userWorkshop
                 ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}`
                 : "N/A";
               return (

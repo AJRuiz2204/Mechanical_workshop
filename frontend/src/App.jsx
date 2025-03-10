@@ -27,7 +27,7 @@ import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPD
 import SalesReportView from "./components/Home/Reports/SalesReportsListView";
 import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
 import SalesReportAllPreviewView from "./components/Home/Reports/SalesReportAllPreviewView";
-
+import VehicleXlsx from "./components/Home/Diagnostic/xlsx/VehicleXlsx";
 
 const App = () => {
   return (
@@ -242,6 +242,14 @@ const App = () => {
             element={
               <ProtectedRoute requiredRoles={"Manager"}>
                 <SalesReportAllPreviewView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/VehicleXlsx"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <VehicleXlsx />
               </ProtectedRoute>
             }
           />
