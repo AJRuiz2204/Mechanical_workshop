@@ -56,7 +56,7 @@ const VehicleXlsx = () => {
 
   return (
     <Container fluid className="p-4">
-      <h3>Listado de Estimates</h3>
+      <h3>Vehicle estimates list</h3>
       {error && <Alert variant="danger">{error}</Alert>}
       {/* Botón para exportar a XLSX */}
       <div className="mb-3 d-flex justify-content-end">
