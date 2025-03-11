@@ -15,7 +15,7 @@ const VehicleXlsx = () => {
       const data = await getEstimateData();
       setEstimates(data);
     } catch (err) {
-      setError(err.message || "Error al cargar la información");
+      setError(err.message || "Error loading information");
     } finally {
       setLoading(false);
     }
@@ -26,8 +26,8 @@ const VehicleXlsx = () => {
   }, []);
 
   /**
-   * downloadExcel - Convierte los datos en formato JSON a una hoja de cálculo
-   * y dispara la descarga del archivo XLSX.
+   * downloadExcel - Converts JSON data into a spreadsheet
+   * and triggers the download of the XLSX file.
    */
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(estimates);
@@ -58,28 +58,28 @@ const VehicleXlsx = () => {
     <Container fluid className="p-4">
       <h3>Vehicle estimates list</h3>
       {error && <Alert variant="danger">{error}</Alert>}
-      {/* Botón para exportar a XLSX */}
+      {/* Button to export to XLSX */}
       <div className="mb-3 d-flex justify-content-end">
         <Button variant="primary" onClick={downloadExcel}>
-          Descargar XLSX
+          Download XLSX
         </Button>
       </div>
       {estimates.length === 0 ? (
-        <Alert variant="info">No se encontraron registros</Alert>
+        <Alert variant="info">No records found</Alert>
       ) : (
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Fecha de Creación</th>
-              <th>ID Estimado</th>
+              <th>Creation Date</th>
+              <th>Estimate ID</th>
               <th>VIN</th>
-              <th>Cantidad</th>
-              <th>Descripción</th>
-              <th>Precio Neto</th>
-              <th>Precio de Lista</th>
-              <th>Precio Total</th>
-              <th>Mano de Obra</th>
-              <th>Suministros</th>
+              <th>Quantity</th>
+              <th>Description</th>
+              <th>Net Price</th>
+              <th>List Price</th>
+              <th>Total Price</th>
+              <th>Labor</th>
+              <th>Supplies</th>
             </tr>
           </thead>
           <tbody>

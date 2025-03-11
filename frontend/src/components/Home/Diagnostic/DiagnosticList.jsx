@@ -181,7 +181,7 @@ const DiagnosticList = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3>Diagnostic List</h3>
         <Button variant="outline-primary" onClick={() => navigate('/VehicleXlsx')}>
-          Ver Excel
+          Vehicles information Xslx
         </Button>
       </div>
       {/* Nueva barra de búsqueda */}
