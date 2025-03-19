@@ -1,9 +1,7 @@
-// src/services/laborTaxMarkupSettingsService.js
-
 import axios from "axios";
 
-// Define the base API URL for LaborTaxMarkupSettings
-const API_URL = "/api/LaborTaxMarkupSettings";
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
+const API_URL = `${BASE_API}/LaborTaxMarkupSettings`;
 
 /**
  * Retrieves labor tax and markup settings by ID.

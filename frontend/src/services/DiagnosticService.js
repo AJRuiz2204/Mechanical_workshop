@@ -1,7 +1,4 @@
-// src/services/DiagnosticService.js
-
-// Define the API base URL. Make sure to replace the localhost URL if your environment is different.
-const API_BASE_URL = "http://localhost:5121/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * Creates a new diagnostic.
@@ -138,7 +135,6 @@ export const deleteDiagnostic = async (id) => {
       if (errorData && errorData.message) {
         errorMessage = errorData.message;
       } else {
-        // Fallback: intenta obtener texto del error para más detalles.
         const errorText = await response.text();
         errorMessage = errorText || errorMessage;
       }
@@ -162,16 +158,13 @@ export const deleteDiagnostic = async (id) => {
  */
 export const getDiagnosticsByTechnician = async (name, lastName) => {
   try {
-    // Validate that the parameters are not empty.
     if (!name || !lastName) {
       throw new Error("Parameters 'name' and 'lastName' are required.");
     }
 
-    // Encode the parameters for URLs.
     const encodedName = encodeURIComponent(name);
     const encodedLastName = encodeURIComponent(lastName);
 
-    // Make the GET request to the custom endpoint.
     const response = await fetch(
       `${API_BASE_URL}/Diagnostics/byTechnician?name=${encodedName}&lastName=${encodedLastName}`
     );
@@ -185,7 +178,7 @@ export const getDiagnosticsByTechnician = async (name, lastName) => {
       }
     }
 
-    return await response.json(); // Returns an array of DiagnosticReadDto
+    return await response.json();
   } catch (error) {
     console.error("Error in getDiagnosticsByTechnician:", error);
     throw error;

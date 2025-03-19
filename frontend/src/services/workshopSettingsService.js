@@ -1,8 +1,7 @@
-// src/services/workshopSettingsService.js
-
 import axios from "axios";
 
-const API_URL = "/api/WorkshopSettings";
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
+const API_URL = `${BASE_API}/WorkshopSettings`;
 
 // Add an interceptor to log error details
 axios.interceptors.response.use(
@@ -19,11 +18,10 @@ axios.interceptors.response.use(
 
 /**
  * getWorkshopSettings
- * Obtiene la configuración actual del taller.
- * This function retrieves the current workshop settings.
+ * Retrieves the current workshop settings.
  *
  * @async
- * @function
+ * @function getWorkshopSettings
  * @returns {Promise<Object>} The workshop settings data.
  * @throws Will throw an error if the request fails.
  */
@@ -32,7 +30,6 @@ export const getWorkshopSettings = async () => {
     const response = await axios.get(API_URL);
     return response.data;
   } catch (error) {
-    // Throw error to be handled by the calling function
     throw (
       error.response?.data || { message: "Error fetching workshop settings." }
     );
@@ -41,11 +38,10 @@ export const getWorkshopSettings = async () => {
 
 /**
  * createWorkshopSettings
- * Crea una nueva configuración de taller.
- * This function creates new workshop settings.
+ * Creates new workshop settings.
  *
  * @async
- * @function
+ * @function createWorkshopSettings
  * @param {Object} data - The workshop settings data to create.
  * @returns {Promise<Object>} The created workshop settings data.
  * @throws Will throw an error if the request fails.
@@ -87,11 +83,10 @@ export const createWorkshopSettings = async (data) => {
 
 /**
  * updateWorkshopSettings
- * Actualiza la configuración de taller existente.
- * This function updates existing workshop settings.
+ * Updates existing workshop settings.
  *
  * @async
- * @function
+ * @function updateWorkshopSettings
  * @param {number} id - The ID of the workshop settings to update.
  * @param {Object} data - The updated workshop settings data.
  * @returns {Promise<void>} No return value.
@@ -132,11 +127,10 @@ export const updateWorkshopSettings = async (id, data) => {
 
 /**
  * deleteWorkshopSettings
- * Elimina la configuración de taller por su ID.
- * This function deletes workshop settings by ID.
+ * Deletes workshop settings by ID.
  *
  * @async
- * @function
+ * @function deleteWorkshopSettings
  * @param {number} id - The ID of the workshop settings to delete.
  * @returns {Promise<void>} No return value.
  * @throws Will throw an error if the request fails.

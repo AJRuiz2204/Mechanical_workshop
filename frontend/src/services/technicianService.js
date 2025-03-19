@@ -1,23 +1,21 @@
-// frontend/src/services/technicianService.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5121/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * technicianService
- * Proporciona métodos para la interacción con el backend relacionado con los técnicos.
- * This object provides methods for interacting with the backend related to technicians.
+ * Provides methods for interacting with the backend related to technicians.
  */
 const technicianService = {
   /**
    * getTechnicians
-   * Obtiene la lista de todos los técnicos.
+   * Retrieves the list of all technicians.
    * This function fetches the list of all technicians.
    *
    * @async
    * @function
-   * @returns {Promise<Array>} Un array con la información de los técnicos.
-   * @throws Lanzará un error si la petición falla.
+   * @returns {Promise<Array>} An array containing the technicians' information.
+   * @throws Throws an error if the request fails.
    */
   getTechnicians: async () => {
     try {

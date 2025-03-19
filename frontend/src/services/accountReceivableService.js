@@ -1,6 +1,5 @@
-// src/services/accountReceivableService.js
-
-const ACCOUNT_RECEIVABLE_API_URL = "/api/AccountReceivable";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
+const ACCOUNT_RECEIVABLE_API_URL = `${API_URL}/AccountReceivable`;
 const PAYMENT_API_URL = (accountId) =>
   `${ACCOUNT_RECEIVABLE_API_URL}/Payment/${accountId}`;
 const CREATE_PAYMENT_URL = `${ACCOUNT_RECEIVABLE_API_URL}/Payment`;

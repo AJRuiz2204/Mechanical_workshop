@@ -1,9 +1,4 @@
-// src/services/NotesService.js
-
-/**
- * Service for managing notes related to Diagnostics or Technician Diagnostics.
- * / Servicio para la gestión de notas relacionadas con Diagnósticos o Diagnósticos de Técnico.
- */
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * getNotesByTechDiag - Retrieves notes associated with a specific Technician Diagnostic.
@@ -17,10 +12,14 @@
  */
 export const getNotesByTechDiag = async (techDiagId) => {
   try {
-    const response = await fetch(`/api/notes/techniciandiagnostic/${techDiagId}`);
+    const response = await fetch(
+      `${BASE_API}/notes/techniciandiagnostic/${techDiagId}`
+    );
 
     if (response.status === 404) {
-      console.warn(`No notes found for Technician Diagnostic ID: ${techDiagId}`);
+      console.warn(
+        `No notes found for Technician Diagnostic ID: ${techDiagId}`
+      );
       return [];
     }
 
@@ -48,7 +47,7 @@ export const getNotesByTechDiag = async (techDiagId) => {
  */
 export const getNotesByDiagnostic = async (diagId) => {
   try {
-    const response = await fetch(`/api/notes/diagnostic/${diagId}`);
+    const response = await fetch(`${BASE_API}/notes/diagnostic/${diagId}`);
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(errorData?.message || "Error fetching notes.");
@@ -75,7 +74,7 @@ export const getNotesByDiagnostic = async (diagId) => {
  */
 export const createNote = async (noteData) => {
   try {
-    const response = await fetch(`/api/notes`, {
+    const response = await fetch(`${BASE_API}/notes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(noteData),
@@ -102,7 +101,7 @@ export const createNote = async (noteData) => {
  */
 export const deleteNote = async (noteId) => {
   try {
-    const response = await fetch(`/api/notes/${noteId}`, {
+    const response = await fetch(`${BASE_API}/notes/${noteId}`, {
       method: "DELETE",
     });
     if (!response.ok) {

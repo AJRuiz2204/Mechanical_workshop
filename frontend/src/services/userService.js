@@ -1,32 +1,26 @@
-/* eslint-disable no-useless-catch */
-// Frontend: src/services/userService.js
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * Register
- * Registra un nuevo usuario.
- * This function registers a new user.
+ * Registers a new user.
  *
  * @async
- * @function
+ * @function Register
  * @param {Object} userData - The data for the new user, including fields like username, password, and email.
  * @returns {Promise<Object>} Returns the created user data as JSON.
  * @throws Will throw an error if the registration fails.
  */
 export const Register = async (userData) => {
-  try {
-    const response = await fetch("http://localhost:5121/api/Users/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(userData),
-    });
+  const response = await fetch(`${BASE_API}/Users/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(userData),
+  });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.Message || "Error creating the user.");
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.Message || "Error creating the user.");
   }
+
+  return await response.json();
 };

@@ -1,8 +1,5 @@
-// src/services/UserWorkshopService.js
-
-// FUNCTIONS FOR USER WORKSHOPS (MECHANICAL WORKSHOPS)
-
-const API_BASE_URL = "http://localhost:5121/api/UserWorkshops"; // Ensure this is the correct URL
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
+const API_BASE_URL = `${BASE_API}/UserWorkshops`;
 
 /**
  * Retrieves the list of all mechanical workshops.
@@ -153,7 +150,7 @@ export const deleteUserWorkshop = async (id) => {
       throw new Error("Error deleting the mechanical workshop.");
     }
 
-    // If everything went well, there's no content to return
+    // If everything went well, there's no content to return.
     return;
   } catch (error) {
     console.error("Error in deleteUserWorkshop:", error);

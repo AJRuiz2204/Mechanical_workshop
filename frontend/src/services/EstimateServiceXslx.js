@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "/api/EstimatesSumary";
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
+const API_URL = `${BASE_API}/EstimatesSumary`;
 
 export const getEstimateData = async () => {
   try {

@@ -4,16 +4,17 @@
  * @fileoverview This file contains all API calls related to estimates, vehicles,
  * and technician diagnostics.
  */
-
-const API_URL = "/api/Estimates";
-const VEHICLE_API_URL = "/api/UserWorkshops/vehicles";
-const GET_VEHICLE_BY_ID_URL = (id) => `/api/UserWorkshops/vehicle/${id}`;
-const TECH_DIAGNOSTIC_API_URL = "/api/TechnicianDiagnostics";
-const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) => `/api/TechnicianDiagnostics/${id}`;
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
+const API_URL = `${BASE_API}/Estimates`;
+const VEHICLE_API_URL = `${BASE_API}/UserWorkshops/vehicles`;
+const GET_VEHICLE_BY_ID_URL = (id) => `${BASE_API}/UserWorkshops/vehicle/${id}`;
+const TECH_DIAGNOSTIC_API_URL = `${BASE_API}/TechnicianDiagnostics`;
+const GET_TECH_DIAGNOSTIC_BY_ID_URL = (id) =>
+  `${BASE_API}/TechnicianDiagnostics/${id}`;
 const GET_DIAGNOSTIC_BY_VEHICLE_ID_URL = (vehicleId) =>
-  `/api/TechnicianDiagnostics/vehicle/${vehicleId}`;
-const VEHICLE_DIAGNOSTIC_API_URL = "/api/VehicleDiagnostic";
-const API_URL_WITHACCOUNT = "/api/EstimateWithAccountReceivable";
+  `${BASE_API}/TechnicianDiagnostics/vehicle/${vehicleId}`;
+const VEHICLE_DIAGNOSTIC_API_URL = `${BASE_API}/VehicleDiagnostic`;
+const API_URL_WITHACCOUNT = `${BASE_API}/EstimateWithAccountReceivable`;
 
 /**
  * Fetches the list of estimates along with their account receivable information.
@@ -141,7 +142,7 @@ export const createEstimate = async (estimateData) => {
  */
 export const updateEstimate = async (id, estimateData) => {
   try {
-    const response = await fetch(`http://localhost:5173/api/Estimates/${id}`, {
+    const response = await fetch(`${API_URL}/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(estimateData),
@@ -151,7 +152,9 @@ export const updateEstimate = async (id, estimateData) => {
 
     if (!response.ok) {
       console.error("SERVER RESPONSE:", data);
-      throw new Error(data.details || data.message || "Error updating the estimate.");
+      throw new Error(
+        data.details || data.message || "Error updating the estimate."
+      );
     }
 
     return data;
@@ -258,7 +261,9 @@ export const getTechnicianDiagnosticById = async (id) => {
   try {
     const response = await fetch(GET_TECH_DIAGNOSTIC_BY_ID_URL(id));
     if (!response.ok) {
-      throw new Error(`Error fetching the Technician Diagnostic with ID ${id}.`);
+      throw new Error(
+        `Error fetching the Technician Diagnostic with ID ${id}.`
+      );
     }
     return await response.json();
   } catch (error) {
@@ -283,7 +288,9 @@ export const getDiagnosticByVehicleId = async (vehicleId) => {
       if (response.status === 404) {
         return null;
       }
-      throw new Error(`Error fetching Technician Diagnostic for Vehicle ID ${vehicleId}.`);
+      throw new Error(
+        `Error fetching Technician Diagnostic for Vehicle ID ${vehicleId}.`
+      );
     }
     return await response.json();
   } catch (error) {

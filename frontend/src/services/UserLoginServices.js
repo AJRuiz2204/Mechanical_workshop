@@ -1,18 +1,18 @@
 import emailjs from "emailjs-com";
 import axios from "axios";
 
-const API_URL = "http://localhost:5121/api/Users";
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
+const API_URL = `${BASE_API}/Users`;
 
 /**
  * loginUser
- * Inicia sesión de un usuario con las credenciales dadas.
- * This function logs in a user with the given credentials.
+ * Logs in a user with the given credentials.
  *
  * @async
- * @function
- * @param {Object} credentials - Credenciales del usuario (por ejemplo, { email, password }).
- * @returns {Promise<Object>} El objeto de sesión o token devuelto por el servidor.
- * @throws Lanzará un error si la solicitud falla.
+ * @function loginUser
+ * @param {Object} credentials - User credentials (e.g., { email, password }).
+ * @returns {Promise<Object>} The session object or token returned by the server.
+ * @throws Will throw an error if the request fails.
  */
 export const loginUser = async (credentials) => {
   try {
@@ -25,11 +25,10 @@ export const loginUser = async (credentials) => {
 
 /**
  * isLoggedIn
- * Verifica si un usuario está autenticado.
- * This function checks if a user is logged in.
+ * Checks if a user is logged in.
  *
- * @function
- * @returns {boolean} `true` si hay un token en localStorage; de lo contrario, `false`.
+ * @function isLoggedIn
+ * @returns {boolean} `true` if a token exists in localStorage; otherwise, `false`.
  */
 export const isLoggedIn = () => {
   return !!localStorage.getItem("token");
@@ -37,10 +36,9 @@ export const isLoggedIn = () => {
 
 /**
  * logoutUser
- * Cierra la sesión del usuario.
- * This function logs out the user.
+ * Logs out the user.
  *
- * @function
+ * @function logoutUser
  * @returns {void}
  */
 export const logoutUser = () => {
@@ -50,18 +48,17 @@ export const logoutUser = () => {
 
 /**
  * forgotPassword
- * Solicita un código de reinicio de contraseña enviando el correo.
- * This function requests a password reset code by sending the user's email.
+ * Requests a password reset code by sending the user's email.
  *
  * @async
- * @function
- * @param {string} email - El correo electrónico del usuario.
- * @returns {Promise<string>} El código devuelto por el backend.
- * @throws Lanzará un error si la solicitud falla.
+ * @function forgotPassword
+ * @param {string} email - The user's email address.
+ * @returns {Promise<string>} The code returned by the backend.
+ * @throws Will throw an error if the request fails.
  */
 export const forgotPassword = async (email) => {
   try {
-    const response = await fetch("/api/Users/forgot-password", {
+    const response = await fetch(`${API_URL}/forgot-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -83,15 +80,14 @@ export const forgotPassword = async (email) => {
 
 /**
  * sendEmailWithCode
- * Envía un correo electrónico con un código de verificación usando EmailJS.
- * This function sends an email with a verification code using EmailJS.
+ * Sends an email with a verification code using EmailJS.
  *
  * @async
- * @function
- * @param {string} email - El correo electrónico del usuario al que se enviará el código.
- * @param {string|number} code - El código que se incluirá en el correo.
- * @returns {Promise<Object>} El resultado de la operación de EmailJS.
- * @throws Lanzará un error si el envío del correo falla.
+ * @function sendEmailWithCode
+ * @param {string} email - The user's email address to which the code will be sent.
+ * @param {string|number} code - The code to include in the email.
+ * @returns {Promise<Object>} The result of the EmailJS operation.
+ * @throws Will throw an error if sending the email fails.
  */
 export const sendEmailWithCode = async (email, code) => {
   const templateParams = {
@@ -119,19 +115,18 @@ export const sendEmailWithCode = async (email, code) => {
 
 /**
  * verifyCode
- * Verifica el código recibido para el reinicio de contraseña.
- * This function verifies the reset code received for password reset.
+ * Verifies the reset code received for password reset.
  *
  * @async
- * @function
- * @param {string} email - El correo electrónico del usuario.
- * @param {string|number} code - El código a verificar.
- * @returns {Promise<Object|string>} El mensaje o JSON devuelto por el backend.
- * @throws Lanzará un error si la verificación falla.
+ * @function verifyCode
+ * @param {string} email - The user's email address.
+ * @param {string|number} code - The code to verify.
+ * @returns {Promise<Object|string>} The message or JSON returned by the backend.
+ * @throws Will throw an error if the verification fails.
  */
 export const verifyCode = async (email, code) => {
   try {
-    const response = await fetch("/api/Users/verify-code", {
+    const response = await fetch(`${API_URL}/verify-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ Email: email, Code: code }),
@@ -161,19 +156,18 @@ export const verifyCode = async (email, code) => {
 
 /**
  * changePassword
- * Cambia la contraseña del usuario después de verificar el código.
- * This function changes the user's password after the code is verified.
+ * Changes the user's password after the reset code is verified.
  *
  * @async
- * @function
- * @param {string} email - El correo electrónico del usuario.
- * @param {string} newPassword - La nueva contraseña.
- * @returns {Promise<Object>} La respuesta del backend que contiene un mensaje y detalles del usuario afectado.
- * @throws Lanzará un error si la solicitud falla.
+ * @function changePassword
+ * @param {string} email - The user's email address.
+ * @param {string} newPassword - The new password.
+ * @returns {Promise<Object>} The backend response containing a message and details of the affected user.
+ * @throws Will throw an error if the request fails.
  */
 export const changePassword = async (email, newPassword) => {
   try {
-    const response = await fetch("/api/Users/change-password", {
+    const response = await fetch(`${API_URL}/change-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ Email: email, NewPassword: newPassword }),

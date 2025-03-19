@@ -1,4 +1,4 @@
-// Frontend: src/services/TechnicianDiagnosticService.js
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * createTechnicianDiagnostic
@@ -13,7 +13,7 @@
  */
 export const createTechnicianDiagnostic = async (techDiagData) => {
   try {
-    const response = await fetch(`/api/TechnicianDiagnostics`, {
+    const response = await fetch(`${BASE_API}/TechnicianDiagnostics`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(techDiagData),
@@ -46,7 +46,7 @@ export const createTechnicianDiagnostic = async (techDiagData) => {
  */
 export const getTechnicianDiagnostic = async (id) => {
   try {
-    const response = await fetch(`/api/TechnicianDiagnostics/${id}`);
+    const response = await fetch(`${BASE_API}/TechnicianDiagnostics/${id}`);
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
@@ -76,7 +76,7 @@ export const getTechnicianDiagnostic = async (id) => {
  */
 export const updateTechnicianDiagnostic = async (id, techDiagData) => {
   try {
-    const response = await fetch(`/api/TechnicianDiagnostics/${id}`, {
+    const response = await fetch(`${BASE_API}/TechnicianDiagnostics/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(techDiagData),
@@ -109,7 +109,7 @@ export const updateTechnicianDiagnostic = async (id, techDiagData) => {
  */
 export const deleteTechnicianDiagnostic = async (id) => {
   try {
-    const response = await fetch(`/api/TechnicianDiagnostics/${id}`, {
+    const response = await fetch(`${BASE_API}/TechnicianDiagnostics/${id}`, {
       method: "DELETE",
     });
     if (!response.ok) {
@@ -141,7 +141,7 @@ export const deleteTechnicianDiagnostic = async (id) => {
 export const getTechnicianDiagnosticByDiagId = async (diagnosticId) => {
   try {
     const response = await fetch(
-      `/api/TechnicianDiagnostics/byDiagnostic/${diagnosticId}`
+      `${BASE_API}/TechnicianDiagnostics/byDiagnostic/${diagnosticId}`
     );
 
     if (response.status === 404) {
@@ -179,7 +179,7 @@ export const getTechnicianDiagnosticsBatch = async (diagnosticIds) => {
   try {
     const idsParam = diagnosticIds.join("&diagnosticIds=");
     const response = await fetch(
-      `/api/TechnicianDiagnostics/byDiagnostics?diagnosticIds=${idsParam}`
+      `${BASE_API}/TechnicianDiagnostics/byDiagnostics?diagnosticIds=${idsParam}`
     );
 
     if (!response.ok) {

@@ -1,19 +1,18 @@
-// src/services/VehicleService.js
+const BASE_API = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * getVehicleById
- * Obtiene un vehículo por su ID.
- * This function retrieves a vehicle by its ID.
+ * Retrieves a vehicle by its ID.
  *
  * @async
- * @function
+ * @function getVehicleById
  * @param {number|string} id - The ID of the vehicle to retrieve.
  * @returns {Promise<Object>} The vehicle data (must match VehicleReadDto).
  * @throws Will throw an error if the request fails.
  */
 export const getVehicleById = async (id) => {
   try {
-    const response = await fetch(`/api/UserWorkshops/vehicle/${id}`);
+    const response = await fetch(`${BASE_API}/UserWorkshops/vehicle/${id}`);
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       if (errorData && errorData.message) {
@@ -31,11 +30,10 @@ export const getVehicleById = async (id) => {
 
 /**
  * updateVehicleStatus
- * Actualiza el estado de un vehículo (opcional, si es necesario).
- * This function updates a vehicle's status (optional, if needed).
+ * Updates a vehicle's status (optional, if needed).
  *
  * @async
- * @function
+ * @function updateVehicleStatus
  * @param {number|string} vehicleId - The ID of the vehicle to update.
  * @param {string} newStatus - The new status to assign to the vehicle.
  * @returns {Promise<void>} No return value.
@@ -43,7 +41,7 @@ export const getVehicleById = async (id) => {
  */
 export const updateVehicleStatus = async (vehicleId, newStatus) => {
   try {
-    const response = await fetch(`/api/Vehicles/${vehicleId}/status`, {
+    const response = await fetch(`${BASE_API}/Vehicles/${vehicleId}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
