@@ -111,7 +111,7 @@ const Diagnostic = () => {
   /**
    * handleSubmit Function:
    * Handles form submission to create a new diagnostic.
-   * Validates that a technician is assigned and a reason for visit is provided.
+   * Validates that a technician is assigned and a Customer state is provided.
    *
    * @param {Event} e - The form submission event.
    */
@@ -125,7 +125,7 @@ const Diagnostic = () => {
       return;
     }
     if (!formData.reasonForVisit.trim()) {
-      setErrorMessage("Reason for visit is required.");
+      setErrorMessage("Customer state is required.");
       return;
     }
 
@@ -256,7 +256,7 @@ const Diagnostic = () => {
           </Col>
           <Col md={6}>
             <Form.Group controlId="reasonForVisit">
-              <Form.Label>Reason for Visit</Form.Label>
+              <Form.Label>Customer state</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}

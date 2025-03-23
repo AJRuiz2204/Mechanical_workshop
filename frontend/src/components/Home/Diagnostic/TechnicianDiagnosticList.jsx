@@ -122,7 +122,7 @@ const TechnicianDiagnosticList = () => {
               <th>VIN</th>
               <th>Make</th>
               <th>Model</th>
-              <th>Reason for Visit</th>
+              <th>Customer state</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>

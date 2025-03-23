@@ -16,7 +16,8 @@ import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 // Format a date using dayjs
 const formatDate = (date) => dayjs(date).format("MMM-DD-YYYY");
 // Format a number as currency
-const formatCurrency = (amount) => `$ ${Number(amount).toFixed(2)}`;
+const formatCurrency = (amount) =>
+	isNaN(Number(amount)) ? "-" : `$ ${Number(amount).toFixed(2)}`;
 
 // Define PDF styles with very small fonts for an A4 document
 const styles = StyleSheet.create({
@@ -314,29 +315,29 @@ const PaymentPDF = ({ pdfData }) => {
           {/* Columna 1: Bill To */}
           <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>Bill To:</Text>
-            <Text style={styles.infoText}>{customer.fullName || "N/A"}</Text>
+            <Text style={styles.infoText}>{customer.fullName || ""}</Text>
             <Text style={styles.infoText}>
-              {customer.primaryPhone || "N/A"}
+              {customer.primaryPhone || ""}
             </Text>
           </View>
           {/* Columna 2: Información del vehículo (Make, Model, Year) */}
           <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>Vehicle</Text>
-            <Text style={styles.infoText}>Make: {vehicle.make || "N/A"}</Text>
-            <Text style={styles.infoText}>Model: {vehicle.model || "N/A"}</Text>
-            <Text style={styles.infoText}>Year: {vehicle.year || "N/A"}</Text>
+            <Text style={styles.infoText}>Make: {vehicle.make || ""}</Text>
+            <Text style={styles.infoText}>Model: {vehicle.model || ""}</Text>
+            <Text style={styles.infoText}>Year: {vehicle.year || ""}</Text>
           </View>
           {/* Columna 3: VIN, Engine, Mileage con encabezado Invoice # */}
           <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>
-              Invoice #{estimate.id || "N/A"}
+              Invoice #{estimate.id || ""}
             </Text>
-            <Text style={styles.infoText}>VIN: {vehicle.vin || "N/A"}</Text>
+            <Text style={styles.infoText}>VIN: {vehicle.vin || ""}</Text>
             <Text style={styles.infoText}>
-              Engine: {vehicle.engine || estimate.vehicle?.engine || "N/A"}
+              Engine: {vehicle.engine || estimate.vehicle?.engine || ""}
             </Text>
             <Text style={styles.infoText}>
-              Mileage: {estimate.technicianDiagnostic?.mileage || "N/A"}
+              Mileage: {estimate.technicianDiagnostic?.mileage || ""}
             </Text>
           </View>
           {/* Columna 4: Fecha */}
@@ -363,7 +364,7 @@ const PaymentPDF = ({ pdfData }) => {
           combinedItems.map((item, idx) => (
             <View key={idx} style={styles.tableRow}>
               <Text style={[styles.colType, styles.tableText]}>
-                {item.type || "N/A"}
+                {item.type || "-"}
               </Text>
               <Text style={[styles.colDesc, styles.tableText]}>
                 {item.description || ""}
@@ -375,8 +376,8 @@ const PaymentPDF = ({ pdfData }) => {
               </Text>
               <Text style={[styles.colQuantityHours, styles.tableText]}>
                 {item.type && item.type.toUpperCase().includes("LABOR")
-                  ? `${item.quantity} hrs`
-                  : item.quantity}
+                  ? (item.quantity ? `${item.quantity} hrs` : "-")
+                  : (item.quantity ? item.quantity : "-")}
               </Text>
               <Text style={[styles.colListPrice, styles.tableText]}>
                 {formatCurrency(item.listPrice)}
