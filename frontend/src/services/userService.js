@@ -1,4 +1,4 @@
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
+import api from "./api";
 
 /**
  * Register
@@ -11,16 +11,12 @@ const BASE_API = import.meta.env.VITE_API_URL || "/api";
  * @throws Will throw an error if the registration fails.
  */
 export const Register = async (userData) => {
-  const response = await fetch(`${BASE_API}/Users/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(userData),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.Message || "Error creating the user.");
+  try {
+    const response = await api.post(`/Users/register`, userData, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.Message || "Error creating the user.");
   }
-
-  return await response.json();
 };

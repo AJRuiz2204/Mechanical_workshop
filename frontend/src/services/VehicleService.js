@@ -1,4 +1,4 @@
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
+import api from "./api";
 
 /**
  * getVehicleById
@@ -12,16 +12,8 @@ const BASE_API = import.meta.env.VITE_API_URL || "/api";
  */
 export const getVehicleById = async (id) => {
   try {
-    const response = await fetch(`${BASE_API}/UserWorkshops/vehicle/${id}`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error fetching the vehicle by ID.");
-      }
-    }
-    return await response.json();
+    const response = await api.get(`/UserWorkshops/vehicle/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error in getVehicleById:", error);
     throw error;
@@ -41,19 +33,10 @@ export const getVehicleById = async (id) => {
  */
 export const updateVehicleStatus = async (vehicleId, newStatus) => {
   try {
-    const response = await fetch(`${BASE_API}/Vehicles/${vehicleId}/status`, {
-      method: "PUT",
+    const response = await api.put(`/Vehicles/${vehicleId}/status`, { status: newStatus }, {
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
     });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error updating the vehicle status.");
-      }
-    }
+    return response.data;
   } catch (error) {
     console.error("Error in updateVehicleStatus:", error);
     throw error;

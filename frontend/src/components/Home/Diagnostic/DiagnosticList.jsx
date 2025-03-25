@@ -21,7 +21,7 @@ import "./DiagnosticList.css";
  * DiagnosticList Component
  *
  * This component displays a list of diagnostics in a table format.
- * For each diagnostic, it shows vehicle details, Customer state, and the current status.
+ * For each diagnostic, it shows vehicle details, reason for visit, and the current status.
  *
  * Depending on whether a Technician Diagnostic exists:
  * - If present, it displays "Edit" and "Delete" buttons for the Technician Diagnostic.
@@ -181,7 +181,7 @@ const DiagnosticList = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3>Diagnostic List</h3>
         <Button variant="outline-primary" onClick={() => navigate('/VehicleXlsx')}>
-          Vehicles information Xslx
+          Ver Excel
         </Button>
       </div>
       {/* Nueva barra de búsqueda */}

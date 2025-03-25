@@ -1,4 +1,4 @@
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
+import api from './api';
 
 /**
  * createTechnicianDiagnostic
@@ -13,20 +13,8 @@ const BASE_API = import.meta.env.VITE_API_URL || "/api";
  */
 export const createTechnicianDiagnostic = async (techDiagData) => {
   try {
-    const response = await fetch(`${BASE_API}/TechnicianDiagnostics`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(techDiagData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error creating the technician diagnostic.");
-      }
-    }
-    return await response.json(); // TechnicianDiagnosticReadDto
+    const response = await api.post('/TechnicianDiagnostics', techDiagData);
+    return response.data;
   } catch (error) {
     console.error("Error in createTechnicianDiagnostic:", error);
     throw error;
@@ -46,16 +34,8 @@ export const createTechnicianDiagnostic = async (techDiagData) => {
  */
 export const getTechnicianDiagnostic = async (id) => {
   try {
-    const response = await fetch(`${BASE_API}/TechnicianDiagnostics/${id}`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error fetching the technician diagnostic.");
-      }
-    }
-    return await response.json();
+    const response = await api.get(`/TechnicianDiagnostics/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error in getTechnicianDiagnostic:", error);
     throw error;
@@ -76,20 +56,8 @@ export const getTechnicianDiagnostic = async (id) => {
  */
 export const updateTechnicianDiagnostic = async (id, techDiagData) => {
   try {
-    const response = await fetch(`${BASE_API}/TechnicianDiagnostics/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(techDiagData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error updating the technician diagnostic.");
-      }
-    }
-    return;
+    const response = await api.put(`/TechnicianDiagnostics/${id}`, techDiagData);
+    return response.data;
   } catch (error) {
     console.error("Error in updateTechnicianDiagnostic:", error);
     throw error;
@@ -109,18 +77,8 @@ export const updateTechnicianDiagnostic = async (id, techDiagData) => {
  */
 export const deleteTechnicianDiagnostic = async (id) => {
   try {
-    const response = await fetch(`${BASE_API}/TechnicianDiagnostics/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error deleting the technician diagnostic.");
-      }
-    }
-    return;
+    const response = await api.delete(`/TechnicianDiagnostics/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error in deleteTechnicianDiagnostic:", error);
     throw error;
@@ -140,22 +98,8 @@ export const deleteTechnicianDiagnostic = async (id) => {
  */
 export const getTechnicianDiagnosticByDiagId = async (diagnosticId) => {
   try {
-    const response = await fetch(
-      `${BASE_API}/TechnicianDiagnostics/byDiagnostic/${diagnosticId}`
-    );
-
-    if (response.status === 404) {
-      throw new Error("Not found");
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.message || "Error fetching technician diagnostic"
-      );
-    }
-
-    return await response.json();
+    const response = await api.get(`/TechnicianDiagnostics/byDiagnostic/${diagnosticId}`);
+    return response.data;
   } catch (error) {
     if (error.message !== "Not found") {
       console.error("Error in getTechnicianDiagnosticByDiagId:", error);
@@ -178,16 +122,8 @@ export const getTechnicianDiagnosticByDiagId = async (diagnosticId) => {
 export const getTechnicianDiagnosticsBatch = async (diagnosticIds) => {
   try {
     const idsParam = diagnosticIds.join("&diagnosticIds=");
-    const response = await fetch(
-      `${BASE_API}/TechnicianDiagnostics/byDiagnostics?diagnosticIds=${idsParam}`
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Error fetching batch diagnostics");
-    }
-
-    return await response.json();
+    const response = await api.get(`/TechnicianDiagnostics/byDiagnostics?diagnosticIds=${idsParam}`);
+    return response.data;
   } catch (error) {
     console.error("Error in getTechnicianDiagnosticsBatch:", error);
     throw error;

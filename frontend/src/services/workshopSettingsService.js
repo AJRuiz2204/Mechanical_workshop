@@ -1,20 +1,4 @@
-import axios from "axios";
-
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
-const API_URL = `${BASE_API}/WorkshopSettings`;
-
-// Add an interceptor to log error details
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("API Error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      config: error.config,
-    });
-    return Promise.reject(error);
-  }
-);
+import api from "./api";
 
 /**
  * getWorkshopSettings
@@ -27,7 +11,7 @@ axios.interceptors.response.use(
  */
 export const getWorkshopSettings = async () => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await api.get(`/WorkshopSettings`);
     return response.data;
   } catch (error) {
     throw (
@@ -62,7 +46,7 @@ export const createWorkshopSettings = async (data) => {
     };
 
     console.log("Sending payload:", payload);
-    const response = await axios.post(API_URL, payload, {
+    const response = await api.post(`/WorkshopSettings`, payload, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -108,7 +92,7 @@ export const updateWorkshopSettings = async (id, data) => {
     };
 
     console.log("Updating with payload:", payload);
-    await axios.put(`${API_URL}/${id}`, payload, {
+    await api.put(`/WorkshopSettings/${id}`, payload, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -137,7 +121,7 @@ export const updateWorkshopSettings = async (id, data) => {
  */
 export const deleteWorkshopSettings = async (id) => {
   try {
-    await axios.delete(`${API_URL}/${id}`);
+    await api.delete(`/WorkshopSettings/${id}`);
   } catch (error) {
     console.error("Error details:", {
       message: error.response?.data?.message || error.message,

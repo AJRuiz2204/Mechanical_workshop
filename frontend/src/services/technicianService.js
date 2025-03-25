@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import api from './api';
 
 /**
  * technicianService
@@ -19,7 +17,7 @@ const technicianService = {
    */
   getTechnicians: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/Technician`);
+      const response = await api.get('/Technician');
       return response.data;
     } catch (error) {
       console.error('Error fetching technicians:', error);

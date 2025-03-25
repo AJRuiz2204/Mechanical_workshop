@@ -1,7 +1,5 @@
-import axios from "axios";
-
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
-const API_URL = `${BASE_API}/SalesReport`;
+import api from './api';
+const API_URL = '/SalesReport';
 
 /**
  * Retrieves all stored sales reports, including complete Estimate information in each detail.
@@ -12,7 +10,7 @@ const API_URL = `${BASE_API}/SalesReport`;
  */
 export const getAllSalesReports = async () => {
   try {
-    const response = await axios.get(`${API_URL}/all`);
+    const response = await api.get(`${API_URL}/all`);
     console.log("Service response:", response.data);
     return response.data;
   } catch (error) {
@@ -38,7 +36,7 @@ export const getSalesReport = async (startDate, endDate) => {
       params.startDate = startDate;
       params.endDate = endDate;
     }
-    const response = await axios.get(API_URL, { params });
+    const response = await api.get(API_URL, { params });
     console.log("Service response:", response.data);
     return response.data;
   } catch (error) {
@@ -57,7 +55,7 @@ export const getSalesReport = async (startDate, endDate) => {
  */
 export const getSalesReportById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await api.get(`${API_URL}/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error in getSalesReportById:", error);
@@ -75,7 +73,7 @@ export const getSalesReportById = async (id) => {
  */
 export const createSalesReport = async (reportData) => {
   try {
-    const response = await axios.post(API_URL, reportData, {
+    const response = await api.post(API_URL, reportData, {
       headers: { "Content-Type": "application/json" },
     });
     return response.data;

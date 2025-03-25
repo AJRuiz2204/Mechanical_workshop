@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+import api from './api';
 
 /**
  * Creates a new diagnostic.
@@ -10,22 +10,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
  */
 export const createDiagnostic = async (diagnosticData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Diagnostics`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(diagnosticData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error creating the diagnostic.");
-      }
-    }
-
-    return await response.json();
+    const response = await api.post('/Diagnostics', diagnosticData);
+    return response.data;
   } catch (error) {
     console.error("Error in createDiagnostic:", error);
     throw error;
@@ -41,16 +27,8 @@ export const createDiagnostic = async (diagnosticData) => {
  */
 export const getDiagnostics = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Diagnostics`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error retrieving the list of diagnostics.");
-      }
-    }
-    return await response.json();
+    const response = await api.get('/Diagnostics');
+    return response.data;
   } catch (error) {
     console.error("Error in getDiagnostics:", error);
     throw error;
@@ -67,16 +45,8 @@ export const getDiagnostics = async () => {
  */
 export const getDiagnosticById = async (id) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Diagnostics/${id}`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error retrieving the diagnostic by ID.");
-      }
-    }
-    return await response.json();
+    const response = await api.get(`/Diagnostics/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error in getDiagnosticById:", error);
     throw error;
@@ -94,21 +64,7 @@ export const getDiagnosticById = async (id) => {
  */
 export const updateDiagnostic = async (id, diagnosticData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Diagnostics/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(diagnosticData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error updating the diagnostic.");
-      }
-    }
-    return;
+    await api.put(`/Diagnostics/${id}`, diagnosticData);
   } catch (error) {
     console.error("Error in updateDiagnostic:", error);
     throw error;
@@ -125,22 +81,7 @@ export const updateDiagnostic = async (id, diagnosticData) => {
  */
 export const deleteDiagnostic = async (id) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/Diagnostics/${id}`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      let errorMessage = "Error deleting the diagnostic.";
-      if (errorData && errorData.message) {
-        errorMessage = errorData.message;
-      } else {
-        const errorText = await response.text();
-        errorMessage = errorText || errorMessage;
-      }
-      throw new Error(errorMessage);
-    }
-    return;
+    await api.delete(`/Diagnostics/${id}`);
   } catch (error) {
     console.error("Error in deleteDiagnostic:", error);
     throw error;
@@ -165,20 +106,11 @@ export const getDiagnosticsByTechnician = async (name, lastName) => {
     const encodedName = encodeURIComponent(name);
     const encodedLastName = encodeURIComponent(lastName);
 
-    const response = await fetch(
-      `${API_BASE_URL}/Diagnostics/byTechnician?name=${encodedName}&lastName=${encodedLastName}`
+    const response = await api.get(
+      `/Diagnostics/byTechnician?name=${encodedName}&lastName=${encodedLastName}`
     );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      if (errorData && errorData.message) {
-        throw new Error(errorData.message);
-      } else {
-        throw new Error("Error retrieving diagnostics by technician.");
-      }
-    }
-
-    return await response.json();
+    return response.data;
   } catch (error) {
     console.error("Error in getDiagnosticsByTechnician:", error);
     throw error;

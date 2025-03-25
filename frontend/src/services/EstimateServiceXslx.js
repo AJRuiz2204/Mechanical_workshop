@@ -1,11 +1,10 @@
-import axios from "axios";
+import api from './api';
 
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
-const API_URL = `${BASE_API}/EstimatesSumary`;
+const API_URL = '/EstimatesSumary';
 
 export const getEstimateData = async () => {
   try {
-    const response = await axios.get(`${API_URL}/GetEstimateData`);
+    const response = await api.get(`${API_URL}/GetEstimateData`);
     return response.data;
   } catch (error) {
     console.error("Error al obtener datos del resumen de estimados:", error);

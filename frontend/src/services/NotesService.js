@@ -1,4 +1,4 @@
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
+import api from './api';
 
 /**
  * getNotesByTechDiag - Retrieves notes associated with a specific Technician Diagnostic.
@@ -12,23 +12,8 @@ const BASE_API = import.meta.env.VITE_API_URL || "/api";
  */
 export const getNotesByTechDiag = async (techDiagId) => {
   try {
-    const response = await fetch(
-      `${BASE_API}/notes/techniciandiagnostic/${techDiagId}`
-    );
-
-    if (response.status === 404) {
-      console.warn(
-        `No notes found for Technician Diagnostic ID: ${techDiagId}`
-      );
-      return [];
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || "Error fetching notes.");
-    }
-
-    return await response.json();
+    const response = await api.get(`/notes/techniciandiagnostic/${techDiagId}`);
+    return response.data;
   } catch (error) {
     console.error("Error in getNotesByTechDiag:", error);
     throw error;
@@ -47,12 +32,8 @@ export const getNotesByTechDiag = async (techDiagId) => {
  */
 export const getNotesByDiagnostic = async (diagId) => {
   try {
-    const response = await fetch(`${BASE_API}/notes/diagnostic/${diagId}`);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || "Error fetching notes.");
-    }
-    return await response.json();
+    const response = await api.get(`/notes/diagnostic/${diagId}`);
+    return response.data;
   } catch (error) {
     console.error("Error in getNotesByDiagnostic:", error);
     throw error;
@@ -74,16 +55,8 @@ export const getNotesByDiagnostic = async (diagId) => {
  */
 export const createNote = async (noteData) => {
   try {
-    const response = await fetch(`${BASE_API}/notes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(noteData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || "Error creating note.");
-    }
-    return await response.json(); // Returns the created note
+    const response = await api.post(`/notes`, noteData);
+    return response.data; // Returns the created note
   } catch (error) {
     console.error("Error in createNote:", error);
     throw error;
@@ -101,13 +74,7 @@ export const createNote = async (noteData) => {
  */
 export const deleteNote = async (noteId) => {
   try {
-    const response = await fetch(`${BASE_API}/notes/${noteId}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || "Error deleting note.");
-    }
+    await api.delete(`/notes/${noteId}`);
     return;
   } catch (error) {
     console.error("Error in deleteNote:", error);

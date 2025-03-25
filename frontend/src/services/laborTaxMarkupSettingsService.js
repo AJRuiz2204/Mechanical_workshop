@@ -1,7 +1,6 @@
-import axios from "axios";
+import api from './api';
 
-const BASE_API = import.meta.env.VITE_API_URL || "/api";
-const API_URL = `${BASE_API}/LaborTaxMarkupSettings`;
+const API_URL = '/LaborTaxMarkupSettings';
 
 /**
  * Retrieves labor tax and markup settings by ID.
@@ -12,7 +11,7 @@ const API_URL = `${BASE_API}/LaborTaxMarkupSettings`;
  * @throws Will throw an error if the request fails.
  */
 export async function getSettingsById(id) {
-  const response = await axios.get(`${API_URL}/${id}`);
+  const response = await api.get(`${API_URL}/${id}`);
   return response.data;
 }
 
@@ -25,7 +24,7 @@ export async function getSettingsById(id) {
  * @throws Will throw an error if the request fails.
  */
 export async function createSettings(createDto) {
-  const response = await axios.post(API_URL, createDto, {
+  const response = await api.post(API_URL, createDto, {
     headers: { "Content-Type": "application/json" },
   });
   return response.data;
@@ -41,7 +40,7 @@ export async function createSettings(createDto) {
  * @throws Will throw an error if the request fails.
  */
 export async function patchSettings(id, patchDoc) {
-  await axios.patch(`${API_URL}/${id}`, patchDoc, {
+  await api.patch(`${API_URL}/${id}`, patchDoc, {
     headers: { "Content-Type": "application/json-patch+json" },
   });
 }
