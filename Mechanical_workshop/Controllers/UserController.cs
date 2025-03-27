@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging; // Añadir esta línea
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -23,21 +23,21 @@ namespace Mechanical_workshop.Controllers
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
-        private readonly ILogger<UsersController> _logger; // Añadir esta línea
+        private readonly ILogger<UsersController> _logger;
 
         public UsersController(AppDbContext context, IMapper mapper, IConfiguration config, ILogger<UsersController> logger) // Modificar constructor
         {
             _context = context;
             _mapper = mapper;
             _config = config;
-            _logger = logger; // Añadir esta línea
+            _logger = logger;
         }
 
         // 🔹 POST: api/Users/register (Crear usuario)
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(UserCreateDto userCreateDto)
         {
-            _logger.LogInformation("Register endpoint llamado."); // Añadir esta línea
+            _logger.LogInformation("Register endpoint llamado.");
 
             if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
                 return BadRequest(new { Message = "Username already exists." });
@@ -58,7 +58,7 @@ namespace Mechanical_workshop.Controllers
         [HttpPost("login")]
         public async Task<ActionResult> Login(UserLoginDto userLoginDto)
         {
-            _logger.LogInformation("Login endpoint llamado."); // Añadir esta línea
+            _logger.LogInformation("Login endpoint llamado.");
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
             if (user == null)
@@ -121,7 +121,7 @@ namespace Mechanical_workshop.Controllers
         [Authorize]
         public async Task<ActionResult> GetProfile()
         {
-            _logger.LogInformation("GetProfile endpoint llamado."); // Añadir esta línea
+            _logger.LogInformation("GetProfile endpoint llamado.");
 
             var username = User.Identity.Name;
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
@@ -196,7 +196,7 @@ namespace Mechanical_workshop.Controllers
         [Authorize(Roles = "Administrator")]
         public IActionResult GetAdminData()
         {
-            _logger.LogInformation("GetAdminData endpoint llamado."); // Añadir esta línea
+            _logger.LogInformation("GetAdminData endpoint llamado.");
 
             return Ok(new { Message = "This is protected admin data" });
         }

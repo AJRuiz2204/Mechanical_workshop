@@ -8,31 +8,20 @@ namespace Mechanical_workshop.Dtos
         [Required]
         public int VehicleID { get; set; }
         public TechnicianDiagnosticCreateDto? TechnicianDiagnostic { get; set; }
-
         [Required]
         [StringLength(500)]
         public string CustomerNote { get; set; } = string.Empty;
-
         [Range(0, double.MaxValue)]
         public decimal Subtotal { get; set; }
-
         [Range(0, double.MaxValue)]
         public decimal Tax { get; set; }
-
         [Range(0, double.MaxValue)]
         public decimal Total { get; set; }
-
         [Required]
         [StringLength(20)]
         public string AuthorizationStatus { get; set; } = "InReview";
-
-        // Lista de Partes
         public List<EstimatePartCreateDto> Parts { get; set; } = new List<EstimatePartCreateDto>();
-
-        // Lista de Mano de Obra
         public List<EstimateLaborCreateDto> Labors { get; set; } = new List<EstimateLaborCreateDto>();
-
-        // Lista de Tarifas Planas
         public List<EstimateFlatFeeCreateDto> FlatFees { get; set; } = new List<EstimateFlatFeeCreateDto>();
     }
 
@@ -90,7 +79,7 @@ namespace Mechanical_workshop.Dtos
         public string Description { get; set; } = string.Empty;
 
         [Range(0, int.MaxValue)]
-        public int Duration { get; set; } // Duración en horas
+        public int Duration { get; set; }
 
         [Range(0, double.MaxValue)]
         public decimal LaborRate { get; set; }

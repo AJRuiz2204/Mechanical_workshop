@@ -1,7 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Mechanical_workshop.Data; // Reemplaza con tu namespace de DbContext
+using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 

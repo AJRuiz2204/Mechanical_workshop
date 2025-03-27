@@ -37,6 +37,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/register-user" element={<RegisterUser />} />
 
         <Route
           element={
@@ -189,14 +190,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/register-user"
             element={
               <ManagerProtectedRoute requiredRoles={"Manager"}>
                 <RegisterUser />
               </ManagerProtectedRoute>
             }
-          />
+          /> */}
           <Route
             path="/accounts-receivable"
             element={

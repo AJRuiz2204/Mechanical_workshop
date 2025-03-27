@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:5121/api",
+    baseURL: "https://app2.j-benz.com/api",
 });
 
 export const setAuthToken = (token) => {
