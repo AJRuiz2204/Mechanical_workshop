@@ -171,7 +171,7 @@ namespace Mechanical_workshop.Controllers
                 if (estimate.TechnicianDiagnostic == null)
                 {
                     var newDiag = _mapper.Map<TechnicianDiagnostic>(dto.TechnicianDiagnostic);
-                    newDiag.Id = 0; // Insertar nueva
+                    newDiag.Id = 0;
                     estimate.TechnicianDiagnostic = newDiag;
                 }
                 else
