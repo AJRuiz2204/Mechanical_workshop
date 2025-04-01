@@ -16,7 +16,6 @@ import { loginUser } from "../../services/UserLoginServices";
  * @returns {JSX.Element} The Login component.
  */
 const Login = () => {
-  // State variables to manage username, password, and error messages.
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,29 +28,26 @@ const Login = () => {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Attempting to log in with:", { username, password }); // Credential log
+    console.log("Attempting to log in with:", { username, password });
     const credentials = { username, password };
 
     try {
-      const response = await loginUser(credentials); // Save the full response
-      console.log("Response from loginUser:", response); // Response log
+      const response = await loginUser(credentials);
+      console.log("Response from loginUser:", response);
 
-      // Destructure the token and user from the response.
       const { token, user } = response;
 
       if (!token || !user) {
         throw new Error("Invalid login response.");
       }
 
-      // Store token and user details in localStorage.
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      console.log("Data stored in localStorage."); // Storage confirmation
+      console.log("Data stored in localStorage.");
 
-      // Navigate to the home page after successful login.
       navigate("/home");
     } catch (err) {
-      console.error("Error in handleSubmit:", err); // Error log
+      console.error("Error in handleSubmit:", err);
       setError(err.message || "Error logging in.");
     }
   };
@@ -93,23 +89,25 @@ const Login = () => {
               LOGIN
             </button>
           </form>
-          
+          <div className="text-center mt-3">
+            <small className="text-muted">v1.4.9</small>
+          </div>
+
           {/*
           Uncomment the following lines if you wish to include links
           for "Forgot Password" or "Register User".*/}
-          
-          <div className="text-center mt-3">
+
+          {/* <div className="text-center mt-3">
             <Link to="/forgot-password" className="forgot-password-link">
               FORGOT PASSWORD?
             </Link>
-          </div>
-          <div className="text-center mt-2">
+          </div> */}
+          {/* <div className="text-center mt-2">
             <span className="text-muted">New User? </span>
             <Link to="/register-user" className="register-user-link">
               Register here
             </Link>
-          </div>
-          
+          </div> */}
         </div>
       </div>
     </div>
