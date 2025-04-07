@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
-import { Register } from "../../services/userService";
+import { Register } from "../../../services/userService";
 
 /**
  * RegisterUser Component
@@ -213,13 +213,13 @@ const RegisterUser = () => {
             <button type="submit" className="btn btn-primary">
               ADD USER
             </button>
-            <button
+            {/* <button
               type="button"
               className="btn btn-secondary"
               onClick={handleCancel}
             >
               CANCEL
-            </button>
+            </button> */}
           </div>
         </form>
       </div>

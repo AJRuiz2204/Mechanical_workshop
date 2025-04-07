@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ManagerProtectedRoute from "./components/ProtectedRoute/ManagerProtectedRoute";
 import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
-import RegisterUser from "./components/RegisterUser/RegisterUser";
+import RegisterUser from "./components/Home/RegisterUser/RegisterUser";
 import VehicleReception from "./components/Home/VehicleReception/VehicleReception";
 import ChangePassword from "./components/ForgotPassword/ChangePassword";
 import VehicleList from "./components/Home/VehicleList/VehicleList";
@@ -37,7 +37,6 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/register-user" element={<RegisterUser />} />
 
         <Route
           element={
@@ -190,14 +189,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          {/* <Route
+          <Route
             path="/register-user"
             element={
               <ManagerProtectedRoute requiredRoles={"Manager"}>
                 <RegisterUser />
               </ManagerProtectedRoute>
             }
-          /> */}
+          />
           <Route
             path="/accounts-receivable"
             element={

@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "./jwt";
 
 const api = axios.create({
-    baseURL: "https://api2.j-benz.com/api",
+    baseURL: "http://54.197.96.169/api",
 });
 
 // Agregamos interceptor para incluir el token en cada petición
