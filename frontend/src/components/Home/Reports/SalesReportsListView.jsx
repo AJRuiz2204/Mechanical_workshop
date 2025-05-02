@@ -3,15 +3,15 @@
 // src/components/Settings/SalesReportsListView.jsx
 
 import React, { useState, useEffect } from "react";
-import { Table, Alert, Button, Form } from "react-bootstrap";
+import { Table, Alert, Button, Form, DatePicker, Spin } from "antd";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
+import dayjs from "dayjs";
 import {
   getAllSalesReports,
   getSalesReport,
   createSalesReport,
 } from "../../../services/salesReportService";
-import "./SalesReportsListView.css";
 
 /**
  * SalesReportAllPreviewView Component
@@ -30,7 +30,7 @@ import "./SalesReportsListView.css";
  * - Displays loading, error, and success messages.
  *
  * Responsive Behavior:
- * - Uses Bootstrap’s responsive utilities and custom CSS to adjust
+ * - Uses AntD’s responsive utilities and custom CSS to adjust
  *   layout and font sizes on smaller devices.
  */
 const SalesReportAllPreviewView = ({ onSave }) => {
@@ -42,10 +42,8 @@ const SalesReportAllPreviewView = ({ onSave }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   // Date filter states; endDate defaults to today
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState(
-    new Date().toISOString().substring(0, 10)
-  );
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(dayjs());
 
   // Fetch the preview when the component mounts
   useEffect(() => {
@@ -56,15 +54,15 @@ const SalesReportAllPreviewView = ({ onSave }) => {
    * fetchPreview Function
    *
    * Asynchronously fetches the sales report preview using the current
-   * start and end dates. If a date is an empty string, it passes null to the API.
+   * start and end dates. If a date is null, it passes null to the API.
    */
   const fetchPreview = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getSalesReport(
-        startDate === "" ? null : startDate,
-        endDate === "" ? null : endDate
+        startDate?.format("YYYY-MM-DD") || null,
+        endDate?.format("YYYY-MM-DD") || null
       );
       console.log("Preview obtained:", data);
       setPreview(data);
@@ -104,69 +102,95 @@ const SalesReportAllPreviewView = ({ onSave }) => {
     }
   };
 
-  if (loading) return <div>Loading report preview...</div>;
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (loading) return <Spin />;
+  if (error) return <Alert message={error} type="error" showIcon />;
   if (!preview) return null;
+
+  // Columns for preview table
+  const previewColumns = [
+    {
+      title: "Total Estimates",
+      dataIndex: "totalEstimates",
+      key: "totalEstimates",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Parts Revenue",
+      dataIndex: "totalPartsRevenue",
+      key: "totalPartsRevenue",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Labor Revenue",
+      dataIndex: "totalLaborRevenue",
+      key: "totalLaborRevenue",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Flat Fee Revenue",
+      dataIndex: "totalFlatFeeRevenue",
+      key: "totalFlatFeeRevenue",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Tax Collected",
+      dataIndex: "totalTaxCollected",
+      key: "totalTaxCollected",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Payments",
+      dataIndex: "totalPaymentsCollected",
+      key: "totalPaymentsCollected",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Outstanding",
+      dataIndex: "totalOutstanding",
+      key: "totalOutstanding",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+  ];
+  const previewData = [{ key: "preview", ...preview }];
 
   return (
     <div className="sales-report-preview container-fluid mt-5">
       <h2 className="sales-report-title">Sales Report Preview</h2>
       {/* Date Filters Form */}
-      <Form className="sales-report-form mb-4">
-        <Form.Group controlId="startDate" className="mb-3">
-          <Form.Label>Start Date (optional)</Form.Label>
-          <Form.Control
-            type="date"
+      <Form layout="inline" className="sales-report-form mb-4">
+        <Form.Item label="Start Date (optional)">
+          <DatePicker
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(d) => setStartDate(d)}
+            format="YYYY-MM-DD"
           />
-        </Form.Group>
-        <Form.Group controlId="endDate" className="mb-3">
-          <Form.Label>End Date</Form.Label>
-          <Form.Control
-            type="date"
+        </Form.Item>
+        <Form.Item label="End Date" required>
+          <DatePicker
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
+            onChange={(d) => setEndDate(d)}
+            format="YYYY-MM-DD"
           />
-        </Form.Group>
-        <Button variant="primary" onClick={fetchPreview}>
-          Update Preview
-        </Button>
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" onClick={fetchPreview}>
+            Update Preview
+          </Button>
+        </Form.Item>
       </Form>
       {/* Sales Report Summary Table */}
-      <Table striped bordered hover responsive className="mt-4">
-        <thead>
-          <tr>
-            <th>Total Estimates</th>
-            <th>Total Parts Revenue</th>
-            <th>Total Labor Revenue</th>
-            <th>Total Flat Fee Revenue</th>
-            <th>Total Tax Collected</th>
-            <th>Total Payments</th>
-            <th>Total Outstanding</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${Number(preview.totalEstimates).toFixed(2)}</td>
-            <td>${Number(preview.totalPartsRevenue).toFixed(2)}</td>
-            <td>${Number(preview.totalLaborRevenue).toFixed(2)}</td>
-            <td>${Number(preview.totalFlatFeeRevenue).toFixed(2)}</td>
-            <td>${Number(preview.totalTaxCollected).toFixed(2)}</td>
-            <td>${Number(preview.totalPaymentsCollected).toFixed(2)}</td>
-            <td>${Number(preview.totalOutstanding).toFixed(2)}</td>
-          </tr>
-        </tbody>
-      </Table>
+      <Table
+        columns={previewColumns}
+        dataSource={previewData}
+        pagination={false}
+        className="mt-4"
+      />
       {/* Save Report Button */}
-      <Button variant="success" onClick={handleSave} className="mt-3">
+      <Button type="primary" onClick={handleSave} className="mt-3">
         Save Report
       </Button>
       {success && (
-        <Alert variant="success" className="mt-3">
-          {success}
-        </Alert>
+        <Alert message={success} type="success" showIcon className="mt-3" />
       )}
     </div>
   );
@@ -188,11 +212,11 @@ SalesReportAllPreviewView.propTypes = {
  * Features:
  * - Fetches all sales reports on mount.
  * - Displays a responsive table of saved reports.
- * - Uses Bootstrap components for layout and styling.
+ * - Uses AntD components for layout and styling.
  * - Provides a link to view each report as a PDF.
  *
  * Responsive Behavior:
- * - The table and container adjust using Bootstrap’s responsive classes
+ * - The table and container adjust using AntD’s responsive classes
  *   and custom CSS for extra small devices.
  */
 const SalesReportsListView = () => {
@@ -227,8 +251,80 @@ const SalesReportsListView = () => {
     }
   };
 
-  if (loading) return <div>Loading reports...</div>;
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (loading) return <Spin />;
+  if (error) return <Alert message={error} type="error" showIcon />;
+
+  // Columns for reports list table
+  const reportColumns = [
+    { title: "Report ID", dataIndex: "salesReportId", key: "salesReportId" },
+    {
+      title: "Period",
+      key: "period",
+      render: (_, record) =>
+        `${dayjs(record.startDate).format("MM/DD/YYYY")} - ${dayjs(
+          record.endDate
+        ).format("MM/DD/YYYY")}`,
+    },
+    {
+      title: "Total Estimates",
+      dataIndex: "totalEstimates",
+      key: "totalEstimates",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Parts Revenue",
+      dataIndex: "totalPartsRevenue",
+      key: "totalPartsRevenue",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Labor Revenue",
+      dataIndex: "totalLaborRevenue",
+      key: "totalLaborRevenue",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Flat Fee Revenue",
+      dataIndex: "totalFlatFeeRevenue",
+      key: "totalFlatFeeRevenue",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Tax",
+      dataIndex: "totalTaxCollected",
+      key: "totalTaxCollected",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Paid",
+      dataIndex: "totalPaymentsCollected",
+      key: "totalPaymentsCollected",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Total Outstanding",
+      dataIndex: "totalOutstanding",
+      key: "totalOutstanding",
+      render: (v) => `$${Number(v).toFixed(2)}`,
+    },
+    {
+      title: "Creation Date",
+      dataIndex: "createdDate",
+      key: "createdDate",
+      render: (v) => dayjs(v).format("MM/DD/YYYY"),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Link to={`/sales-report-pdf/${record.salesReportId}`}>
+          <Button type="primary" size="small">
+            View PDF
+          </Button>
+        </Link>
+      ),
+    },
+  ];
 
   return (
     <div className="sales-reports-list container-fluid w-100 py-5">
@@ -237,53 +333,14 @@ const SalesReportsListView = () => {
       <SalesReportAllPreviewView onSave={fetchReports} />
       {/* Reports List Table */}
       {reports.length === 0 ? (
-        <Alert variant="info" className="mt-5">
-          No reports stored.
-        </Alert>
+        <Alert message="No reports stored." type="info" showIcon className="mt-5" />
       ) : (
-        <Table striped bordered hover responsive className="mt-5">
-          <thead>
-            <tr>
-              <th>Report ID</th>
-              <th>Period</th>
-              <th>Total Estimates</th>
-              <th>Total Parts Revenue</th>
-              <th>Total Labor Revenue</th>
-              <th>Total Flat Fee Revenue</th>
-              <th>Total Tax</th>
-              <th>Total Paid</th>
-              <th>Total Outstanding</th>
-              <th>Creation Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((report) => (
-              <tr key={report.salesReportId}>
-                <td>{report.salesReportId}</td>
-                <td>
-                  {new Date(report.startDate).toLocaleDateString()} -{" "}
-                  {new Date(report.endDate).toLocaleDateString()}
-                </td>
-                <td>${Number(report.totalEstimates).toFixed(2)}</td>
-                <td>${Number(report.totalPartsRevenue).toFixed(2)}</td>
-                <td>${Number(report.totalLaborRevenue).toFixed(2)}</td>
-                <td>${Number(report.totalFlatFeeRevenue).toFixed(2)}</td>
-                <td>${Number(report.totalTaxCollected).toFixed(2)}</td>
-                <td>${Number(report.totalPaymentsCollected).toFixed(2)}</td>
-                <td>${Number(report.totalOutstanding).toFixed(2)}</td>
-                <td>{new Date(report.createdDate).toLocaleDateString()}</td>
-                <td>
-                  <Link to={`/sales-report-pdf/${report.salesReportId}`}>
-                    <Button variant="primary" size="sm">
-                      View PDF
-                    </Button>
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <Table
+          columns={reportColumns}
+          dataSource={reports.map((report) => ({ key: report.salesReportId, ...report }))}
+          className="mt-5"
+          pagination={{ pageSize: 10 }}
+        />
       )}
     </div>
   );

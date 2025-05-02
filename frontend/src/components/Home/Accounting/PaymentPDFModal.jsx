@@ -1,9 +1,9 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { Modal } from "react-bootstrap";
+import { Modal } from "antd";
 import { PDFViewer } from "@react-pdf/renderer";
-import PaymentPDF from "./PaymentPDF"; // Adjust the path as needed
+import PaymentPDF from "./PaymentPDF";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 
 /**
@@ -54,21 +54,22 @@ const PaymentPDFModal = ({ show, onHide, customerPayments }) => {
   }, [customerPayments]);
 
   return (
-    <Modal show={show} onHide={onHide} size="xl" dialogClassName="modal-90w">
-      <Modal.Header closeButton>
-        <Modal.Title>Payment PDF</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {loading ? (
-          <div>Loading PDF...</div>
-        ) : (
-          <div className="payment-modal-content">
-            <PDFViewer width="100%" height="700">
-              <PaymentPDF pdfData={pdfData} />
-            </PDFViewer>
-          </div>
-        )}
-      </Modal.Body>
+    <Modal
+      visible={show}
+      onCancel={onHide}
+      width="90%"
+      footer={null}
+      title="Payment PDF"
+    >
+      {loading ? (
+        <div>Loading PDF...</div>
+      ) : (
+        <div className="payment-modal-content">
+          <PDFViewer width="100%" height="700">
+            <PaymentPDF pdfData={pdfData} />
+          </PDFViewer>
+        </div>
+      )}
     </Modal>
   );
 };

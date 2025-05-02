@@ -1,16 +1,7 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
-// Frontend: src/components/NotesSection/NotesSection.jsx
-
-import React, { useEffect, useState } from "react";
-import {
-  Form,
-  Button,
-  Alert,
-  Spinner,
-  ListGroup,
-  Modal,
-} from "react-bootstrap";
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { Form, Input, Button, Alert, Spin, List, Modal } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 import {
   getNotesByDiagnostic,
   createNote,
@@ -73,12 +64,11 @@ const NotesSection = ({ diagId, techDiagId }) => {
 
   /**
    * handleAddNote - Handles the creation of a new note.
-   * Assigns either DiagnosticId or TechnicianDiagnosticId based on which ID is available.
+   * Assigns both DiagnosticId and TechnicianDiagnosticId if available.
    *
    * @param {Object} e - The form submission event.
    */
-  const handleAddNote = async (e) => {
-    e.preventDefault();
+  const handleAddNote = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -88,12 +78,13 @@ const NotesSection = ({ diagId, techDiagId }) => {
     }
 
     try {
-      const newNote = await createNote({
-        ...(techDiagId
-          ? { TechnicianDiagnosticId: techDiagId }
-          : { DiagnosticId: diagId }),
-        Content: noteText.trim(),
-      });
+      // include both IDs so backend can validate DiagnosticId
+      const payload = {
+        diagnosticId: diagId,
+        ...(techDiagId && { technicianDiagnosticId: techDiagId }),
+        content: noteText.trim(),
+      };
+      const newNote = await createNote(payload);
       setNotes((prev) => [...prev, newNote]);
       setSuccessMessage("Note added successfully.");
       setNoteText("");
@@ -121,84 +112,75 @@ const NotesSection = ({ diagId, techDiagId }) => {
   };
 
   return (
-    <div className="notes-section-container mt-4">
+    <div className="notes-section-container">
       <h5>Notes</h5>
 
-      {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
-      {successMessage && <Alert variant="success">{successMessage}</Alert>}
+      {errorMessage && <Alert type="error" message={errorMessage} />}
+      {successMessage && <Alert type="success" message={successMessage} />}
 
-      {/* Add Note Form */}
-      <Form onSubmit={handleAddNote}>
-        <Form.Group controlId="noteText" className="mb-3">
-          <Form.Label>Add a Note</Form.Label>
-          <Form.Control
-            as="textarea"
+      <Form layout="vertical" onFinish={handleAddNote}>
+        <Form.Item rules={[{ required: true, message: "Please enter a note" }]}>
+          <Input.TextArea
             rows={3}
             placeholder="Enter your note here..."
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
-            required
           />
-        </Form.Group>
-        <Button variant="primary" type="submit">
-          Add Note
-        </Button>
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            Add Note
+          </Button>
+        </Form.Item>
       </Form>
 
-      {loading ? (
-        <div className="d-flex justify-content-center my-3">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading notes...</span>
-          </Spinner>
-        </div>
-      ) : notes.length > 0 ? (
-        <ListGroup className="mt-3">
-          {notes.map((note) => (
-            <ListGroup.Item
+      <Spin spinning={loading}>
+        <List
+          dataSource={notes}
+          bordered
+          locale={{ emptyText: "No notes available." }}
+          renderItem={(note) => (
+            <List.Item
               key={note.id}
-              className="d-flex justify-content-between align-items-start list-group-item-custom"
+              actions={[
+                <Button
+                  key={`delete-${note.id}`}
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  onClick={() => {
+                    setNoteToDelete(note);
+                    setShowDeleteModal(true);
+                  }}
+                />,
+              ]}
             >
-              <div>
-                <span className="note-timestamp">
-                  {new Date(note.createdAt).toLocaleString()}
-                </span>
-                <p className="note-content">{note.content}</p>
-              </div>
-              <Button
-                variant="danger"
-                size="sm"
-                className="delete-button"
-                onClick={() => {
-                  setNoteToDelete(note);
-                  setShowDeleteModal(true);
-                }}
-              >
-                Delete
-              </Button>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      ) : (
-        <p className="mt-3">No notes available.</p>
-      )}
+              <List.Item.Meta
+                description={new Date(note.createdAt).toLocaleString()}
+              />
+              <div>{note.content}</div>
+            </List.Item>
+          )}
+        />
+      </Spin>
 
-      {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Note</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Are you sure you want to delete this note?</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDeleteNote}>
-            Delete
-          </Button>
-        </Modal.Footer>
+      <Modal
+        title="Delete Note"
+        open={showDeleteModal}
+        onOk={handleDeleteNote}
+        onCancel={() => setShowDeleteModal(false)}
+        okType="danger"
+        okText="Delete"
+      >
+        Are you sure you want to delete this note?
       </Modal>
     </div>
   );
+};
+
+// add prop validation
+NotesSection.propTypes = {
+  diagId: PropTypes.number,
+  techDiagId: PropTypes.number,
 };
 
 export default NotesSection;

@@ -1,6 +1,18 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
-import { Card, Button, Row, Col, Form, Badge } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  Button,
+  Row,
+  Col,
+  Form,
+  InputNumber,
+  Input,
+  Select,
+  Checkbox,
+  List,
+  Tag,
+  Typography,
+} from "antd";
 import {
   getAccountsReceivable,
   getAccountReceivableById,
@@ -9,6 +21,8 @@ import {
 } from "../../../services/accountReceivableService";
 import { useLocation } from "react-router-dom";
 import "./styles/AccountsReceivableView.css";
+
+const { Text, Title } = Typography;
 
 /**
  * AccountsReceivableView component:
@@ -105,13 +119,12 @@ const AccountsReceivableView = () => {
    * Validates the payment amount, ensures it does not exceed the account balance,
    * constructs the payload, and calls createPayment to register the payment.
    */
-  const handlePaymentSubmit = async (e) => {
-    e.preventDefault();
+  const handlePaymentSubmit = async (values) => {
     if (!selectedAccountId) return;
 
-    const paymentAmount = parseFloat(formData.amount);
+    const paymentAmount = parseFloat(values.amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      console.log("Invalid amount entered:", formData.amount);
+      console.log("Invalid amount entered:", values.amount);
       alert("Please enter a valid amount");
       return;
     }
@@ -129,9 +142,9 @@ const AccountsReceivableView = () => {
     const payload = {
       AccountReceivableId: selectedAccountId,
       Amount: paymentAmount,
-      Method: formData.method,
-      TransactionReference: formData.transactionReference,
-      Notes: formData.notes,
+      Method: values.method,
+      TransactionReference: values.transactionReference,
+      Notes: values.notes,
     };
 
     console.log("Payload to send:", payload);
@@ -173,139 +186,123 @@ const AccountsReceivableView = () => {
 
   return (
     <div className="container-fluid w-100 py-5">
-      {/* Header for the Accounts Receivable Management view */}
-      <h1 className="mb-4 text-center">Accounts Receivable Management</h1>
+      <Title level={3} className="text-center mb-4">
+        Accounts Receivable Management
+      </Title>
 
-      {/*
-        Modified Layout:
-        The layout is now divided into two columns:
-          - Left Column: Displays a vertical list of account cards with filtering options.
-          - Right Column: Displays the payment section when an account is selected.
-      */}
-      <Row className="mb-4">
-        {/* Left Column: Accounts List rendered as a vertical list */}
-        <Col md={6}>
-          <Card className="shadow">
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Accounts Receivable</h5>
-              {/* Button to refresh the accounts list */}
-              <Button variant="primary" onClick={loadAccounts}>
+      <Row gutter={24}>
+        <Col span={10}>
+          <Card>
+            <Row justify="space-between" align="middle">
+              <Title level={5}>Accounts Receivable</Title>
+              <Button type="primary" onClick={loadAccounts}>
                 Refresh List
               </Button>
-            </Card.Header>
-            <Card.Body>
-              {/* Filter options for accounts based on status */}
-              <Form className="mb-3">
-                <Form.Check
-                  inline
-                  label="Paid"
-                  type="checkbox"
-                  id="filter-paid"
+            </Row>
+
+            <Form layout="inline" style={{ margin: "16px 0" }}>
+              <Form.Item>
+                <Checkbox
                   checked={filterPaid}
                   onChange={(e) => setFilterPaid(e.target.checked)}
-                />
-                <Form.Check
-                  inline
-                  label="Pending"
-                  type="checkbox"
-                  id="filter-pending"
+                >
+                  Paid
+                </Checkbox>
+              </Form.Item>
+              <Form.Item>
+                <Checkbox
                   checked={filterPending}
                   onChange={(e) => setFilterPending(e.target.checked)}
-                />
-              </Form>
-
-              {/*
-                Render each account as a full-width card with a bottom margin.
-                This creates a vertical list layout instead of a grid.
-                Only accounts that pass the filter (Paid or Pending) are displayed.
-              */}
-              {filteredAccounts.map((account) => (
-                <Card
-                  key={account.id}
-                  className="account-card mb-3"
-                  onClick={() => selectAccount(account.id)}
-                  style={{ cursor: "pointer", transition: "all 0.3s" }}
                 >
-                  <Card.Body>
-                    <Card.Title>Account #{account.id}</Card.Title>
-                    <Card.Text className="mb-1">
-                      Customer: {account.customer.fullName}
-                    </Card.Text>
-                    <Card.Text className="mb-1">
+                  Pending
+                </Checkbox>
+              </Form.Item>
+            </Form>
+
+            <List
+              pagination={{ pageSize: 10 }}
+              dataSource={filteredAccounts}
+              renderItem={(account) => (
+                <List.Item
+                  onClick={() => selectAccount(account.id)}
+                  style={{ cursor: "pointer", padding: 0 }}
+                >
+                  <Card style={{ width: "100%", marginBottom: 8 }} hoverable>
+                    <Title level={5}>Account #{account.id}</Title>
+                    <Text>Customer: {account.customer.fullName}</Text>
+                    <br />
+                    <Text>
                       Vehicle: {account.vehicle.make} {account.vehicle.model}
-                    </Card.Text>
-                    <Card.Text className="mb-1">
-                      Total: ${account.originalAmount.toFixed(2)}
-                    </Card.Text>
-                    <Card.Text className="mb-0">
-                      Balance: ${account.balance.toFixed(2)}
-                    </Card.Text>
-                    <Badge
-                      bg={account.status === "Paid" ? "success" : "warning"}
-                    >
+                    </Text>
+                    <br />
+                    <Text>Total: ${account.originalAmount.toFixed(2)}</Text>
+                    <br />
+                    <Text>Balance: ${account.balance.toFixed(2)}</Text>
+                    <br />
+                    <Tag color={account.status === "Paid" ? "green" : "orange"}>
                       {account.status}
-                    </Badge>
-                  </Card.Body>
-                </Card>
-              ))}
-            </Card.Body>
+                    </Tag>
+                  </Card>
+                </List.Item>
+              )}
+            />
           </Card>
         </Col>
 
-        {/* Right Column: Payment Section (displayed only when an account is selected) */}
-        <Col md={6}>
+        <Col span={14}>
           {showPayments && (
             <>
-              <Card className="shadow mb-4">
-                <Card.Header>
-                  <h5 className="mb-0">Payment Record</h5>
-                  {selectedAccount && (
-                    <small className="text-muted">
-                      Pending balance: ${selectedAccount.balance.toFixed(2)}
-                    </small>
-                  )}
-                </Card.Header>
-                <Card.Body>
-                  <Form onSubmit={handlePaymentSubmit}>
-                    <Row className="g-3">
-                      <Col md={6}>
-                        <Form.Label>Amount</Form.Label>
-                        <Form.Control
-                          type="number"
-                          step="0.01"
-                          required
-                          value={formData.amount}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              amount: e.target.value,
-                            })
+              <Card style={{ marginBottom: 24 }}>
+                <Title level={5}>Payment Record</Title>
+                {selectedAccount && (
+                  <Text type="secondary">
+                    Pending balance: ${selectedAccount.balance.toFixed(2)}
+                  </Text>
+                )}
+                <Form
+                  layout="vertical"
+                  onFinish={handlePaymentSubmit}
+                  initialValues={formData}
+                >
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item
+                        label="Amount"
+                        name="amount"
+                        rules={[{ required: true }]}
+                      >
+                        <InputNumber
+                          style={{ width: "100%" }}
+                          step={0.01}
+                          onChange={(value) =>
+                            setFormData({ ...formData, amount: value })
                           }
                         />
-                      </Col>
-                      <Col md={6}>
-                        <Form.Label>Payment Method</Form.Label>
-                        <Form.Select
-                          value={formData.method}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              method: e.target.value,
-                            })
+                      </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                      <Form.Item
+                        label="Payment Method"
+                        name="method"
+                        rules={[{ required: true }]}
+                      >
+                        <Select
+                          onChange={(value) =>
+                            setFormData({ ...formData, method: value })
                           }
-                          required
                         >
-                          <option value="Cash">Cash</option>
-                          <option value="CreditCard">Credit Card</option>
-                          <option value="Transfer">Transfer</option>
-                          <option value="Check">Check</option>
-                        </Form.Select>
-                      </Col>
-                      <Col xs={12}>
-                        <Form.Label>Reference</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={formData.transactionReference}
+                          <Select.Option value="Cash">Cash</Select.Option>
+                          <Select.Option value="CreditCard">
+                            Credit Card
+                          </Select.Option>
+                          <Select.Option value="Transfer">Transfer</Select.Option>
+                          <Select.Option value="Check">Check</Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+                    <Col span={24}>
+                      <Form.Item label="Reference" name="transactionReference">
+                        <Input
                           onChange={(e) =>
                             setFormData({
                               ...formData,
@@ -313,69 +310,57 @@ const AccountsReceivableView = () => {
                             })
                           }
                         />
-                      </Col>
-                      <Col xs={12}>
-                        <Form.Label>Notes</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={formData.notes}
+                      </Form.Item>
+                    </Col>
+                    <Col span={24}>
+                      <Form.Item label="Notes" name="notes">
+                        <Input
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              notes: e.target.value,
-                            })
+                            setFormData({ ...formData, notes: e.target.value })
                           }
                         />
-                      </Col>
-                      <Col xs={12}>
-                        <Button
-                          variant="success"
-                          type="submit"
-                          className="w-100"
-                        >
+                      </Form.Item>
+                    </Col>
+                    <Col span={24}>
+                      <Form.Item>
+                        <Button type="primary" htmlType="submit" block>
                           Register Payment
                         </Button>
-                      </Col>
-                    </Row>
-                  </Form>
-                </Card.Body>
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </Form>
               </Card>
 
-              <Card className="shadow">
-                <Card.Header>
-                  <h5 className="mb-0">Payment History</h5>
-                </Card.Header>
-                <Card.Body
-                  className="payment-list"
-                  style={{ maxHeight: "400px", overflowY: "auto" }}
-                >
+              <Card>
+                <Title level={5}>Payment History</Title>
+                <div style={{ maxHeight: 400, overflowY: "auto" }}>
                   {payments.map((payment) => (
-                    <Card key={payment.id} className="mb-2">
-                      <Card.Body className="p-3">
-                        <div className="d-flex justify-content-between">
-                          <div>
-                            <h6 className="mb-0">
-                              ${payment.amount.toFixed(2)}
-                            </h6>
-                            <small className="text-muted">
-                              {new Date(
-                                payment.paymentDate
-                              ).toLocaleDateString()}
-                            </small>
-                          </div>
-                          <div>
-                            <Badge bg="primary">{payment.method}</Badge>
-                          </div>
-                        </div>
-                        {payment.transactionReference && (
-                          <small className="text-muted">
-                            Ref: {payment.transactionReference}
-                          </small>
-                        )}
-                      </Card.Body>
+                    <Card
+                      key={payment.id}
+                      size="small"
+                      style={{ marginBottom: 8 }}
+                    >
+                      <Row justify="space-between">
+                        <Col>
+                          <Text strong>${payment.amount.toFixed(2)}</Text>
+                          <br />
+                          <Text type="secondary">
+                            {new Date(payment.paymentDate).toLocaleDateString()}
+                          </Text>
+                        </Col>
+                        <Col>
+                          <Tag color="blue">{payment.method}</Tag>
+                        </Col>
+                      </Row>
+                      {payment.transactionReference && (
+                        <Text type="secondary">
+                          Ref: {payment.transactionReference}
+                        </Text>
+                      )}
                     </Card>
                   ))}
-                </Card.Body>
+                </div>
               </Card>
             </>
           )}

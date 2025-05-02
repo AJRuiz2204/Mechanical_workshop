@@ -91,6 +91,18 @@ namespace Mechanical_workshop.Data
                 .WithOne(d => d.SalesReport)
                 .HasForeignKey(d => d.SalesReportId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Hacer TechnicianDiagnosticID opcional
+            modelBuilder.Entity<Estimate>()
+                .Property(e => e.TechnicianDiagnosticID)
+                .IsRequired(false);
+
+            // Ajustar la relación para que no haga cascading y permita NULL
+            modelBuilder.Entity<Estimate>()
+                .HasOne(e => e.TechnicianDiagnostic)
+                .WithMany()
+                .HasForeignKey(e => e.TechnicianDiagnosticID)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

@@ -3,12 +3,12 @@
 // src/components/Settings/SalesReportAllPreviewView.jsx
 
 import React, { useState, useEffect } from "react";
-import { Button, Table, Alert, Form } from "react-bootstrap";
+import { Button, Table, Alert, Form, DatePicker, Typography } from "antd";
+import dayjs from "dayjs";
 import {
   getSalesReport,
   createSalesReport,
 } from "../../../services/salesReportService";
-import "./SalesReportAllPreviewView.css";
 
 /**
  * SalesReportAllPreviewView Component
@@ -27,13 +27,60 @@ import "./SalesReportAllPreviewView.css";
  *
  * Dependencies:
  * - React and React Hooks for state management.
- * - React Bootstrap for layout and styling.
+ * - Ant Design for layout and styling.
  * - A sales report service for API interactions.
  *
  * Responsive Behavior:
- * - Uses Bootstrap’s breakpoints to ensure the layout is optimized on all devices.
+ * - Uses Ant Design’s components to ensure the layout is optimized on all devices.
  * - Custom CSS adjusts paddings, font sizes, and spacing for extra-small devices.
  */
+
+// Define Ant Design table columns
+const columns = [
+  {
+    title: "Total Estimates",
+    dataIndex: "totalEstimates",
+    key: "totalEstimates",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+  {
+    title: "Total Parts Revenue",
+    dataIndex: "totalPartsRevenue",
+    key: "totalPartsRevenue",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+  {
+    title: "Total Labor Revenue",
+    dataIndex: "totalLaborRevenue",
+    key: "totalLaborRevenue",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+  {
+    title: "Total Flat Fee Revenue",
+    dataIndex: "totalFlatFeeRevenue",
+    key: "totalFlatFeeRevenue",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+  {
+    title: "Total Tax Collected",
+    dataIndex: "totalTaxCollected",
+    key: "totalTaxCollected",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+  {
+    title: "Total Payments",
+    dataIndex: "totalPaymentsCollected",
+    key: "totalPaymentsCollected",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+  {
+    title: "Total Outstanding",
+    dataIndex: "totalOutstanding",
+    key: "totalOutstanding",
+    render: (v) => `$${Number(v).toFixed(2)}`,
+  },
+];
+
 const SalesReportAllPreviewView = () => {
   // State to store the sales report preview data
   const [preview, setPreview] = useState(null);
@@ -112,71 +159,51 @@ const SalesReportAllPreviewView = () => {
   // Render a loading message while data is being fetched
   if (loading) return <div>Loading report preview...</div>;
   // Render an error alert if an error occurs
-  if (error) return <Alert variant="danger">{error}</Alert>;
+  if (error) return <Alert message={error} type="error" showIcon />;
   // Return null if there is no preview data available
   if (!preview) return null;
 
   return (
-    <div className="container-fluid sales-report-container-fluid">
+    <div className="sales-report-container-fluid">
       {/* Title */}
-      <h1 className="sales-report-title">Sales Report Preview</h1>
+      <Typography.Title level={2} className="sales-report-title">
+        Sales Report Preview
+      </Typography.Title>
       {/* Date Filters Form */}
-      <Form className="sales-report-form mb-4">
-        <Form.Group controlId="startDate" className="mb-3">
-          <Form.Label>Start Date (optional)</Form.Label>
-          <Form.Control
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+      <Form layout="vertical" className="sales-report-form">
+        <Form.Item label="Start Date (optional)">
+          <DatePicker
+            format="YYYY-MM-DD"
+            value={startDate ? dayjs(startDate) : null}
+            onChange={(_, ds) => setStartDate(ds)}
           />
-        </Form.Group>
-        <Form.Group controlId="endDate" className="mb-3">
-          <Form.Label>End Date</Form.Label>
-          <Form.Control
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
+        </Form.Item>
+        <Form.Item label="End Date" required>
+          <DatePicker
+            format="YYYY-MM-DD"
+            value={endDate ? dayjs(endDate) : null}
+            onChange={(_, ds) => setEndDate(ds)}
           />
-        </Form.Group>
-        <Button variant="primary" onClick={fetchPreview}>
+        </Form.Item>
+        <Button type="primary" onClick={fetchPreview}>
           Update Preview
         </Button>
       </Form>
       {/* Sales Report Summary Table */}
-      <Table striped bordered hover responsive className="mt-4">
-        <thead>
-          <tr>
-            <th>Total Estimates</th>
-            <th>Total Parts Revenue</th>
-            <th>Total Labor Revenue</th>
-            <th>Total Flat Fee Revenue</th>
-            <th>Total Tax Collected</th>
-            <th>Total Payments</th>
-            <th>Total Outstanding</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${Number(preview.totalEstimates).toFixed(2)}</td>
-            <td>${Number(preview.totalPartsRevenue).toFixed(2)}</td>
-            <td>${Number(preview.totalLaborRevenue).toFixed(2)}</td>
-            <td>${Number(preview.totalFlatFeeRevenue).toFixed(2)}</td>
-            <td>${Number(preview.totalTaxCollected).toFixed(2)}</td>
-            <td>${Number(preview.totalPaymentsCollected).toFixed(2)}</td>
-            <td>${Number(preview.totalOutstanding).toFixed(2)}</td>
-          </tr>
-        </tbody>
-      </Table>
+      <Table
+        columns={columns}
+        dataSource={[preview]}
+        pagination={false}
+        rowKey="salesReportId"
+        className="mt-4"
+      />
       {/* Save Report Button */}
-      <Button variant="success" onClick={handleSave} className="mt-3">
+      <Button type="primary" onClick={handleSave} className="mt-3">
         Save Report
       </Button>
       {/* Success Alert */}
       {success && (
-        <Alert variant="success" className="mt-3">
-          {success}
-        </Alert>
+        <Alert message={success} type="success" showIcon className="mt-3" />
       )}
     </div>
   );

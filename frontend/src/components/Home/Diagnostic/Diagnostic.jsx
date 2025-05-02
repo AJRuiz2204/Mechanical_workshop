@@ -4,18 +4,21 @@
 import React, { useState, useEffect } from "react";
 import {
   Form,
+  Input,
   Button,
-  Container,
   Row,
   Col,
+  Select,
   Alert,
-  Spinner,
-} from "react-bootstrap";
+  Spin,
+} from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import { createDiagnostic } from "../../../services/DiagnosticService";
 import { getVehicleById } from "../../../services/VehicleService";
-import technicianService from "../../../services/technicianService"; // Technician service
-import "./Diagnostic.css";
+import technicianService from "../../../services/technicianService";
+
+const { TextArea } = Input;
+const { Option } = Select;
 
 /**
  * Diagnostic Component
@@ -28,7 +31,7 @@ import "./Diagnostic.css";
  * reason for the visit (or customer state). Upon submission, a diagnostic is created.
  *
  * Responsive Behavior:
- * Uses Bootstrap’s grid and utility classes along with custom CSS to ensure that
+ * Uses Ant Design’s grid and utility classes along with custom CSS to ensure that
  * the layout and typography adjust properly on all devices.
  *
  * @returns {JSX.Element} The Diagnostic component.
@@ -115,8 +118,7 @@ const Diagnostic = () => {
    *
    * @param {Event} e - The form submission event.
    */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -147,144 +149,125 @@ const Diagnostic = () => {
   // Show a spinner while loading data
   if (loading || techLoading) {
     return (
-      <Container className="p-4 border rounded">
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{ height: "200px" }}
-        >
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div>
-      </Container>
+      <div className="p-4 border rounded" style={{ minHeight: 200, textAlign: "center" }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
   // If there is an error, display it with a back button
   if (errorMessage) {
     return (
-      <Container className="p-4 border rounded">
-        <Alert variant="danger">{errorMessage}</Alert>
-        <Button
-          variant="secondary"
-          onClick={() => navigate("/diagnostic-list")}
-        >
+      <div className="p-4 border rounded">
+        <Alert message={errorMessage} type="error" showIcon />
+        <Button onClick={() => navigate("/diagnostic-list")} style={{ marginTop: 16 }}>
           Back to Diagnostics List
         </Button>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container className="p-4 border rounded bg-light">
+    <div className="p-4 border rounded bg-light">
       <h3>Create Diagnostic</h3>
 
       {/* Display success and technician error messages */}
-      {successMessage && <Alert variant="success">{successMessage}</Alert>}
-      {techError && <Alert variant="danger">{techError}</Alert>}
+      {successMessage && <Alert message={successMessage} type="success" showIcon />}
+      {techError && <Alert message={techError} type="error" showIcon />}
 
       {/* Vehicle Information (read-only) */}
       <h5>Vehicle Information</h5>
-      <Row className="mb-3">
-        <Col md={4}>
-          <Form.Group controlId="vin">
-            <Form.Label>VIN</Form.Label>
-            <Form.Control type="text" value={vehicle.vin} readOnly />
-          </Form.Group>
+      <Row gutter={16} className="mb-3">
+        <Col span={8}>
+          <Form.Item label="VIN">
+            <Input value={vehicle.vin} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={4}>
-          <Form.Group controlId="make">
-            <Form.Label>Make</Form.Label>
-            <Form.Control type="text" value={vehicle.make} readOnly />
-          </Form.Group>
+        <Col span={8}>
+          <Form.Item label="Make">
+            <Input value={vehicle.make} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={4}>
-          <Form.Group controlId="model">
-            <Form.Label>Model</Form.Label>
-            <Form.Control type="text" value={vehicle.model} readOnly />
-          </Form.Group>
+        <Col span={8}>
+          <Form.Item label="Model">
+            <Input value={vehicle.model} readOnly />
+          </Form.Item>
         </Col>
       </Row>
-      <Row className="mb-3">
-        <Col md={4}>
-          <Form.Group controlId="engine">
-            <Form.Label>Engine</Form.Label>
-            <Form.Control type="text" value={vehicle.engine} readOnly />
-          </Form.Group>
+      <Row gutter={16} className="mb-3">
+        <Col span={8}>
+          <Form.Item label="Engine">
+            <Input value={vehicle.engine} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={4}>
-          <Form.Group controlId="plate">
-            <Form.Label>Plate</Form.Label>
-            <Form.Control type="text" value={vehicle.plate} readOnly />
-          </Form.Group>
+        <Col span={8}>
+          <Form.Item label="Plate">
+            <Input value={vehicle.plate} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={4}>
-          <Form.Group controlId="status">
-            <Form.Label>Status</Form.Label>
-            <Form.Control type="text" value={vehicle.status} readOnly />
-          </Form.Group>
+        <Col span={8}>
+          <Form.Item label="Status">
+            <Input value={vehicle.status} readOnly />
+          </Form.Item>
         </Col>
       </Row>
 
       {/* Diagnostic Form */}
-      <Form onSubmit={handleSubmit}>
-        <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group controlId="assignedTechnician">
-              <Form.Label>Assign Technician</Form.Label>
-              <Form.Select
-                name="assignedTechnician"
-                value={formData.assignedTechnician}
-                onChange={handleChange}
-                required
+      <Form onFinish={handleSubmit} layout="vertical">
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="Assign Technician"
+              name="assignedTechnician"
+              rules={[{ required: true, message: "You must assign a technician." }]}
+            >
+              <Select
+                placeholder="-- Select --"
+                onChange={(value) => setFormData({ ...formData, assignedTechnician: value })}
               >
-                <option value="">-- Select --</option>
-                {technicians.length > 0 ? (
-                  technicians.map((tech) => (
-                    <option
-                      key={tech.ID}
-                      value={`${tech.name} ${tech.lastName}`}
-                    >
-                      {`${tech.name} ${tech.lastName}`}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No technicians available</option>
-                )}
-              </Form.Select>
-            </Form.Group>
+                {technicians.length
+                  ? technicians.map((tech) => (
+                      <Option
+                        key={tech.ID}
+                        value={`${tech.name} ${tech.lastName}`}
+                      >{`${tech.name} ${tech.lastName}`}</Option>
+                    ))
+                  : null}
+              </Select>
+            </Form.Item>
           </Col>
-          <Col md={6}>
-            <Form.Group controlId="reasonForVisit">
-              <Form.Label>Customer state</Form.Label>
-              <Form.Control
-                as="textarea"
+          <Col span={12}>
+            <Form.Item
+              label="Customer state"
+              name="reasonForVisit"
+              rules={[{ required: true, message: "Customer state is required." }]}
+            >
+              <TextArea
                 rows={3}
-                name="reasonForVisit"
                 placeholder="Enter the reason for the visit"
+                onChange={(e) =>
+                  setFormData({ ...formData, reasonForVisit: e.target.value })
+                }
                 value={formData.reasonForVisit}
-                onChange={handleChange}
-                required
               />
-            </Form.Group>
+            </Form.Item>
           </Col>
         </Row>
 
         {/* Action Buttons */}
-        <div className="d-flex justify-content-end">
+        <Form.Item style={{ textAlign: "right" }}>
           <Button
-            variant="secondary"
-            className="me-2"
+            style={{ marginRight: 8 }}
             onClick={() => navigate("/diagnostic-list")}
           >
             Cancel
           </Button>
-          <Button variant="success" type="submit">
+          <Button type="primary" htmlType="submit">
             Save Diagnostic
           </Button>
-        </div>
+        </Form.Item>
       </Form>
-    </Container>
+    </div>
   );
 };
 

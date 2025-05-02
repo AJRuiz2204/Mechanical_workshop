@@ -105,14 +105,10 @@ namespace Mechanical_workshop.Controllers
             var estimate = _mapper.Map<Estimate>(estimateCreateDto);
             estimate.VehicleID = vehicle.Id;
             estimate.UserWorkshopID = vehicle.UserWorkshopId;
-
-            // Manejar TechnicianDiagnostic si está presente en el DTO
-            if (estimateCreateDto.TechnicianDiagnostic != null)
-            {
-                var technicianDiagnostic = _mapper.Map<TechnicianDiagnostic>(estimateCreateDto.TechnicianDiagnostic);
-                technicianDiagnostic.Id = 0;
-                estimate.TechnicianDiagnostic = technicianDiagnostic;
-            }
+            // Excluir TechnicianDiagnostic para evitar creación automática
+            estimate.TechnicianDiagnostic = null;
+            // Asegurar que el FK quede NULL y no 0
+            estimate.TechnicianDiagnosticID = null;
 
             _context.Estimates.Add(estimate);
             await _context.SaveChangesAsync();
@@ -158,31 +154,6 @@ namespace Mechanical_workshop.Controllers
             estimate.Total = dto.Total;
             estimate.AuthorizationStatus = dto.AuthorizationStatus;
             estimate.Mileage = dto.Mileage;
-
-            // TechnicianDiagnostic
-            if (dto.TechnicianDiagnostic == null)
-            {
-                if (estimate.TechnicianDiagnostic != null)
-                {
-                    _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
-                    estimate.TechnicianDiagnostic = null;
-                }
-            }
-            else
-            {
-                if (estimate.TechnicianDiagnostic == null)
-                {
-                    var newDiag = _mapper.Map<TechnicianDiagnostic>(dto.TechnicianDiagnostic);
-                    newDiag.Id = 0;
-                    estimate.TechnicianDiagnostic = newDiag;
-                }
-                else
-                {
-                    // Mantener la misma PK para no romper EF
-                    dto.TechnicianDiagnostic.ID = estimate.TechnicianDiagnostic.Id;
-                    _mapper.Map(dto.TechnicianDiagnostic, estimate.TechnicianDiagnostic);
-                }
-            }
 
             // Reemplazar listas de Parts, Labors, FlatFees
             _context.EstimateParts.RemoveRange(estimate.Parts);

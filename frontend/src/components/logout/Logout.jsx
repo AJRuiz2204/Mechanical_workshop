@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-// Frontend: src/components/logout/Logout.jsx
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 

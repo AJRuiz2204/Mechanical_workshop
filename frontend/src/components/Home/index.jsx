@@ -1,164 +1,184 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Layout, Menu, Avatar, Typography, Button, Space } from "antd";
+import {
+  CarOutlined,
+  ToolOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
+  ProfileOutlined,
+  DollarCircleOutlined,
+  ClockCircleOutlined,
+  SettingOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { logoutUser } from "../../services/UserLoginServices";
-import vehicleIcon from "../../images/HomeImages/vehicle.svg";
-import diagnosticIcon from "../../images/HomeImages/diagnostic.svg";
-import estimatesIcon from "../../images/HomeImages/estimate.svg";
-import reportsIcon from "../../images/HomeImages/reports.svg";
-import technicianIcon from "../../images/HomeImages/technician.svg";
-import accountsReceivableIcon from "../../images/HomeImages/account.svg";
-import paymentListIcon from "../../images/HomeImages/payment.svg";
-import settingsIcon from "../../images/HomeImages/settings.svg";
-import addUserIcon from "../../images/HomeImages/users.svg";
-import '../../images/HomeImages/vehicle.svg';
-import "./Home.css";
 
-/**
- * Home Component
- *
- * This component renders the main home page which includes a side menu and a content area.
- * The side menu displays different navigation items based on the user's role,
- * and includes a welcome message and a logout button.
- *
- * The main content area is used to display the content for the selected route.
- *
- * @returns {JSX.Element} The Home component.
- */
+const { Sider, Content } = Layout;
+const { Title, Text } = Typography;
+
 const Home = () => {
-  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Define the menu items with their labels, routes, and the roles that can view them.
-  const menuItems = [
-    {
-      label: "VEHICLE RECEPTION",
-      route: "/vehicle-list",
-      roles: ["Manager"],
-      icon: vehicleIcon,
-    },
-    {
-      label: "DIAGNOSTIC",
-      route: "/diagnostic-list",
-      roles: ["Manager"],
-      icon: diagnosticIcon,
-    },
-    {
-      label: "ESTIMATES",
-      route: "/estimates",
-      roles: ["Manager"],
-      icon: estimatesIcon,
-    },
-    {
-      label: "REPORTS",
-      route: "/reports",
-      roles: ["Manager"],
-      icon: reportsIcon,
-    },
-    {
-      label: "MY DIAGNOSTICS",
-      route: "/technicianDiagnosticList",
-      roles: ["Technician"],
-      icon: technicianIcon,
-    },
-    {
-      label: "PENDING PAYMENTS",
-      route: "/accounts-receivable",
-      roles: ["Manager"],
-      icon: accountsReceivableIcon,
-    },
-    {
-      label: "HISTORY",
-      route: "/payment-list",
-      roles: ["Manager"],
-      icon: paymentListIcon,
-    },
-    {
-      label: "SETTINGS",
-      route: "/settings",
-      roles: ["Manager"],
-      icon: settingsIcon,
-    },
-    {
-      label: "ADD USER",
-      route: "/register-user",
-      roles: ["Manager"],
-      icon: addUserIcon,
-    },
-  ];
-
-  // When the component mounts, retrieve the user data from localStorage.
+  // Carga de usuario desde localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const stored = localStorage.getItem("user");
+    if (stored) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error("Error parsing user from localStorage:", error);
+        setUser(JSON.parse(stored));
+      } catch {
+        console.error("Error parseando usuario");
       }
     }
   }, []);
 
-  /**
-   * handleTabClick - Handles the click event on a menu item and navigates to the specified route.
-   *
-   * @param {string} route - The route to navigate to.
-   */
-  const handleTabClick = (route) => {
-    navigate(route);
-  };
+  if (!user) return <div>Loading...</div>;
 
-  /**
-   * handleLogout - Handles the logout action by calling the logout service and navigating to the login page.
-   */
+  // Definición de todos los menús con roles e íconos de Antd
+  const allItems = [
+    {
+      key: "/vehicle-list",
+      icon: <CarOutlined />,
+      label: "VEHICLE RECEPTION",
+      roles: ["Manager"],
+    },
+    {
+      key: "/diagnostic-list",
+      icon: <ToolOutlined />,
+      label: "DIAGNOSTIC",
+      roles: ["Manager"],
+    },
+    {
+      key: "/estimates",
+      icon: <FileTextOutlined />,
+      label: "ESTIMATES",
+      roles: ["Manager"],
+    },
+    {
+      key: "/reports",
+      icon: <BarChartOutlined />,
+      label: "REPORTS",
+      roles: ["Manager"],
+    },
+    {
+      key: "/technicianDiagnosticList",
+      icon: <ProfileOutlined />,
+      label: "MY DIAGNOSTICS",
+      roles: ["Technician"],
+    },
+    {
+      key: "/accounts-receivable",
+      icon: <DollarCircleOutlined />,
+      label: "PENDING PAYMENTS",
+      roles: ["Manager"],
+    },
+    {
+      key: "/payment-list",
+      icon: <ClockCircleOutlined />,
+      label: "HISTORY",
+      roles: ["Manager"],
+    },
+    {
+      key: "/settings",
+      icon: <SettingOutlined />,
+      label: "SETTINGS",
+      roles: ["Manager"],
+    },
+    {
+      key: "/register-user",
+      icon: <UserAddOutlined />,
+      label: "ADD USER",
+      roles: ["Manager"],
+    },
+  ];
+
+  // Filtrar según el perfil del usuario
+  const menuItems = allItems
+    .filter((item) => item.roles.includes(user.profile))
+    .map(({ key, icon, label }) => ({ key, icon, label }));
+
   const handleLogout = () => {
+    // Clear all stored data
+    localStorage.clear();
     logoutUser();
     navigate("/login");
   };
 
-  if (!user) {
-    // Display a loading message while the user information is being retrieved.
-    return <div>Loading...</div>;
-  }
-
-  // Filter menu items based on the user's profile (role).
-  const filteredMenuItems = menuItems.filter((item) =>
-    item.roles.includes(user.profile)
-  );
-
   return (
-    <div className="home-container">
-      {/* Side Menu */}
-      <div className="side-menu">
-        {/* Menu Items */}
-        <div className="menu-items">
-          {filteredMenuItems.map((item) => (
-            <button
-              key={item.route}
-              className="side-menu-item"
-              onClick={() => handleTabClick(item.route)}
-            >
-              <img src={item.icon} alt={item.label} style={{marginRight: 8}} />
-              {item.label}
-            </button>
-          ))}
+    <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        width={240}
+        style={{
+          background: "#001529",
+          display: "flex",
+          flexDirection: "column",
+          color: "#fff",
+          height: "100vh", // ensure full‑height
+          overflowY: "auto", // allow its own scrolling if needed
+        }}
+      >
+        {/* Logo */}
+        <div className="logo" style={{ padding: 16, textAlign: "center" }}>
+          <Title level={3} style={{ color: "#fff", margin: 0 }}>
+            {collapsed ? "JB" : "JBenz"}
+          </Title>
         </div>
-        {/* Welcome Message and Logout Button */}
-        <div className="welcome-section">
-          <div className="welcome-message">
-            Welcome {user.profile} {user.name} {user.lastName}
-          </div>
-          <button onClick={handleLogout} className="logout-button">
+
+        {/* Menu */}
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={({ key }) => navigate(key)}
+          style={{ borderRight: 0 }}
+        />
+
+        {/* Sección de usuario al pie */}
+        <div style={{ marginTop: "auto", padding: 16, color: "#fff" }}>
+          <Space
+            direction="horizontal"
+            align="center"
+            style={{ width: "100%", marginBottom: 12, color: "#fff" }}
+          >
+            <Avatar
+              style={{ backgroundColor: "#1890ff" }}
+              icon={<ProfileOutlined />}
+            />
+            {!collapsed && (
+              <div>
+                <Text style={{ color: "#fff" }}>Welcome, {user.name}</Text>
+                <br />
+                <Text style={{ color: "#fff" }}>{user.profile}</Text>
+              </div>
+            )}
+          </Space>
+          <Button type="primary" block onClick={handleLogout}>
             Logout
-          </button>
+          </Button>
         </div>
-      </div>
-      {/* Main Content Area */}
-      <div className="content-area">
-        {/* Additional components or routes can be included here */}
-      </div>
-    </div>
+      </Sider>
+
+      <Layout style={{ flex: 1, height: "100vh", overflow: "hidden" }}>
+        <Content
+          style={{
+            margin: 24,
+            padding: 24,
+            background: "#fff",
+            height: "100%",
+            overflowY: "auto",
+          }}
+        >
+          <Outlet />
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

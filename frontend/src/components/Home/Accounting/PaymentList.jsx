@@ -1,9 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react"; // Importing React and its hooks
-import { Table, Alert, Button } from "react-bootstrap"; // Importing components from react-bootstrap
-import { Link } from "react-router-dom"; // Importing Link for routing (unused in this file)
+import { Table, Input, Alert, Button } from "antd"; // Importing components from Ant Design
 import { getAllPayments } from "../../../services/accountReceivableService"; // Service to fetch payments
-import "./styles/PaymentList.css"; // Importing CSS styles
 import PaymentPDFModal from "./PaymentPDFModal"; // Modal component to display/download PDF
 
 /**
@@ -78,6 +76,66 @@ const PaymentList = () => {
     {}
   );
 
+  // Nuevo dataSource para Antd Table
+  const dataSource = Object.keys(filteredGroupedPayments).map((accountId) => {
+    const accountPayments = filteredGroupedPayments[accountId];
+    const totalPaid = accountPayments.reduce((s, p) => s + Number(p.amount), 0);
+    const initialBalance = accountPayments[0].initialBalance || 0;
+    const remainingBalance = accountPayments[0].remainingBalance || 0;
+    const clientName = accountPayments[0].customer?.fullName || "No customer";
+    const vehicleInfo = accountPayments[0].vehicle
+      ? `${accountPayments[0].vehicle.make} ${accountPayments[0].vehicle.model} (${accountPayments[0].vehicle.year}) - ${accountPayments[0].vehicle.vin}`
+      : "No vehicle";
+    return {
+      key: accountId,
+      customer: clientName,
+      vehicle: vehicleInfo,
+      initialBalance: initialBalance.toFixed(2),
+      totalPaid: totalPaid.toFixed(2),
+      remainingBalance: remainingBalance.toFixed(2),
+      paymentsCount: accountPayments.length,
+      accountPayments,
+    };
+  });
+
+  // Columnas Antd
+  const columns = [
+    { title: "Customer", dataIndex: "customer", key: "customer" },
+    { title: "Vehicle", dataIndex: "vehicle", key: "vehicle" },
+    {
+      title: "Initial Balance",
+      dataIndex: "initialBalance",
+      key: "initialBalance",
+      render: (v) => `$${v}`,
+    },
+    {
+      title: "Total Paid",
+      dataIndex: "totalPaid",
+      key: "totalPaid",
+      render: (v) => `$${v}`,
+    },
+    {
+      title: "Remaining Balance",
+      dataIndex: "remainingBalance",
+      key: "remainingBalance",
+      render: (v) => `$${v}`,
+    },
+    { title: "Number of Payments", dataIndex: "paymentsCount", key: "paymentsCount" },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => handleOpenPaymentPDF(record.key, record.accountPayments)}
+        >
+          Download PDF
+        </Button>
+      ),
+    },
+  ];
+
   /**
    * handleOpenPaymentPDF:
    * Opens the PDF modal and sets the payment data for the selected account.
@@ -97,7 +155,7 @@ const PaymentList = () => {
 
   // Render an error message if fetching failed
   if (error) {
-    return <Alert variant="danger">{error}</Alert>; // Display error alert
+    return <Alert message={error} type="error" showIcon />; // Display error alert
   }
 
   return (
@@ -106,77 +164,19 @@ const PaymentList = () => {
 
       {/* Search field to filter payments by customer or vehicle */}
       <div className="mb-3">
-        <input
-          type="text"
+        <Input
           placeholder="Search by customer or vehicle"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)} // Update search term on input change
-          className="form-control"
         />
       </div>
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Customer</th>
-            <th>Vehicle</th>
-            <th>Initial Balance</th>
-            <th>Total Paid</th>
-            <th>Remaining Balance</th>
-            <th>Number of Payments</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(filteredGroupedPayments).length === 0 ? (
-            // If no payments match the filter, show a 'No payments found' row.
-            <tr>
-              <td colSpan="7" className="text-center">
-                No payments found.
-              </td>
-            </tr>
-          ) : (
-            Object.keys(filteredGroupedPayments).map((accountId) => {
-              const accountPayments = filteredGroupedPayments[accountId];
-              // Calculate the total amount paid for the current account.
-              const totalPaid = accountPayments.reduce(
-                (sum, payment) => sum + Number(payment.amount),
-                0
-              );
-              // Retrieve balance and customer/vehicle info from the first payment in the group.
-              const remainingBalance = accountPayments[0].remainingBalance || 0;
-              const initialBalance = accountPayments[0].initialBalance || 0;
-              const clientName =
-                accountPayments[0].customer?.fullName || "No customer";
-              const vehicleInfo = accountPayments[0].vehicle
-                ? `${accountPayments[0].vehicle.make} ${accountPayments[0].vehicle.model} (${accountPayments[0].vehicle.year}) - ${accountPayments[0].vehicle.vin}`
-                : "No vehicle";
-
-              return (
-                <tr key={accountId}>
-                  <td>{clientName}</td>
-                  <td>{vehicleInfo}</td>
-                  <td>${Number(initialBalance).toFixed(2)}</td>
-                  <td>${totalPaid.toFixed(2)}</td>
-                  <td>${Number(remainingBalance).toFixed(2)}</td>
-                  <td>{accountPayments.length}</td>
-                  <td>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() =>
-                        handleOpenPaymentPDF(accountId, accountPayments)
-                      } // Open PDF modal for the selected account
-                    >
-                      Download PDF
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </Table>
+      <Table
+        columns={columns}
+        dataSource={dataSource}
+        pagination={{ pageSize: 10 }}
+        locale={{ emptyText: "No payments found." }}
+      />
 
       {/* Conditionally render the Payment PDF Modal if payments are selected */}
       {selectedAccountPayments && (

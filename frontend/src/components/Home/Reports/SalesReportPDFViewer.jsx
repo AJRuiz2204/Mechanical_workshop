@@ -5,6 +5,7 @@ import SalesReportPDF from "./SalesReportPDF";
 import { useParams } from "react-router-dom";
 import { getSalesReportById } from "../../../services/salesReportService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
+import { Spin, Card } from "antd";
 
 // SalesReportPDFViewer component: fetches a sales report by its ID and renders it
 // in a PDFViewer using the SalesReportPDF component.
@@ -42,14 +43,20 @@ const SalesReportPDFViewer = () => {
 
   // If the report data is not yet loaded, display a loading message.
   if (!reportData) {
-    return <div>Loading Report...</div>;
+    return (
+      <div style={{ textAlign: "center", paddingTop: 50 }}>
+        <Spin tip="Loading report..." size="large" />
+      </div>
+    );
   }
 
   // Render the PDFViewer with the SalesReportPDF component displaying the report.
   return (
-    <PDFViewer width="100%" height="1000">
-      <SalesReportPDF pdfData={reportData} />
-    </PDFViewer>
+    <Card bodyStyle={{ height: "1000px", padding: 0 }}>
+      <PDFViewer width="100%" height="100%">
+        <SalesReportPDF pdfData={reportData} />
+      </PDFViewer>
+    </Card>
   );
 };
 

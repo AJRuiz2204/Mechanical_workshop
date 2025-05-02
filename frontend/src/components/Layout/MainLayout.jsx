@@ -13,9 +13,6 @@ const MainLayout = () => {
   return (
     <div className="app-container" style={{ display: "flex" }}>
       <Home />
-      <div className="content" style={{ flexGrow: 1, padding: "20px" }}>
-        <Outlet />
-      </div>
     </div>
   );
 };

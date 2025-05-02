@@ -1,11 +1,11 @@
-/* eslint-disable react/prop-types */
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { PDFViewer } from "@react-pdf/renderer";
-import EstimatePDF from "./EstimatePDF"; // Adjust the path as needed
+import { Spin } from "antd";
+import EstimatePDF from "./EstimatePDF";
 import { getEstimateById } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
+import PropTypes from "prop-types";
 
 /**
  * PDFModalContent Component
@@ -123,7 +123,11 @@ const PDFModalContent = ({ estimateId }) => {
   }, [estimateId]);
 
   if (loading) {
-    return <div>Loading PDF...</div>;
+    return (
+      <div style={{ textAlign: "center", padding: 50 }}>
+        <Spin tip="Loading PDF..." />
+      </div>
+    );
   }
 
   return (
@@ -131,6 +135,10 @@ const PDFModalContent = ({ estimateId }) => {
       <EstimatePDF pdfData={pdfData} />
     </PDFViewer>
   );
+};
+
+PDFModalContent.propTypes = {
+  estimateId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
 
 export default PDFModalContent;

@@ -1,83 +1,56 @@
-import { useFlatFeeModal } from "../hooks/useModalHooks";
-import PropTypes from "prop-types";
-import { Modal, Button, Form, InputGroup, FormControl } from "react-bootstrap";
+import PropTypes from 'prop-types';
+import { Modal, Form, Input, InputNumber, Button, Space } from 'antd';
+import { useFlatFeeModal } from '../hooks/useModalHooks';
 
-const FlatFeeModal = ({
-  show,
-  onHide,
-  newFlatFee,
-  setNewFlatFee,
-  addFlatFee,
-}) => {
+/**
+ * FlatFeeModal allows adding a new flat fee to the estimate
+ */
+const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee }) => {
   const clearFields = useFlatFeeModal(show, setNewFlatFee);
 
   return (
-    <Modal centered show={show} onHide={onHide} size="sm">
-      <Modal.Header closeButton>
-        <Modal.Title>Add Flat Fee</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
-          <Form.Group className="mb-3">
-            <Form.Label>Description</Form.Label>
-            <Form.Control
-              type="text"
-              value={newFlatFee.description}
-              onChange={(e) =>
-                setNewFlatFee({ ...newFlatFee, description: e.target.value })
-              }
-              placeholder="Enter flat fee description"
-              required
-            />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Flat Fee Price</Form.Label>
-            <InputGroup>
-              <InputGroup.Text>$</InputGroup.Text>
-              <FormControl
-                type="number"
-                step="0.01"
-                min="1"
-                required
-                value={newFlatFee.flatFeePrice}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const parsedVal = val === "" ? "" : parseFloat(val);
-                  setNewFlatFee({
-                    ...newFlatFee,
-                    flatFeePrice: val,
-                    extendedPrice: val === "" ? 0 : parsedVal,
-                  });
-                }}
-                placeholder="Flat Fee Price"
-              />
-            </InputGroup>
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Extended Price</Form.Label>
-            <InputGroup>
-              <InputGroup.Text>$</InputGroup.Text>
-              <FormControl
-                type="number"
-                step="0.01"
-                value={newFlatFee.extendedPrice === 0 ? "" : newFlatFee.extendedPrice}
-                readOnly
-              />
-            </InputGroup>
-          </Form.Group>
-        </Form>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button size="sm" variant="warning" onClick={clearFields}>
-          Clear
-        </Button>
-        <Button variant="secondary" onClick={onHide}>
-          Close
-        </Button>
-        <Button variant="primary" onClick={addFlatFee}>
-          Add Flat Fee
-        </Button>
-      </Modal.Footer>
+    <Modal title="Add Flat Fee" open={show} onCancel={onHide} footer={null} destroyOnClose>
+      <Form layout="vertical" onFinish={addFlatFee}>
+        <Form.Item label="Description" required>
+          <Input
+            value={newFlatFee.description}
+            onChange={e => setNewFlatFee({ ...newFlatFee, description: e.target.value })}
+            placeholder="Enter flat fee description"
+          />
+        </Form.Item>
+        <Form.Item label="Flat Fee Price" required>
+          <InputNumber
+            min={1}
+            value={newFlatFee.flatFeePrice}
+            onChange={flatFeePrice => {
+              setNewFlatFee({
+                ...newFlatFee,
+                flatFeePrice,
+                extendedPrice: flatFeePrice,
+              });
+            }}
+            formatter={v => `$ ${v}`}
+            parser={v => v.replace(/\$/g, '')}
+            style={{ width: '100%' }}
+          />
+        </Form.Item>
+        <Form.Item label="Extended Price">
+          <InputNumber
+            value={newFlatFee.extendedPrice}
+            readOnly
+            formatter={v => `$ ${v}`}
+            parser={v => v.replace(/\$/g, '')}
+            style={{ width: '100%' }}
+          />
+        </Form.Item>
+        <Form.Item>
+          <Space>
+            <Button onClick={clearFields}>Clear</Button>
+            <Button onClick={onHide}>Close</Button>
+            <Button type="primary" htmlType="submit">Add Flat Fee</Button>
+          </Space>
+        </Form.Item>
+      </Form>
     </Modal>
   );
 };
@@ -85,11 +58,7 @@ const FlatFeeModal = ({
 FlatFeeModal.propTypes = {
   show: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
-  newFlatFee: PropTypes.shape({
-    description: PropTypes.string,
-    flatFeePrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    extendedPrice: PropTypes.number
-  }).isRequired,
+  newFlatFee: PropTypes.object.isRequired,
   setNewFlatFee: PropTypes.func.isRequired,
   addFlatFee: PropTypes.func.isRequired,
 };

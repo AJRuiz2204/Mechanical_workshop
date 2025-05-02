@@ -1,12 +1,14 @@
-/* eslint-disable no-unused-vars */
-// Frontend: src/components/RegisterUser/RegisterUser.jsx
-
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import "./RegisterUser.css";
+import {
+  Form,
+  Input,
+  Button,
+  Select,
+  Card,
+  Typography,
+  notification,
+} from "antd";
+import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import { Register } from "../../../services/userService";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 /**
  * RegisterUser Component
@@ -15,14 +17,7 @@ import "react-toastify/dist/ReactToastify.css";
  * @returns {JSX.Element} The RegisterUser component.
  */
 const RegisterUser = () => {
-  // State variables for managing form inputs
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [profile, setProfile] = useState("Manager");
-  const [showPassword, setShowPassword] = useState(false);
+  const [form] = Form.useForm();
 
   /**
    * Generates a secure random password and updates the password state.
@@ -37,195 +32,120 @@ const RegisterUser = () => {
         Math.floor(Math.random() * chars.length)
       );
     }
-    setPassword(generatedPassword);
+    form.setFieldsValue({ password: generatedPassword });
   };
 
   /**
    * Handles the form submission for user registration.
    * Sends the user data to the backend service and manages the response.
    *
-   * @param {Event} e - The form submission event.
+   * @param {Object} values - The form values.
    */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Create the user data object
-    const userData = {
-      email,
-      name,
-      lastName,
-      username,
-      password,
-      profile,
-    };
-
+  const onFinish = async (values) => {
     try {
-      await Register(userData); // Call the Register function from the userService
-      toast.success("User registered successfully.");
-
-      // Clear the form fields after successful registration
-      setEmail("");
-      setName("");
-      setLastName("");
-      setUsername("");
-      setPassword("");
-      setProfile("Manager");
-      setShowPassword(false);
+      await Register(values);
+      notification.success({ message: "User registered successfully." });
+      form.resetFields();
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      notification.error({ message: `Error: ${err.message}` });
     }
   };
 
-  /**
-   * Handles form cancellation by resetting all form fields.
-   */
-  const handleCancel = () => {
-    setEmail("");
-    setName("");
-    setLastName("");
-    setUsername("");
-    setPassword("");
-    setProfile("Manager");
-    setShowPassword(false);
+  const onReset = () => {
+    form.resetFields();
   };
 
   return (
-    <div className="register-user-container d-flex justify-content-center align-items-center vh-100">
-      <div className="card shadow p-4 register-user-card">
-        <h2 className="text-center mb-4">REGISTER USER</h2>
-        <form onSubmit={handleSubmit}>
-          {/* Email Input */}
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label">
-              EMAIL
-            </label>
-            <input
-              type="email"
-              className="form-control"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter user email address"
-              required
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <Card
+        title={
+          <Typography.Title level={2} style={{ textAlign: "center" }}>
+            REGISTER USER
+          </Typography.Title>
+        }
+        style={{ width: 500 }}
+      >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              {
+                required: true,
+                type: "email",
+                message: "Please enter a valid email!",
+              },
+            ]}
+          >
+            <Input placeholder="Enter user email address" />
+          </Form.Item>
+          <Form.Item
+            name="name"
+            label="First Name"
+            rules={[
+              { required: true, message: "Please enter user first name!" },
+            ]}
+          >
+            <Input placeholder="Enter user's first name" />
+          </Form.Item>
+          <Form.Item
+            name="lastName"
+            label="Last Name"
+            rules={[
+              { required: true, message: "Please enter user last name!" },
+            ]}
+          >
+            <Input placeholder="Enter user's last name" />
+          </Form.Item>
+          <Form.Item
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: "Please enter a username!" }]}
+          >
+            <Input placeholder="Enter username" />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: "Please enter a password!" }]}
+          >
+            <Input.Password
+              placeholder="Enter a secure password"
+              iconRender={(visible) =>
+                visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+              }
+              addonAfter={<Button onClick={generatePassword}>Generate</Button>}
             />
-          </div>
-
-          {/* First Name Input */}
-          <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              NAME
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter user's first name"
-              required
-            />
-          </div>
-
-          {/* Last Name Input */}
-          <div className="mb-3">
-            <label htmlFor="lastName" className="form-label">
-              LAST NAME
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Enter user's last name"
-              required
-            />
-          </div>
-
-          {/* Username Input */}
-          <div className="mb-3">
-            <label htmlFor="username" className="form-label">
-              USERNAME
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
-              required
-            />
-          </div>
-
-          {/* Password Input with Generate and Show/Hide functionality */}
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">
-              PASSWORD
-            </label>
-            <div className="input-group">
-              <input
-                type={showPassword ? "text" : "password"}
-                className="form-control"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter a secure password"
-                required
-              />
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={generatePassword}
-              >
-                Generate Password
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-            <div className="form-text">
-              The password must be at least 12 characters long, including
-              uppercase letters, lowercase letters, numbers, and symbols.
-            </div>
-          </div>
-
-          {/* Profile Selection */}
-          <div className="mb-3">
-            <label htmlFor="profile" className="form-label">
-              PROFILE
-            </label>
-            <select
-              className="form-select"
-              id="profile"
-              value={profile}
-              onChange={(e) => setProfile(e.target.value)}
+          </Form.Item>
+          <Form.Item name="profile" label="Profile" initialValue="Manager">
+            <Select>
+              <Select.Option value="Manager">Administrator</Select.Option>
+              <Select.Option value="Technician">
+                Mechanical Technician
+              </Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Add User
+            </Button>
+            <Button
+              htmlType="button"
+              onClick={onReset}
+              style={{ marginLeft: 8 }}
             >
-              <option value="Manager">Administrator</option>
-              <option value="Technician">Mechanical Technician</option>
-            </select>
-          </div>
-
-          {/* Submit and Cancel Buttons */}
-          <div className="d-grid gap-2">
-            <button type="submit" className="btn btn-primary">
-              ADD USER
-            </button>
-            {/* <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleCancel}
-            >
-              CANCEL
-            </button> */}
-          </div>
-        </form>
-      </div>
-      <ToastContainer position="top-right" autoClose={5000} hideProgressBar />
+              Cancel
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
     </div>
   );
 };

@@ -1,21 +1,11 @@
-/* eslint-disable no-unused-vars */
-// src/components/Diagnostic/TechnicianDiagnosticList.jsx
-import React, { useEffect, useState } from "react";
-import {
-  Table,
-  Button,
-  Container,
-  Alert,
-  Spinner,
-  Badge,
-} from "react-bootstrap";
+import { useEffect, useState } from "react";
+import { Table, Button, Spin, Alert, Badge, Space, Card } from "antd";
 import { useNavigate } from "react-router-dom";
 import { getDiagnosticsByTechnician } from "../../../services/DiagnosticService";
 import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
 } from "../../../services/TechnicianDiagnosticService";
-import "./TechnicianDiagnosticList.css";
 
 /**
  * TechnicianDiagnosticList Component
@@ -31,6 +21,83 @@ const TechnicianDiagnosticList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [techDiagMap, setTechDiagMap] = useState({});
+
+  // Columns configuration for AntD Table
+  const columns = [
+    { title: "ID", dataIndex: "id", key: "id" },
+    {
+      title: "VIN",
+      dataIndex: ["vehicle", "vin"],
+      key: "vin",
+      render: (text) => text || "N/A",
+    },
+    {
+      title: "Make",
+      dataIndex: ["vehicle", "make"],
+      key: "make",
+      render: (text) => text || "N/A",
+    },
+    {
+      title: "Model",
+      dataIndex: ["vehicle", "model"],
+      key: "model",
+      render: (text) => text || "N/A",
+    },
+    {
+      title: "Customer state",
+      dataIndex: "reasonForVisit",
+      key: "reasonForVisit",
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, record) => {
+        const hasTechDiag = !!techDiagMap[record.id];
+        return (
+          <Badge
+            status={hasTechDiag ? "success" : "error"}
+            text={hasTechDiag ? "With Diagnostic" : "Without Diagnostic"}
+          />
+        );
+      },
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => {
+        const hasTechDiag = !!techDiagMap[record.id];
+        return (
+          <Space>
+            {hasTechDiag ? (
+              <>
+                <Button
+                  onClick={() =>
+                    navigate(
+                      `/technicianDiagnostic/edit/${techDiagMap[record.id]}`
+                    )
+                  }
+                >
+                  Edit
+                </Button>
+                <Button danger onClick={() => handleDelete(record.id)}>
+                  Delete
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="primary"
+                onClick={() =>
+                  navigate(`/technicianDiagnostic/create/${record.id}`)
+                }
+              >
+                Create
+              </Button>
+            )}
+          </Space>
+        );
+      },
+    },
+  ];
 
   useEffect(() => {
     const fetchTechnicianDiagnostics = async () => {
@@ -103,89 +170,34 @@ const TechnicianDiagnosticList = () => {
   };
 
   return (
-    <Container className="p-4 border rounded bg-light">
-      <h3>My Diagnostics</h3>
-
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      {loading ? (
-        <div className="text-center py-5">
-          <Spinner animation="border" />
-        </div>
-      ) : diagnostics.length === 0 ? (
-        <Alert variant="info">You have no assigned diagnostics.</Alert>
-      ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>VIN</th>
-              <th>Make</th>
-              <th>Model</th>
-              <th>Customer state</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {diagnostics.map((diag) => {
-              const hasTechDiag = !!techDiagMap[diag.id];
-              return (
-                <tr key={diag.id}>
-                  <td>{diag.id}</td>
-                  <td>{diag.vehicle?.vin || "N/A"}</td>
-                  <td>{diag.vehicle?.make || "N/A"}</td>
-                  <td>{diag.vehicle?.model || "N/A"}</td>
-                  <td>{diag.reasonForVisit}</td>
-                  <td>
-                    <Badge bg={hasTechDiag ? "success" : "danger"}>
-                      {hasTechDiag ? "With Diagnostic" : "Without Diagnostic"}
-                    </Badge>
-                  </td>
-                  <td>
-                    {hasTechDiag ? (
-                      <>
-                        <Button
-                          variant="warning"
-                          size="sm"
-                          className="me-2"
-                          onClick={() =>
-                            navigate(
-                              `/technicianDiagnostic/edit/${
-                                techDiagMap[diag.id]
-                              }`
-                            )
-                          }
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(diag.id)}
-                        >
-                          Delete
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/technicianDiagnostic/create/${diag.id}`)
-                        }
-                      >
-                        Create
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
+    <Card title="My Diagnostics" style={{ margin: 16 }}>
+      {/* Error message */}
+      {error && (
+        <Alert
+          message={error}
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
       )}
-    </Container>
+
+      {/* Loading and content */}
+      <Spin spinning={loading} tip="Loading...">
+        {!loading && diagnostics.length === 0 && (
+          <Alert
+            message="You have no assigned diagnostics."
+            type="info"
+            showIcon
+          />
+        )}
+        <Table
+          dataSource={diagnostics}
+          columns={columns}
+          rowKey="id"
+          pagination={{ pageSize: 10 }}
+        />
+      </Spin>
+    </Card>
   );
 };
 

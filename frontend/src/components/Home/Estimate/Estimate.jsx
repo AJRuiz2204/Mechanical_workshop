@@ -1,20 +1,4 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import {
-  Form,
-  Button,
-  Table,
-  Row,
-  Col,
-  Modal,
-  InputGroup,
-  FormControl,
-  Alert,
-  Spinner,
-  Container,
-  Card,
-  ListGroup,
-} from "react-bootstrap";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   createEstimate,
@@ -23,90 +7,44 @@ import {
   getVehicleDiagnostics,
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
-import { getWorkshopSettings } from "../../../services/workshopSettingsService";
-import "./Estimate.css";
-import EditableCell from "./Editceld/EditableCell";
+import {
+  Form,
+  Input,
+  Select,
+  Button,
+  Table,
+  Row,
+  Col,
+  Modal,
+  Alert,
+  Spin,
+  Card,
+  Descriptions,
+} from "antd";
+import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
 import LaborModal from "./Modals/LaborModal";
 import FlatFeeModal from "./Modals/FlatFeeModal";
 
-/**
- * @component Estimate
- * @description Main component for creating and editing estimates in the application.
- * Features:
- * - Vehicle selection with diagnostic information
- * - Parts management with pricing and tax calculations
- * - Labor charges with different rates
- * - Flat fee additions
- * - Total calculations including tax
- * - PDF generation capability
- */
+const { Option } = Select;
+const { Column } = Table;
 
-/**
- * Main Estimate component handling estimate creation and editing
- * @returns {JSX.Element} Rendered Estimate form
- */
 const Estimate = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
-  /**
-   * @state vehicleDiagnosticOptions
-   * @description List of vehicles with their associated diagnostics
-   * @type {Array<{vehicle: Object, owner: Object, diagnostic: Object, technicianDiagnostics: Array}>}
-   */
   const [vehicleDiagnosticOptions, setVehicleDiagnosticOptions] = useState([]);
-  /**
-   * @state selectedOption
-   * @description Currently selected vehicle diagnostic option
-   * @type {Object|null}
-   */
   const [selectedOption, setSelectedOption] = useState(null);
-  // Estos estados se asignan al seleccionar una opción
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [owner, setOwner] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [extendedDiagnostic, setExtendedDiagnostic] = useState("");
   const [mileage, setMileage] = useState(0);
 
-  // States for data, UI, and calculations
   const [isLoading, setIsLoading] = useState(true);
-  /**
-   * @state parts
-   * @description List of parts added to the estimate
-   * @type {Array<{
-   *   description: string,
-   *   partNumber: string,
-   *   quantity: number,
-   *   netPrice: number,
-   *   listPrice: number,
-   *   extendedPrice: number,
-   *   applyPartTax: boolean
-   * }>}
-   */
   const [parts, setParts] = useState([]);
-  /**
-   * @state labors
-   * @description List of labor charges added to the estimate
-   * @type {Array<{
-   *   description: string,
-   *   duration: number,
-   *   laborRate: number,
-   *   extendedPrice: number,
-   *   applyLaborTax: boolean
-   * }>}
-   */
   const [labors, setLabors] = useState([]);
-  /**
-   * @state flatFees
-   * @description List of flat fees added to the estimate
-   * @type {Array<{
-   *   description: string,
-   *   flatFeePrice: number,
-   *   extendedPrice: number
-   * }>}
-   */
   const [flatFees, setFlatFees] = useState([]);
   const [customerNote, setCustomerNote] = useState("");
   const [authorizationStatus, setAuthorizationStatus] = useState("Pending");
@@ -115,20 +53,15 @@ const Estimate = () => {
   const [total, setTotal] = useState(0);
   const [settings, setSettings] = useState(null);
   const [noTax, setNoTax] = useState(false);
-  const [workshopSettings, setWorkshopSettings] = useState(null);
-  const [loadingWorkshop, setLoadingWorkshop] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [saving, setSaving] = useState(false);
-  const hasLoadedEstimate = useRef(false);
 
-  // Visibility for our new, separated modals
   const [showTaxSettingsModal, setShowTaxSettingsModal] = useState(false);
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
 
-  // States for new items (part, labor, flat fee)
   const [newPart, setNewPart] = useState({
     description: "",
     partNumber: "",
@@ -152,24 +85,9 @@ const Estimate = () => {
   });
   const [isAddingPart, setIsAddingPart] = useState(false);
 
-  // Reference for the PDF container (if needed)
-  const pdfContainerRef = useRef(null);
-
-  /**
-   * @effect
-   * @description Loads initial data when component mounts:
-   * - Workshop settings
-   * - Tax and markup settings
-   * - Vehicle diagnostics
-   * - Existing estimate data (in edit mode)
-   */
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Cargar configuraciones
-        const shopData = await getWorkshopSettings();
-        setWorkshopSettings(shopData);
-
         const cfg = await getSettingsById(1);
         setSettings(cfg);
 
@@ -195,7 +113,6 @@ const Estimate = () => {
         });
         setVehicleDiagnosticOptions(options);
 
-        // Si estamos en modo edición, cargar la Estimate
         if (isEditMode) {
           const estimateData = await getEstimateById(id);
 
@@ -204,7 +121,6 @@ const Estimate = () => {
             return;
           }
 
-          // Aquí seteas los datos
           setSelectedVehicle(estimateData.vehicle || null);
           setOwner(estimateData.owner || null);
           setDiagnostic(estimateData.technicianDiagnostic || null);
@@ -218,7 +134,6 @@ const Estimate = () => {
           setTotal(estimateData.total ?? 0);
           setAuthorizationStatus(estimateData.authorizationStatus ?? "Pending");
 
-          // AQUÍ pones el mapeo nuevo:
           setParts(
             (estimateData.parts || []).map((part) => ({
               ...part,
@@ -237,29 +152,16 @@ const Estimate = () => {
         setError("Error loading data: " + (err.message || "Unknown error."));
       } finally {
         setIsLoading(false);
-        setLoadingWorkshop(false);
       }
     };
 
     loadData();
   }, [isEditMode, id]);
 
-  /**
-   * @effect
-   * @description Updates noTax whenever owner changes
-   */
   useEffect(() => {
     setNoTax(owner?.noTax || false);
   }, [owner]);
 
-  /**
-   * @effect
-   * @description Recalculates totals whenever parts, labors, flat fees, or authorization status change
-   * Updates:
-   * - Subtotal
-   * - Tax amount (set to 0 if status is 'Approved')
-   * - Total amount
-   */
   useEffect(() => {
     if (!settings) return;
 
@@ -298,11 +200,6 @@ const Estimate = () => {
     setTotal(totalCalc);
   }, [parts, labors, flatFees, settings]);
 
-  /**
-   * @function handleOptionChange
-   * @description Handles selection of a vehicle diagnostic option
-   * @param {Event} e - Change event from select element
-   */
   const handleOptionChange = (e) => {
     const optionIndex = e.target.value;
 
@@ -323,11 +220,9 @@ const Estimate = () => {
     setMileage(selectedTD.mileage || 0);
   };
 
-  // Handlers for opening and closing modals
   const handleShowTaxSettingsModal = () => setShowTaxSettingsModal(true);
   const handleCloseTaxSettingsModal = () => setShowTaxSettingsModal(false);
 
-  // PART
   const handleShowPartModal = () => {
     const defaultTax = owner?.noTax
       ? false
@@ -352,13 +247,10 @@ const Estimate = () => {
       netPrice: 0,
       listPrice: 0,
       extendedPrice: 0,
-      applyPartTax: owner?.noTax
-        ? false
-        : settings?.partTaxByDefault ?? false,
+      applyPartTax: owner?.noTax ? false : settings?.partTaxByDefault ?? false,
     });
   };
 
-  // LABOR
   const handleShowLaborModal = () => {
     const defaultTax = owner?.noTax
       ? false
@@ -385,14 +277,8 @@ const Estimate = () => {
     });
   };
 
-  /**
-   * @function addPart
-   * @description Validates and adds a new part to the estimate
-   * @async
-   */
   const addPart = async () => {
     if (isAddingPart) return;
-    // Validar que los campos numéricos no sean vacíos
     if (
       newPart.quantity === "" ||
       newPart.netPrice === "" ||
@@ -428,17 +314,13 @@ const Estimate = () => {
       setSuccess("Part added successfully.");
       setShowPartModal(false);
       setError(null);
-    } catch (err) {
+    } catch {
       setError("Error adding the part.");
     } finally {
       setIsAddingPart(false);
     }
   };
 
-  /**
-   * @function addLabor
-   * @description Validates and adds a new labor charge to the estimate
-   */
   const addLabor = () => {
     if (
       !newLabor.description ||
@@ -463,10 +345,6 @@ const Estimate = () => {
     setShowLaborModal(false);
   };
 
-  /**
-   * @function addFlatFee
-   * @description Validates and adds a new flat fee to the estimate
-   */
   const addFlatFee = () => {
     if (
       !newFlatFee.description ||
@@ -483,12 +361,6 @@ const Estimate = () => {
     setShowFlatFeeModal(false);
   };
 
-  /**
-   * @function removeItem
-   * @description Removes an item from parts, labors, or flat fees
-   * @param {string} type - Type of item ("PART", "LABOR", or "FLATFEE")
-   * @param {number} idx - Index of item in its respective array
-   */
   const removeItem = (type, idx) => {
     if (type === "PART") {
       setParts((prev) => {
@@ -511,7 +383,6 @@ const Estimate = () => {
     }
   };
 
-  // Inline edit handlers
   const updatePartField = (idx, field, value) => {
     const arr = [...parts];
     arr[idx] = { ...arr[idx], [field]: value };
@@ -541,15 +412,7 @@ const Estimate = () => {
     setFlatFees(arr);
   };
 
-  /**
-   * @function handleSave
-   * @description Validates and saves the estimate
-   * @param {Event} e - Form submission event
-   * @async
-   */
-  const handleSave = async (e) => {
-    e.preventDefault();
-
+  const handleSave = async () => {
     if (!isEditMode && (!selectedOption || selectedOption === "")) {
       setError("Please select a vehicle.");
       return;
@@ -640,23 +503,9 @@ const Estimate = () => {
     }
   };
 
-  /**
-   * @computed combinedItems
-   * @description Combines parts, labors, and flat fees into a single array
-   * @type {Array<{
-   *   type: string,
-   *   description: string,
-   *   quantity: number|string,
-   *   price: number,
-   *   listPrice: string|number,
-   *   extendedPrice: number,
-   *   taxable: boolean,
-   *   partNumber: string
-   * }>}
-   */
   const combinedItems = useMemo(() => {
     return [
-      ...parts.map((p) => ({
+      ...parts.map((p, idx) => ({
         type: "Part",
         description: p.description,
         quantity: p.quantity,
@@ -665,8 +514,9 @@ const Estimate = () => {
         extendedPrice: p.extendedPrice,
         taxable: p.applyPartTax,
         partNumber: p.partNumber,
+        key: `Part-${idx}`,
       })),
-      ...labors.map((l) => ({
+      ...labors.map((l, idx) => ({
         type: "Labor",
         description: l.description,
         quantity: l.duration,
@@ -675,8 +525,9 @@ const Estimate = () => {
         extendedPrice: l.extendedPrice,
         taxable: l.applyLaborTax,
         partNumber: "",
+        key: `Labor-${idx}`,
       })),
-      ...flatFees.map((f) => ({
+      ...flatFees.map((f, idx) => ({
         type: "Flat Fee",
         description: f.description,
         quantity: "-",
@@ -685,216 +536,165 @@ const Estimate = () => {
         extendedPrice: f.extendedPrice,
         taxable: false,
         partNumber: "",
+        key: `FlatFee-${idx}`,
       })),
     ];
   }, [parts, labors, flatFees]);
 
-  if (isLoading || loadingWorkshop) {
+  if (isLoading) {
     return (
-      <Container
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "80vh" }}
+      <div
+        style={{
+          height: "80vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading Estimate...</span>
-        </Spinner>
-      </Container>
+        <Spin size="large" />
+      </div>
     );
   }
 
   return (
-    <Container className="p-4 border rounded mt-4 estimate-container">
-      <h3 className="mb-4">
-        {isEditMode ? "Edit Estimate" : "Create Estimate"}
-      </h3>
+    <div className="p-4 border rounded mt-4 estimate-container">
+      <h3>{isEditMode ? "Edit Estimate" : "Create Estimate"}</h3>
 
       {error && (
-        <Alert variant="danger" onClose={() => setError(null)} dismissible>
-          {error}
-        </Alert>
+        <Alert
+          type="error"
+          message={error}
+          closable
+          onClose={() => setError(null)}
+        />
       )}
       {success && (
-        <Alert variant="success" onClose={() => setSuccess(null)} dismissible>
-          {success}
-        </Alert>
+        <Alert
+          type="success"
+          message={success}
+          closable
+          onClose={() => setSuccess(null)}
+        />
       )}
 
-      <div className="text-end mb-3">
-        <Button variant="info" onClick={handleShowTaxSettingsModal}>
+      <div style={{ textAlign: "right", marginBottom: 16 }}>
+        <Button onClick={handleShowTaxSettingsModal}>
           View Tax &amp; Markup Settings
         </Button>
       </div>
 
-      <Form onSubmit={handleSave}>
-        {/* Dropdown: Selección de opción de vehículo con diagnóstico extendido */}
+      <Form layout="vertical" onFinish={handleSave}>
         {!isEditMode && (
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Group controlId="vehicleDiagnosticSelect">
-                <Form.Label>
-                  Select Vehicle (only those with TechnicianDiagnostic)
-                </Form.Label>
-                <Form.Control
-                  as="select"
-                  onChange={handleOptionChange}
-                  required
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="vehicleDiagnosticSelect"
+                label="Select Vehicle (only those with TechnicianDiagnostic)"
+                rules={[{ required: true, message: "Select a valid option." }]}
+              >
+                <Select
+                  placeholder="-- Select Option --"
+                  onChange={(value) =>
+                    handleOptionChange({ target: { value } })
+                  }
                 >
-                  <option value="">-- Select Option --</option>
-                  {vehicleDiagnosticOptions.map((opt, index) => (
-                    <option key={index} value={index}>
+                  <Option value="">-- Select Option --</Option>
+                  {vehicleDiagnosticOptions.map((opt, idx) => (
+                    <Option key={idx} value={idx}>
                       {`${opt.vehicle.vin} - ${opt.owner.name} ${opt.owner.lastName} - Diagnostic ID: ${opt.diagnostic.diagnosticId} - Extended: ${opt.technicianDiagnostics[0].extendedDiagnostic}`}
-                    </option>
+                    </Option>
                   ))}
-                </Form.Control>
-              </Form.Group>
+                </Select>
+              </Form.Item>
             </Col>
-            <Col md={6}>
-              <Form.Group controlId="authorizationStatus">
-                <Form.Label>Authorization Status</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={"Pending"}
-                  onChange={(e) => {}}
-                  required
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Not aproved">Not aproved</option>
-                </Form.Control>
-              </Form.Group>
+            <Col span={12}>
+              <Form.Item
+                name="authorizationStatus"
+                label="Authorization Status"
+                initialValue="Pending"
+              >
+                <Select>
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Approved">Approved</Option>
+                  <Option value="Not aproved">Not aproved</Option>
+                </Select>
+              </Form.Item>
             </Col>
           </Row>
         )}
-        {/* Section: Complete vehicle information */}
+
         {selectedVehicle && (
-          <Row className="mb-3">
-            <Col>
+          <Row gutter={16}>
+            <Col span={24}>
               <Card>
-                <Card.Body>
-                  <Card.Title>Vehicle Information</Card.Title>
-                  <ListGroup variant="flush">
-                    <ListGroup.Item>
-                      <strong>VIN:</strong> {selectedVehicle.vin}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Make:</strong> {selectedVehicle.make}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Model:</strong> {selectedVehicle.model}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Year:</strong> {selectedVehicle.year}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Engine:</strong> {selectedVehicle.engine}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Plate:</strong> {selectedVehicle.plate}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>State:</strong> {selectedVehicle.state}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Status:</strong> {selectedVehicle.status}
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Mileage:</strong> {mileage} km
-                    </ListGroup.Item>
-                    {owner && (
-                      <ListGroup.Item>
-                        <strong>Workshop:</strong> {owner.name} {owner.lastName}{" "}
-                        - {owner.email}
-                      </ListGroup.Item>
-                    )}
-                  </ListGroup>
-                </Card.Body>
+                <Descriptions column={3} bordered>
+                  <Descriptions.Item label="VIN">
+                    {selectedVehicle.vin}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Make">
+                    {selectedVehicle.make}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Model">
+                    {selectedVehicle.model}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Year">
+                    {selectedVehicle.year}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Engine">
+                    {selectedVehicle.engine}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Plate">
+                    {selectedVehicle.plate}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="State">
+                    {selectedVehicle.state}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Status">
+                    {selectedVehicle.status}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Mileage">
+                    {mileage} km
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Extended Diagnostic">
+                    {extendedDiagnostic}
+                  </Descriptions.Item>
+                  {owner && (
+                    <Descriptions.Item label="Owner">
+                      {owner.name} {owner.lastName} - {owner.email}
+                    </Descriptions.Item>
+                  )}
+                </Descriptions>
               </Card>
             </Col>
           </Row>
         )}
-        {/* Edit Mode: Información adicional en edición */}
-        {isEditMode && (
-          <Row className="mb-3">
-            <Col md={6}>
-              <p className="fw-bold">Vehicle:</p>
-              {selectedVehicle ? (
-                <p>
-                  {selectedVehicle.vin}{" "}
-                  {selectedVehicle.userWorkshop &&
-                  selectedVehicle.userWorkshop.name
-                    ? `${selectedVehicle.userWorkshop.name} ${selectedVehicle.userWorkshop.lastName}`
-                    : "No Owner"}{" "}
-                  {selectedVehicle.make} {selectedVehicle.model}{" "}
-                  {selectedVehicle.year} {selectedVehicle.plate}
-                </p>
-              ) : (
-                <p>No vehicle associated.</p>
-              )}
-            </Col>
-            <Col md={6}>
-              <Form.Group controlId="authorizationStatus">
-                <Form.Label>Authorization Status</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={authorizationStatus}
-                  onChange={(e) => setAuthorizationStatus(e.target.value)}
-                  required
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Not aproved">Not aproved</option>
-                </Form.Control>
-              </Form.Group>
-            </Col>
-          </Row>
-        )}
-        {isEditMode && selectedVehicle && owner && (
-          <Row className="mb-3">
-            <Col md={6}>
-              <p className="fw-bold">Owner:</p>
-              <p>
-                {owner.name} {owner.lastName} - {owner.email}
-              </p>
-            </Col>
-            <Col md={6}>
-              <p className="fw-bold">Tax Setting:</p>
-              <p>{owner.noTax ? "No Tax" : "Taxable"}</p>
-            </Col>
-          </Row>
-        )}
-        {/* Section: Technician Diagnostic */}
-        <Form.Group controlId="diagnostic" className="mb-3">
-          <Form.Label>Extended Diagnostic</Form.Label>
-          <Form.Control
-            as="textarea"
+
+        <Form.Item label="Extended Diagnostic">
+          <Input.TextArea
             rows={3}
             value={extendedDiagnostic}
             onChange={(e) => setExtendedDiagnostic(e.target.value)}
-            placeholder="Enter technician diagnostic..."
             readOnly={isEditMode}
           />
-        </Form.Group>
-        {/* Botones para agregar items */}
-        <Row className="mb-3">
+        </Form.Item>
+
+        <Row gutter={16} className="mb-3">
           <Col>
             <Button
-              variant="primary"
+              type="primary"
               onClick={handleShowPartModal}
-              className="me-2"
               disabled={!selectedVehicle && !isEditMode}
             >
               Add Part
-            </Button>
+            </Button>{" "}
             <Button
-              variant="secondary"
               onClick={handleShowLaborModal}
-              className="me-2"
               disabled={!selectedVehicle && !isEditMode}
             >
               Add Labor
-            </Button>
+            </Button>{" "}
             <Button
-              variant="info"
+              type="dashed"
               onClick={() => setShowFlatFeeModal(true)}
               disabled={!selectedVehicle && !isEditMode}
             >
@@ -902,266 +702,211 @@ const Estimate = () => {
             </Button>
           </Col>
         </Row>
-        {/* Tabla de items */}
-        <Row>
-          <Col>
-            <h5>Items</h5>
-            <Table bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>TYPE</th>
-                  <th>DESCRIPTION</th>
-                  <th>PART# / HOURS</th>
-                  <th>NET / RATE</th>
-                  <th>QUANTITY</th>
-                  <th>LIST PRICE</th>
-                  <th>EXTENDED PRICE</th>
-                  <th>TAX?</th>
-                  <th>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {parts.map((p, idx) => (
-                  <tr key={idx}>
-                    <td>[PART]</td>
 
-                    <EditableCell
-                      value={p.description}
-                      onChange={(v) => updatePartField(idx, "description", v)}
-                    />
+        <Table
+          dataSource={combinedItems}
+          pagination={false}
+          rowKey="key"
+          scroll={{ x: "max-content" }}
+        >
+          <Column title="TYPE" dataIndex="type" key="type" />
+          <Column
+            title="DESCRIPTION"
+            dataIndex="description"
+            key="description"
+            render={(text, record, idx) => (
+              <EditableCell
+                value={text}
+                onChange={(v) => {
+                  if (record.type === "Part")
+                    updatePartField(idx, "description", v);
+                  else if (record.type === "Labor")
+                    updateLaborField(idx, "description", v);
+                  else updateFlatFeeField(idx, "description", v);
+                }}
+              />
+            )}
+          />
+          <Column
+            title="PART# / HOURS"
+            key="partOrHours"
+            render={(_, record, idx) =>
+              record.type === "Part" ? (
+                <EditableCell
+                  value={record.partNumber}
+                  onChange={(v) => updatePartField(idx, "partNumber", v)}
+                />
+              ) : (
+                <EditableCell
+                  value={record.quantity}
+                  onChange={(v) => updateLaborField(idx, "duration", v)}
+                  type="number"
+                />
+              )
+            }
+          />
+          <Column
+            title="NET / RATE"
+            dataIndex="price"
+            key="price"
+            render={(val) => `$${parseFloat(val).toFixed(2)}`}
+          />
+          <Column
+            title="QUANTITY"
+            dataIndex="quantity"
+            key="quantity"
+            render={(val, record, idx) =>
+              record.type === "Part" ? (
+                <EditableCell
+                  value={val}
+                  onChange={(v) => updatePartField(idx, "quantity", v)}
+                  type="number"
+                />
+              ) : (
+                <span>{val}</span>
+              )
+            }
+          />
+          <Column
+            title="LIST PRICE"
+            dataIndex="listPrice"
+            key="listPrice"
+            render={(val, record, idx) =>
+              record.type === "Part" ? (
+                <EditableCell
+                  value={val}
+                  onChange={(v) => updatePartField(idx, "listPrice", v)}
+                  type="number"
+                />
+              ) : (
+                <span>-</span>
+              )
+            }
+          />
+          <Column
+            title="EXTENDED PRICE"
+            dataIndex="extendedPrice"
+            key="extendedPrice"
+            render={(val) => `$${val.toFixed(2)}`}
+          />
+          <Column
+            title="TAX?"
+            dataIndex="taxable"
+            key="taxable"
+            render={(checked, record, idx) =>
+              record.type !== "Flat Fee" ? (
+                <Form.Item valuePropName="checked">
+                  <Input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      const v = e.target.checked;
+                      if (record.type === "Part")
+                        updatePartField(idx, "applyPartTax", v);
+                      else updateLaborField(idx, "applyLaborTax", v);
+                    }}
+                  />
+                </Form.Item>
+              ) : (
+                <span>No</span>
+              )
+            }
+          />
+          <Column
+            title="ACTION"
+            key="action"
+            render={(_, __, idx) => (
+              <Button
+                type="link"
+                danger
+                onClick={() =>
+                  removeItem(combinedItems[idx].type.toUpperCase(), idx)
+                }
+              >
+                Remove
+              </Button>
+            )}
+          />
+        </Table>
 
-                    <EditableCell
-                      value={p.partNumber}
-                      onChange={(v) => updatePartField(idx, "partNumber", v)}
-                    />
-
-                    {/* ESTA COLUMNA NO ES EDITABLE */}
-                    <td>${parseFloat(p.netPrice).toFixed(2)}</td>
-
-                    <EditableCell
-                      value={p.quantity}
-                      onChange={(v) => updatePartField(idx, "quantity", v)}
-                      type="number"
-                    />
-
-                    <EditableCell
-                      value={p.listPrice}
-                      onChange={(v) => updatePartField(idx, "listPrice", v)}
-                      type="number"
-                    />
-
-                    <td>${p.extendedPrice.toFixed(2)}</td>
-
-                    <td>
-                      <Form.Check
-                        type="checkbox"
-                        checked={p.applyPartTax}
-                        onChange={(e) =>
-                          updatePartField(idx, "applyPartTax", e.target.checked)
-                        }
-                      />
-                    </td>
-
-                    <td>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => removeItem("PART", idx)}
-                      >
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-
-                {labors.map((l, idx) => (
-                  <tr key={idx}>
-                    <td>[LABOR]</td>
-
-                    <EditableCell
-                      value={l.description}
-                      onChange={(v) => updateLaborField(idx, "description", v)}
-                    />
-
-                    <EditableCell
-                      value={l.duration}
-                      onChange={(v) => updateLaborField(idx, "duration", v)}
-                      type="number"
-                    />
-
-                    {/* NO EDITABLE */}
-                    <td>${parseFloat(l.laborRate).toFixed(2)}</td>
-
-                    <td>{l.duration}</td>
-                    <td>-</td>
-                    <td>${l.extendedPrice.toFixed(2)}</td>
-
-                    <td>
-                      <Form.Check
-                        type="checkbox"
-                        checked={l.applyLaborTax}
-                        onChange={(e) =>
-                          updateLaborField(
-                            idx,
-                            "applyLaborTax",
-                            e.target.checked
-                          )
-                        }
-                      />
-                    </td>
-
-                    <td>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => removeItem("LABOR", idx)}
-                      >
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-
-                {flatFees.map((f, idx) => (
-                  <tr key={idx}>
-                    <td>[FLATFEE]</td>
-
-                    <EditableCell
-                      value={f.description}
-                      onChange={(v) =>
-                        updateFlatFeeField(idx, "description", v)
-                      }
-                    />
-
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-
-                    <EditableCell
-                      value={f.flatFeePrice}
-                      onChange={(v) =>
-                        updateFlatFeeField(idx, "flatFeePrice", v)
-                      }
-                      type="number"
-                    />
-
-                    <td>No</td>
-
-                    <td>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => removeItem("FLATFEE", idx)}
-                      >
-                        Remove
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Col>
-        </Row>
-        {/* Campo para la descripción de labor o servicios */}
-        <Form.Group className="mb-3">
-          <Form.Label>Description of labor or services</Form.Label>
-          <Form.Control
-            as="textarea"
+        <Form.Item label="Description of labor or services" required>
+          <Input.TextArea
             rows={3}
             value={customerNote}
             onChange={(e) => setCustomerNote(e.target.value)}
           />
-        </Form.Group>
-        {/* Sección de Totales */}
-        <Row>
-          <Col md={8}></Col>
-          <Col md={4}>
-            <div className="text-end">
+        </Form.Item>
+
+        <Row justify="end" style={{ marginBottom: 16 }}>
+          <Col>
+            <div style={{ textAlign: "right" }}>
               <div>Subtotal: ${subtotal.toFixed(2)}</div>
               <div>Tax: ${tax.toFixed(2)}</div>
               <h5>Total: ${total.toFixed(2)}</h5>
             </div>
           </Col>
         </Row>
-        {/* Botones para guardar o cancelar */}
-        <Row className="mb-3">
+
+        <Row gutter={16}>
           <Col>
             <Button
-              variant="success"
-              type="submit"
-              disabled={saving || isLoading}
-              className="me-2"
+              type="primary"
+              htmlType="submit"
+              loading={saving}
+              disabled={isLoading}
             >
-              {saving
-                ? "Saving..."
-                : isEditMode
-                ? "Update Estimate"
-                : "Create Estimate"}
-            </Button>
-            <Button variant="secondary" onClick={() => navigate("/estimates")}>
-              Cancel
-            </Button>
+              {isEditMode ? "Update Estimate" : "Create Estimate"}
+            </Button>{" "}
+            <Button onClick={() => navigate("/estimates")}>Cancel</Button>
           </Col>
         </Row>
       </Form>
 
-      {/* Modal: Tax & Markup Settings */}
       <Modal
-        centered
-        show={showTaxSettingsModal}
-        onHide={handleCloseTaxSettingsModal}
-        size="sm"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Tax & Markup Settings</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {!settings ? (
-            <Alert variant="warning">No settings found.</Alert>
-          ) : (
-            <div className="row">
-              <div className="col-6 mb-2">
-                <strong>Hourly Rate 1:</strong> {settings.hourlyRate1}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Hourly Rate 2:</strong> {settings.hourlyRate2}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Hourly Rate 3:</strong> {settings.hourlyRate3}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Default Hourly Rate:</strong>{" "}
-                {settings.defaultHourlyRate}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Part Tax Rate:</strong> {settings.partTaxRate}%
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Part Tax By Default:</strong>{" "}
-                {settings.partTaxByDefault ? "Yes" : "No"}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Labor Tax Rate:</strong> {settings.laborTaxRate}%
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Labor Tax By Default:</strong>{" "}
-                {settings.laborTaxByDefault ? "Yes" : "No"}
-              </div>
-              <div className="col-6 mb-2">
-                <strong>Part Markup:</strong> {settings.partMarkup}%
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseTaxSettingsModal}>
+        title="Tax & Markup Settings"
+        open={showTaxSettingsModal}
+        onCancel={handleCloseTaxSettingsModal}
+        footer={[
+          <Button key="close" onClick={handleCloseTaxSettingsModal}>
             Close
-          </Button>
-        </Modal.Footer>
+          </Button>,
+        ]}
+      >
+        {!settings ? (
+          <Alert type="warning" message="No settings found." />
+        ) : (
+          <Descriptions column={1} bordered>
+            <Descriptions.Item label="Hourly Rate 1">
+              {settings.hourlyRate1}
+            </Descriptions.Item>
+            <Descriptions.Item label="Hourly Rate 2">
+              {settings.hourlyRate2}
+            </Descriptions.Item>
+            <Descriptions.Item label="Hourly Rate 3">
+              {settings.hourlyRate3}
+            </Descriptions.Item>
+            <Descriptions.Item label="Default Hourly Rate">
+              {settings.defaultHourlyRate}
+            </Descriptions.Item>
+            <Descriptions.Item label="Part Tax Rate">
+              {settings.partTaxRate}%
+            </Descriptions.Item>
+            <Descriptions.Item label="Part Tax By Default">
+              {settings.partTaxByDefault ? "Yes" : "No"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Labor Tax Rate">
+              {settings.laborTaxRate}%
+            </Descriptions.Item>
+            <Descriptions.Item label="Labor Tax By Default">
+              {settings.laborTaxByDefault ? "Yes" : "No"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Part Markup">
+              {settings.partMarkup}%
+            </Descriptions.Item>
+          </Descriptions>
+        )}
       </Modal>
 
-      {/* Componentes modales */}
       <PartModal
         show={showPartModal}
         onHide={handleClosePartModal}
@@ -1188,7 +933,7 @@ const Estimate = () => {
         addFlatFee={addFlatFee}
         settings={settings}
       />
-    </Container>
+    </div>
   );
 };
 

@@ -1,38 +1,29 @@
-/* eslint-disable no-unused-vars */
-// src/components/LaborTaxMarkupSettings/LaborTaxMarkupSettingsForm.jsx
-
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import {
+  Form,
+  InputNumber,
+  Checkbox,
+  Button,
+  Row,
+  Col,
+  Spin,
+  Alert,
+  Card,
+  Typography,
+  Space,
+} from "antd";
 import {
   getSettingsById,
   createSettings,
   patchSettings,
 } from "../../../services/laborTaxMarkupSettingsService";
-import "./LaborTaxMarkupSettingsForm.css";
 
-/**
- * LaborTaxMarkupSettingsForm Component
- *
- * Description:
- * This component manages the Labor, Tax, and Markup settings for the workshop.
- * It allows users to create new settings or edit existing ones. The form includes
- * fields for hourly rates, tax rates, and markup percentages. In addition, it displays
- * the current settings fetched from the backend in a read-only format.
- *
- * Features:
- * - Fetch existing settings on mount.
- * - Create new settings if none exist.
- * - Patch existing settings with updated values.
- * - Display success and error messages based on operations.
- * - Show a loading spinner while fetching data.
- * - Display current settings from the database.
- *
- * Dependencies:
- * - React and React Hooks for state management.
- * - Bootstrap classes for layout and responsiveness.
- * - Custom CSS for additional responsive styling.
- */
+const { Title, Text } = Typography;
+
 const LaborTaxMarkupSettingsForm = () => {
-  // State to manage form inputs
+  // Constant setting ID used for fetching settings
+  const SETTINGS_ID = 1;
+
   const [formData, setFormData] = useState({
     hourlyRate1: "",
     hourlyRate2: "",
@@ -44,112 +35,64 @@ const LaborTaxMarkupSettingsForm = () => {
     laborTaxByDefault: false,
     partMarkup: "",
   });
-
-  // State to hold settings fetched from the database
   const [dbData, setDbData] = useState(null);
-  // State to hold the record ID from the database
   const [recordId, setRecordId] = useState(null);
-  // Determines if the form is in edit mode (patch) or create mode
   const [isEditMode, setIsEditMode] = useState(false);
-  // Loading state while fetching data
   const [loading, setLoading] = useState(true);
-  // Saving state during create or patch operations
   const [saving, setSaving] = useState(false);
-  // Error message state
   const [error, setError] = useState(null);
-  // Success message state
   const [success, setSuccess] = useState(null);
 
-  // Constant ID used to fetch specific settings (adjust as needed)
-  const SETTINGS_ID = 1;
+  // Converts empty strings or other non-numeric values to a safe number
+  const safeNumber = (val) => {
+    if (val === "" || val == null) return 0;
+    const n = parseFloat(val);
+    return isNaN(n) ? 0 : n;
+  };
 
-  /**
-   * useEffect Hook:
-   * Fetches existing settings from the backend when the component mounts.
-   * Sets the form into edit mode if settings are found, otherwise remains in create mode.
-   */
+  // Fetch settings on mount
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
         const data = await getSettingsById(SETTINGS_ID);
         setDbData(data);
         setRecordId(data.id);
         setIsEditMode(true);
-        // Populate formData with fetched data. Convert numeric zeros to empty strings.
         setFormData({
-          hourlyRate1: data.hourlyRate1 === 0 ? "" : String(data.hourlyRate1),
-          hourlyRate2: data.hourlyRate2 === 0 ? "" : String(data.hourlyRate2),
-          hourlyRate3: data.hourlyRate3 === 0 ? "" : String(data.hourlyRate3),
-          defaultHourlyRate:
-            data.defaultHourlyRate === 0 ? "" : String(data.defaultHourlyRate),
-          partTaxRate: data.partTaxRate === 0 ? "" : String(data.partTaxRate),
+          hourlyRate1: data.hourlyRate1 || "",
+          hourlyRate2: data.hourlyRate2 || "",
+          hourlyRate3: data.hourlyRate3 || "",
+          defaultHourlyRate: data.defaultHourlyRate || "",
+          partTaxRate: data.partTaxRate || "",
           partTaxByDefault: data.partTaxByDefault,
-          laborTaxRate:
-            data.laborTaxRate === 0 ? "" : String(data.laborTaxRate),
+          laborTaxRate: data.laborTaxRate || "",
           laborTaxByDefault: data.laborTaxByDefault,
-          partMarkup: data.partMarkup === 0 ? "" : String(data.partMarkup),
+          partMarkup: data.partMarkup || "",
         });
       } catch (err) {
-        // If the settings are not found (404), switch to create mode
-        if (err?.status === 404 || err?.message?.includes("404")) {
+        if (err.status === 404 || err.message?.includes("404")) {
           setIsEditMode(false);
-          setDbData(null);
         } else {
           setError(err.message || "Error loading settings.");
         }
       } finally {
         setLoading(false);
       }
-    };
-    fetchData();
+    })();
   }, []);
 
-  /**
-   * handleChange Function:
-   * Updates the formData state when the user inputs data.
-   * Handles both text/number fields and checkbox inputs.
-   *
-   * @param {Object} e - The event object from the input change.
-   */
-  const handleChange = (e) => {
-    const { name, type, checked, value } = e.target;
-    if (type === "checkbox") {
-      setFormData((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+  // Handle input changes in the form fields
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  /**
-   * safeNumber Function:
-   * Safely converts a string input to a float.
-   * Returns 0 if the input is empty or not a valid number.
-   *
-   * @param {string} val - The value to convert.
-   * @returns {number} - The parsed float or 0.
-   */
-  const safeNumber = (val) => {
-    if (val === "") return 0;
-    const p = parseFloat(val);
-    return isNaN(p) ? 0 : p;
-  };
-
-  /**
-   * handleSubmitCreate Function:
-   * Handles the submission of the form when creating new settings.
-   * Prepares the payload, sends a create request to the backend, and updates the UI.
-   *
-   * @param {Object} e - The form submission event.
-   */
-  const handleSubmitCreate = async (e) => {
-    e.preventDefault();
+  // Create new settings
+  const handleSubmitCreate = async () => {
     setSaving(true);
     setError(null);
     setSuccess(null);
-
     try {
-      // Prepare the data payload for creation
-      const createDto = {
+      const dto = {
         hourlyRate1: safeNumber(formData.hourlyRate1),
         hourlyRate2: safeNumber(formData.hourlyRate2),
         hourlyRate3: safeNumber(formData.hourlyRate3),
@@ -160,17 +103,12 @@ const LaborTaxMarkupSettingsForm = () => {
         laborTaxByDefault: formData.laborTaxByDefault,
         partMarkup: safeNumber(formData.partMarkup),
       };
-      // Send create request to the backend
-      const created = await createSettings(createDto);
+      const created = await createSettings(dto);
       setRecordId(created.id);
       setIsEditMode(true);
-      setSuccess("Record created successfully.");
-
-      // Fetch the newly created data for display
-      const newDbData = await getSettingsById(created.id);
-      setDbData(newDbData);
-
-      // Reset form fields
+      setSuccess("Settings created successfully.");
+      const fresh = await getSettingsById(created.id);
+      setDbData(fresh);
       setFormData({
         hourlyRate1: "",
         hourlyRate2: "",
@@ -189,21 +127,12 @@ const LaborTaxMarkupSettingsForm = () => {
     }
   };
 
-  /**
-   * handleSubmitPatch Function:
-   * Handles the submission of the form when patching (updating) existing settings.
-   * Prepares a patch document and sends a patch request to the backend.
-   *
-   * @param {Object} e - The form submission event.
-   */
-  const handleSubmitPatch = async (e) => {
-    e.preventDefault();
+  // Update existing settings
+  const handleSubmitPatch = async () => {
     setSaving(true);
     setError(null);
     setSuccess(null);
-
     try {
-      // Prepare a patch document (JSON Patch format)
       const patchDoc = [
         {
           op: "replace",
@@ -251,15 +180,10 @@ const LaborTaxMarkupSettingsForm = () => {
           value: safeNumber(formData.partMarkup),
         },
       ];
-      // Send patch request to the backend
       await patchSettings(recordId, patchDoc);
-      setSuccess("Record patched successfully.");
-
-      // Fetch updated data for display
-      const updatedData = await getSettingsById(recordId);
-      setDbData(updatedData);
-
-      // Reset form fields
+      setSuccess("Settings updated successfully.");
+      const fresh = await getSettingsById(recordId);
+      setDbData(fresh);
       setFormData({
         hourlyRate1: "",
         hourlyRate2: "",
@@ -272,340 +196,179 @@ const LaborTaxMarkupSettingsForm = () => {
         partMarkup: "",
       });
     } catch (err) {
-      setError(err.message || "Error patching settings.");
+      setError(err.message || "Error updating settings.");
     } finally {
       setSaving(false);
     }
   };
 
-  // Show a full-page spinner while data is loading
+  const handleSubmit = isEditMode ? handleSubmitPatch : handleSubmitCreate;
+
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
+      <Spin
+        tip="Loading settings..."
+        style={{ display: "block", margin: "100px auto" }}
+      />
     );
   }
 
-  // Choose the appropriate submit handler based on edit mode
-  const handleSubmit = isEditMode ? handleSubmitPatch : handleSubmitCreate;
-
   return (
-    <div className="container-fluid mt-4">
-      {/* Display error message */}
-      {error && (
-        <div className="alert alert-danger mt-3" role="alert">
-          {error}
-        </div>
-      )}
-      {/* Display success message */}
-      {success && (
-        <div className="alert alert-success mt-3" role="alert">
-          {success}
-        </div>
-      )}
+    <Row gutter={24}>
+      {/* Form for create/update */}
+      <Col xs={24} sm={12}>
+        <Card>
+          <Title level={4}>
+            Labor & Tax Markup Settings — {isEditMode ? "Edit" : "Create"}
+          </Title>
 
-      <div className="row">
-        {/* Form Section */}
-        <div className="col-md-6">
-          <div className="card mb-3">
-            <div className="card-body">
-              <h3 className="card-title">
-                Labor & Tax Markup Settings ({isEditMode ? "Patch" : "Create"})
-              </h3>
-              <form onSubmit={handleSubmit} className="mt-3">
-                {/* Hourly Rate 1 */}
-                <div className="mb-3">
-                  <label htmlFor="hourlyRate1" className="form-label">
-                    Hourly Rate 1:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="hourlyRate1"
-                    name="hourlyRate1"
-                    value={formData.hourlyRate1}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Hourly Rate 2 */}
-                <div className="mb-3">
-                  <label htmlFor="hourlyRate2" className="form-label">
-                    Hourly Rate 2:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="hourlyRate2"
-                    name="hourlyRate2"
-                    value={formData.hourlyRate2}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Hourly Rate 3 */}
-                <div className="mb-3">
-                  <label htmlFor="hourlyRate3" className="form-label">
-                    Hourly Rate 3:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="hourlyRate3"
-                    name="hourlyRate3"
-                    value={formData.hourlyRate3}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Default Hourly Rate */}
-                <div className="mb-3">
-                  <label htmlFor="defaultHourlyRate" className="form-label">
-                    Default Hourly Rate:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="defaultHourlyRate"
-                    name="defaultHourlyRate"
-                    value={formData.defaultHourlyRate}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Part Tax Rate */}
-                <div className="mb-3">
-                  <label htmlFor="partTaxRate" className="form-label">
-                    Part Tax Rate:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="partTaxRate"
-                    name="partTaxRate"
-                    value={formData.partTaxRate}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Part Tax By Default Checkbox */}
-                <div className="form-check mb-3">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="partTaxByDefault"
-                    name="partTaxByDefault"
-                    checked={formData.partTaxByDefault}
-                    onChange={handleChange}
-                  />
-                  <label
-                    className="form-check-label"
-                    htmlFor="partTaxByDefault"
-                  >
-                    Part Tax by Default
-                  </label>
-                </div>
-                {/* Labor Tax Rate */}
-                <div className="mb-3">
-                  <label htmlFor="laborTaxRate" className="form-label">
-                    Labor Tax Rate:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="laborTaxRate"
-                    name="laborTaxRate"
-                    value={formData.laborTaxRate}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Labor Tax By Default Checkbox */}
-                <div className="form-check mb-3">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="laborTaxByDefault"
-                    name="laborTaxByDefault"
-                    checked={formData.laborTaxByDefault}
-                    onChange={handleChange}
-                  />
-                  <label
-                    className="form-check-label"
-                    htmlFor="laborTaxByDefault"
-                  >
-                    Labor Tax by Default
-                  </label>
-                </div>
-                {/* Part Markup */}
-                <div className="mb-3">
-                  <label htmlFor="partMarkup" className="form-label">
-                    Part Markup:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="form-control"
-                    id="partMarkup"
-                    name="partMarkup"
-                    value={formData.partMarkup}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <>
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Saving...
-                    </>
-                  ) : isEditMode ? (
-                    "Patch Existing Record"
-                  ) : (
-                    "Create New Record"
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
+          {error && (
+            <Alert type="error" message={error} style={{ marginBottom: 16 }} />
+          )}
+          {success && (
+            <Alert
+              type="success"
+              message={success}
+              style={{ marginBottom: 16 }}
+            />
+          )}
 
-        {/* Database Read Section */}
-        <div className="col-md-6">
-          <div className="card mb-3">
-            <div className="card-body">
-              <h5>Labor & Tax Markup Settings (DB Read)</h5>
-              {!dbData ? (
-                <div className="alert alert-info mt-3" role="alert">
-                  No record in DB yet.
-                </div>
-              ) : (
-                <div className="row">
-                  {/* Display settings in read-only inputs */}
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">DB Hourly Rate 1:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.hourlyRate1}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">DB Hourly Rate 2:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.hourlyRate2}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">DB Hourly Rate 3:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.hourlyRate3}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">
-                      DB Default Hourly Rate:
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.defaultHourlyRate}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">DB Part Tax Rate:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.partTaxRate}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3 d-flex align-items-end">
-                    <div className="form-check">
-                      <label className="form-check-label me-2">
-                        DB Part Tax by Default:
-                      </label>
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={dbData.partTaxByDefault}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">DB Labor Tax Rate:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.laborTaxRate}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3 d-flex align-items-end">
-                    <div className="form-check">
-                      <label className="form-check-label me-2">
-                        DB Labor Tax by Default:
-                      </label>
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={dbData.laborTaxByDefault}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">DB Part Markup:</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      readOnly
-                      value={dbData.partMarkup}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3" />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          <Form layout="vertical" onFinish={handleSubmit}>
+            <Form.Item label="Hourly Rate 1" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.hourlyRate1}
+                onChange={(v) => handleChange("hourlyRate1", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item label="Hourly Rate 2" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.hourlyRate2}
+                onChange={(v) => handleChange("hourlyRate2", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item label="Hourly Rate 3" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.hourlyRate3}
+                onChange={(v) => handleChange("hourlyRate3", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item label="Default Hourly Rate" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.defaultHourlyRate}
+                onChange={(v) => handleChange("defaultHourlyRate", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item label="Part Tax Rate" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.partTaxRate}
+                onChange={(v) => handleChange("partTaxRate", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Checkbox
+                checked={formData.partTaxByDefault}
+                onChange={(e) =>
+                  handleChange("partTaxByDefault", e.target.checked)
+                }
+              >
+                Part Tax by Default
+              </Checkbox>
+            </Form.Item>
+
+            <Form.Item label="Labor Tax Rate" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.laborTaxRate}
+                onChange={(v) => handleChange("laborTaxRate", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Checkbox
+                checked={formData.laborTaxByDefault}
+                onChange={(e) =>
+                  handleChange("laborTaxByDefault", e.target.checked)
+                }
+              >
+                Labor Tax by Default
+              </Checkbox>
+            </Form.Item>
+
+            <Form.Item label="Part Markup" required>
+              <InputNumber
+                style={{ width: "100%" }}
+                value={formData.partMarkup}
+                onChange={(v) => handleChange("partMarkup", v)}
+                step={0.01}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={saving}>
+                  {isEditMode ? "Update" : "Create"}
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Card>
+      </Col>
+
+      {/* Section to read current settings from the DB */}
+      <Col xs={24} sm={12}>
+        <Card title="DB Read (Current Settings)">
+          {!dbData ? (
+            <Text type="secondary">No record in the database.</Text>
+          ) : (
+            <Form layout="vertical">
+              <Form.Item label="DB Hourly Rate 1">
+                <Text>{dbData.hourlyRate1}</Text>
+              </Form.Item>
+              <Form.Item label="DB Hourly Rate 2">
+                <Text>{dbData.hourlyRate2}</Text>
+              </Form.Item>
+              <Form.Item label="DB Hourly Rate 3">
+                <Text>{dbData.hourlyRate3}</Text>
+              </Form.Item>
+              <Form.Item label="DB Default Hourly Rate">
+                <Text>{dbData.defaultHourlyRate}</Text>
+              </Form.Item>
+              <Form.Item label="DB Part Tax Rate">
+                <Text>{dbData.partTaxRate}</Text>
+              </Form.Item>
+              <Form.Item label="DB Part Tax by Default">
+                <Checkbox checked={dbData.partTaxByDefault} disabled />
+              </Form.Item>
+              <Form.Item label="DB Labor Tax Rate">
+                <Text>{dbData.laborTaxRate}</Text>
+              </Form.Item>
+              <Form.Item label="DB Labor Tax by Default">
+                <Checkbox checked={dbData.laborTaxByDefault} disabled />
+              </Form.Item>
+              <Form.Item label="DB Part Markup">
+                <Text>{dbData.partMarkup}</Text>
+              </Form.Item>
+            </Form>
+          )}
+        </Card>
+      </Col>
+    </Row>
   );
 };
 

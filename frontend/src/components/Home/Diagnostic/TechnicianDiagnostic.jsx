@@ -1,17 +1,5 @@
 /* eslint-disable no-unused-vars */
-// src/components/Diagnostic/TechnicianDiagnostic.jsx
-
 import React, { useEffect, useState } from "react";
-import {
-  Form,
-  Button,
-  Container,
-  Row,
-  Col,
-  Alert,
-  Spinner,
-  Modal,
-} from "react-bootstrap";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   createTechnicianDiagnostic,
@@ -20,7 +8,7 @@ import {
   deleteTechnicianDiagnostic,
 } from "../../../services/TechnicianDiagnosticService";
 import { getDiagnosticById } from "../../../services/DiagnosticService";
-import "./TechnicianDiagnostic.css";
+import { Form, Input, Button, Row, Col, Spin, Alert, Modal } from "antd";
 import NotesSection from "../../NotesSection/NotesSection";
 
 /**
@@ -38,8 +26,8 @@ import NotesSection from "../../NotesSection/NotesSection";
  * - In edit mode, pre-populates the form with existing technician diagnostic data.
  * - Offers Save and Delete actions.
  * - Includes a NotesSection component for technician notes.
- * - Uses Bootstrap’s grid system, forms, modals, alerts, and spinners.
- * - Responsive design is implemented via Bootstrap classes and custom CSS.
+ * - Uses Ant Design components for layout, forms, modals, alerts, and spinners.
+ * - Responsive design is implemented via Ant Design grid system and custom CSS.
  *
  * @returns {JSX.Element} The TechnicianDiagnostic component.
  */
@@ -147,11 +135,8 @@ const TechnicianDiagnostic = () => {
    *
    * Validates the form and either creates a new technician diagnostic
    * or updates an existing one based on the mode.
-   *
-   * @param {Object} e - The form submission event.
    */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -262,202 +247,150 @@ const TechnicianDiagnostic = () => {
 
   if (loading) {
     return (
-      <Container className="p-4 border rounded diagnostic-container">
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{ height: "200px" }}
-        >
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div>
-      </Container>
+      <Spin
+        size="large"
+        style={{ width: "100%", marginTop: 200, textAlign: "center" }}
+      />
     );
   }
 
   if (!diagnostic) {
     return (
-      <Container className="p-4 border rounded diagnostic-container">
-        <Alert variant="danger">Could not load diagnostic information.</Alert>
-        <Button
-          variant="secondary"
-          onClick={() => navigate("/technicianDiagnosticList")}
-        >
+      <div className="diagnostic-container">
+        <Alert type="error" message="Could not load diagnostic information." />
+        <Button onClick={() => navigate("/technicianDiagnosticList")}>
           Back to Diagnostics List
         </Button>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container className="p-4 border rounded diagnostic-container bg-light">
-      <h3 className="mb-4">
+    <div
+      className="diagnostic-container"
+      style={{ maxHeight: "100vh", overflowY: "auto" }}
+    >
+      <h3>
         {isEditMode
           ? "Edit Technician Diagnostic"
           : "Assign Technician Diagnostic"}
       </h3>
-      {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
-      {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-      {/* Vehicle Information Section */}
+      {errorMessage && <Alert type="error" message={errorMessage} />}
+      {successMessage && <Alert type="success" message={successMessage} />}
+
       <h5>Vehicle Information</h5>
-      <Row className="mb-3">
-        <Col md={3}>
-          <Form.Group controlId="vin">
-            <Form.Label>VIN</Form.Label>
-            <Form.Control
-              type="text"
-              value={diagnostic.vehicle?.vin || "N/A"}
-              readOnly
-            />
-          </Form.Group>
+      <Row gutter={[16, 16]}>
+        <Col span={6}>
+          <Form.Item label="VIN">
+            <Input value={diagnostic.vehicle?.vin || "N/A"} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={3}>
-          <Form.Group controlId="make">
-            <Form.Label>Make</Form.Label>
-            <Form.Control
-              type="text"
-              value={diagnostic.vehicle?.make || "N/A"}
-              readOnly
-            />
-          </Form.Group>
+        <Col span={6}>
+          <Form.Item label="Make">
+            <Input value={diagnostic.vehicle?.make || "N/A"} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={3}>
-          <Form.Group controlId="model">
-            <Form.Label>Model</Form.Label>
-            <Form.Control
-              type="text"
-              value={diagnostic.vehicle?.model || "N/A"}
-              readOnly
-            />
-          </Form.Group>
+        <Col span={6}>
+          <Form.Item label="Model">
+            <Input value={diagnostic.vehicle?.model || "N/A"} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={3}>
-          <Form.Group controlId="plate">
-            <Form.Label>Plate</Form.Label>
-            <Form.Control
-              type="text"
-              value={diagnostic.vehicle?.plate || "N/A"}
-              readOnly
-            />
-          </Form.Group>
+        <Col span={6}>
+          <Form.Item label="Plate">
+            <Input value={diagnostic.vehicle?.plate || "N/A"} readOnly />
+          </Form.Item>
         </Col>
       </Row>
-      <Row className="mb-3">
-        <Col md={3}>
-          <Form.Group controlId="engine">
-            <Form.Label>Engine</Form.Label>
-            <Form.Control
-              type="text"
-              value={diagnostic.vehicle?.engine || "N/A"}
-              readOnly
-            />
-          </Form.Group>
+      <Row gutter={[16, 16]}>
+        <Col span={6}>
+          <Form.Item label="Engine">
+            <Input value={diagnostic.vehicle?.engine || "N/A"} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={3}>
-          <Form.Group controlId="status">
-            <Form.Label>Status</Form.Label>
-            <Form.Control
-              type="text"
-              value={diagnostic.vehicle?.status || "N/A"}
-              readOnly
-            />
-          </Form.Group>
+        <Col span={6}>
+          <Form.Item label="Status">
+            <Input value={diagnostic.vehicle?.status || "N/A"} readOnly />
+          </Form.Item>
         </Col>
-        <Col md={6}>
-          <Form.Group controlId="reasonForVisit">
-            <Form.Label>Customer State</Form.Label>
-            <Form.Control
-              as="textarea"
+        <Col span={12}>
+          <Form.Item label="Customer State">
+            <Input.TextArea
               rows={2}
               value={diagnostic.reasonForVisit || "N/A"}
               readOnly
             />
-          </Form.Group>
+          </Form.Item>
         </Col>
       </Row>
 
-      {/* Technician Diagnostic Form */}
-      <Form onSubmit={handleSubmit}>
+      <Form layout="vertical" onFinish={handleSubmit}>
         <h5>Technician Diagnostic Information</h5>
-        <Row className="mb-3">
-          <Col md={6}>
-            <Form.Group controlId="mileage">
-              <Form.Label>Vehicle Mileage</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter mileage"
-                name="mileage"
-                value={formData.mileage}
-                onChange={handleMileageChange}
-                required
-                maxLength={7}
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group controlId="extendedDiagnostic">
-              <Form.Label>Extended Diagnostic</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Enter detailed diagnostic information..."
-                name="extendedDiagnostic"
-                value={formData.extendedDiagnostic}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-
-        <div className="d-flex justify-content-end">
+        <Form.Item
+          label="Vehicle Mileage"
+          rules={[{ required: true, message: "Mileage is required" }]}
+        >
+          <Input
+            placeholder="Enter mileage"
+            value={formData.mileage}
+            onChange={handleMileageChange}
+            maxLength={7}
+          />
+        </Form.Item>
+        <Form.Item
+          label="Extended Diagnostic"
+          rules={[{ required: true, message: "Extended diagnostic is required" }]}
+        >
+          <Input.TextArea
+            name="extendedDiagnostic"
+            rows={3}
+            placeholder="Enter detailed diagnostic information..."
+            value={formData.extendedDiagnostic}
+            onChange={handleChange}
+          />
+        </Form.Item>
+        <Form.Item>
           <Button
-            variant="secondary"
-            className="me-2"
+            style={{ marginRight: 8 }}
             onClick={() => navigate("/technicianDiagnosticList")}
           >
             Cancel
           </Button>
           {isEditMode && (
             <Button
-              variant="danger"
-              className="me-2"
+              danger
+              style={{ marginRight: 8 }}
               onClick={() => setShowDeleteModal(true)}
             >
               Delete
             </Button>
           )}
-          <Button variant="success" type="submit">
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{ marginRight: 0 }}
+          >
             {isEditMode ? "Save Changes" : "Save Technician Diagnostic"}
           </Button>
-        </div>
+        </Form.Item>
       </Form>
 
-      {/* Integrate NotesSection for additional technician notes */}
       <NotesSection
         diagId={diagnostic.id}
         techDiagId={technicianDiagnostic?.id}
       />
 
-      {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Technician Diagnostic</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete this Technician Diagnostic?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete
-          </Button>
-        </Modal.Footer>
+      <Modal
+        title="Delete Technician Diagnostic"
+        open={showDeleteModal}
+        onOk={handleDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        okType="danger"
+        okText="Delete"
+      >
+        Are you sure you want to delete this Technician Diagnostic?
       </Modal>
-    </Container>
+    </div>
   );
 };
 

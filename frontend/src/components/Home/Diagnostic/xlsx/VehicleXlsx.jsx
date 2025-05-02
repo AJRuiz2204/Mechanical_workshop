@@ -1,6 +1,6 @@
 // components/Home/Estimate/EstimateList.js
 import { useState, useEffect } from "react";
-import { Table, Button, Container, Alert, Spinner } from "react-bootstrap";
+import { Table, Button, Row, Spin, Alert, Empty } from "antd";
 import { getEstimateData } from "../../../../services/EstimateServiceXslx";
 import * as XLSX from "xlsx";
 
@@ -44,63 +44,58 @@ const VehicleXlsx = () => {
     document.body.removeChild(link);
   };
 
+  // Columns for Antd Table
+  const columns = [
+    {
+      title: "Creation Date",
+      dataIndex: "createTime",
+      key: "createTime",
+      render: (val) => new Date(val).toLocaleString(),
+    },
+    { title: "Estimate ID", dataIndex: "estimateId", key: "estimateId" },
+    { title: "VIN", dataIndex: "vin", key: "vin" },
+    {
+      title: "Quantity",
+      dataIndex: "quantity",
+      key: "quantity",
+      render: (val) => (val !== undefined ? val : "-"),
+    },
+    { title: "Description", dataIndex: "description", key: "description" },
+    { title: "Net Price", dataIndex: "netPrice", key: "netPrice" },
+    { title: "List Price", dataIndex: "listPrice", key: "listPrice" },
+    { title: "Total Price", dataIndex: "priceTo", key: "priceTo" },
+    { title: "Labor", dataIndex: "labor", key: "labor" },
+    { title: "Supplies", dataIndex: "shopSupplies", key: "shopSupplies" },
+  ];
+
   if (loading) {
     return (
-      <Container fluid className="p-4">
-        <div className="text-center py-5">
-          <Spinner animation="border" />
-        </div>
-      </Container>
+      <Row justify="center" style={{ padding: 24 }}>
+        <Spin size="large" />
+      </Row>
     );
   }
 
   return (
-    <Container fluid className="p-4">
+    <div style={{ padding: 24 }}>
       <h3>Vehicle estimates list</h3>
-      {error && <Alert variant="danger">{error}</Alert>}
-      {/* Button to export to XLSX */}
-      <div className="mb-3 d-flex justify-content-end">
-        <Button variant="primary" onClick={downloadExcel}>
+      {error && <Alert message={error} type="error" showIcon />}
+      <div style={{ marginBottom: 16, textAlign: "right" }}>
+        <Button type="primary" onClick={downloadExcel}>
           Download XLSX
         </Button>
       </div>
       {estimates.length === 0 ? (
-        <Alert variant="info">No records found</Alert>
+        <Empty description="No records found" />
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>Creation Date</th>
-              <th>Estimate ID</th>
-              <th>VIN</th>
-              <th>Quantity</th>
-              <th>Description</th>
-              <th>Net Price</th>
-              <th>List Price</th>
-              <th>Total Price</th>
-              <th>Labor</th>
-              <th>Supplies</th>
-            </tr>
-          </thead>
-          <tbody>
-            {estimates.map((item, index) => (
-              <tr key={index}>
-                <td>{new Date(item.createTime).toLocaleString()}</td>
-                <td>{item.estimateId}</td>
-                <td>{item.vin}</td>
-                <td>{item.quantity !== undefined ? item.quantity : "-"}</td>
-                <td>{item.description}</td>
-                <td>{item.netPrice}</td>
-                <td>{item.listPrice}</td>
-                <td>{item.priceTo}</td>
-                <td>{item.labor}</td>
-                <td>{item.shopSupplies}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <Table
+          columns={columns}
+          dataSource={estimates}
+          rowKey={(record, idx) => idx}
+          pagination={false}
+        />
       )}
-    </Container>
+    </div>
   );
 };
 
