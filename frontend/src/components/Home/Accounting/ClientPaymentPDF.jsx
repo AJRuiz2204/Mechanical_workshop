@@ -147,6 +147,9 @@ const ClientPaymentPDF = ({ pdfData }) => {
   // Format the current date for the footer
   const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
 
+  // Generate quote date string if not provided in pdfData
+  const quoteDateString = dayjs().format("DDMMYYYY,HH:mm");
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -184,13 +187,10 @@ const ClientPaymentPDF = ({ pdfData }) => {
             {/* Quote Information Section */}
             <View style={styles.quoteInfo}>
               <Text style={styles.textLine}>
-                Quote # {workshopData.quoteNumber || ""}
+                Quote # {workshopData.quoteNumber || quoteDateString}
               </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
-              </Text>
-              <Text style={styles.textLine}>
-                Expires: {workshopData.expiryDate || ""}
               </Text>
             </View>
           </View>

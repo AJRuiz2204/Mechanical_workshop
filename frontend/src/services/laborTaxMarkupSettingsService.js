@@ -1,6 +1,6 @@
-import api from './api';
+import api from "./api";
 
-const API_URL = '/LaborTaxMarkupSettings';
+const API_URL = "/LaborTaxMarkupSettings";
 
 /**
  * Retrieves labor tax and markup settings by ID.
@@ -11,8 +11,13 @@ const API_URL = '/LaborTaxMarkupSettings';
  * @throws Will throw an error if the request fails.
  */
 export async function getSettingsById(id) {
-  const response = await api.get(`${API_URL}/${id}`);
-  return response.data;
+  try {
+    const response = await api.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching settings by ID", error);
+    throw error;
+  }
 }
 
 /**
@@ -24,10 +29,15 @@ export async function getSettingsById(id) {
  * @throws Will throw an error if the request fails.
  */
 export async function createSettings(createDto) {
-  const response = await api.post(API_URL, createDto, {
-    headers: { "Content-Type": "application/json" },
-  });
-  return response.data;
+  try {
+    const response = await api.post(API_URL, createDto, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating settings", error);
+    throw error;
+  }
 }
 
 /**
@@ -40,7 +50,12 @@ export async function createSettings(createDto) {
  * @throws Will throw an error if the request fails.
  */
 export async function patchSettings(id, patchDoc) {
-  await api.patch(`${API_URL}/${id}`, patchDoc, {
-    headers: { "Content-Type": "application/json-patch+json" },
-  });
+  try {
+    await api.patch(`${API_URL}/${id}`, patchDoc, {
+      headers: { "Content-Type": "application/json-patch+json" },
+    });
+  } catch (error) {
+    console.error("Error patching settings", error);
+    throw error;
+  }
 }

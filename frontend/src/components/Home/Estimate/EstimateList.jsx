@@ -1,12 +1,16 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Table, Alert, Button, Form, Badge, Modal } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import { deleteEstimate, getEstimatesWithAccounts } from "../../../services/EstimateService";
+import { Link, useLocation } from "react-router-dom";
+import {
+  deleteEstimate,
+  getEstimatesWithAccounts,
+} from "../../../services/EstimateService";
 import { createAccountReceivable } from "../../../services/accountReceivableService";
 import AccountPaymentModal from "../../Home/Accounting/AccountPaymentModal";
 import "./EstimateList.css";
 import PDFModalContent from "./PDFModalContent";
+import EstimateActions from "./EstimateActions/EstimateActions";
 
 /**
  * EstimateList Component
@@ -21,6 +25,7 @@ import PDFModalContent from "./PDFModalContent";
  * @returns {JSX.Element} The EstimateList component.
  */
 const EstimateList = () => {
+  const location = useLocation(); // ← track route changes
   // State to store the list of estimates (with account receivable data).
   const [estimates, setEstimates] = useState([]);
   // Loading and error states for fetching estimates.
@@ -41,24 +46,27 @@ const EstimateList = () => {
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
 
+  // Extracted fetch function to reload estimates
+  const fetchEstimates = async () => {
+    setLoading(true);
+    try {
+      const data = await getEstimatesWithAccounts();
+      setEstimates(data);
+      setError(null);
+    } catch (err) {
+      setError(`Error loading estimates: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /**
    * useEffect Hook:
    * Fetches the list of estimates with account receivable data when the component mounts.
    */
   useEffect(() => {
-    const fetchEstimates = async () => {
-      try {
-        const data = await getEstimatesWithAccounts();
-        console.log("Payload recibido:", data);
-        setEstimates(data);
-      } catch (err) {
-        setError(`Error loading estimates: ${err.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchEstimates();
-  }, []);
+  }, [location]); // ← rerun on every navigation/re‑mount
 
   /**
    * Returns the payment status label.
@@ -101,7 +109,8 @@ const EstimateList = () => {
       } else if (pendingFilter && !paidFilter) {
         paymentMatches = paymentStatus === "Pending";
       } else if (paidFilter && pendingFilter) {
-        paymentMatches = paymentStatus === "Paid" || paymentStatus === "Pending";
+        paymentMatches =
+          paymentStatus === "Paid" || paymentStatus === "Pending";
       }
     }
     return matchesSearch && paymentMatches;
@@ -128,9 +137,13 @@ const EstimateList = () => {
       return;
     try {
       const newAccount = await createAccountReceivable({ estimateId: estId });
-      setSuccess(`Account receivable successfully created for estimate ${estId}.`);
+      setSuccess(
+        `Account receivable successfully created for estimate ${estId}.`
+      );
       setModalAccountId(newAccount.id);
       setShowPaymentModal(true);
+      // refresh list
+      fetchEstimates();
     } catch (err) {
       setError(`Error generating account: ${err.message}`);
     }
@@ -154,12 +167,15 @@ const EstimateList = () => {
    * @param {number|string} id - The ID of the estimate to delete.
    */
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this estimate?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this estimate?"
+    );
     if (!confirmDelete) return;
     try {
       await deleteEstimate(id);
       setSuccess(`Estimate with ID ${id} successfully deleted.`);
-      setEstimates((prev) => prev.filter((item) => item.estimate.id !== id));
+      // refresh list
+      fetchEstimates();
     } catch (err) {
       setError(`Error deleting estimate: ${err.message}`);
     }
@@ -305,7 +321,9 @@ const EstimateList = () => {
                 <td>${item.estimate.tax?.toFixed(2)}</td>
                 <td>${item.estimate.total?.toFixed(2)}</td>
                 <td>
-                  <Badge bg={getStatusVariant(item.estimate.authorizationStatus)}>
+                  <Badge
+                    bg={getStatusVariant(item.estimate.authorizationStatus)}
+                  >
                     {getStatusLabel(item.estimate.authorizationStatus)}
                   </Badge>
                 </td>
@@ -315,39 +333,13 @@ const EstimateList = () => {
                   </Badge>
                 </td>
                 <td>
-                  <Button
-                    variant="info"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleOpenPDF(item.estimate.id)}
-                  >
-                    View PDF
-                  </Button>
-                  <Link to={`/estimate/edit/${item.estimate.id}`}>
-                    <Button
-                      variant="warning"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleEdit(item)}
-                    >
-                      Edit
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleDelete(item.estimate.id)}
-                  >
-                    Delete
-                  </Button>
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={() => handleGenerateAccount(item)}
-                  >
-                    {item.accountReceivable ? "Open Account" : "Generate Account"}
-                  </Button>
+                  <EstimateActions
+                    item={item}
+                    onViewPDF={handleOpenPDF}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onGenerateAccount={handleGenerateAccount}
+                  />
                 </td>
               </tr>
             ))
@@ -358,7 +350,11 @@ const EstimateList = () => {
       {/* Payment Modal */}
       <AccountPaymentModal
         show={showPaymentModal}
-        onHide={() => setShowPaymentModal(false)}
+        onHide={() => {
+          setShowPaymentModal(false);
+          // refresh list after closing payment modal
+          fetchEstimates();
+        }}
         accountId={modalAccountId}
       />
 
@@ -373,7 +369,9 @@ const EstimateList = () => {
           <Modal.Title>Estimate PDF</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {selectedEstimateId && <PDFModalContent estimateId={selectedEstimateId} />}
+          {selectedEstimateId && (
+            <PDFModalContent estimateId={selectedEstimateId} />
+          )}
         </Modal.Body>
       </Modal>
     </div>

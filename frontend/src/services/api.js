@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "./jwt";
 
 const api = axios.create({
-    baseURL: "http://54.197.96.169/api",
+    baseURL: "http://localhost:5121/api", // http://54.197.96.169
 });
 
 // Agregamos interceptor para incluir el token en cada petición

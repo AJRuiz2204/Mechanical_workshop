@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, Alert, Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 import {
   getAllSalesReports,
   getSalesReport,
@@ -32,7 +33,7 @@ import "./SalesReportsListView.css";
  * - Uses Bootstrap’s responsive utilities and custom CSS to adjust
  *   layout and font sizes on smaller devices.
  */
-const SalesReportAllPreviewView = () => {
+const SalesReportAllPreviewView = ({ onSave }) => {
   // State for sales report preview data
   const [preview, setPreview] = useState(null);
   // Loading state for fetching the preview
@@ -94,6 +95,7 @@ const SalesReportAllPreviewView = () => {
       const savedReport = await createSalesReport(reportToSave);
       console.log("Report saved:", savedReport);
       setSuccess("Report saved successfully.");
+      if (onSave) onSave(); // Refresh list on save
     } catch (err) {
       console.error("Error saving report:", err);
       setError(
@@ -170,6 +172,11 @@ const SalesReportAllPreviewView = () => {
   );
 };
 
+// add prop-types validation
+SalesReportAllPreviewView.propTypes = {
+  onSave: PropTypes.func,
+};
+
 /**
  * SalesReportsListView Component
  *
@@ -227,7 +234,7 @@ const SalesReportsListView = () => {
     <div className="sales-reports-list container-fluid w-100 py-5">
       <h1 className="mb-4">Sales Reports History</h1>
       {/* Sales Report Preview Component */}
-      <SalesReportAllPreviewView />
+      <SalesReportAllPreviewView onSave={fetchReports} />
       {/* Reports List Table */}
       {reports.length === 0 ? (
         <Alert variant="info" className="mt-5">

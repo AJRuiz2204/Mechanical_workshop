@@ -12,6 +12,7 @@ namespace Mechanical_workshop.Dtos
         public decimal Subtotal { get; set; }
         public decimal Tax { get; set; }
         public decimal Total { get; set; }
+        public int Mileage { get; set; } = 0;
         public string AuthorizationStatus { get; set; } = "InReview";
         public VehicleDto Vehicle { get; set; } = null!;
         public UserWorkshopReadDto Owner { get; set; } = null!;

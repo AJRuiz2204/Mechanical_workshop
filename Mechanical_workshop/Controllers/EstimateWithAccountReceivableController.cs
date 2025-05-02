@@ -48,7 +48,7 @@ namespace Mechanical_workshop.Controllers
                               Estimate = _mapper.Map<EstimateFullDto>(estimate),
                               AccountReceivable = account == null
                                   ? null
-                                  : _mapper.Map<AccountReceivableResponseDto>(account)
+                                  : _mapper.Map<AccountReceivableResponseDto>(account),
                           }).ToList();
 
             // Aquí removemos la información repetida, asignando null a la propiedad Estimate anidada.

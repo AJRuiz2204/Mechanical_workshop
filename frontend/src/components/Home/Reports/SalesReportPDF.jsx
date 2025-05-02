@@ -164,6 +164,8 @@ const SalesReportPDF = ({ pdfData }) => {
   // Extract workshop information from pdfData (default to empty object if not provided)
   const workshopData = pdfData?.workshopData || {};
   const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
+  // Generar quote plano + hora militar si no viene de pdfData
+  const quoteDateString = dayjs().format("DDMMYYYY,HH:mm");
 
   return (
     <Document>
@@ -202,13 +204,10 @@ const SalesReportPDF = ({ pdfData }) => {
             {/* Quote Information Section */}
             <View style={styles.quoteInfo}>
               <Text style={styles.textLine}>
-                Quote # {workshopData.quoteNumber || ""}
+                Quote # {workshopData.quoteNumber || quoteDateString}
               </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
-              </Text>
-              <Text style={styles.textLine}>
-                Expires: {workshopData.expiryDate || ""}
               </Text>
             </View>
           </View>

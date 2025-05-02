@@ -1,11 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Form,
   Button,
@@ -26,11 +20,15 @@ import {
   createEstimate,
   getEstimateById,
   updateEstimate,
-  getVehicleDiagnostics, // nuevo endpoint
+  getVehicleDiagnostics,
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 import "./Estimate.css";
+import EditableCell from "./Editceld/EditableCell";
+import PartModal from "./Modals/PartModal";
+import LaborModal from "./Modals/LaborModal";
+import FlatFeeModal from "./Modals/FlatFeeModal";
 
 /**
  * @component Estimate
@@ -54,7 +52,7 @@ const Estimate = () => {
   const isEditMode = Boolean(id);
 
   /**
-   * @state vehicleDiagnosticOptions 
+   * @state vehicleDiagnosticOptions
    * @description List of vehicles with their associated diagnostics
    * @type {Array<{vehicle: Object, owner: Object, diagnostic: Object, technicianDiagnostics: Array}>}
    */
@@ -70,6 +68,7 @@ const Estimate = () => {
   const [owner, setOwner] = useState(null);
   const [diagnostic, setDiagnostic] = useState(null);
   const [extendedDiagnostic, setExtendedDiagnostic] = useState("");
+  const [mileage, setMileage] = useState(0);
 
   // States for data, UI, and calculations
   const [isLoading, setIsLoading] = useState(true);
@@ -121,8 +120,9 @@ const Estimate = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [saving, setSaving] = useState(false);
+  const hasLoadedEstimate = useRef(false);
 
-  // States to control modal visibility
+  // Visibility for our new, separated modals
   const [showTaxSettingsModal, setShowTaxSettingsModal] = useState(false);
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
@@ -166,30 +166,23 @@ const Estimate = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Get workshop settings
+        // Cargar configuraciones
         const shopData = await getWorkshopSettings();
-        console.log("Payload workshop settings:", shopData);
         setWorkshopSettings(shopData);
 
-        // Get tax and markup settings
         const cfg = await getSettingsById(1);
-        console.log("Payload tax & markup settings:", cfg);
         setSettings(cfg);
 
-        // Usar el endpoint que trae vehículos con sus diagnósticos
         const vDiagnostics = await getVehicleDiagnostics();
-        console.log("Payload vehicle diagnostics:", vDiagnostics);
         const options = [];
         vDiagnostics.forEach((vd) => {
           if (vd.diagnostics && vd.diagnostics.length > 0) {
             vd.diagnostics.forEach((diag) => {
-              // Filtrar technicianDiagnostics válidos (extendedDiagnostic no vacío)
               const validTechs = diag.technicianDiagnostics.filter(
                 (td) =>
                   td.extendedDiagnostic && td.extendedDiagnostic.trim() !== ""
               );
               if (validTechs.length > 0) {
-                // Agregar una opción por cada diagnóstico válido
                 options.push({
                   vehicle: vd.vehicle,
                   owner: vd.owner,
@@ -202,39 +195,69 @@ const Estimate = () => {
         });
         setVehicleDiagnosticOptions(options);
 
+        // Si estamos en modo edición, cargar la Estimate
         if (isEditMode) {
           const estimateData = await getEstimateById(id);
-          console.log("Payload estimate (edit mode):", estimateData);
-          setSelectedVehicle(estimateData.vehicle);
-          setOwner(estimateData.owner);
-          setDiagnostic(estimateData.technicianDiagnostic);
+
+          if (!estimateData) {
+            setError("Estimate not found.");
+            return;
+          }
+
+          // Aquí seteas los datos
+          setSelectedVehicle(estimateData.vehicle || null);
+          setOwner(estimateData.owner || null);
+          setDiagnostic(estimateData.technicianDiagnostic || null);
           setExtendedDiagnostic(
             estimateData.technicianDiagnostic?.extendedDiagnostic || ""
           );
-          setCustomerNote(estimateData.customerNote || "");
-          setSubtotal(estimateData.subtotal || 0);
-          setTax(estimateData.tax || 0);
-          setTotal(estimateData.total || 0);
-          setParts(estimateData.parts || []);
-          setLabors(estimateData.labors || []);
+          setMileage(estimateData.technicianDiagnostic?.mileage || 0);
+          setCustomerNote(estimateData.customerNote ?? "");
+          setSubtotal(estimateData.subtotal ?? 0);
+          setTax(estimateData.tax ?? 0);
+          setTotal(estimateData.total ?? 0);
+          setAuthorizationStatus(estimateData.authorizationStatus ?? "Pending");
+
+          // AQUÍ pones el mapeo nuevo:
+          setParts(
+            (estimateData.parts || []).map((part) => ({
+              ...part,
+              applyPartTax: part.taxable,
+            }))
+          );
+          setLabors(
+            (estimateData.labors || []).map((labor) => ({
+              ...labor,
+              applyLaborTax: labor.taxable,
+            }))
+          );
           setFlatFees(estimateData.flatFees || []);
         }
       } catch (err) {
-        setError("Error loading data: " + err.message);
+        setError("Error loading data: " + (err.message || "Unknown error."));
       } finally {
         setIsLoading(false);
         setLoadingWorkshop(false);
       }
     };
+
     loadData();
   }, [isEditMode, id]);
 
   /**
    * @effect
-   * @description Recalculates totals whenever parts, labors, or flat fees change
+   * @description Updates noTax whenever owner changes
+   */
+  useEffect(() => {
+    setNoTax(owner?.noTax || false);
+  }, [owner]);
+
+  /**
+   * @effect
+   * @description Recalculates totals whenever parts, labors, flat fees, or authorization status change
    * Updates:
    * - Subtotal
-   * - Tax amount
+   * - Tax amount (set to 0 if status is 'Approved')
    * - Total amount
    */
   useEffect(() => {
@@ -246,7 +269,6 @@ const Estimate = () => {
     let taxLabors = 0;
     let othersTotal = 0;
 
-    // Calculate total and tax for parts
     parts.forEach((part) => {
       const partExt = parseFloat(part.extendedPrice) || 0;
       partsTotal += partExt;
@@ -255,7 +277,6 @@ const Estimate = () => {
       }
     });
 
-    // Calculate total and tax for labors
     labors.forEach((labor) => {
       const laborExt = parseFloat(labor.extendedPrice) || 0;
       laborTotal += laborExt;
@@ -264,16 +285,16 @@ const Estimate = () => {
       }
     });
 
-    // Sum total of flat fees (no tax)
     flatFees.forEach((fee) => {
       othersTotal += parseFloat(fee.extendedPrice) || 0;
     });
 
-    // Calculate final total
-    const totalCalc =
-      partsTotal + laborTotal + othersTotal + taxParts + taxLabors;
-    setSubtotal(partsTotal + laborTotal + othersTotal);
-    setTax(taxParts + taxLabors);
+    const currentSubtotal = partsTotal + laborTotal + othersTotal;
+    const currentTax = taxParts + taxLabors;
+    const totalCalc = currentSubtotal + currentTax;
+
+    setSubtotal(currentSubtotal);
+    setTax(currentTax);
     setTotal(totalCalc);
   }, [parts, labors, flatFees, settings]);
 
@@ -284,110 +305,83 @@ const Estimate = () => {
    */
   const handleOptionChange = (e) => {
     const optionIndex = e.target.value;
+
     if (!optionIndex || optionIndex === "") {
       setError("Select a valid option.");
       setSelectedOption(null);
       return;
     }
+
     const selected = vehicleDiagnosticOptions[optionIndex];
+    const selectedTD = selected.technicianDiagnostics[0];
+
     setSelectedOption(selected);
     setSelectedVehicle(selected.vehicle);
     setOwner(selected.owner);
     setDiagnostic(selected.diagnostic);
-    // Se toma el extendedDiagnostic del primer TechnicianDiagnostic válido
-    setExtendedDiagnostic(
-      selected.technicianDiagnostics[0].extendedDiagnostic || ""
-    );
+    setExtendedDiagnostic(selectedTD.extendedDiagnostic || "");
+    setMileage(selectedTD.mileage || 0);
   };
 
   // Handlers for opening and closing modals
   const handleShowTaxSettingsModal = () => setShowTaxSettingsModal(true);
   const handleCloseTaxSettingsModal = () => setShowTaxSettingsModal(false);
 
-  /**
-   * handleShowPartModal: Abre el modal para agregar una nueva parte y establece los valores por defecto.
-   */
+  // PART
   const handleShowPartModal = () => {
-    const defaultTax = noTax ? false : true;
+    const defaultTax = owner?.noTax
+      ? false
+      : settings?.partTaxByDefault ?? false;
     setNewPart({
       description: "",
       partNumber: "",
-      quantity: "",
-      netPrice: "",
-      listPrice: "",
+      quantity: 1,
+      netPrice: 0,
+      listPrice: 0,
       extendedPrice: 0,
       applyPartTax: defaultTax,
     });
     setShowPartModal(true);
   };
-
-  /**
-   * handleClosePartModal: Cierra el modal de agregar parte y resetea el estado newPart.
-   */
   const handleClosePartModal = () => {
     setShowPartModal(false);
     setNewPart({
       description: "",
       partNumber: "",
-      quantity: "",
-      netPrice: "",
-      listPrice: "",
+      quantity: 1,
+      netPrice: 0,
+      listPrice: 0,
       extendedPrice: 0,
-      applyPartTax: noTax ? false : true,
+      applyPartTax: owner?.noTax
+        ? false
+        : settings?.partTaxByDefault ?? false,
     });
   };
 
-  /**
-   * handleShowLaborModal: Abre el modal para agregar labor y establece los valores por defecto.
-   */
+  // LABOR
   const handleShowLaborModal = () => {
-    const defaultTax = noTax ? false : true;
-    let defaultRate = settings?.defaultHourlyRate || "";
+    const defaultTax = owner?.noTax
+      ? false
+      : settings?.laborTaxByDefault ?? false;
     setNewLabor({
       description: "",
-      duration: "",
-      laborRate: defaultRate,
+      duration: 0,
+      laborRate: settings?.defaultHourlyRate ?? "",
       extendedPrice: 0,
       applyLaborTax: defaultTax,
     });
     setShowLaborModal(true);
   };
-
-  /**
-   * handleCloseLaborModal: Cierra el modal de agregar labor y resetea el estado newLabor.
-   */
   const handleCloseLaborModal = () => {
     setShowLaborModal(false);
     setNewLabor({
       description: "",
-      duration: "",
-      laborRate: settings?.defaultHourlyRate || "",
+      duration: 0,
+      laborRate: settings?.defaultHourlyRate ?? "",
       extendedPrice: 0,
-      applyLaborTax: noTax ? false : true,
-    });
-  };
-
-  /**
-   * handleShowFlatFeeModal: Abre el modal para agregar flat fee y establece los valores por defecto.
-   */
-  const handleShowFlatFeeModal = () => {
-    setNewFlatFee({
-      description: "",
-      flatFeePrice: "",
-      extendedPrice: 0,
-    });
-    setShowFlatFeeModal(true);
-  };
-
-  /**
-   * handleCloseFlatFeeModal: Cierra el modal de agregar flat fee y resetea su estado.
-   */
-  const handleCloseFlatFeeModal = () => {
-    setShowFlatFeeModal(false);
-    setNewFlatFee({
-      description: "",
-      flatFeePrice: "",
-      extendedPrice: 0,
+      applyLaborTax: owner?.noTax
+        ? false
+        : settings?.laborTaxByDefault ?? false,
     });
   };
 
@@ -446,7 +440,11 @@ const Estimate = () => {
    * @description Validates and adds a new labor charge to the estimate
    */
   const addLabor = () => {
-    if (!newLabor.description || newLabor.duration === "" || parseFloat(newLabor.duration) <= 0) {
+    if (
+      !newLabor.description ||
+      newLabor.duration === "" ||
+      parseFloat(newLabor.duration) <= 0
+    ) {
       setError("Please fill out all labor fields correctly.");
       return;
     }
@@ -462,7 +460,7 @@ const Estimate = () => {
     };
     setLabors([...labors, newItem]);
     setError(null);
-    handleCloseLaborModal();
+    setShowLaborModal(false);
   };
 
   /**
@@ -470,7 +468,11 @@ const Estimate = () => {
    * @description Validates and adds a new flat fee to the estimate
    */
   const addFlatFee = () => {
-    if (!newFlatFee.description || newFlatFee.flatFeePrice === "" || parseFloat(newFlatFee.flatFeePrice) <= 0) {
+    if (
+      !newFlatFee.description ||
+      newFlatFee.flatFeePrice === "" ||
+      parseFloat(newFlatFee.flatFeePrice) <= 0
+    ) {
       setError("Please fill out all flat fee fields correctly.");
       return;
     }
@@ -478,7 +480,7 @@ const Estimate = () => {
     const newItem = { ...newFlatFee, extendedPrice: price };
     setFlatFees([...flatFees, newItem]);
     setError(null);
-    handleCloseFlatFeeModal();
+    setShowFlatFeeModal(false);
   };
 
   /**
@@ -507,6 +509,36 @@ const Estimate = () => {
         return arr;
       });
     }
+  };
+
+  // Inline edit handlers
+  const updatePartField = (idx, field, value) => {
+    const arr = [...parts];
+    arr[idx] = { ...arr[idx], [field]: value };
+    if (field === "quantity" || field === "listPrice") {
+      const qty = parseFloat(arr[idx].quantity) || 0;
+      const lp = parseFloat(arr[idx].listPrice) || 0;
+      arr[idx].extendedPrice = qty * lp;
+    }
+    setParts(arr);
+  };
+  const updateLaborField = (idx, field, value) => {
+    const arr = [...labors];
+    arr[idx] = { ...arr[idx], [field]: value };
+    if (field === "duration" || field === "laborRate") {
+      const dur = parseFloat(arr[idx].duration) || 0;
+      const rate = parseFloat(arr[idx].laborRate) || 0;
+      arr[idx].extendedPrice = dur * rate;
+    }
+    setLabors(arr);
+  };
+  const updateFlatFeeField = (idx, field, value) => {
+    const arr = [...flatFees];
+    arr[idx] = { ...arr[idx], [field]: value };
+    if (field === "flatFeePrice") {
+      arr[idx].extendedPrice = parseFloat(arr[idx].flatFeePrice) || 0;
+    }
+    setFlatFees(arr);
   };
 
   /**
@@ -549,6 +581,7 @@ const Estimate = () => {
       Subtotal: subtotal,
       Tax: tax,
       Total: total,
+      Mileage: mileage,
       AuthorizationStatus: authorizationStatus,
       TechnicianDiagnostic: extendedDiagnostic
         ? {
@@ -732,7 +765,6 @@ const Estimate = () => {
             </Col>
           </Row>
         )}
-
         {/* Section: Complete vehicle information */}
         {selectedVehicle && (
           <Row className="mb-3">
@@ -765,6 +797,9 @@ const Estimate = () => {
                     <ListGroup.Item>
                       <strong>Status:</strong> {selectedVehicle.status}
                     </ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>Mileage:</strong> {mileage} km
+                    </ListGroup.Item>
                     {owner && (
                       <ListGroup.Item>
                         <strong>Workshop:</strong> {owner.name} {owner.lastName}{" "}
@@ -777,7 +812,6 @@ const Estimate = () => {
             </Col>
           </Row>
         )}
-
         {/* Edit Mode: Información adicional en edición */}
         {isEditMode && (
           <Row className="mb-3">
@@ -814,7 +848,6 @@ const Estimate = () => {
             </Col>
           </Row>
         )}
-
         {isEditMode && selectedVehicle && owner && (
           <Row className="mb-3">
             <Col md={6}>
@@ -829,7 +862,6 @@ const Estimate = () => {
             </Col>
           </Row>
         )}
-
         {/* Section: Technician Diagnostic */}
         <Form.Group controlId="diagnostic" className="mb-3">
           <Form.Label>Extended Diagnostic</Form.Label>
@@ -842,7 +874,6 @@ const Estimate = () => {
             readOnly={isEditMode}
           />
         </Form.Group>
-
         {/* Botones para agregar items */}
         <Row className="mb-3">
           <Col>
@@ -864,14 +895,13 @@ const Estimate = () => {
             </Button>
             <Button
               variant="info"
-              onClick={handleShowFlatFeeModal}
+              onClick={() => setShowFlatFeeModal(true)}
               disabled={!selectedVehicle && !isEditMode}
             >
               Add Flat Fee
             </Button>
           </Col>
         </Row>
-
         {/* Tabla de items */}
         <Row>
           <Col>
@@ -892,24 +922,47 @@ const Estimate = () => {
               </thead>
               <tbody>
                 {parts.map((p, idx) => (
-                  <tr key={`p-${idx}`}>
-                    <td data-label="TYPE">[PART]</td>
-                    <td data-label="DESCRIPTION">{p.description}</td>
-                    <td data-label="PART# / HOURS">
-                      {p.partNumber} (QTY: {p.quantity})
+                  <tr key={idx}>
+                    <td>[PART]</td>
+
+                    <EditableCell
+                      value={p.description}
+                      onChange={(v) => updatePartField(idx, "description", v)}
+                    />
+
+                    <EditableCell
+                      value={p.partNumber}
+                      onChange={(v) => updatePartField(idx, "partNumber", v)}
+                    />
+
+                    {/* ESTA COLUMNA NO ES EDITABLE */}
+                    <td>${parseFloat(p.netPrice).toFixed(2)}</td>
+
+                    <EditableCell
+                      value={p.quantity}
+                      onChange={(v) => updatePartField(idx, "quantity", v)}
+                      type="number"
+                    />
+
+                    <EditableCell
+                      value={p.listPrice}
+                      onChange={(v) => updatePartField(idx, "listPrice", v)}
+                      type="number"
+                    />
+
+                    <td>${p.extendedPrice.toFixed(2)}</td>
+
+                    <td>
+                      <Form.Check
+                        type="checkbox"
+                        checked={p.applyPartTax}
+                        onChange={(e) =>
+                          updatePartField(idx, "applyPartTax", e.target.checked)
+                        }
+                      />
                     </td>
-                    <td data-label="NET / RATE">
-                      ${parseFloat(p.netPrice).toFixed(2)}
-                    </td>
-                    <td data-label="QUANTITY">{p.quantity}</td>
-                    <td data-label="LIST PRICE">
-                      ${parseFloat(p.listPrice).toFixed(2)}
-                    </td>
-                    <td data-label="EXTENDED PRICE">
-                      ${parseFloat(p.extendedPrice).toFixed(2)}
-                    </td>
-                    <td data-label="TAX?">{p.applyPartTax ? "Yes" : "No"}</td>
-                    <td data-label="ACTION">
+
+                    <td>
                       <Button
                         variant="danger"
                         size="sm"
@@ -920,21 +973,44 @@ const Estimate = () => {
                     </td>
                   </tr>
                 ))}
+
                 {labors.map((l, idx) => (
-                  <tr key={`l-${idx}`}>
-                    <td data-label="TYPE">[LABOR]</td>
-                    <td data-label="DESCRIPTION">{l.description}</td>
-                    <td data-label="PART# / HOURS">{l.duration} hrs</td>
-                    <td data-label="NET / RATE">
-                      ${parseFloat(l.laborRate).toFixed(2)}
+                  <tr key={idx}>
+                    <td>[LABOR]</td>
+
+                    <EditableCell
+                      value={l.description}
+                      onChange={(v) => updateLaborField(idx, "description", v)}
+                    />
+
+                    <EditableCell
+                      value={l.duration}
+                      onChange={(v) => updateLaborField(idx, "duration", v)}
+                      type="number"
+                    />
+
+                    {/* NO EDITABLE */}
+                    <td>${parseFloat(l.laborRate).toFixed(2)}</td>
+
+                    <td>{l.duration}</td>
+                    <td>-</td>
+                    <td>${l.extendedPrice.toFixed(2)}</td>
+
+                    <td>
+                      <Form.Check
+                        type="checkbox"
+                        checked={l.applyLaborTax}
+                        onChange={(e) =>
+                          updateLaborField(
+                            idx,
+                            "applyLaborTax",
+                            e.target.checked
+                          )
+                        }
+                      />
                     </td>
-                    <td data-label="QUANTITY">{l.duration}</td>
-                    <td data-label="LIST PRICE">-</td>
-                    <td data-label="EXTENDED PRICE">
-                      ${parseFloat(l.extendedPrice).toFixed(2)}
-                    </td>
-                    <td data-label="TAX?">{l.applyLaborTax ? "Yes" : "No"}</td>
-                    <td data-label="ACTION">
+
+                    <td>
                       <Button
                         variant="danger"
                         size="sm"
@@ -945,19 +1021,34 @@ const Estimate = () => {
                     </td>
                   </tr>
                 ))}
+
                 {flatFees.map((f, idx) => (
-                  <tr key={`f-${idx}`}>
-                    <td data-label="TYPE">[FLATFEE]</td>
-                    <td data-label="DESCRIPTION">{f.description}</td>
-                    <td data-label="PART# / HOURS">-</td>
-                    <td data-label="NET / RATE">-</td>
-                    <td data-label="QUANTITY">-</td>
-                    <td data-label="LIST PRICE">-</td>
-                    <td data-label="EXTENDED PRICE">
-                      ${parseFloat(f.extendedPrice).toFixed(2)}
-                    </td>
-                    <td data-label="TAX?">No</td>
-                    <td data-label="ACTION">
+                  <tr key={idx}>
+                    <td>[FLATFEE]</td>
+
+                    <EditableCell
+                      value={f.description}
+                      onChange={(v) =>
+                        updateFlatFeeField(idx, "description", v)
+                      }
+                    />
+
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+
+                    <EditableCell
+                      value={f.flatFeePrice}
+                      onChange={(v) =>
+                        updateFlatFeeField(idx, "flatFeePrice", v)
+                      }
+                      type="number"
+                    />
+
+                    <td>No</td>
+
+                    <td>
                       <Button
                         variant="danger"
                         size="sm"
@@ -972,7 +1063,6 @@ const Estimate = () => {
             </Table>
           </Col>
         </Row>
-
         {/* Campo para la descripción de labor o servicios */}
         <Form.Group className="mb-3">
           <Form.Label>Description of labor or services</Form.Label>
@@ -983,7 +1073,6 @@ const Estimate = () => {
             onChange={(e) => setCustomerNote(e.target.value)}
           />
         </Form.Group>
-
         {/* Sección de Totales */}
         <Row>
           <Col md={8}></Col>
@@ -995,7 +1084,6 @@ const Estimate = () => {
             </div>
           </Col>
         </Row>
-
         {/* Botones para guardar o cancelar */}
         <Row className="mb-3">
           <Col>
@@ -1019,7 +1107,12 @@ const Estimate = () => {
       </Form>
 
       {/* Modal: Tax & Markup Settings */}
-      <Modal centered show={showTaxSettingsModal} onHide={handleCloseTaxSettingsModal} size="sm">
+      <Modal
+        centered
+        show={showTaxSettingsModal}
+        onHide={handleCloseTaxSettingsModal}
+        size="sm"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Tax & Markup Settings</Modal.Title>
         </Modal.Header>
@@ -1068,325 +1161,33 @@ const Estimate = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Modal: Add Part */}
-      <Modal centered show={showPartModal} onHide={handleClosePartModal} size="sm">
-        <Modal.Header closeButton>
-          <Modal.Title>Add Part</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                type="text"
-                value={newPart.description}
-                onChange={(e) =>
-                  setNewPart({ ...newPart, description: e.target.value })
-                }
-                placeholder="Enter part description"
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Part Number</Form.Label>
-              <Form.Control
-                type="text"
-                value={newPart.partNumber}
-                onChange={(e) =>
-                  setNewPart({ ...newPart, partNumber: e.target.value })
-                }
-                placeholder="Enter part number"
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Quantity</Form.Label>
-              <Form.Control
-                type="number"
-                min="1"
-                value={newPart.quantity}
-                onChange={(e) => {
-                  const qty = e.target.value;
-                  const parsedQty = qty === "" ? "" : parseInt(qty, 10);
-                  const list = newPart.listPrice === "" ? 0 : parseFloat(newPart.listPrice);
-                  setNewPart({
-                    ...newPart,
-                    quantity: qty,
-                    extendedPrice: qty === "" ? 0 : list * parsedQty,
-                  });
-                }}
-                placeholder="Quantity"
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Net Price</Form.Label>
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-                <FormControl
-                  type="number"
-                  step="0.01"
-                  value={newPart.netPrice}
-                  onChange={(e) => {
-                    const price = e.target.value;
-                    setNewPart({
-                      ...newPart,
-                      netPrice: price,
-                    });
-                  }}
-                  placeholder="Net Price"
-                  required
-                />
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>List Price</Form.Label>
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-                <FormControl
-                  type="number"
-                  step="0.01"
-                  value={newPart.listPrice}
-                  onChange={(e) => {
-                    const price = e.target.value;
-                    const parsedPrice = price === "" ? "" : parseFloat(price);
-                    const qty = newPart.quantity === "" ? 0 : parseInt(newPart.quantity, 10);
-                    setNewPart({
-                      ...newPart,
-                      listPrice: price,
-                      extendedPrice: newPart.quantity === "" ? 0 : parsedPrice * qty,
-                    });
-                  }}
-                  placeholder="List Price"
-                  required
-                />
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Extended Price</Form.Label>
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-                <FormControl
-                  type="number"
-                  step="0.01"
-                  value={
-                    newPart.extendedPrice === 0 ? "" : newPart.extendedPrice
-                  }
-                  readOnly
-                  placeholder="0"
-                />
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mt-3">
-              <Form.Check
-                type="checkbox"
-                label={
-                  noTax
-                    ? "Override NoTax? (Apply Part Tax)"
-                    : "Don't Apply Part Tax?"
-                }
-                checked={newPart.applyPartTax}
-                onChange={(e) =>
-                  setNewPart({ ...newPart, applyPartTax: e.target.checked })
-                }
-              />
-              <Form.Text className="text-muted">
-                {noTax
-                  ? "If checked, tax will be applied even if NoTax is set."
-                  : "If checked, tax will not be applied for this part."}
-              </Form.Text>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClosePartModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={addPart} disabled={isAddingPart}>
-            {isAddingPart ? "Adding..." : "Add Part"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal: Add Labor */}
-      <Modal centered show={showLaborModal} onHide={handleCloseLaborModal} size="sm">
-        <Modal.Header closeButton>
-          <Modal.Title>Add Labor</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-2">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                type="text"
-                value={newLabor.description}
-                onChange={(e) =>
-                  setNewLabor({ ...newLabor, description: e.target.value })
-                }
-                placeholder="Labor description"
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Duration (hours)</Form.Label>
-              <Form.Control
-                type="number"
-                min="0"
-                value={newLabor.duration}
-                onChange={(e) => {
-                  const dur = e.target.value;
-                  const parsedDur = dur === "" ? "" : parseFloat(dur);
-                  const rate = newLabor.laborRate === "" ? 0 : parseFloat(newLabor.laborRate);
-                  setNewLabor({
-                    ...newLabor,
-                    duration: dur,
-                    extendedPrice: dur === "" ? 0 : parsedDur * rate,
-                  });
-                }}
-                placeholder="Hours"
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Labor Rate</Form.Label>
-              <Form.Select
-                value={newLabor.laborRate}
-                onChange={(e) => {
-                  const rate = e.target.value;
-                  const parsedRate = rate === "" ? "" : parseFloat(rate);
-                  const dur = newLabor.duration === "" ? 0 : parseFloat(newLabor.duration);
-                  setNewLabor({
-                    ...newLabor,
-                    laborRate: rate,
-                    extendedPrice: newLabor.duration === "" ? 0 : dur * parsedRate,
-                  });
-                }}
-              >
-                {settings ? (
-                  <>
-                    <option value={settings.hourlyRate1}>Rate1: {settings.hourlyRate1}</option>
-                    <option value={settings.hourlyRate2}>Rate2: {settings.hourlyRate2}</option>
-                    <option value={settings.hourlyRate3}>Rate3: {settings.hourlyRate3}</option>
-                    <option value={settings.defaultHourlyRate}>Default: {settings.defaultHourlyRate}</option>
-                  </>
-                ) : (
-                  <option value={140}>$140 (fallback)</option>
-                )}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Extended Price</Form.Label>
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-                <FormControl
-                  type="number"
-                  step="0.01"
-                  value={
-                    newLabor.extendedPrice === 0 ? "" : newLabor.extendedPrice
-                  }
-                  readOnly
-                  placeholder="0"
-                />
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mt-3">
-              <Form.Check
-                type="checkbox"
-                label={
-                  noTax
-                    ? "Override NoTax? (Apply Labor Tax)"
-                    : "Don't Apply Labor Tax?"
-                }
-                checked={newLabor.applyLaborTax}
-                onChange={(e) =>
-                  setNewLabor({ ...newLabor, applyLaborTax: e.target.checked })
-                }
-              />
-              <Form.Text className="text-muted">
-                {noTax
-                  ? "If checked, tax will be applied even if NoTax is set."
-                  : "If checked, tax will not be applied for this labor."}
-              </Form.Text>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseLaborModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={addLabor}>
-            Add Labor
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal: Add Flat Fee */}
-      <Modal centered show={showFlatFeeModal} onHide={handleCloseFlatFeeModal} size="sm">
-        <Modal.Header closeButton>
-          <Modal.Title>Add Flat Fee</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                type="text"
-                value={newFlatFee.description}
-                onChange={(e) =>
-                  setNewFlatFee({ ...newFlatFee, description: e.target.value })
-                }
-                placeholder="Enter flat fee description"
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Flat Fee Price</Form.Label>
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-                <FormControl
-                  type="number"
-                  step="0.01"
-                  value={newFlatFee.flatFeePrice}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const parsedVal = val === "" ? "" : parseFloat(val);
-                    setNewFlatFee({
-                      ...newFlatFee,
-                      flatFeePrice: val,
-                      extendedPrice: val === "" ? 0 : parsedVal,
-                    });
-                  }}
-                  placeholder="Flat Fee Price"
-                  required
-                />
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Extended Price</Form.Label>
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-                <FormControl
-                  type="number"
-                  step="0.01"
-                  value={
-                    newFlatFee.extendedPrice === 0
-                      ? ""
-                      : newFlatFee.extendedPrice
-                  }
-                  readOnly
-                  placeholder="0"
-                />
-              </InputGroup>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseFlatFeeModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={addFlatFee}>
-            Add Flat Fee
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* Componentes modales */}
+      <PartModal
+        show={showPartModal}
+        onHide={handleClosePartModal}
+        newPart={newPart}
+        setNewPart={setNewPart}
+        addPart={addPart}
+        noTax={noTax}
+        settings={settings}
+      />
+      <LaborModal
+        show={showLaborModal}
+        onHide={handleCloseLaborModal}
+        newLabor={newLabor}
+        setNewLabor={setNewLabor}
+        addLabor={addLabor}
+        noTax={noTax}
+        settings={settings}
+      />
+      <FlatFeeModal
+        show={showFlatFeeModal}
+        onHide={() => setShowFlatFeeModal(false)}
+        newFlatFee={newFlatFee}
+        setNewFlatFee={setNewFlatFee}
+        addFlatFee={addFlatFee}
+        settings={settings}
+      />
     </Container>
   );
 };

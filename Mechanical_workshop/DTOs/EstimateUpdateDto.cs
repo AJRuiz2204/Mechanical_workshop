@@ -16,6 +16,7 @@ namespace Mechanical_workshop.Dtos
         public decimal Tax { get; set; }
         [Range(0, double.MaxValue)]
         public decimal Total { get; set; }
+        public int? Mileage { get; set; } = 0;
         [Required]
         [StringLength(20)]
         public string AuthorizationStatus { get; set; } = "InReview";

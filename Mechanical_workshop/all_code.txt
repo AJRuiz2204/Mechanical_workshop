@@ -1,0 +1,4899 @@
+﻿
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\AccountReceivableController.cs =====
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AccountReceivableController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public AccountReceivableController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // GET: api/AccountReceivable
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<AccountReceivableResponseDto>>> GetAccountsReceivable()
+        {
+            var accounts = await _context.AccountsReceivable
+                            .Include(ar => ar.Estimate)
+                                .ThenInclude(e => e.Vehicle)
+                            .Include(ar => ar.Estimate)
+                                .ThenInclude(e => e.TechnicianDiagnostic)
+                            .Include(ar => ar.Customer)
+                            .Include(ar => ar.Payments)
+                            .ProjectTo<AccountReceivableResponseDto>(_mapper.ConfigurationProvider)
+                            .ToListAsync();
+
+            return _mapper.Map<List<AccountReceivableResponseDto>>(accounts);
+        }
+
+        // GET: api/AccountReceivable/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<AccountReceivableResponseDto>> GetAccountReceivable(int id)
+        {
+            var account = await _context.AccountsReceivable
+                .Include(ar => ar.Estimate)
+                    .ThenInclude(e => e.Vehicle)
+                .Include(ar => ar.Estimate)
+                    .ThenInclude(e => e.TechnicianDiagnostic)
+                .Include(ar => ar.Customer)
+                .Include(ar => ar.Payments)
+                .FirstOrDefaultAsync(ar => ar.Id == id);
+
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            return _mapper.Map<AccountReceivableResponseDto>(account);
+        }
+
+
+        // POST: api/AccountReceivable
+        [HttpPost]
+        public async Task<ActionResult<AccountReceivableResponseDto>> CreateAccountReceivable(AccountReceivableCreateDto createDto)
+        {
+            // Verificar si ya existe una cuenta para el mismo EstimateId
+            var existingAccount = await _context.AccountsReceivable
+                .FirstOrDefaultAsync(ar => ar.EstimateId == createDto.EstimateId);
+            if (existingAccount != null)
+            {
+                // Si ya existe, se retorna el DTO existente
+                return CreatedAtAction(nameof(GetAccountReceivable),
+                    new { id = existingAccount.Id },
+                    _mapper.Map<AccountReceivableResponseDto>(existingAccount));
+            }
+
+            // Buscar el estimado
+            var estimate = await _context.Estimates
+                .Include(e => e.Vehicle)
+                .FirstOrDefaultAsync(e => e.ID == createDto.EstimateId);
+
+            if (estimate == null)
+            {
+                return BadRequest("El presupuesto especificado no existe");
+            }
+
+            // Mapear el DTO a la entidad AccountReceivable
+            var account = _mapper.Map<AccountReceivable>(createDto);
+            account.OriginalAmount = estimate.Total;
+            account.Balance = estimate.Total;
+            account.CustomerId = estimate.Vehicle.UserWorkshopId;
+
+            _context.AccountsReceivable.Add(account);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetAccountReceivable),
+                new { id = account.Id },
+                _mapper.Map<AccountReceivableResponseDto>(account));
+        }
+
+
+        // PUT: api/AccountReceivable/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateAccountReceivable(int id, AccountReceivableUpdateDto updateDto)
+        {
+            var account = await _context.AccountsReceivable.FindAsync(id);
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            _mapper.Map(updateDto, account);
+
+            if (account.Balance <= 0)
+            {
+                account.Status = "Paid";
+                account.CompletedDate = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // DELETE: api/AccountReceivable/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAccountReceivable(int id)
+        {
+            var account = await _context.AccountsReceivable.FindAsync(id);
+            if (account == null)
+            {
+                return NotFound();
+            }
+
+            _context.AccountsReceivable.Remove(account);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // POST: api/AccountReceivable/Payment
+        [HttpPost("Payment")]
+        public async Task<ActionResult<PaymentResponseDto>> CreatePayment(PaymentCreateDto paymentDto)
+        {
+            var account = await _context.AccountsReceivable
+                .Include(ar => ar.Payments)
+                .FirstOrDefaultAsync(ar => ar.Id == paymentDto.AccountReceivableId);
+
+            if (account == null)
+            {
+                return NotFound("Cuenta por cobrar no encontrada");
+            }
+
+            if (paymentDto.Amount > account.Balance)
+            {
+                return BadRequest("El monto excede el saldo pendiente");
+            }
+
+            // Mapear el DTO a Payment
+            var payment = _mapper.Map<Payment>(paymentDto);
+            // Asignar la llave forÃ¡nea explÃ­citamente
+            payment.AccountReceivableId = paymentDto.AccountReceivableId;
+            payment.PaymentDate = DateTime.UtcNow;
+
+            account.Payments.Add(payment);
+            account.Balance -= payment.Amount;
+
+            if (account.Balance <= 0)
+            {
+                account.Status = "Paid";
+                account.CompletedDate = DateTime.UtcNow;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return CreatedAtAction(nameof(GetAccountReceivable),
+                new { id = account.Id },
+                _mapper.Map<PaymentResponseDto>(payment));
+        }
+
+        // GET: api/AccountReceivable/Payment/5
+        [HttpGet("Payment/{accountId}")]
+        public async Task<ActionResult<IEnumerable<PaymentResponseDto>>> GetPayments(int accountId)
+        {
+            var payments = await _context.Payments
+                .Where(p => p.AccountReceivableId == accountId)
+                .ToListAsync();
+
+            return _mapper.Map<List<PaymentResponseDto>>(payments);
+        }
+
+        // GET: api/AccountReceivable/Payment
+        [HttpGet("Payment")]
+        public async Task<ActionResult<IEnumerable<PaymentResponseDto>>> GetAllPayments()
+        {
+            // Incluir AccountReceivable, y dentro de Ã©ste, incluir Customer, Estimate con su Vehicle, Parts, Labors, FlatFees y TechnicianDiagnostic
+            var payments = await _context.Payments
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Customer)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.Vehicle)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.Parts)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.Labors)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.FlatFees)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(a => a.Estimate)
+                        .ThenInclude(e => e.TechnicianDiagnostic)
+                .ToListAsync();
+
+            return _mapper.Map<List<PaymentResponseDto>>(payments);
+        }
+
+        // GET: api/AccountReceivable/Payment/Client/{customerId}
+        [HttpGet("Payment/Client/{customerId}")]
+        public async Task<ActionResult<IEnumerable<PaymentResponseDto>>> GetPaymentsByCustomer(int customerId)
+        {
+            var payments = await _context.Payments
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Customer)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.Vehicle)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.Parts)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.Labors)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.FlatFees)
+                .Include(p => p.AccountReceivable)
+                    .ThenInclude(ar => ar.Estimate)
+                        .ThenInclude(e => e.TechnicianDiagnostic)
+                .Where(p => p.AccountReceivable.Customer.Id == customerId)
+                .ToListAsync();
+
+            return _mapper.Map<List<PaymentResponseDto>>(payments);
+        }
+
+
+
+
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\AuthController.cs =====
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\DiagnosticsController.cs =====
+// Controllers/DiagnosticsController.cs
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using AutoMapper;
+
+namespace Mechanical_workshop.Controllers
+{
+    /// <summary>
+    /// Controller for managing diagnostics.
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DiagnosticsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public DiagnosticsController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        /// <summary>
+        /// Creates a new diagnostic.
+        /// </summary>
+        /// <param name="diagnosticCreateDto">Diagnostic data transfer object.</param>
+        /// <returns>The created diagnostic read DTO.</returns>
+        [HttpPost]
+        public async Task<ActionResult<DiagnosticReadDto>> CreateDiagnostic(DiagnosticCreateDto diagnosticCreateDto)
+        {
+            // Map DTO to entity
+            var diagnostic = _mapper.Map<Diagnostic>(diagnosticCreateDto);
+
+            // Add to database
+            _context.Diagnostics.Add(diagnostic);
+            await _context.SaveChangesAsync();
+
+            // Reconsulta el diagnÃ³stico para incluir Vehicle y UserWorkshop
+            var diagnosticWithRelations = await _context.Diagnostics
+                .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .FirstOrDefaultAsync(d => d.Id == diagnostic.Id);
+
+            // Map entity to ReadDto
+            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnosticWithRelations);
+
+            return CreatedAtAction(nameof(GetDiagnostic), new { id = diagnostic.Id }, diagnosticReadDto);
+        }
+
+        // GET: api/Diagnostics
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnostics()
+        {
+            var diagnostics = await _context.Diagnostics
+                .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(d => d.TechnicianDiagnostics)
+                .ToListAsync();
+
+            var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+            return Ok(diagnosticReadDtos);
+        }
+
+        // GET: api/Diagnostics/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<DiagnosticReadDto>> GetDiagnostic(int id)
+        {
+            var diagnostic = await _context.Diagnostics
+                .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(d => d.TechnicianDiagnostics)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
+            if (diagnostic == null)
+            {
+                return NotFound(new { message = "Diagnostic not found." });
+            }
+
+            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
+            return Ok(diagnosticReadDto);
+        }
+
+        // PUT: api/Diagnostics/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDiagnostic(int id, DiagnosticCreateDto diagnosticUpdateDto)
+        {
+            if (id <= 0)
+            {
+                return BadRequest(new { message = "Invalid ID." });
+            }
+
+            var diagnostic = await _context.Diagnostics.FindAsync(id);
+            if (diagnostic == null)
+            {
+                return NotFound(new { message = "Diagnostic to update not found." });
+            }
+
+            // Map updates from DTO
+            _mapper.Map(diagnosticUpdateDto, diagnostic);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Error updating the diagnostic." });
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/Diagnostics/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDiagnostic(int id)
+        {
+            var diagnostic = await _context.Diagnostics.FindAsync(id);
+            if (diagnostic == null)
+            {
+                return NotFound(new { message = "Diagnostic to delete not found." });
+            }
+
+            _context.Diagnostics.Remove(diagnostic);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // GET: api/Diagnostics/byTechnician?name=John&lastName=Doe
+        [HttpGet("byTechnician")]
+        public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnosticsByTechnician([FromQuery] string name, [FromQuery] string lastName)
+        {
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(lastName))
+            {
+                return BadRequest(new { message = "Query parameters 'name' and 'lastName' are required." });
+            }
+
+            var fullName = $"{name} {lastName}";
+
+            var diagnostics = await _context.Diagnostics
+                .Where(d => d.AssignedTechnician == fullName)
+                .Include(d => d.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(d => d.TechnicianDiagnostics)
+                .ToListAsync();
+
+            var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+
+            return Ok(diagnosticReadDtos);
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\EstimatesController.cs =====
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using AutoMapper;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class EstimatesController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public EstimatesController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // GET: api/Estimates
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<EstimateFullDto>>> GetEstimates()
+        {
+            var estimates = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .ToListAsync();
+
+            var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
+            return Ok(estimateDtos);
+        }
+
+        // GET: api/Estimates/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<EstimateFullDto>> GetEstimate(int id)
+        {
+            var estimate = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .FirstOrDefaultAsync(e => e.ID == id);
+
+            if (estimate == null)
+            {
+                return NotFound(new { message = $"Estimate with ID {id} not found." });
+            }
+
+            var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
+            return Ok(estimateDto);
+        }
+
+        // GET: api/Estimates/WithUserWorkshop/{id}
+        [HttpGet("WithUserWorkshop/{id}")]
+        public async Task<ActionResult<EstimateFullDto>> GetEstimateWithUserWorkshop(int id)
+        {
+            var estimate = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .FirstOrDefaultAsync(e => e.ID == id);
+
+            if (estimate == null)
+            {
+                return NotFound(new { message = $"Estimate with ID {id} not found." });
+            }
+
+            var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
+            return Ok(estimateDto);
+        }
+
+        // POST: api/Estimates
+        [HttpPost]
+        public async Task<ActionResult<EstimateFullDto>> CreateEstimate(EstimateCreateDto estimateCreateDto)
+        {
+            // Verificar la existencia del vehÃ­culo
+            var vehicle = await _context.Vehicles
+                .Include(v => v.UserWorkshop)
+                .FirstOrDefaultAsync(v => v.Id == estimateCreateDto.VehicleID);
+
+            if (vehicle == null)
+            {
+                return BadRequest(new { message = "Invalid Vehicle ID." });
+            }
+
+            // Mapear el DTO a la entidad Estimate
+            var estimate = _mapper.Map<Estimate>(estimateCreateDto);
+            estimate.VehicleID = vehicle.Id;
+            estimate.UserWorkshopID = vehicle.UserWorkshopId;
+
+            // Manejar TechnicianDiagnostic si estÃ¡ presente en el DTO
+            if (estimateCreateDto.TechnicianDiagnostic != null)
+            {
+                var technicianDiagnostic = _mapper.Map<TechnicianDiagnostic>(estimateCreateDto.TechnicianDiagnostic);
+                estimate.TechnicianDiagnostic = technicianDiagnostic;
+            }
+
+            _context.Estimates.Add(estimate);
+            await _context.SaveChangesAsync();
+
+            // Recuperar la estimaciÃ³n completa para la respuesta
+            var createdEstimate = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .FirstOrDefaultAsync(e => e.ID == estimate.ID);
+
+            var estimateFullDto = _mapper.Map<EstimateFullDto>(createdEstimate);
+            return CreatedAtAction(nameof(GetEstimate), new { id = estimate.ID }, estimateFullDto);
+        }
+        
+        // PUT: api/Estimates/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateEstimate(int id, [FromBody] EstimateUpdateDto dto)
+        {
+            if (id != dto.ID)
+                return BadRequest(new { message = "ID mismatch." });
+
+            var estimate = await _context.Estimates
+                .Include(e => e.TechnicianDiagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .FirstOrDefaultAsync(e => e.ID == id);
+
+            if (estimate == null)
+            {
+                return NotFound(new { message = $"Estimate with ID {id} not found." });
+            }
+
+            // Actualizar SOLO los campos permitidos
+            estimate.CustomerNote = dto.CustomerNote ?? estimate.CustomerNote;
+            estimate.Subtotal = dto.Subtotal;
+            estimate.Tax = dto.Tax;
+            estimate.Total = dto.Total;
+            estimate.AuthorizationStatus = dto.AuthorizationStatus;
+
+            // TechnicianDiagnostic
+            if (dto.TechnicianDiagnostic == null)
+            {
+                if (estimate.TechnicianDiagnostic != null)
+                {
+                    _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
+                    estimate.TechnicianDiagnostic = null;
+                }
+            }
+            else
+            {
+                if (estimate.TechnicianDiagnostic == null)
+                {
+                    var newDiag = _mapper.Map<TechnicianDiagnostic>(dto.TechnicianDiagnostic);
+                    newDiag.Id = 0;
+                    estimate.TechnicianDiagnostic = newDiag;
+                }
+                else
+                {
+                    // Mantener la misma PK para no romper EF
+                    dto.TechnicianDiagnostic.ID = estimate.TechnicianDiagnostic.Id;
+                    _mapper.Map(dto.TechnicianDiagnostic, estimate.TechnicianDiagnostic);
+                }
+            }
+
+            // Reemplazar listas de Parts, Labors, FlatFees
+            _context.EstimateParts.RemoveRange(estimate.Parts);
+            _context.EstimateLabors.RemoveRange(estimate.Labors);
+            _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
+
+            estimate.Parts.Clear();
+            estimate.Labors.Clear();
+            estimate.FlatFees.Clear();
+
+            if (dto.Parts != null)
+            {
+                foreach (var partDto in dto.Parts)
+                {
+                    var partEntity = _mapper.Map<EstimatePart>(partDto);
+                    estimate.Parts.Add(partEntity);
+                }
+            }
+            if (dto.Labors != null)
+            {
+                foreach (var laborDto in dto.Labors)
+                {
+                    var laborEntity = _mapper.Map<EstimateLabor>(laborDto);
+                    estimate.Labors.Add(laborEntity);
+                }
+            }
+            if (dto.FlatFees != null)
+            {
+                foreach (var feeDto in dto.FlatFees)
+                {
+                    var feeEntity = _mapper.Map<EstimateFlatFee>(feeDto);
+                    estimate.FlatFees.Add(feeEntity);
+                }
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, new { message = "Error updating the estimate.", details = ex.Message });
+            }
+
+            var updatedDto = _mapper.Map<EstimateFullDto>(estimate);
+            return Ok(updatedDto);
+        }
+
+        // DELETE: api/Estimates/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEstimate(int id)
+        {
+            var estimate = await _context.Estimates
+                .Include(e => e.TechnicianDiagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .FirstOrDefaultAsync(e => e.ID == id);
+
+            if (estimate == null)
+            {
+                return NotFound(new { message = $"Estimate with ID {id} not found." });
+            }
+
+            // Eliminar TechnicianDiagnostic si existe
+            if (estimate.TechnicianDiagnostic != null)
+            {
+                _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
+            }
+
+            // Eliminar Partes, Mano de Obra y Tarifas Planas
+            _context.EstimateParts.RemoveRange(estimate.Parts);
+            _context.EstimateLabors.RemoveRange(estimate.Labors);
+            _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
+            _context.Estimates.Remove(estimate);
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private bool EstimateExists(int id)
+        {
+            return _context.Estimates.Any(e => e.ID == id);
+        }
+
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\EstimatesSumaryController.cs =====
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EstimatesSumaryController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public EstimatesSumaryController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        [HttpGet("GetEstimateData")]
+        public IActionResult GetEstimateData()
+        {
+            // Cargamos los Estimates con sus relaciones
+            var estimates = _context.Estimates
+                .Include(e => e.Vehicle)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .ToList();
+
+            // Lista final de renglones
+            var result = new List<EstimateLineDto>();
+
+            // Recorremos cada Estimate
+            foreach (var estimate in estimates)
+            {
+                // 1) Mapeamos las PARTS a DTO
+                var partDtos = _mapper.Map<List<EstimateLineDto>>(estimate.Parts);
+                // A cada DTO le asignamos el VIN (porque lo ignoramos en el map)
+                foreach (var dto in partDtos)
+                {
+                    dto.Vin = estimate.Vehicle.Vin;
+                    result.Add(dto);
+                }
+
+                // 2) Mapeamos las LABORS a DTO
+                var laborDtos = _mapper.Map<List<EstimateLineDto>>(estimate.Labors);
+                foreach (var dto in laborDtos)
+                {
+                    dto.Vin = estimate.Vehicle.Vin;
+                    result.Add(dto);
+                }
+
+                // 3) Mapeamos los FLAT FEES a DTO
+                var feeDtos = _mapper.Map<List<EstimateLineDto>>(estimate.FlatFees);
+                foreach (var dto in feeDtos)
+                {
+                    dto.Vin = estimate.Vehicle.Vin;
+                    result.Add(dto);
+                }
+            }
+
+            return Ok(result);
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\EstimateWithAccountReceivableController.cs =====
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using AutoMapper;
+
+namespace Mechanical_workshop.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EstimateWithAccountReceivableController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public EstimateWithAccountReceivableController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // GET: api/EstimateWithAccountReceivable
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<EstimateWithAccountReceivableDto>>> GetEstimatesWithAccounts()
+        {
+            // Primero obtenemos los Estimates con sus relaciones completas.
+            var estimates = await _context.Estimates
+                .Include(e => e.Vehicle)
+                    .ThenInclude(v => v.UserWorkshop)
+                .Include(e => e.TechnicianDiagnostic)
+                    .ThenInclude(td => td.Diagnostic)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .ToListAsync();
+
+            // Realizamos el join con AccountsReceivable y mapeamos a nuestro DTO compuesto.
+            var result = (from estimate in estimates
+                          join ar in _context.AccountsReceivable
+                              on estimate.ID equals ar.EstimateId into arGroup
+                          from account in arGroup.DefaultIfEmpty()
+                          select new EstimateWithAccountReceivableDto
+                          {
+                              Estimate = _mapper.Map<EstimateFullDto>(estimate),
+                              AccountReceivable = account == null
+                                  ? null
+                                  : _mapper.Map<AccountReceivableResponseDto>(account),
+                          }).ToList();
+
+            // AquÃ­ removemos la informaciÃ³n repetida, asignando null a la propiedad Estimate anidada.
+            result.ForEach(item =>
+            {
+                if (item.AccountReceivable != null)
+                {
+                    item.AccountReceivable.Estimate = null;
+                }
+            });
+
+            return Ok(result);
+        }
+
+
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\LaborTaxMarkupSettingsController.cs =====
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.JsonPatch;
+using AutoMapper;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.DTOs;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class LaborTaxMarkupSettingsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public LaborTaxMarkupSettingsController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // POST: api/LaborTaxMarkupSettings
+        [HttpPost]
+        public async Task<ActionResult<LaborTaxMarkupSettingsReadDto>> Create(LaborTaxMarkupSettingsCreateDto createDto)
+        {
+            var entity = _mapper.Map<LaborTaxMarkupSettings>(createDto);
+            _context.LaborTaxMarkupSettings.Add(entity);
+            await _context.SaveChangesAsync();
+            var readDto = _mapper.Map<LaborTaxMarkupSettingsReadDto>(entity);
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, readDto);
+        }
+
+        // GET: api/LaborTaxMarkupSettings/{id}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<LaborTaxMarkupSettingsReadDto>> GetById(int id)
+        {
+            var entity = await _context.LaborTaxMarkupSettings.FindAsync(id);
+            if (entity == null)
+                return NotFound();
+            var dto = _mapper.Map<LaborTaxMarkupSettingsReadDto>(entity);
+            return Ok(dto);
+        }
+
+        // PATCH: api/LaborTaxMarkupSettings/{id}
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(int id, [FromBody] JsonPatchDocument<LaborTaxMarkupSettingsUpdateDto> patchDoc)
+        {
+            if (patchDoc == null)
+                return BadRequest("Patch document cannot be null.");
+            var entity = await _context.LaborTaxMarkupSettings.FindAsync(id);
+            if (entity == null)
+                return NotFound();
+            var updateDto = _mapper.Map<LaborTaxMarkupSettingsUpdateDto>(entity);
+            patchDoc.ApplyTo(updateDto);
+            if (!TryValidateModel(updateDto))
+                return ValidationProblem(ModelState);
+            _mapper.Map(updateDto, entity);
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+    }
+
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\NotesController.cs =====
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using AutoMapper;
+using static Mechanical_workshop.Dtos.NoteDto;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class NotesController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public NotesController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // GET: api/notes/diagnostic/5
+        [HttpGet("diagnostic/{diagId}")]
+        public async Task<ActionResult<IEnumerable<NoteReadDto>>> GetNotesByDiagnostic(int diagId)
+        {
+            var notes = await _context.Notes
+                .Where(n => n.DiagnosticId == diagId)
+                .ToListAsync();
+
+            return Ok(_mapper.Map<IEnumerable<NoteReadDto>>(notes));
+        }
+
+        [HttpGet("techniciandiagnostic/{techDiagId}")]
+        public async Task<ActionResult<IEnumerable<NoteReadDto>>> GetNotesByTechDiag(int techDiagId)
+        {
+            // Buscar notas con TechnicianDiagnosticId o DiagnosticId vinculado
+            var notes = await _context.Notes
+                .Where(n => n.TechnicianDiagnosticId == techDiagId || n.DiagnosticId ==
+                            (_context.TechnicianDiagnostics.Where(td => td.Id == techDiagId)
+                            .Select(td => td.DiagnosticId)
+                            .FirstOrDefault()))
+                .ToListAsync();
+
+            if (!notes.Any())
+            {
+                return NotFound(new { message = "No notes found for Technician Diagnostic ID." });
+            }
+
+            return Ok(_mapper.Map<IEnumerable<NoteReadDto>>(notes));
+        }
+
+
+        // GET: api/notes/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<NoteReadDto>> GetNote(int id)
+        {
+            var note = await _context.Notes.FindAsync(id);
+            if (note == null) return NotFound();
+
+            return Ok(_mapper.Map<NoteReadDto>(note));
+        }
+
+        // POST: api/notes
+        [HttpPost]
+        public async Task<ActionResult<NoteReadDto>> CreateNote(NoteCreateDto dto)
+        {
+            // Validate Diagnostic exists
+            var diagnostic = await _context.Diagnostics.FindAsync(dto.DiagnosticId);
+            if (diagnostic == null) return BadRequest("Invalid Diagnostic ID");
+
+            var note = _mapper.Map<Note>(dto);
+            _context.Notes.Add(note);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetNote),
+                new { id = note.Id },
+                _mapper.Map<NoteReadDto>(note));
+        }
+
+        // PUT: api/notes/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateNote(int id, NoteUpdateDto dto)
+        {
+            var note = await _context.Notes.FindAsync(id);
+            if (note == null) return NotFound();
+
+            _mapper.Map(dto, note);
+            note.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE: api/notes/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteNote(int id)
+        {
+            var note = await _context.Notes.FindAsync(id);
+            if (note == null) return NotFound();
+
+            _context.Notes.Remove(note);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\SalesReportsController.cs =====
+using AutoMapper;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SalesReportController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly ILogger<SalesReportController> _logger;
+
+        public SalesReportController(AppDbContext context, IMapper mapper, ILogger<SalesReportController> logger)
+        {
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
+        }
+
+        // GET: api/SalesReport?startDate=...&endDate=...
+        // Retrieves a sales report for a given period.
+        [HttpGet]
+        public async Task<ActionResult<SalesReportDto>> GetSalesReport([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            // If startDate is not provided, use DateTime.MinValue.
+            // If endDate is not provided, use DateTime.Today.
+            // To include all records on the end date, add one day to endDate and compare using '<'
+            DateTime queryStart = startDate ?? DateTime.MinValue;
+            DateTime queryEnd = (endDate ?? DateTime.Today).AddDays(1);
+
+            _logger.LogInformation("Generating sales report for the period {StartDate} - {EndDate}", queryStart, queryEnd.AddDays(-1));
+
+            // Retrieve estimates within the specified date range with all necessary related entities.
+            var estimates = await _context.Estimates
+                .Include(e => e.Vehicle)
+                .Include(e => e.UserWorkshop)
+                .Include(e => e.AccountReceivable)
+                    .ThenInclude(ar => ar.Payments)
+                .Include(e => e.Parts)
+                .Include(e => e.Labors)
+                .Include(e => e.FlatFees)
+                .Where(e => e.Date >= queryStart && e.Date < queryEnd)
+                .ToListAsync();
+
+            // Create a new SalesReport instance
+            var report = new SalesReport
+            {
+                // Keep the original value of startDate (which may be null) and adjust endDate to display the original date.
+                StartDate = startDate,
+                EndDate = queryEnd.AddDays(-1),
+                CreatedDate = DateTime.UtcNow,
+            };
+
+            // Process each estimate and add its details to the sales report.
+            foreach (var e in estimates)
+            {
+                decimal totalPayments = 0;
+                decimal remainingBalance = 0;
+                decimal originalAmount = 0;
+
+                if (e.AccountReceivable != null)
+                {
+                    totalPayments = e.AccountReceivable.Payments.Sum(p => p.Amount);
+                    remainingBalance = e.AccountReceivable.Balance;
+                    originalAmount = e.AccountReceivable.OriginalAmount;
+                }
+
+                var detail = new SalesReportDetail
+                {
+                    EstimateId = e.ID,
+                    EstimateDate = e.Date,
+                    Subtotal = e.Subtotal,
+                    Tax = e.Tax,
+                    Total = e.Total,
+                    OriginalAmount = originalAmount,
+                    RemainingBalance = remainingBalance,
+                    TotalPayments = totalPayments,
+                    // Include the full Estimate if mapping is needed.
+                    Estimate = e
+                };
+
+                report.Details.Add(detail);
+            }
+
+            // Calculate aggregate totals for the report.
+            report.TotalEstimates = report.Details.Sum(d => d.Total);
+            report.TotalPaymentsCollected = report.Details.Sum(d => d.TotalPayments);
+            report.TotalOutstanding = report.Details.Sum(d => d.RemainingBalance);
+            report.TotalPartsRevenue = estimates.Sum(e => e.Parts.Sum(p => p.ExtendedPrice));
+            report.TotalLaborRevenue = estimates.Sum(e => e.Labors.Sum(l => l.ExtendedPrice));
+            report.TotalFlatFeeRevenue = estimates.Sum(e => e.FlatFees.Sum(f => f.ExtendedPrice));
+            report.TotalTaxCollected = estimates.Sum(e => e.Tax);
+
+            // Map the report entity to a DTO and return it.
+            var reportDto = _mapper.Map<SalesReportDto>(report);
+            return Ok(reportDto);
+        }
+
+        // GET: api/SalesReport/{id}
+        // Retrieves a sales report by its ID.
+        [HttpGet("{id}")]
+        public async Task<ActionResult<SalesReportDto>> GetSalesReportById(int id)
+        {
+            var salesReport = await _context.SalesReports
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Estimate)
+                .FirstOrDefaultAsync(r => r.SalesReportId == id);
+            if (salesReport == null)
+            {
+                return NotFound();
+            }
+            var reportDto = _mapper.Map<SalesReportDto>(salesReport);
+            return Ok(reportDto);
+        }
+
+        // POST: api/SalesReport
+        // Creates a new sales report based on the provided SalesReportDto.
+        [HttpPost]
+        public async Task<ActionResult<SalesReportDto>> CreateSalesReport([FromBody] SalesReportDto reportDto)
+        {
+            if (reportDto == null)
+            {
+                _logger.LogError("No report information provided.");
+                return BadRequest("No report information provided.");
+            }
+
+            // Fill in null values in the details (if any), because only the summary is to be saved.
+            if (reportDto.Details != null)
+            {
+                foreach (var detail in reportDto.Details)
+                {
+                    detail.Subtotal = detail.Subtotal ?? 0;
+                    detail.Tax = detail.Tax ?? 0;
+                    detail.Total = detail.Total ?? 0;
+                    detail.OriginalAmount = detail.OriginalAmount ?? 0;
+                    detail.RemainingBalance = detail.RemainingBalance ?? 0;
+                    detail.TotalPayments = detail.TotalPayments ?? 0;
+                }
+            }
+
+            // Map the DTO to a SalesReport entity.
+            var salesReport = _mapper.Map<SalesReport>(reportDto);
+
+            _context.SalesReports.Add(salesReport);
+            await _context.SaveChangesAsync();
+
+            var createdReportDto = _mapper.Map<SalesReportDto>(salesReport);
+            return CreatedAtAction(nameof(GetSalesReportById), new { id = createdReportDto.SalesReportId }, createdReportDto);
+        }
+
+        // GET: api/SalesReport/all
+        // Retrieves all sales reports.
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<SalesReportDto>>> GetAllSalesReports()
+        {
+            var reports = await _context.SalesReports
+                .Include(r => r.Details)
+                    .ThenInclude(d => d.Estimate)
+                .ToListAsync();
+            return Ok(_mapper.Map<List<SalesReportDto>>(reports));
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\TechnicianController.cs =====
+// Backend: Controllers/TechnicianController.cs
+using AutoMapper;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TechnicianController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public TechnicianController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TechnicianDtos>>> GetTechnicians()
+        {
+            var technicians = await _context.Users
+                .Where(u => u.Profile == "Technician")
+                .ToListAsync();
+
+            var technicianDtos = _mapper.Map<IEnumerable<TechnicianDtos>>(technicians);
+
+            return Ok(technicianDtos);
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\TechnicianDiagnosticsController.cs =====
+// Controllers/TechnicianDiagnosticsController.cs
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using AutoMapper;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TechnicianDiagnosticsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public TechnicianDiagnosticsController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+        // POST: api/TechnicianDiagnostics
+        [HttpPost]
+        public async Task<ActionResult<TechnicianDiagnosticReadDto>> CreateTechnicianDiagnostic(TechnicianDiagnosticCreateDto dto)
+        {
+            var diagnostic = await _context.Diagnostics.FindAsync(dto.DiagnosticId);
+            if (diagnostic == null)
+                return NotFound(new { message = "Diagnostic not found." });
+
+            var entity = _mapper.Map<TechnicianDiagnostic>(dto);
+            _context.TechnicianDiagnostics.Add(entity);
+            await _context.SaveChangesAsync();
+
+            // ðŸ”´ ACTUALIZAR NOTAS ASIGNÃNDOLES EL TechnicianDiagnosticId
+            var notes = await _context.Notes.Where(n => n.DiagnosticId == entity.DiagnosticId && n.TechnicianDiagnosticId == null).ToListAsync();
+            foreach (var note in notes)
+            {
+                note.TechnicianDiagnosticId = entity.Id;
+            }
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetTechnicianDiagnostic), new { id = entity.Id }, _mapper.Map<TechnicianDiagnosticReadDto>(entity));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTechnicianDiagnostic(int id, TechnicianDiagnosticCreateDto dto)
+        {
+            var existingTd = await _context.TechnicianDiagnostics.FindAsync(id);
+            if (existingTd == null)
+                return NotFound(new { message = "Technician Diagnostic to update was not found." });
+
+            existingTd.Mileage = dto.Mileage;
+            existingTd.ExtendedDiagnostic = dto.ExtendedDiagnostic;
+
+            await _context.SaveChangesAsync();
+
+            // ðŸ”´ ACTUALIZAR NOTAS ASIGNÃNDOLES EL TechnicianDiagnosticId
+            var notes = await _context.Notes.Where(n => n.DiagnosticId == existingTd.DiagnosticId && n.TechnicianDiagnosticId == null).ToListAsync();
+            foreach (var note in notes)
+            {
+                note.TechnicianDiagnosticId = existingTd.Id;
+            }
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<TechnicianDiagnosticReadDto>> GetTechnicianDiagnostic(int id)
+        {
+            var td = await _context.TechnicianDiagnostics
+                .Include(t => t.Diagnostic)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (td == null)
+            {
+                return NotFound(new { message = "Technician Diagnostic with that ID was not found." });
+            }
+
+            var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(td);
+            return Ok(readDto);
+        }
+
+
+        // GET: api/TechnicianDiagnostics/byDiagnostic/5
+        [HttpGet("byDiagnostic/{diagnosticId}")]
+        public async Task<ActionResult<TechnicianDiagnosticReadDto>> GetByDiagnosticId(int diagnosticId)
+        {
+            var techDiag = await _context.TechnicianDiagnostics
+                .Include(td => td.Diagnostic)
+                .FirstOrDefaultAsync(td => td.DiagnosticId == diagnosticId);
+
+            if (techDiag == null)
+            {
+                return NotFound(new { message = "There is no TechnicianDiagnostic for that DiagnosticId." });
+            }
+
+            var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(techDiag);
+            return Ok(readDto);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTechnicianDiagnostic(int id)
+        {
+            var td = await _context.TechnicianDiagnostics
+                .Include(td => td.Notes) // Include notes for cascade delete
+                .FirstOrDefaultAsync(td => td.Id == id);
+
+            if (td == null) return NotFound();
+
+            _context.TechnicianDiagnostics.Remove(td);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // GET: api/TechnicianDiagnostics/vehicle/{vehicleId}
+        [HttpGet("vehicle/{vehicleId}")]
+        public async Task<ActionResult<TechnicianDiagnosticReadDto>> GetDiagnosticByVehicleId(int vehicleId)
+        {
+            var techDiag = await _context.TechnicianDiagnostics
+                .Include(td => td.Diagnostic) // Incluir detalles del Diagnostic si es necesario
+                .FirstOrDefaultAsync(td => td.Diagnostic.VehicleId == vehicleId);
+            if (techDiag == null)
+            {
+                return NotFound(new { message = $"No Technician Diagnostic found for Vehicle ID {vehicleId}." });
+            }
+            var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(techDiag);
+            return Ok(readDto);
+        }
+
+        // AÃ±adir este endpoint para bÃºsqueda eficiente
+        [HttpGet("byDiagnostics")]
+        public async Task<ActionResult<IEnumerable<TechnicianDiagnosticReadDto>>> GetByDiagnosticIds(
+            [FromQuery] List<int> diagnosticIds)
+        {
+            var techDiags = await _context.TechnicianDiagnostics
+                .Include(td => td.Diagnostic)
+                .Where(td => diagnosticIds.Contains(td.DiagnosticId))
+                .ToListAsync();
+
+            return Ok(_mapper.Map<IEnumerable<TechnicianDiagnosticReadDto>>(techDiags));
+        }
+
+
+
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\UserController.cs =====
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using AutoMapper;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UsersController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+                private readonly IMapper _mapper;
+        private readonly IConfiguration _config;
+        private readonly ILogger<UsersController> _logger;
+
+        public UsersController(AppDbContext context, IMapper mapper, IConfiguration config, ILogger<UsersController> logger)
+        {
+            _context = context;
+            _mapper = mapper;
+            _config = config;
+            _logger = logger;
+        }
+
+        // ðŸ”¹ POST: api/Users/register (Crear usuario)
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> Register(UserCreateDto userCreateDto)
+        {
+            _logger.LogInformation("Register endpoint llamado.");
+
+            if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
+                return BadRequest(new { Message = "Username already exists." });
+
+            if (await _context.Users.AnyAsync(u => u.Email == userCreateDto.Email))
+                return BadRequest(new { Message = "Email already exists." });
+
+            var user = _mapper.Map<User>(userCreateDto);
+            user.Password = BCrypt.Net.BCrypt.HashPassword(userCreateDto.Password);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(Register), new { id = user.ID }, user);
+        }
+
+        // ðŸ”¹ POST: api/Users/login (AutenticaciÃ³n y generaciÃ³n de JWT)
+        [HttpPost("login")]
+        public async Task<ActionResult> Login(UserLoginDto userLoginDto)
+        {
+            _logger.LogInformation("Login endpoint llamado.");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
+            if (user == null)
+                return Unauthorized(new { Message = "User not found." });
+
+            if (!BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password))
+                return Unauthorized(new { Message = "Incorrect password." });
+
+            var token = GenerateJwtToken(user);
+            return Ok(new
+            {
+                Token = token,
+                User = new
+                {
+                    user.ID,
+                    user.Email,
+                    user.Name,
+                    user.LastName,
+                    user.Username,
+                    user.Profile
+                }
+            });
+        }
+
+        // ðŸ”¹ MÃ©todo para generar JWT (ahora usa Profile en lugar de Role)
+        private string GenerateJwtToken(User user)
+        {
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var secretKey = jwtSettings["Secret"];
+
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new InvalidOperationException("JWT Secret Key is missing in appsettings.json");
+            }
+
+            var key = Encoding.UTF8.GetBytes(secretKey);
+
+            var claims = new[]
+            {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.Profile)
+        };
+
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["TokenExpirationMinutes"])),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+
+        // ðŸ”¹ GET: api/Users/profile (Obtener perfil del usuario autenticado)
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<ActionResult> GetProfile()
+        {
+            _logger.LogInformation("GetProfile endpoint llamado.");
+
+            var username = User.Identity.Name;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+
+            if (user == null)
+                return NotFound(new { Message = "User not found." });
+
+            return Ok(new
+            {
+                user.ID,
+                user.Email,
+                user.Name,
+                user.LastName,
+                user.Username,
+                user.Profile
+            });
+        }
+
+        // POST: api/Users/forgot-password
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            if (!IsValidEmail(forgotPasswordDto.Email))
+                return BadRequest(new { Message = "Invalid email format." });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDto.Email);
+            if (user == null)
+                return BadRequest(new { Message = "Email not found." });
+
+            // Generate a verification code
+            var code = new Random().Next(100000, 999999).ToString();
+            user.ResetCode = code;
+            user.ResetCodeExpiry = DateTime.Now.AddMinutes(5);
+
+            // Save the code to the database
+            await _context.SaveChangesAsync();
+
+            // Log the generated code in the server console
+            Console.WriteLine($"Generated code for {user.Email}: {code}");
+
+            // Return the generated code
+            return Ok(new { Code = code });
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [HttpPost("verify-code")]
+        public async Task<ActionResult> VerifyCode(VerifyCodeDto verifyCodeDto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == verifyCodeDto.Email);
+            if (user == null || user.ResetCode != verifyCodeDto.Code || user.ResetCodeExpiry < DateTime.Now)
+            {
+                return BadRequest(new { Message = "Invalid or expired code." }); // JSON
+            }
+
+            return Ok(new { Message = "Code verified successfully." }); // JSON
+        }
+
+        // ðŸ”¹ GET: api/Users/admin (Solo accesible para admins)
+        [HttpGet("admin")]
+        [Authorize(Roles = "Administrator")]
+        public IActionResult GetAdminData()
+        {
+            _logger.LogInformation("GetAdminData endpoint llamado.");
+
+            return Ok(new { Message = "This is protected admin data" });
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\UserWorkshopsController.cs =====
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using AutoMapper;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+
+namespace Mechanical_workshop.Controllers
+{
+    /// <summary>
+    /// Controller for managing UserWorkshops and their Vehicles.
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UserWorkshopsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly ILogger<UserWorkshopsController> _logger;
+
+        public UserWorkshopsController(
+            AppDbContext context,
+            IMapper mapper,
+            ILogger<UserWorkshopsController> logger)
+        {
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Retrieves all UserWorkshops along with their associated Vehicles.
+        /// </summary>
+        /// <returns>A list of UserWorkshopReadDto objects.</returns>
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserWorkshopReadDto>>> GetUserWorkshops()
+        {
+            _logger.LogInformation("GET: Retrieving all UserWorkshops with Vehicles...");
+
+            var userWorkshops = await _context.UserWorkshops
+                .Include(uw => uw.Vehicles)
+                .ToListAsync();
+
+            _logger.LogInformation("GET: Retrieved {Count} UserWorkshops.", userWorkshops.Count);
+
+            return Ok(_mapper.Map<IEnumerable<UserWorkshopReadDto>>(userWorkshops));
+        }
+
+        /// <summary>
+        /// Retrieves a specific UserWorkshop by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the UserWorkshop.</param>
+        /// <returns>The UserWorkshopReadDto object.</returns>
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserWorkshopReadDto>> GetUserWorkshop(int id)
+        {
+            _logger.LogInformation("GET: Retrieving UserWorkshop by ID: {Id}", id);
+
+            var userWorkshop = await _context.UserWorkshops
+                .Include(uw => uw.Vehicles)
+                .FirstOrDefaultAsync(uw => uw.Id == id);
+
+            if (userWorkshop == null)
+            {
+                _logger.LogWarning("GET: UserWorkshop with ID {Id} not found.", id);
+                return NotFound();
+            }
+
+            _logger.LogInformation("GET: Found UserWorkshop with ID {Id}", id);
+            return Ok(_mapper.Map<UserWorkshopReadDto>(userWorkshop));
+        }
+
+        /// <summary>
+        /// Creates a new UserWorkshop.
+        /// </summary>
+        /// <param name="userWorkshopDto">UserWorkshopCreateDto object with workshop and associated vehicle information.</param>
+        /// <returns>The created UserWorkshopReadDto.</returns>
+        [HttpPost]
+        public async Task<ActionResult<UserWorkshopReadDto>> CreateUserWorkshop(UserWorkshopCreateDto userWorkshopDto)
+        {
+            _logger.LogInformation("POST: Creating a new UserWorkshop.");
+
+            if (userWorkshopDto == null)
+            {
+                _logger.LogWarning("POST: UserWorkshopCreateDto is null.");
+                return BadRequest("Invalid UserWorkshop data.");
+            }
+
+            try
+            {
+                // Map the DTO to the entity
+                var userWorkshop = _mapper.Map<UserWorkshop>(userWorkshopDto);
+
+                userWorkshop.Vehicles = new List<Vehicle>();
+
+                foreach (var vehicleDto in userWorkshopDto.Vehicles)
+                {
+                    if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
+                    {
+                        _logger.LogWarning("POST: A VehicleDto with an empty VIN will be skipped.");
+                        continue;
+                    }
+
+                    _logger.LogInformation(
+                        "VehicleDto => VIN: {Vin}, Make: {Make}, Model: {Model}",
+                        vehicleDto.Vin, vehicleDto.Make, vehicleDto.Model
+                    );
+
+                    var existingVehicle = await _context.Vehicles
+                        .FirstOrDefaultAsync(v => v.Vin == vehicleDto.Vin);
+
+                    if (existingVehicle == null)
+                    {
+                        _logger.LogInformation(
+                            "No existing vehicle found with VIN = {Vin}. Creating a new one...",
+                            vehicleDto.Vin
+                        );
+                        var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
+                        userWorkshop.Vehicles.Add(newVehicle);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "Existing vehicle found with VIN = {Vin}. Reusing the same entity.",
+                            vehicleDto.Vin
+                        );
+                        userWorkshop.Vehicles.Add(existingVehicle);
+                    }
+                }
+
+                _logger.LogInformation(
+                    "After manual additions, userWorkshop.Vehicles.Count = {Count}",
+                    userWorkshop.Vehicles.Count
+                );
+
+                // Save the UserWorkshop to the database
+                _context.UserWorkshops.Add(userWorkshop);
+                await _context.SaveChangesAsync();
+
+                // Map the entity to ReadDto
+                var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
+
+                _logger.LogInformation("POST: UserWorkshop created successfully with ID = {Id}.", userWorkshop.Id);
+
+                return CreatedAtAction(nameof(GetUserWorkshop), new { id = readDto.Id }, readDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "POST: Error creating UserWorkshop.");
+                return StatusCode(500, "Error creating the mechanical workshop.");
+            }
+        }
+
+        /// <summary>
+        /// Creates multiple UserWorkshops.
+        /// </summary>
+        /// <param name="userWorkshopsDto">List of UserWorkshopCreateDto.</param>
+        /// <returns>List of created UserWorkshopReadDto.</returns>
+        [HttpPost("bulk")]
+        public async Task<ActionResult<IEnumerable<UserWorkshopReadDto>>> CreateUserWorkshops(IEnumerable<UserWorkshopCreateDto> userWorkshopsDto)
+        {
+            _logger.LogInformation("POST: Creating multiple UserWorkshops. Count: {Count}", userWorkshopsDto.Count());
+
+            var readDtos = new List<UserWorkshopReadDto>();
+
+            foreach (var userWorkshopDto in userWorkshopsDto)
+            {
+                try
+                {
+                    var userWorkshop = _mapper.Map<UserWorkshop>(userWorkshopDto);
+
+                    userWorkshop.Vehicles = new List<Vehicle>();
+
+                    foreach (var vehicleDto in userWorkshopDto.Vehicles)
+                    {
+                        if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
+                        {
+                            _logger.LogWarning("POST Bulk: A VehicleDto with an empty VIN will be skipped.");
+                            continue;
+                        }
+
+                        _logger.LogInformation(
+                            "VehicleDto => VIN: {Vin}, Make: {Make}, Model: {Model}",
+                            vehicleDto.Vin, vehicleDto.Make, vehicleDto.Model
+                        );
+
+                        var existingVehicle = await _context.Vehicles
+                            .FirstOrDefaultAsync(v => v.Vin == vehicleDto.Vin);
+
+                        if (existingVehicle == null)
+                        {
+                            _logger.LogInformation(
+                                "No existing vehicle found with VIN = {Vin}. Creating a new one...",
+                                vehicleDto.Vin
+                            );
+                            var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
+                            userWorkshop.Vehicles.Add(newVehicle);
+                        }
+                        else
+                        {
+                            _logger.LogInformation(
+                                "Existing vehicle found with VIN = {Vin}. Reusing the same entity.",
+                                vehicleDto.Vin
+                            );
+                            userWorkshop.Vehicles.Add(existingVehicle);
+                        }
+                    }
+
+                    _logger.LogInformation(
+                        "After manual additions, userWorkshop.Vehicles.Count = {Count}",
+                        userWorkshop.Vehicles.Count
+                    );
+
+                    // Save the UserWorkshop
+                    _context.UserWorkshops.Add(userWorkshop);
+                    await _context.SaveChangesAsync();
+
+                    // Map to ReadDto and add to the response list
+                    var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
+                    readDtos.Add(readDto);
+
+                    _logger.LogInformation("POST Bulk: UserWorkshop created successfully with ID = {Id}.", userWorkshop.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "POST Bulk: Error creating UserWorkshop.");
+                    // Optional: Decide how to handle individual errors without stopping the entire process
+                }
+            }
+
+            return CreatedAtAction(nameof(GetUserWorkshops), readDtos);
+        }
+
+        /// <summary>
+        /// Updates an existing UserWorkshop.
+        /// </summary>
+        /// <param name="id">The ID of the UserWorkshop to update.</param>
+        /// <param name="userWorkshopUpdateDto">The UserWorkshopUpdateDto object containing updated details.</param>
+        /// <returns>No content if successful.</returns>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUserWorkshop(int id, UserWorkshopUpdateDto userWorkshopUpdateDto)
+        {
+            _logger.LogInformation("PUT: Updating UserWorkshop with ID = {Id}. Incoming DTO: {@Dto}", id, userWorkshopUpdateDto);
+
+            if (id != userWorkshopUpdateDto.Id)
+            {
+                _logger.LogWarning("PUT: ID mismatch. Route ID: {RouteId}, DTO ID: {DtoId}", id, userWorkshopUpdateDto.Id);
+                return BadRequest(new { message = "The ID in the route does not match the ID in the request body." });
+            }
+
+            var userWorkshop = await _context.UserWorkshops
+                .Include(uw => uw.Vehicles)
+                .FirstOrDefaultAsync(uw => uw.Id == id);
+
+            if (userWorkshop == null)
+            {
+                _logger.LogWarning("PUT: UserWorkshop with ID {Id} not found.", id);
+                return NotFound(new { message = $"UserWorkshop with ID {id} not found." });
+            }
+
+            // Mapear los campos principales del UserWorkshop (AutoMapper ignorarÃ¡ el Id de los vehÃ­culos gracias a la configuraciÃ³n)
+            _mapper.Map(userWorkshopUpdateDto, userWorkshop);
+
+            // Manejar vehÃ­culos: remover los que ya no estÃ©n en el DTO y agregar o actualizar los existentes
+            var dtoVins = userWorkshopUpdateDto.Vehicles.Select(v => v.Vin).ToList();
+
+            // Remover vehÃ­culos que ya no estÃ¡n presentes en el DTO
+            var vehiclesToRemove = userWorkshop.Vehicles.Where(v => !dtoVins.Contains(v.Vin)).ToList();
+            if (vehiclesToRemove.Any())
+            {
+                _logger.LogInformation("PUT: Removing {Count} vehicles not present in the DTO.", vehiclesToRemove.Count);
+                _context.Vehicles.RemoveRange(vehiclesToRemove);
+            }
+
+            // Procesar cada vehÃ­culo del DTO
+            foreach (var vehicleDto in userWorkshopUpdateDto.Vehicles)
+            {
+                if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
+                {
+                    _logger.LogWarning("PUT: Found a vehicle with an empty VIN in the DTO. It will be skipped.");
+                    continue;
+                }
+
+                var existingVehicle = userWorkshop.Vehicles.FirstOrDefault(v => v.Vin == vehicleDto.Vin);
+                if (existingVehicle != null)
+                {
+                    // Actualiza los campos del vehÃ­culo existente (el Id no se modifica por la configuraciÃ³n de AutoMapper)
+                    _mapper.Map(vehicleDto, existingVehicle);
+                    _logger.LogInformation("PUT: Updated existing vehicle with VIN = {Vin}.", vehicleDto.Vin);
+                }
+                else
+                {
+                    // Si no existe, agrega el vehÃ­culo
+                    // Nota: Si se requiere lÃ³gica adicional para evitar duplicados en la DB, se puede hacer aquÃ­.
+                    var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
+                    userWorkshop.Vehicles.Add(newVehicle);
+                    _logger.LogInformation("PUT: Added new vehicle with VIN = {Vin}.", vehicleDto.Vin);
+                }
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("PUT: UserWorkshop with ID = {Id} updated successfully.", id);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogError(ex, "PUT: Concurrency error updating UserWorkshop with ID = {Id}", id);
+                if (!UserWorkshopExists(id))
+                {
+                    _logger.LogWarning("PUT: UserWorkshop with ID {Id} no longer exists after concurrency error.", id);
+                    return NotFound(new { message = $"UserWorkshop with ID {id} no longer exists." });
+                }
+                else
+                {
+                    _logger.LogError("PUT: Unknown concurrency error for UserWorkshop with ID = {Id}.", id);
+                    return StatusCode(500, new { message = "Concurrency error while updating the UserWorkshop." });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "PUT: Unexpected error updating UserWorkshop with ID = {Id}", id);
+                return StatusCode(500, new { message = "Unexpected error while updating the UserWorkshop." });
+            }
+
+            return NoContent();
+        }
+
+
+        /// <summary>
+        /// Deletes a UserWorkshop by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the UserWorkshop to delete.</param>
+        /// <returns>No content if successful.</returns>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUserWorkshop(int id)
+        {
+            _logger.LogInformation("DELETE: Deleting UserWorkshop with ID = {Id}", id);
+
+            var userWorkshop = await _context.UserWorkshops.FindAsync(id);
+            if (userWorkshop == null)
+            {
+                _logger.LogWarning("DELETE: UserWorkshop with ID {Id} not found.", id);
+                return NotFound();
+            }
+
+            _context.UserWorkshops.Remove(userWorkshop);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("DELETE: UserWorkshop with ID {Id} deleted successfully.", id);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Checks if a UserWorkshop exists by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the UserWorkshop.</param>
+        /// <returns>True if it exists, otherwise False.</returns>
+        private bool UserWorkshopExists(int id)
+        {
+            return _context.UserWorkshops.Any(e => e.Id == id);
+        }
+
+        /// <summary>
+        /// Searches for vehicles by VIN number or client name in real-time.
+        /// </summary>
+        /// <param name="searchTerm">Search term (VIN or client name)</param>
+        /// <returns>List of VehicleSearchDto that match the search term</returns>
+        [HttpGet("searchVehicles")]
+        public async Task<ActionResult> SearchVehicles([FromQuery] string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return BadRequest(new { success = false, message = "The search term cannot be empty." });
+            }
+
+            try
+            {
+                var searchTermLower = searchTerm.ToLower();
+
+                var vehicles = await _context.UserWorkshops
+                    .Include(uw => uw.Vehicles)
+                    .Where(uw => EF.Functions.Like(uw.Name, $"%{searchTerm}%") ||
+                                 EF.Functions.Like(uw.LastName, $"%{searchTerm}%") ||
+                                 uw.Vehicles.Any(v => EF.Functions.Like(v.Vin, $"%{searchTerm}%")))
+                    .SelectMany(uw => uw.Vehicles, (uw, v) => new { Workshop = uw, Vehicle = v })
+                    .Select(wv => new VehicleSearchDto
+                    {
+                        Vin = wv.Vehicle.Vin,
+                        Make = wv.Vehicle.Make,
+                        Model = wv.Vehicle.Model,
+                        OwnerName = $"{wv.Workshop.Name} {wv.Workshop.LastName}"
+                    })
+                    .ToListAsync();
+
+                if (!vehicles.Any())
+                {
+                    return Ok(new { success = false, message = "No vehicles were found that match your search." });
+                }
+
+                return Ok(new { success = true, data = vehicles });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "An error occurred while processing your request.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Retrieves all Vehicles from all UserWorkshops.
+        /// </summary>
+        /// <returns>A list of VehicleSearchDto objects.</returns>
+        [HttpGet("vehicles")]
+        public async Task<ActionResult<List<VehicleSearchDto>>> GetAllVehicles()
+        {
+            _logger.LogInformation("GET: Retrieving all vehicles from all UserWorkshops...");
+
+            try
+            {
+                var vehicles = await _context.UserWorkshops
+                    .Include(uw => uw.Vehicles)
+                    .SelectMany(
+                        uw => uw.Vehicles,
+                        (uw, v) => new
+                        {
+                            Id = v.Id,
+                            Vin = v.Vin,
+                            v.Make,
+                            v.Model,
+                            v.Engine,
+                            v.Plate,
+                            v.State,
+                            v.Status,
+                            OwnerName = $"{uw.Name} {uw.LastName}"
+                        }
+                    )
+                    .ToListAsync();
+
+                _logger.LogInformation("GET: Retrieved a total of {Count} vehicles.", vehicles.Count);
+
+                var result = vehicles.Select(v => new VehicleSearchDto
+                {
+                    Id = v.Id,
+                    Vin = v.Vin,
+                    Make = v.Make,
+                    Model = v.Model,
+                    OwnerName = v.OwnerName,
+                    Status = v.Status
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GET: Error retrieving the vehicle list");
+                return BadRequest(new { message = $"Error retrieving the vehicle list: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Deletes a Vehicle by its VIN.
+        /// </summary>
+        /// <param name="vin">The VIN of the Vehicle to delete.</param>
+        /// <returns>No content if successful.</returns>
+        [HttpDelete("vehicle/{vin}")]
+        public async Task<IActionResult> DeleteVehicleByVin(string vin)
+        {
+            _logger.LogInformation("DELETE: Deleting vehicle by VIN = {Vin}", vin);
+
+            try
+            {
+                var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.Vin == vin);
+                if (vehicle == null)
+                {
+                    _logger.LogWarning("DELETE: Vehicle with VIN {Vin} not found.", vin);
+                    return NotFound(new { message = $"Vehicle with VIN '{vin}' not found." });
+                }
+
+                _context.Vehicles.Remove(vehicle);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("DELETE: Successfully removed vehicle with VIN = {Vin}", vin);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DELETE: Error deleting vehicle with VIN {Vin}", vin);
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = $"Error deleting the vehicle: {ex.Message}"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Retrieves a Vehicle by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the Vehicle.</param>
+        /// <returns>The VehicleReadDto object.</returns>
+        [HttpGet("vehicle/{id}")]
+        public async Task<ActionResult<VehicleReadDto>> GetVehicleById(int id)
+        {
+            _logger.LogInformation("GET: Retrieving vehicle by ID = {Id}", id);
+
+            var vehicle = await _context.Vehicles
+                .Include(v => v.UserWorkshop)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vehicle == null)
+            {
+                _logger.LogWarning("GET: Vehicle with ID {Id} not found.", id);
+                return NotFound(new { message = $"Vehicle with ID {id} not found." });
+            }
+
+            _logger.LogInformation("GET: Found vehicle with ID {Id}, VIN = {Vin}", id, vehicle.Vin);
+            var vehicleReadDto = _mapper.Map<VehicleReadDto>(vehicle);
+            return Ok(vehicleReadDto);
+        }
+
+        /// <summary>
+        /// Updates the status of a Vehicle.
+        /// </summary>
+        /// <param name="id">The ID of the Vehicle.</param>
+        /// <param name="newStatus">The new status to set.</param>
+        /// <returns>No content if successful.</returns>
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateVehicleStatus(int id, [FromBody] string newStatus)
+        {
+            _logger.LogInformation("PUT: Updating vehicle status. VehicleID = {Id}, NewStatus = {Status}", id, newStatus);
+
+            var vehicle = await _context.Vehicles.FindAsync(id);
+            if (vehicle == null)
+            {
+                _logger.LogWarning("PUT: Vehicle with ID {Id} not found.", id);
+                return NotFound(new { message = "Vehicle not found." });
+            }
+
+            vehicle.Status = newStatus;
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("PUT: Successfully updated status of Vehicle ID {Id} to {Status}", id, newStatus);
+            return NoContent();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\VehicleDiagnosticController.cs =====
+// Controllers/VehicleDiagnosticController.cs
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Data;
+
+namespace Mechanical_workshop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class VehicleDiagnosticController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public VehicleDiagnosticController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/VehicleDiagnostic
+        [HttpGet]
+        public async Task<IActionResult> GetVehicleDiagnostics()
+        {
+            // Se incluyen las relaciones: Owner (UserWorkshop), DiagnÃ³sticos y dentro de Ã©stos, la colecciÃ³n TechnicianDiagnostics
+            var vehicles = await _context.Vehicles
+                .Include(v => v.UserWorkshop)
+                .Include(v => v.Diagnostics)
+                    .ThenInclude(d => d.TechnicianDiagnostics)
+                .ToListAsync();
+
+            var result = vehicles.Select(v => new VehicleDiagnosticOwnerDto
+            {
+                Vehicle = new VehicleDto
+                {
+                    Id = v.Id,
+                    Vin = v.Vin,
+                    Make = v.Make,
+                    Model = v.Model,
+                    Year = v.Year,
+                    Engine = v.Engine,
+                    Plate = v.Plate,
+                    State = v.State,
+                    Status = v.Status
+                },
+                Owner = new UserWorkshopReadDto
+                {
+                    Id = v.UserWorkshop.Id,
+                    Email = v.UserWorkshop.Email,
+                    Name = v.UserWorkshop.Name,
+                    Username = v.UserWorkshop.Email, // Ajusta segÃºn sea necesario
+                    LastName = v.UserWorkshop.LastName,
+                    NoTax = v.UserWorkshop.NoTax,
+                    Address = v.UserWorkshop.Address,
+                    City = v.UserWorkshop.City,
+                    State = v.UserWorkshop.State,
+                    Zip = v.UserWorkshop.Zip,
+                    PrimaryNumber = v.UserWorkshop.PrimaryNumber,
+                    SecondaryNumber = v.UserWorkshop.SecondaryNumber,
+                    Vehicles = new List<VehicleDto>() // Si requieres mapear la lista de vehÃ­culos
+                },
+                // Mapeo de todos los diagnÃ³sticos asociados a este vehÃ­culo
+                Diagnostics = v.Diagnostics.Select(d => new DiagnosticInfoDto
+                {
+                    DiagnosticId = d.Id,
+                    ReasonForVisit = d.ReasonForVisit,
+                    AssignedTechnician = d.AssignedTechnician,
+                    TechnicianDiagnostics = d.TechnicianDiagnostics?.Select(td => new TechnicianDiagnosticReadDto
+                    {
+                        Id = td.Id,
+                        DiagnosticId = d.Id,
+                        // OpciÃ³n: puedes utilizar td.ReasonForVisit si existe, o mantener d.ReasonForVisit
+                        ReasonForVisit = d.ReasonForVisit,
+                        Mileage = td.Mileage,
+                        ExtendedDiagnostic = td.ExtendedDiagnostic,
+                        VehicleId = d.VehicleId,
+                    }).ToList() ?? new List<TechnicianDiagnosticReadDto>()
+                }).ToList()
+            }).ToList();
+
+            return Ok(result);
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Controllers\WorkshopSettingsController.cs =====
+// Controllers/WorkshopSettingsController.cs
+
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Data;
+using Mechanical_workshop.DTOs;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class WorkshopSettingsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public WorkshopSettingsController(AppDbContext context, IMapper mapper)
+        {
+            _context = context;
+            _mapper = mapper;
+        }
+
+
+        [HttpGet]
+        public async Task<ActionResult<WorkshopSettingsReadDto>> GetWorkshopSettings()
+        {
+            var settings = await _context.WorkshopSettings
+                .OrderByDescending(ws => ws.LastUpdated)
+                .FirstOrDefaultAsync();
+
+            if (settings == null)
+            {
+                return NotFound(new { message = "Workshop settings not found." });
+            }
+
+            return Ok(_mapper.Map<WorkshopSettingsReadDto>(settings));
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<WorkshopSettingsReadDto>> CreateWorkshopSettings(WorkshopSettingsCreateDto workshopSettingsCreateDto)
+        {
+            var workshopSettings = _mapper.Map<WorkshopSettings>(workshopSettingsCreateDto);
+            workshopSettings.LastUpdated = DateTime.UtcNow;
+
+            _context.WorkshopSettings.Add(workshopSettings);
+            await _context.SaveChangesAsync();
+
+            var workshopSettingsReadDto = _mapper.Map<WorkshopSettingsReadDto>(workshopSettings);
+
+            return CreatedAtAction(nameof(GetWorkshopSettings), new { id = workshopSettings.Id }, workshopSettingsReadDto);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateWorkshopSettings(int id, WorkshopSettingsUpdateDto workshopSettingsUpdateDto)
+        {
+            var workshopSettings = await _context.WorkshopSettings.FindAsync(id);
+            if (workshopSettings == null)
+            {
+                return NotFound(new { message = "Workshop settings not found." });
+            }
+
+            _mapper.Map(workshopSettingsUpdateDto, workshopSettings);
+            workshopSettings.LastUpdated = DateTime.UtcNow;
+
+            _context.Entry(workshopSettings).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!WorkshopSettingsExists(id))
+                {
+                    return NotFound(new { message = "Workshop settings not found." });
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteWorkshopSettings(int id)
+        {
+            var workshopSettings = await _context.WorkshopSettings.FindAsync(id);
+            if (workshopSettings == null)
+            {
+                return NotFound(new { message = "Workshop settings not found." });
+            }
+
+            _context.WorkshopSettings.Remove(workshopSettings);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool WorkshopSettingsExists(int id)
+        {
+            return _context.WorkshopSettings.Any(e => e.Id == id);
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Data\AppDbContext.cs =====
+using Microsoft.EntityFrameworkCore;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Controllers;
+using System.Security.Cryptography.X509Certificates;
+
+namespace Mechanical_workshop.Data
+{
+    /// <summary>
+    /// Represents the application's database context.
+    /// </summary>
+    public class AppDbContext : DbContext
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AppDbContext"/> class.
+        /// </summary>
+        /// <param name="options">The options to be used by the DbContext.</param>
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserWorkshop> UserWorkshops { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
+        public DbSet<Report> Reports { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Estimate> Estimates { get; set; }
+        public DbSet<Diagnostic> Diagnostics { get; set; }
+        public DbSet<TechnicianDiagnostic> TechnicianDiagnostics { get; set; }
+        public DbSet<EstimatePart> EstimateParts { get; set; }
+        public DbSet<EstimateLabor> EstimateLabors { get; set; }
+        public DbSet<EstimateFlatFee> EstimateFlatFees { get; set; }
+        public DbSet<WorkshopSettings> WorkshopSettings { get; set; }
+        public DbSet<LaborTaxMarkupSettings> LaborTaxMarkupSettings { get; set; }
+        public DbSet<Note> Notes { get; set; }
+        public DbSet<AccountReceivable> AccountsReceivable { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<SalesReport> SalesReports { get; set; }
+        public DbSet<SalesReportDetail> SalesReportDetails { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UserWorkshop>()
+                .HasMany(uw => uw.Vehicles)
+                .WithOne(v => v.UserWorkshop)
+                .HasForeignKey(v => v.UserWorkshopId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Diagnostic>()
+                .HasOne(d => d.Vehicle)
+                .WithMany(v => v.Diagnostics)
+                .HasForeignKey(d => d.VehicleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Diagnostic>()
+                .HasMany(d => d.TechnicianDiagnostics)
+                .WithOne(td => td.Diagnostic)
+                .HasForeignKey(td => td.DiagnosticId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Diagnostic>()
+                .HasMany(d => d.Notes)
+                .WithOne(n => n.Diagnostic)
+                .HasForeignKey(n => n.DiagnosticId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AccountReceivable>(entity =>
+            {
+                entity.HasOne(ar => ar.Customer)
+                    .WithMany(u => u.AccountsReceivable)
+                    .HasForeignKey(ar => ar.CustomerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(ar => ar.Estimate)
+                    .WithOne(e => e.AccountReceivable)
+                    .HasForeignKey<AccountReceivable>(ar => ar.EstimateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasOne(p => p.AccountReceivable)
+                    .WithMany(ar => ar.Payments)
+                    .HasForeignKey(p => p.AccountReceivableId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<SalesReport>()
+                .HasMany(sr => sr.Details)
+                .WithOne(d => d.SalesReport)
+                .HasForeignKey(d => d.SalesReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\AccountReceivableDto.cs =====
+// DTOs/AccountReceivableDto.cs
+using System.ComponentModel.DataAnnotations;
+using Mechanical_workshop.Dtos;
+
+public class AccountReceivableCreateDto
+{
+    public int EstimateId { get; set; }
+}
+
+public class AccountReceivableUpdateDto
+{
+    public string? Status { get; set; }
+}
+
+public class AccountReceivableResponseDto
+{
+    public int Id { get; set; }
+    public decimal OriginalAmount { get; set; }
+    public decimal Balance { get; set; }
+    public string? Status { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public DateTime? CompletedDate { get; set; }
+    public CustomerShortInfoDto? Customer { get; set; }
+    public VehicleInfoDto? Vehicle { get; set; }
+    public EstimateFullDto? Estimate { get; set; }
+    public List<PaymentResponseDto>? Payments { get; set; }
+}
+
+// DTOs/PaymentDto.cs
+public class PaymentCreateDto
+{
+    [Required]
+    [Range(0.01, double.MaxValue)]
+    public decimal Amount { get; set; }
+
+    [Required]
+    public required string Method { get; set; }
+
+    public required string TransactionReference { get; set; }
+    public required string Notes { get; set; }
+
+    [Required]
+    public int AccountReceivableId { get; set; }
+}
+
+public class PaymentUpdateDto
+{
+    public required string TransactionReference { get; set; }
+    public required string Notes { get; set; }
+}
+
+public class PaymentResponseDto
+{
+    public int Id { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime PaymentDate { get; set; }
+    public string? Method { get; set; }
+    public string? TransactionReference { get; set; }
+    public string? Notes { get; set; }
+    public CustomerShortInfoDto? Customer { get; set; }
+    public VehicleInfoDto? Vehicle { get; set; }
+    public decimal RemainingBalance { get; set; }
+    public decimal InitialBalance { get; set; }
+    public EstimateFullDto? Estimate { get; set; }
+    public TechnicianDiagnosticReadDto? TechnicianDiagnostic { get; set; }
+}
+
+// DTOs/SupportingDtos.cs
+public class CustomerShortInfoDto
+{
+    public int Id { get; set; }
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? PrimaryPhone { get; set; }
+}
+
+public class VehicleInfoDto
+{
+    public int Id { get; set; }
+    public string? Make { get; set; }
+    public string? Model { get; set; }
+    public string? Year { get; set; }
+    public string? VIN { get; set; }
+}
+
+public class EstimateInfoDto
+{
+    public int Id { get; set; }
+    public DateTime Date { get; set; }
+    public decimal Total { get; set; }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\ChangePasswordDto.cs =====
+// Backend: Dtos/ChangePasswordDto.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class ChangePasswordDto
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string NewPassword { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\DiagnosticCreateDto.cs =====
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class DiagnosticCreateDto
+    {
+        [Required]
+        public int VehicleId { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string AssignedTechnician { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(500)]
+        public string ReasonForVisit { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\DiagnosticReadDto.cs =====
+using Mechanical_workshop.Dtos;
+
+public class DiagnosticReadDto
+{
+    public int Id { get; set; }
+    public int VehicleId { get; set; }
+    public string ReasonForVisit { get; set; } = string.Empty;
+    public VehicleReadDto? Vehicle { get; set; }
+    public int? TechDiagnosticId { get; set; }
+    public UserWorkshopReadDto? UserWorkshop { get; set; }
+    public string AssignedTechnician { get; set; } = string.Empty;
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\EstimateCreateDto.cs =====
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class EstimateCreateDto
+    {
+        [Required]
+        public int VehicleID { get; set; }
+        public TechnicianDiagnosticCreateDto? TechnicianDiagnostic { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string CustomerNote { get; set; } = string.Empty;
+        [Range(0, double.MaxValue)]
+        public decimal Subtotal { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal Tax { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal Total { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string AuthorizationStatus { get; set; } = "InReview";
+        public List<EstimatePartCreateDto> Parts { get; set; } = new List<EstimatePartCreateDto>();
+        public List<EstimateLaborCreateDto> Labors { get; set; } = new List<EstimateLaborCreateDto>();
+        public List<EstimateFlatFeeCreateDto> FlatFees { get; set; } = new List<EstimateFlatFeeCreateDto>();
+    }
+
+    // DTO para crear TechnicianDiagnostic dentro de EstimateCreateDto
+    public class TechnicianDiagnosticCreateDto
+    {
+        public int ID { get; set; }
+        
+        [Required]
+        public int DiagnosticId { get; set; }
+
+        [Required]
+        public int Mileage { get; set; }
+
+        [Required]
+        [StringLength(1000)]
+        public string ExtendedDiagnostic { get; set; } = string.Empty;
+    }
+
+    // DTO para Partes al Crear Estimate
+    public class EstimatePartCreateDto
+    {
+        
+        // Eliminar o hacer opcional el ID
+        // public int ID { get; set; }
+
+        [Required]
+        public string Description { get; set; } = string.Empty;
+
+        [Required]
+        public string PartNumber { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal NetPrice { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ListPrice { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ExtendedPrice { get; set; }
+
+        public bool Taxable { get; set; }
+    }
+
+    // DTO para Mano de Obra al Crear Estimate
+    public class EstimateLaborCreateDto
+    {
+        // Eliminar o hacer opcional el ID
+        // public int ID { get; set; }
+        
+        [Required]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(0, int.MaxValue)]
+        public int Duration { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal LaborRate { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ExtendedPrice { get; set; }
+
+        public bool Taxable { get; set; }
+    }
+
+    // DTO para Tarifas Planas al Crear Estimate
+    public class EstimateFlatFeeCreateDto
+    {
+        // Eliminar o hacer opcional el ID
+        // public int ID { get; set; }
+
+        [Required]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(0, double.MaxValue)]
+        public decimal FlatFeePrice { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ExtendedPrice { get; set; }
+
+        public bool Taxable { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\EstimateFullDto.cs =====
+using System;
+using System.Collections.Generic;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class EstimateFullDto
+    {
+        // InformaciÃ³n BÃ¡sica del Estimate
+        public int ID { get; set; }
+        public DateTime Date { get; set; }
+        public string CustomerNote { get; set; } = string.Empty;
+        public decimal Subtotal { get; set; }
+        public decimal Tax { get; set; }
+        public decimal Total { get; set; }
+        public string AuthorizationStatus { get; set; } = "InReview";
+        public VehicleDto Vehicle { get; set; } = null!;
+        public UserWorkshopReadDto Owner { get; set; } = null!;
+        public TechnicianDiagnosticReadDto? TechnicianDiagnostic { get; set; }
+        public List<EstimatePartReadDto> Parts { get; set; } = new List<EstimatePartReadDto>();
+        public List<EstimateLaborReadDto> Labors { get; set; } = new List<EstimateLaborReadDto>();
+        public List<EstimateFlatFeeReadDto> FlatFees { get; set; } = new List<EstimateFlatFeeReadDto>();
+    }
+
+    // DTO para Partes del Estimate
+    public class EstimatePartReadDto
+    {
+        public int ID { get; set; }
+        public string Type { get; set; } = "[PART]";
+        public string Description { get; set; } = string.Empty;
+        public string PartNumber { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal NetPrice { get; set; }
+        public decimal ListPrice { get; set; }
+        public decimal ExtendedPrice { get; set; }
+        public bool Taxable { get; set; }
+    }
+
+    // DTO para Mano de Obra del Estimate
+    public class EstimateLaborReadDto
+    {
+        public int ID { get; set; }
+        public string Type { get; set; } = "[LABOR]";
+        public string Description { get; set; } = string.Empty;
+        public int Duration { get; set; }
+        public decimal LaborRate { get; set; }
+        public decimal ExtendedPrice { get; set; }
+        public bool Taxable { get; set; }
+    }
+
+    // DTO para Tarifas Planas del Estimate
+    public class EstimateFlatFeeReadDto
+    {
+        public int ID { get; set; }
+        public string Type { get; set; } = "[FLATFEE]";
+        public string Description { get; set; } = string.Empty;
+        public decimal FlatFeePrice { get; set; }
+        public decimal ExtendedPrice { get; set; }
+        public bool Taxable { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\EstimateLineDto.cs =====
+namespace Mechanical_workshop.Dtos
+{
+    public class EstimateLineDto
+    {
+        public DateTime CreateTime { get; set; }
+        public int EstimateId { get; set; }
+        public string Vin { get; set; } = string.Empty;
+        public int? Quantity { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal? NetPrice { get; set; }
+        public decimal? ListPrice { get; set; }
+        public decimal? PriceTo { get; set; }
+        public decimal? Labor { get; set; }
+        public decimal? ShopSupplies { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\EstimateUpdateDto.cs =====
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class EstimateUpdateDto
+    {
+        [Required]
+        public int ID { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string CustomerNote { get; set; } = string.Empty;
+        [Range(0, double.MaxValue)]
+        public decimal Subtotal { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal Tax { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal Total { get; set; }
+        [Required]
+        [StringLength(20)]
+        public string AuthorizationStatus { get; set; } = "InReview";
+        public List<EstimatePartCreateDto> Parts { get; set; } = new List<EstimatePartCreateDto>();
+        public List<EstimateLaborCreateDto> Labors { get; set; } = new List<EstimateLaborCreateDto>();
+        public List<EstimateFlatFeeCreateDto> FlatFees { get; set; } = new List<EstimateFlatFeeCreateDto>();
+        public TechnicianDiagnosticCreateDto? TechnicianDiagnostic { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\EstimateWithAccountReceivableDto.cs =====
+using Mechanical_workshop.Dtos;
+
+public class EstimateWithAccountReceivableDto
+{
+    // Representa la informaciÃ³n completa del Estimate.
+    public EstimateFullDto Estimate { get; set; }
+    // InformaciÃ³n de la cuenta por cobrar asociada (puede ser null).
+    public AccountReceivableResponseDto? AccountReceivable { get; set; }
+
+    // Propiedad calculada: true si la cuenta existe y su estado es "Paid".
+    public bool IsPaid => AccountReceivable != null &&
+                           (AccountReceivable.Status?.ToLower() == "paid");
+
+    // Propiedad calculada: true si la cuenta existe y no estÃ¡ pagada.
+    public bool HasPendingPayment => AccountReceivable != null &&
+                                     (AccountReceivable.Status?.ToLower() != "paid");
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\ForgotPasswordDto.cs =====
+// Backend: Dtos/ForgotPasswordDto.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class ForgotPasswordDto
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\LaborTaxMarkupSettingsDtos.cs =====
+namespace Mechanical_workshop.DTOs
+{
+    public class LaborTaxMarkupSettingsReadDto
+    {
+        public int Id { get; set; }
+        public decimal HourlyRate1 { get; set; }
+        public decimal HourlyRate2 { get; set; }
+        public decimal HourlyRate3 { get; set; }
+        public decimal DefaultHourlyRate { get; set; }
+        public decimal PartTaxRate { get; set; }
+        public bool PartTaxByDefault { get; set; }
+        public decimal LaborTaxRate { get; set; }
+        public bool LaborTaxByDefault { get; set; }
+        public decimal PartMarkup { get; set; }
+    }
+
+    public class LaborTaxMarkupSettingsCreateDto
+    {
+        public decimal HourlyRate1 { get; set; }
+        public decimal HourlyRate2 { get; set; }
+        public decimal HourlyRate3 { get; set; }
+        public decimal DefaultHourlyRate { get; set; }
+        public decimal PartTaxRate { get; set; }
+        public bool PartTaxByDefault { get; set; }
+        public decimal LaborTaxRate { get; set; }
+        public bool LaborTaxByDefault { get; set; }
+        public decimal PartMarkup { get; set; }
+    }
+
+    public class LaborTaxMarkupSettingsUpdateDto
+    {
+        public decimal HourlyRate1 { get; set; }
+        public decimal HourlyRate2 { get; set; }
+        public decimal HourlyRate3 { get; set; }
+        public decimal DefaultHourlyRate { get; set; }
+        public decimal PartTaxRate { get; set; }
+        public bool PartTaxByDefault { get; set; }
+        public decimal LaborTaxRate { get; set; }
+        public bool LaborTaxByDefault { get; set; }
+        public decimal PartMarkup { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\NoteDtos.cs =====
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class NoteDto
+    {
+        public class NoteCreateDto
+        {
+            [Required]
+            [StringLength(2000)]
+            public string Content { get; set; } = string.Empty;
+
+            [Required]
+            public int DiagnosticId { get; set; }
+
+            public int? TechnicianDiagnosticId { get; set; }
+        }
+
+        public class NoteReadDto
+        {
+            public int Id { get; set; }
+            public string Content { get; set; } = string.Empty;
+            public DateTime CreatedAt { get; set; }
+            public DateTime? UpdatedAt { get; set; }
+            public int DiagnosticId { get; set; }
+            public int? TechnicianDiagnosticId { get; set; }
+        }
+
+        public class NoteUpdateDto
+        {
+            [Required]
+            [StringLength(2000)]
+            public string Content { get; set; } = string.Empty;
+
+            public int? TechnicianDiagnosticId { get; set; }
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\SalesReportsDtos.cs =====
+using System;
+using System.Collections.Generic;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class SalesReportDto
+    {
+        public int SalesReportId { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+
+        public decimal TotalEstimates { get; set; }
+        public decimal TotalPartsRevenue { get; set; }
+        public decimal TotalLaborRevenue { get; set; }
+        public decimal TotalFlatFeeRevenue { get; set; }
+        public decimal TotalTaxCollected { get; set; }
+        public decimal TotalPaymentsCollected { get; set; }
+        public decimal TotalOutstanding { get; set; }
+
+        public DateTime CreatedDate { get; set; }
+
+        public List<SalesReportDetailDto> Details { get; set; } = new List<SalesReportDetailDto>();
+    }
+
+    public class SalesReportDetailDto
+    {
+        public int SalesReportDetailId { get; set; }
+        public int EstimateId { get; set; }
+        public DateTime EstimateDate { get; set; }
+        public decimal? Subtotal { get; set; }
+        public decimal? Tax { get; set; }
+        public decimal? Total { get; set; }
+        public decimal? OriginalAmount { get; set; }
+        public decimal? RemainingBalance { get; set; }
+        public decimal? TotalPayments { get; set; }
+        public EstimateFullDto? Estimate { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\TechnicianDtos.cs =====
+// Backend: Dtos/TechnicianDtos.cs
+namespace Mechanical_workshop.Dtos
+{
+    public class TechnicianDtos
+    {
+        public string Name { get; set; } = string.Empty;
+        
+        public string LastName { get; set; } = string.Empty;
+        
+        public string Profile { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\UserCreateDto.cs =====
+// Dtos/UserCreateDto.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class UserCreateDto
+    {
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Profile { get; set; } = string.Empty; // "admin" o "technician"
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\UserLoginDtos.cs =====
+// Backend: Dtos/UserLoginDto.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class UserLoginDto
+    {
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string Password { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\UserReadDto.cs =====
+// Backend: Dtos/UserReadDto.cs
+namespace Mechanical_workshop.Dtos
+{
+    public class UserReadDto
+    {
+        public int ID { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public string Profile { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\UserUptadeDto.cs =====
+// Dtos/UserUpdateDto.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class UserUpdateDto
+    {
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; } = string.Empty;
+
+        [StringLength(255)]
+        public string? Password { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string Profile { get; set; } = string.Empty; // "admin" o "technician"
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\UserWorkshopDtos.cs =====
+using System.ComponentModel.DataAnnotations;
+using Mechanical_workshop.Models;
+using static Mechanical_workshop.Dtos.NoteDto;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class VehicleDto
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Vin { get; set; } = string.Empty;
+        [Required]
+        public string Make { get; set; } = string.Empty;
+        [Required]
+        public string Model { get; set; } = string.Empty;
+        [Required]
+        public string Year { get; set; } = string.Empty;
+        [Required]
+        public string Engine { get; set; } = string.Empty;
+        [Required]
+        public string Plate { get; set; } = string.Empty;
+        [Required]
+        public string State { get; set; } = string.Empty;
+        public string Status { get; set; } = "Visto";
+
+    }
+
+    public class UserWorkshopCreateDto
+    {
+        [Required]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        [Required]
+        public string LastName { get; set; } = string.Empty;
+        [Required]
+        public string Profile { get; set; } = string.Empty;
+        [Required]
+        public string Address { get; set; } = string.Empty;
+        [Required]
+        public string City { get; set; } = string.Empty;
+        [Required]
+        public string State { get; set; } = string.Empty;
+        [Required]
+        public string Zip { get; set; } = string.Empty;
+        [Required]
+        public string PrimaryNumber { get; set; } = string.Empty;
+        public string? SecondaryNumber { get; set; }
+        [Required]
+        public bool NoTax { get; set; }
+        [Required]
+        public List<VehicleDto> Vehicles { get; set; } = new();
+    }
+
+    public class UserWorkshopReadDto
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        [Required]
+        public string Username { get; set; } = string.Empty;
+        [Required]
+        public string LastName { get; set; } = string.Empty;
+        public bool NoTax { get; set; }
+
+        [Required]
+        public string Address { get; set; } = string.Empty;
+
+        [Required]
+        public string City { get; set; } = string.Empty;
+
+        [Required]
+        public string State { get; set; } = string.Empty;
+
+        [Required]
+        public string Zip { get; set; } = string.Empty;
+
+        [Required]
+        public string PrimaryNumber { get; set; } = string.Empty;
+
+        public string? SecondaryNumber { get; set; }
+
+        [Required]
+        public List<VehicleDto> Vehicles { get; set; } = new();
+    }
+
+    public class TechnicianDiagnosticReadDto
+    {
+        public int Id { get; set; }
+        public int DiagnosticId { get; set; }
+        public string ReasonForVisit { get; set; } = string.Empty;
+        public int Mileage { get; set; }
+        public string ExtendedDiagnostic { get; set; } = string.Empty;
+        public int VehicleId { get; set; }
+        public List<NoteReadDto> Notes { get; set; } = new List<NoteReadDto>();
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\UserWorkshopUpdateDto.cs =====
+using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class UserWorkshopUpdateDto
+    {
+        [Required]
+        public int Id { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        
+        [StringLength(50)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Profile { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(200)]
+        public string Address { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string City { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string State { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(20)]
+        public string Zip { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [StringLength(20)]
+        public string PrimaryNumber { get; set; } = string.Empty;
+
+        [Phone]
+        [StringLength(20)]
+        public string? SecondaryNumber { get; set; }
+
+        public bool NoTax { get; set; } = false;
+
+        public List<VehicleDto> Vehicles { get; set; } = new();
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\VehicleDiagnosticOwnerDto.cs =====
+// Dtos/VehicleDiagnosticOwnerDto.cs
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Dtos
+{
+    // DTO que agrupa el vehÃ­culo, su owner y la informaciÃ³n de todos los diagnÃ³sticos
+    // (incluye extendedDiagnostic y el TechnicianDiagnostic completo)
+    public class VehicleDiagnosticOwnerDto
+    {
+        [Required]
+        public VehicleDto Vehicle { get; set; } = new VehicleDto();
+
+        [Required]
+        public UserWorkshopReadDto Owner { get; set; } = new UserWorkshopReadDto();
+
+        public List<DiagnosticInfoDto> Diagnostics { get; set; } = new List<DiagnosticInfoDto>();
+    }
+
+    // DTO para representar la informaciÃ³n del diagnÃ³stico personalizado,
+    // incluyendo el TechnicianDiagnostic completo
+    public class DiagnosticInfoDto
+    {
+        public int DiagnosticId { get; set; }
+        public string ReasonForVisit { get; set; } = string.Empty;
+        public string AssignedTechnician { get; set; } = string.Empty;
+        public List<TechnicianDiagnosticReadDto> TechnicianDiagnostics { get; set; } = new List<TechnicianDiagnosticReadDto>();
+    }
+}
+
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\VehicleReadDto.cs =====
+namespace Mechanical_workshop.Dtos
+{
+    public class VehicleReadDto
+    {
+        public int Id { get; set; }
+        public string Vin { get; set; } = string.Empty;
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public string Year { get; set; } = string.Empty;
+        public string Engine { get; set; } = string.Empty;
+        public string Plate { get; set; } = string.Empty;
+        public string State { get; set; } = string.Empty;
+
+        public string Status { get; set; } = "Visto";
+
+        public int UserWorkshopId { get; set; }
+        public UserWorkshopReadDto? UserWorkshop { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\VehicleSearchDto.cs =====
+namespace Mechanical_workshop.Dtos
+{
+    public class VehicleSearchDto
+{
+    public int Id { get; set; }
+    public string Vin { get; set; } = string.Empty;
+    public string Make { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
+    public string OwnerName { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+}
+
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\VerifyCodeDto.cs =====
+// Backend: Dtos/VerifyCodeDto.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Dtos
+{
+    public class VerifyCodeDto
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Code { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\DTOs\WorkshopSettingsDto.cs =====
+// DTOs/WorkshopSettingsDtos.cs
+
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.DTOs
+{
+    public class WorkshopSettingsReadDto
+    {
+
+        public int Id { get; set; }
+
+
+        public string? WorkshopName { get; set; }
+
+
+        public string? Address { get; set; }
+
+
+        public string? PrimaryPhone { get; set; }
+
+
+        public string? SecondaryPhone { get; set; }
+
+
+        public string? Fax { get; set; }
+
+
+        public string? WebsiteUrl { get; set; }
+
+
+        public string? Disclaimer { get; set; }
+
+
+        public string? Email { get; set; }
+
+
+        public DateTime LastUpdated { get; set; }
+    }
+
+    public class WorkshopSettingsCreateDto
+    {
+
+        [Required]
+        [StringLength(255)]
+        public string? WorkshopName { get; set; }
+
+
+        [Required]
+        [StringLength(255)]
+        public string? Address { get; set; }
+
+
+        [Required]
+        [Phone]
+        [StringLength(50)]
+        public string? PrimaryPhone { get; set; }
+
+
+        [Phone]
+        [StringLength(50)]
+        public string? SecondaryPhone { get; set; }
+
+
+        [StringLength(50)]
+        public string? Fax { get; set; }
+
+
+        [StringLength(255)]
+        public string? WebsiteUrl { get; set; }
+
+
+        [StringLength(500)]
+        public string? Disclaimer { get; set; }
+
+
+        [StringLength(255)]
+        [EmailAddress]
+        public string? Email { get; set; }
+    }
+
+    public class WorkshopSettingsUpdateDto
+    {
+
+        [Required]
+        [StringLength(255)]
+        public string? WorkshopName { get; set; }
+
+
+        [Required]
+        [StringLength(255)]
+        public string? Address { get; set; }
+
+
+        [Required]
+        [Phone]
+        [StringLength(50)]
+        public string? PrimaryPhone { get; set; }
+
+
+        [Phone]
+        [StringLength(50)]
+        public string? SecondaryPhone { get; set; }
+
+
+        [StringLength(50)]
+        public string? Fax { get; set; }
+
+
+        [StringLength(255)]
+        public string? WebsiteUrl { get; set; }
+
+
+        [StringLength(500)]
+        public string? Disclaimer { get; set; }
+
+
+        [StringLength(255)]
+        [EmailAddress]
+        public string? Email { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\AccountReceivable.cs =====
+// Models/AccountReceivable.cs
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class AccountReceivable
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public int EstimateId { get; set; }
+
+        [Required]
+        public int CustomerId { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OriginalAmount { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Balance { get; set; }
+
+        [Required]
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+        public DateTime? CompletedDate { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        public string Status { get; set; } = "Pending";
+
+        // Relaciones
+        [ForeignKey("EstimateId")]
+        public virtual Estimate Estimate { get; set; } = null!;
+
+        [ForeignKey("CustomerId")]
+        public virtual UserWorkshop Customer { get; set; } = null!;
+
+        public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    }
+
+    public class Payment
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public int AccountReceivableId { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        [Range(0.01, double.MaxValue)]
+        public decimal Amount { get; set; }
+
+        [Required]
+        public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [StringLength(20)]
+        public required string Method { get; set; }
+
+        [StringLength(500)]
+        public string TransactionReference { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string Notes { get; set; } = string.Empty;
+
+        [ForeignKey("AccountReceivableId")]
+        public virtual AccountReceivable AccountReceivable { get; set; } = null!;
+
+        [NotMapped]
+        public Estimate? Estimate => AccountReceivable?.Estimate;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\Diagnostic.cs =====
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class Diagnostic
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [ForeignKey("Vehicle")]
+        public int VehicleId { get; set; }
+        public Vehicle? Vehicle { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string AssignedTechnician { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(500)]
+        public string ReasonForVisit { get; set; } = string.Empty;
+
+        public ICollection<TechnicianDiagnostic>? TechnicianDiagnostics { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
+
+        public ICollection<Note>? Notes { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\ErrorViewModel.cs =====
+// Models/ErrorViewModel.cs
+namespace Mechanical_workshop.Models
+{
+    public class ErrorViewModel
+    {
+        public string RequestId { get; set; } = string.Empty;
+
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\Estimate.cs =====
+// Models/Estimate.cs
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class Estimate
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [Required]
+        public int VehicleID { get; set; }
+
+        [Required]
+        public int UserWorkshopID { get; set; }
+
+        public DateTime Date { get; set; } = DateTime.UtcNow;
+
+        [StringLength(500)]
+        public string CustomerNote { get; set; } = string.Empty;
+
+        [Range(0, double.MaxValue)]
+        public decimal Subtotal { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal Tax { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal Total { get; set; }
+
+        [Required]
+        [StringLength(20)]
+        public string AuthorizationStatus { get; set; } = "InReview";
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Clave forÃ¡nea para TechnicianDiagnostic
+        public int? TechnicianDiagnosticID { get; set; }
+
+        [ForeignKey("VehicleID")]
+        public virtual Vehicle Vehicle { get; set; } = null!;
+
+        [ForeignKey("UserWorkshopID")]
+        public virtual UserWorkshop UserWorkshop { get; set; } = null!;
+
+        [ForeignKey("TechnicianDiagnosticID")]
+        public virtual TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
+
+        [NotMapped]
+        public string TechnicianExtendedDiagnostic => TechnicianDiagnostic?.ExtendedDiagnostic ?? string.Empty;
+
+        public virtual ICollection<EstimatePart> Parts { get; set; } = new List<EstimatePart>();
+
+        public virtual ICollection<EstimateLabor> Labors { get; set; } = new List<EstimateLabor>();
+
+        public virtual ICollection<EstimateFlatFee> FlatFees { get; set; } = new List<EstimateFlatFee>();
+
+        // RelaciÃ³n 1:1 con AccountReceivable
+        public virtual AccountReceivable? AccountReceivable { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\EstimateFlatFee.cs =====
+// Models/EstimateFlatFee.cs
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class EstimateFlatFee
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [Required]
+        public string Type { get; set; } = "[FLATFEE]";
+
+        [Required]
+        [StringLength(100)]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(0, double.MaxValue)]
+        public decimal FlatFeePrice { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ExtendedPrice { get; set; }
+
+        public bool Taxable { get; set; } = false;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Clave ForÃ¡nea a Estimate
+        [Required]
+        public int EstimateID { get; set; }
+
+        // Propiedad de navegaciÃ³n a Estimate
+        [ForeignKey("EstimateID")]
+        public virtual Estimate Estimate { get; set; } = null!;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\EstimateLabor.cs =====
+// Models/EstimateLabor.cs
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class EstimateLabor
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [Required]
+        public string Type { get; set; } = "[LABOR]";
+
+        [Required]
+        [StringLength(100)]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(0, int.MaxValue)]
+        public int Duration { get; set; } // DuraciÃ³n en horas
+
+        [Range(0, double.MaxValue)]
+        public decimal LaborRate { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ExtendedPrice { get; set; }
+
+        public bool Taxable { get; set; } = false;
+
+        // Clave ForÃ¡nea a Estimate
+        [Required]
+        public int EstimateID { get; set; }
+
+        // Propiedad de navegaciÃ³n a Estimate
+        [ForeignKey("EstimateID")]
+        public virtual Estimate Estimate { get; set; } = null!;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\EstimatePart.cs =====
+// Models/EstimatePart.cs
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class EstimatePart
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [Required]
+        public string Type { get; set; } = "[PART]";
+
+        [Required]
+        [StringLength(100)]
+        public string Description { get; set; } = string.Empty;
+
+        [StringLength(50)]
+        public string PartNumber { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal NetPrice { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ListPrice { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal ExtendedPrice { get; set; }
+
+        public bool Taxable { get; set; } = false;
+
+        // Clave ForÃ¡nea a Estimate
+        [Required]
+        public int EstimateID { get; set; }
+
+        // Propiedad de navegaciÃ³n a Estimate
+        [ForeignKey("EstimateID")]
+        public virtual Estimate Estimate { get; set; } = null!;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\Invoice.cs =====
+// Models/Invoice.cs
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class Invoice
+    {
+        [Key]
+        public int ID { get; set; }
+
+        // Foreign Keys
+        [ForeignKey("Vehicle")]
+        public int VehicleID { get; set; }
+
+        [ForeignKey("User")]
+        public int UserID { get; set; }
+
+        [Required]
+        [Range(0, double.MaxValue)]
+        public decimal Amount { get; set; }
+
+        public DateTime Date { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [StringLength(50)]
+        public string Status { get; set; } = string.Empty;
+
+        // Propiedades de navegaciÃ³n
+        public Vehicle Vehicle { get; set; } = null!;
+        public User User { get; set; } = null!;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\LaborTaxMarkupSettings.cs =====
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Models
+{
+    public class LaborTaxMarkupSettings
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal HourlyRate1 { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal HourlyRate2 { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal HourlyRate3 { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal DefaultHourlyRate { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal PartTaxRate { get; set; }
+
+        public bool PartTaxByDefault { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal LaborTaxRate { get; set; }
+
+        public bool LaborTaxByDefault { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public decimal PartMarkup { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\Note.cs =====
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class Note
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [StringLength(2000)]
+        public string Content { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [Required]
+        [ForeignKey("Diagnostic")]
+        public int DiagnosticId { get; set; }
+        public Diagnostic? Diagnostic { get; set; }
+
+        // Se aÃ±ade la referencia a TechnicianDiagnostic (opcional)
+        [ForeignKey("TechnicianDiagnostic")]
+        public int? TechnicianDiagnosticId { get; set; }
+        public TechnicianDiagnostic? TechnicianDiagnostic { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\Reports.cs =====
+// Models/Report.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Models
+{
+    public class Report
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string Title { get; set; } = string.Empty;
+
+        [Required]
+        public string Content { get; set; } = string.Empty;
+
+        public DateTime Date { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [StringLength(100)]
+        public string Author { get; set; } = string.Empty;
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\SalesReport.cs =====
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class SalesReport
+    {
+        [Key]
+        public int SalesReportId { get; set; }
+
+        // StartDate es opcional (puede ser null)
+        public DateTime? StartDate { get; set; }
+
+        [Required]
+        public DateTime EndDate { get; set; }
+
+        // Totales generales
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalEstimates { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPartsRevenue { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalLaborRevenue { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalFlatFeeRevenue { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalTaxCollected { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPaymentsCollected { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalOutstanding { get; set; }
+
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+        // RelaciÃ³n 1:n con los detalles del reporte
+        public virtual ICollection<SalesReportDetail> Details { get; set; } = new List<SalesReportDetail>();
+    }
+
+    public class SalesReportDetail
+    {
+        [Key]
+        public int SalesReportDetailId { get; set; }
+
+        [Required]
+        public int SalesReportId { get; set; }
+
+        [ForeignKey("SalesReportId")]
+        public virtual SalesReport SalesReport { get; set; } = null!;
+
+        // Datos del Estimate
+        [Required]
+        public int EstimateId { get; set; }
+
+        [ForeignKey("EstimateId")]
+        public virtual Estimate Estimate { get; set; } = null!;
+
+        [Required]
+        public DateTime EstimateDate { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Subtotal { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Tax { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Total { get; set; }
+
+        // Datos de la cuenta por cobrar vinculada al Estimate
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal OriginalAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal RemainingBalance { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalPayments { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\TechnicianDiagnostic.cs =====
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class TechnicianDiagnostic
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [ForeignKey("Diagnostic")]
+        public int DiagnosticId { get; set; }
+        public Diagnostic? Diagnostic { get; set; }
+
+        [Required]
+        public int Mileage { get; set; }
+
+        [Required]
+        [StringLength(1000)]
+        public string ExtendedDiagnostic { get; set; } = string.Empty;
+        public List<Note> Notes { get; set; } = new List<Note>();
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\User.cs =====
+// Backend: Models/User.cs
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Models
+{
+    public class User
+    {
+        [Key]
+        public int ID { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(255)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Profile { get; set; } = string.Empty;
+
+        public string ResetCode { get; set; } = string.Empty;
+        public DateTime? ResetCodeExpiry { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\UserWorkshop.cs =====
+// Models/UserWorkshop.cs
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System;
+using System.Collections.Generic;
+
+namespace Mechanical_workshop.Models
+{
+    public class UserWorkshop
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Profile { get; set; } = string.Empty;
+
+        [StringLength(100)]
+        public string? ResetCode { get; set; }
+
+        public DateTime? ResetCodeExpiration { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string Address { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string City { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string State { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(20)]
+        public string Zip { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [StringLength(20)]
+        public string PrimaryNumber { get; set; } = string.Empty;
+
+        [Phone]
+        [StringLength(20)]
+        public string? SecondaryNumber { get; set; }
+
+        public bool NoTax { get; set; } = false;
+
+        public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+        
+        public virtual ICollection<AccountReceivable> AccountsReceivable { get; set; } = new List<AccountReceivable>();
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\Vehicle.cs =====
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mechanical_workshop.Models
+{
+    public class Vehicle
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [Required]
+        [StringLength(17, MinimumLength = 17, ErrorMessage = "El VIN debe tener 17 caracteres")]
+        public string Vin { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Make { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Model { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(4)]
+        public string Year { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(100)]
+        public string Engine { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(10)]
+        public string Plate { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string State { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string Status { get; set; } = "Visto";
+
+        // Foreign Key
+        public int UserWorkshopId { get; set; }
+
+        [ForeignKey("UserWorkshopId")]
+        public UserWorkshop? UserWorkshop { get; set; }
+        public ICollection<Diagnostic> Diagnostics { get; set; } = new List<Diagnostic>();
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Models\WorkshopSettings.cs =====
+// Models/WorkshopSettings.cs
+
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace Mechanical_workshop.Models
+{
+    public class WorkshopSettings
+    {
+    
+        [Key]
+        public int Id { get; set; }
+        [Required]
+        [StringLength(255)]
+        public string? WorkshopName { get; set; }
+
+    
+        [Required]
+        [StringLength(255)]
+        public string? Address { get; set; }
+
+    
+        [Required]
+        [Phone]
+        [StringLength(50)]
+        public string? PrimaryPhone { get; set; }
+
+    
+        [Phone]
+        [StringLength(50)]
+        public string? SecondaryPhone { get; set; }
+
+    
+        [StringLength(50)] // Fax is not necessarily a phone number.
+        public string? Fax { get; set; }
+
+    
+        [StringLength(255)]
+        public string? WebsiteUrl { get; set; } // More descriptive name.
+
+    
+        [DataType(DataType.DateTime)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd HH:mm:ss}", ApplyFormatInEditMode = true)]
+        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+
+    
+        [StringLength(500)]
+        public string? Disclaimer { get; set; } // More descriptive name, "Warning" could be confusing.
+
+    
+        [StringLength(255)]
+        [EmailAddress]
+        public string? Email { get; set; }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\AccountingProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace MechanicalWorkshop.Profiles
+{
+    public class AccountingProfile : Profile
+    {
+        public AccountingProfile()
+        {
+            // Mapeo para AccountReceivable (ya existente)
+            CreateMap<AccountReceivable, AccountReceivableResponseDto>()
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer))
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Estimate.Vehicle))
+                .ForMember(dest => dest.Estimate, opt => opt.MapFrom(src => src.Estimate))
+                .ForMember(dest => dest.Payments, opt => opt.MapFrom(src => src.Payments));
+            CreateMap<AccountReceivableCreateDto, AccountReceivable>();
+            CreateMap<AccountReceivableUpdateDto, AccountReceivable>();
+
+            // Mapeo para Payment, incluyendo las propiedades de Customer, Vehicle,
+            // RemainingBalance (saldo pendiente) y InitialBalance (saldo inicial)
+            CreateMap<Payment, PaymentResponseDto>()
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.AccountReceivable.Customer))
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.AccountReceivable.Estimate.Vehicle))
+                .ForMember(dest => dest.RemainingBalance, opt => opt.MapFrom(src => src.AccountReceivable.Balance))
+                .ForMember(dest => dest.InitialBalance, opt => opt.MapFrom(src => src.AccountReceivable.OriginalAmount))
+                .ForMember(dest => dest.Estimate, opt => opt.MapFrom(src => src.AccountReceivable.Estimate))
+                // Nuevo mapeo para TechnicianDiagnostic
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.AccountReceivable.Estimate.TechnicianDiagnostic));
+            CreateMap<PaymentCreateDto, Payment>();
+            CreateMap<PaymentUpdateDto, Payment>();
+
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>();
+
+            // Mapeos para los DTOs de soporte
+            CreateMap<UserWorkshop, CustomerShortInfoDto>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Name} {src.LastName}"))
+                .ForMember(dest => dest.PrimaryPhone, opt => opt.MapFrom(src => src.PrimaryNumber));
+            CreateMap<Vehicle, VehicleInfoDto>();
+
+            // Nuevo mapeo para Estimate a EstimateFullDto (incluye TechnicianDiagnostic)
+            CreateMap<Estimate, EstimateFullDto>()
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
+                .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.Vehicle.UserWorkshop))
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic))
+                .ForMember(dest => dest.Parts, opt => opt.MapFrom(src => src.Parts))
+                .ForMember(dest => dest.Labors, opt => opt.MapFrom(src => src.Labors))
+                .ForMember(dest => dest.FlatFees, opt => opt.MapFrom(src => src.FlatFees));
+
+            CreateMap<Estimate, EstimateInfoDto>();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\DiagnosticProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class DiagnosticProfile : Profile
+    {
+        public DiagnosticProfile()
+        {
+            // Mapeo de Vehicle a VehicleReadDto
+            CreateMap<Vehicle, VehicleReadDto>();
+            // Mapeo de UserWorkshop a UserWorkshopReadDto (definido en UserWorkshopDtos.cs)
+            CreateMap<UserWorkshop, UserWorkshopReadDto>();
+
+            // Mapeo de Diagnostic a DiagnosticReadDto, incluyendo la propiedad UserWorkshop
+            CreateMap<Diagnostic, DiagnosticReadDto>()
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
+                .ForMember(dest => dest.UserWorkshop, opt => opt.MapFrom(src => src.Vehicle.UserWorkshop))
+                // Nuevo mapeo para AssignedTechnician
+                .ForMember(dest => dest.AssignedTechnician, opt => opt.MapFrom(src => src.AssignedTechnician));
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\EntityProfile.cs =====
+// Profiles/EntityProfile.cs
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+using System.Linq;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class EntityProfile : Profile
+    {
+        public EntityProfile()
+        {
+            // Mapping entre Vehicle y VehicleReadDto
+            CreateMap<Vehicle, VehicleReadDto>().ReverseMap();
+
+            // Mapping entre Diagnostic y DiagnosticReadDto
+            CreateMap<Diagnostic, DiagnosticReadDto>()
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
+                .ForMember(dest => dest.TechDiagnosticId, opt => opt.MapFrom(src => 
+                    src.TechnicianDiagnostics.Any() ? src.TechnicianDiagnostics.First().Id : (int?)null
+                ));
+
+            // Mapping entre DiagnosticCreateDto y Diagnostic
+            CreateMap<DiagnosticCreateDto, Diagnostic>();
+
+            // Mapping entre TechnicianDiagnostic y TechnicianDiagnosticReadDto
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>()
+                .ForMember(dest => dest.ReasonForVisit, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.ReasonForVisit : ""))
+                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.VehicleId : 0));
+
+            // Mapping entre TechnicianDiagnosticCreateDto y TechnicianDiagnostic
+            CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\EstimateMappingProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.MappingProfiles
+{
+    public class EstimateMappingProfile : Profile
+    {
+        public EstimateMappingProfile()
+        {
+            // Mapeo de PARTS -> DTO
+            CreateMap<EstimatePart, EstimateLineDto>()
+                .ForMember(dest => dest.CreateTime, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.EstimateId, opt => opt.MapFrom(src => src.EstimateID))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity))
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                .ForMember(dest => dest.NetPrice, opt => opt.MapFrom(src => src.NetPrice))
+                .ForMember(dest => dest.ListPrice, opt => opt.MapFrom(src => src.ListPrice))
+                .ForMember(dest => dest.PriceTo, opt => opt.MapFrom(src => src.ExtendedPrice))
+                // Para PARTS, labor y shopSupplies no aplican
+                .ForMember(dest => dest.Labor, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.ShopSupplies, opt => opt.MapFrom(src => (decimal?)0))
+                // El VIN viene de Vehicle, no de la propia parte
+                .ForMember(dest => dest.Vin, opt => opt.Ignore());
+
+            // Mapeo de LABOR -> DTO
+            CreateMap<EstimateLabor, EstimateLineDto>()
+                .ForMember(dest => dest.CreateTime, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.EstimateId, opt => opt.MapFrom(src => src.EstimateID))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => (int?)null)) // Labor no tiene cantidad
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                // Normalmente no se maneja net/list price en labor
+                .ForMember(dest => dest.NetPrice, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.ListPrice, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.PriceTo, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.Labor, opt => opt.MapFrom(src => src.ExtendedPrice))
+                .ForMember(dest => dest.ShopSupplies, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.Vin, opt => opt.Ignore());
+
+            // Mapeo de FLAT FEES -> DTO
+            CreateMap<EstimateFlatFee, EstimateLineDto>()
+                .ForMember(dest => dest.CreateTime, opt => opt.MapFrom(src => src.CreatedAt))
+                .ForMember(dest => dest.EstimateId, opt => opt.MapFrom(src => src.EstimateID))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => (int?)null)) // Cargo fijo no maneja cantidad
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+                .ForMember(dest => dest.NetPrice, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.ListPrice, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.PriceTo, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.Labor, opt => opt.MapFrom(src => (decimal?)0))
+                .ForMember(dest => dest.ShopSupplies, opt => opt.MapFrom(src => src.ExtendedPrice))
+                .ForMember(dest => dest.Vin, opt => opt.Ignore());
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\EstimatesProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+
+namespace Mechanical_workshop.Profiles
+{
+    /// <summary>
+    /// AutoMapper profile for mapping Estimate and related entities.
+    /// This profile ensures that the Taxable property from the database is
+    /// mapped to the frontâ€‘end properties (applyPartTax, applyLaborTax, etc.)
+    /// and vice versa.
+    /// </summary>
+    public class EstimatesProfile : Profile
+    {
+        public EstimatesProfile()
+        {
+            // ActualizaciÃ³n del mapping de Estimate a EstimateFullDto con informaciÃ³n completa
+            CreateMap<Estimate, EstimateFullDto>()
+                .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.ID))
+                .ForMember(dest => dest.Parts, opt => opt.MapFrom(src => src.Parts))
+                .ForMember(dest => dest.Labors, opt => opt.MapFrom(src => src.Labors))
+                .ForMember(dest => dest.FlatFees, opt => opt.MapFrom(src => src.FlatFees))
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
+                .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.UserWorkshop))
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic));
+
+            // Mappings para los elementos internos
+            CreateMap<EstimatePartReadDto, EstimateFullDto>();
+            CreateMap<EstimateLaborReadDto, EstimateFullDto>();
+            CreateMap<EstimateFlatFeeReadDto, EstimateFullDto>();
+
+            // Mapping from EstimateCreateDto to Estimate
+            CreateMap<EstimateCreateDto, Estimate>()
+                .ForMember(dest => dest.Vehicle, opt => opt.Ignore())
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore())
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic))
+                .ForMember(dest => dest.Parts, opt => opt.MapFrom(src => src.Parts))
+                .ForMember(dest => dest.Labors, opt => opt.MapFrom(src => src.Labors))
+                .ForMember(dest => dest.FlatFees, opt => opt.MapFrom(src => src.FlatFees));
+
+            // Mapping TechnicianDiagnostic DTOs
+            CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>().ReverseMap();
+
+            // -----------------------------
+            // Mappings for EstimatePart
+            // -----------------------------
+            CreateMap<EstimatePart, EstimatePartReadDto>()
+                // Map the database property Taxable to the front-end property applyPartTax
+                .ForMember(dest => dest.Taxable, opt => opt.MapFrom(src => src.Taxable))
+                .ReverseMap()
+                // When mapping back, map applyPartTax to Taxable
+                .ForMember(dest => dest.Taxable, opt => opt.MapFrom(src => src.Taxable))
+                .ForMember(dest => dest.ID, opt => opt.Ignore());
+
+            CreateMap<EstimatePartCreateDto, EstimatePart>();
+
+            // -----------------------------
+            // Mappings for EstimateLabor
+            // -----------------------------
+            CreateMap<EstimateLabor, EstimateLaborReadDto>()
+                // Map the database property Taxable to the front-end property applyLaborTax
+                .ForMember(dest => dest.Taxable, opt => opt.MapFrom(src => src.Taxable))
+                .ReverseMap()
+                // When mapping back, map applyLaborTax to Taxable
+                .ForMember(dest => dest.Taxable, opt => opt.MapFrom(src => src.Taxable))
+                .ForMember(dest => dest.ID, opt => opt.Ignore());
+
+            CreateMap<EstimateLaborCreateDto, EstimateLabor>();
+
+            // -----------------------------
+            // Mappings for EstimateFlatFee
+            // -----------------------------
+            CreateMap<EstimateFlatFee, EstimateFlatFeeReadDto>()
+                // Map the database property Taxable to the front-end property taxable (or similar)
+                .ForMember(dest => dest.Taxable, opt => opt.MapFrom(src => src.Taxable))
+                .ReverseMap()
+                // When mapping back, map taxable to Taxable
+                .ForMember(dest => dest.Taxable, opt => opt.MapFrom(src => src.Taxable))
+                .ForMember(dest => dest.ID, opt => opt.Ignore());
+
+            CreateMap<EstimateFlatFeeCreateDto, EstimateFlatFee>();
+
+            // Mapping for Vehicle and UserWorkshop
+            CreateMap<Vehicle, VehicleReadDto>().ReverseMap();
+            CreateMap<UserWorkshop, UserWorkshopReadDto>().ReverseMap();
+
+            // Mapping for Diagnostic
+            CreateMap<Diagnostic, DiagnosticReadDto>().ReverseMap();
+
+            // Mapping para Payment que incluye Estimate completo en PaymentResponseDto
+            CreateMap<Payment, PaymentResponseDto>()
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.AccountReceivable.Customer))
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.AccountReceivable.Estimate.Vehicle))
+                .ForMember(dest => dest.RemainingBalance, opt => opt.MapFrom(src => src.AccountReceivable.Balance))
+                .ForMember(dest => dest.InitialBalance, opt => opt.MapFrom(src => src.AccountReceivable.OriginalAmount))
+                .ForMember(dest => dest.Estimate, opt => opt.MapFrom(src => src.AccountReceivable.Estimate));
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\LaborTaxMarkupSettingsProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.DTOs;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class LaborTaxMarkupSettingsProfile : Profile
+    {
+        public LaborTaxMarkupSettingsProfile()
+        {
+             // De la entidad a los DTOs
+            CreateMap<LaborTaxMarkupSettings, LaborTaxMarkupSettingsReadDto>();
+            CreateMap<LaborTaxMarkupSettings, LaborTaxMarkupSettingsUpdateDto>();
+            CreateMap<LaborTaxMarkupSettings, LaborTaxMarkupSettingsCreateDto>();
+
+            // De los DTOs a la entidad
+            CreateMap<LaborTaxMarkupSettingsCreateDto, LaborTaxMarkupSettings>();
+            CreateMap<LaborTaxMarkupSettingsUpdateDto, LaborTaxMarkupSettings>();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\NoteProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+using static Mechanical_workshop.Dtos.NoteDto;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class NoteProfile : Profile
+    {
+        public NoteProfile()
+        {
+            // Source -> Target
+            CreateMap<Note, NoteReadDto>();
+            CreateMap<NoteCreateDto, Note>();
+            CreateMap<NoteUpdateDto, Note>();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\SalesReportsProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+
+namespace MechanicalWorkshop.Profiles
+{
+    public class SalesReportProfile : Profile
+    {
+        public SalesReportProfile()
+        {
+            // Mapeo de SalesReport a SalesReportDto
+            CreateMap<SalesReport, SalesReportDto>()
+                .ForMember(dest => dest.SalesReportId, opt => opt.MapFrom(src => src.SalesReportId))
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.TotalEstimates, opt => opt.MapFrom(src => src.TotalEstimates))
+                .ForMember(dest => dest.TotalPartsRevenue, opt => opt.MapFrom(src => src.TotalPartsRevenue))
+                .ForMember(dest => dest.TotalLaborRevenue, opt => opt.MapFrom(src => src.TotalLaborRevenue))
+                .ForMember(dest => dest.TotalFlatFeeRevenue, opt => opt.MapFrom(src => src.TotalFlatFeeRevenue))
+                .ForMember(dest => dest.TotalTaxCollected, opt => opt.MapFrom(src => src.TotalTaxCollected))
+                .ForMember(dest => dest.TotalPaymentsCollected, opt => opt.MapFrom(src => src.TotalPaymentsCollected))
+                .ForMember(dest => dest.TotalOutstanding, opt => opt.MapFrom(src => src.TotalOutstanding))
+                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.CreatedDate))
+                .ForMember(dest => dest.Details, opt => opt.MapFrom(src => src.Details));
+
+            // Mapeo de SalesReportDetail a SalesReportDetailDto
+            CreateMap<SalesReportDetail, SalesReportDetailDto>()
+                .ForMember(dest => dest.SalesReportDetailId, opt => opt.MapFrom(src => src.SalesReportDetailId))
+                .ForMember(dest => dest.EstimateId, opt => opt.MapFrom(src => src.EstimateId))
+                .ForMember(dest => dest.EstimateDate, opt => opt.MapFrom(src => src.EstimateDate))
+                .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal))
+                .ForMember(dest => dest.Tax, opt => opt.MapFrom(src => src.Tax))
+                .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total))
+                .ForMember(dest => dest.OriginalAmount, opt => opt.MapFrom(src => src.OriginalAmount))
+                .ForMember(dest => dest.RemainingBalance, opt => opt.MapFrom(src => src.RemainingBalance))
+                .ForMember(dest => dest.TotalPayments, opt => opt.MapFrom(src => src.TotalPayments))
+                // No se mapean CustomerName y VehicleInfo
+                .ForMember(dest => dest.Estimate, opt => opt.MapFrom(src => src.Estimate));
+
+            // Mapeo de SalesReportDetailDto a SalesReportDetail (se ignora la propiedad Estimate)
+            CreateMap<SalesReportDetailDto, SalesReportDetail>()
+                .ForMember(dest => dest.Estimate, opt => opt.Ignore());
+
+            // Mapeo de Estimate a EstimateFullDto (sin cambios respecto a tu configuraciÃ³n actual)
+            CreateMap<Estimate, EstimateFullDto>()
+                .ForMember(dest => dest.ID, opt => opt.MapFrom(src => src.ID))
+                .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Date))
+                .ForMember(dest => dest.CustomerNote, opt => opt.MapFrom(src => src.CustomerNote))
+                .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal))
+                .ForMember(dest => dest.Tax, opt => opt.MapFrom(src => src.Tax))
+                .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total))
+                .ForMember(dest => dest.AuthorizationStatus, opt => opt.MapFrom(src => src.AuthorizationStatus))
+                .ForMember(dest => dest.Vehicle, opt => opt.MapFrom(src => src.Vehicle))
+                .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.UserWorkshop))
+                .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.MapFrom(src => src.TechnicianDiagnostic))
+                .ForMember(dest => dest.Parts, opt => opt.MapFrom(src => src.Parts))
+                .ForMember(dest => dest.Labors, opt => opt.MapFrom(src => src.Labors))
+                .ForMember(dest => dest.FlatFees, opt => opt.MapFrom(src => src.FlatFees));
+
+            // Mapeo de SalesReportDto a SalesReport
+            CreateMap<SalesReportDto, SalesReport>()
+                .ForMember(dest => dest.SalesReportId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore());
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\TechnicianDiagnosticProfile.cs =====
+// Profiles/TechnicianDiagnosticProfile.cs
+
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class TechnicianDiagnosticProfile : Profile
+    {
+        public TechnicianDiagnosticProfile()
+        {
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>()
+                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes));
+            CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();
+
+
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\TechnicianProfile.cs =====
+// Backend: MappingProfiles/TechnicianProfile.cs
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+
+namespace Mechanical_workshop.MappingProfiles
+{
+    public class TechnicianProfile : Profile
+    {
+        public TechnicianProfile()
+        {
+            // Mapea de User a TechnicianDtos
+            CreateMap<User, TechnicianDtos>();
+
+            // Si necesitas mapear en sentido inverso, puedes agregar:
+            // CreateMap<TechnicianDtos, User>();
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\UserProfile.cs =====
+// Profiles/UsersProfile.cs
+using AutoMapper;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class UsersProfile : Profile
+    {
+        public UsersProfile()
+        {
+            // Mapeo de User a UserReadDto
+            CreateMap<User, UserReadDto>();
+
+            // Mapeo de UserCreateDto a User
+            CreateMap<UserCreateDto, User>();
+
+            // Mapeo de UserUpdateDto a User
+            CreateMap<UserUpdateDto, User>();
+            
+        }
+        
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\UserWorkshopProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Dtos;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.Profiles
+{
+    public class UserWorkshopProfile : Profile
+    {
+        public UserWorkshopProfile()
+        {
+            // Mapping between UserWorkshop and UserWorkshopReadDto
+            CreateMap<UserWorkshop, UserWorkshopReadDto>()
+                .ForMember(dest => dest.Vehicles, opt => opt.MapFrom(src => src.Vehicles))
+                .ForMember(dest => dest.NoTax, opt => opt.MapFrom(src => src.NoTax))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+                .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+                .ForMember(dest => dest.State, opt => opt.MapFrom(src => src.State))
+                .ForMember(dest => dest.Zip, opt => opt.MapFrom(src => src.Zip))
+                .ForMember(dest => dest.PrimaryNumber, opt => opt.MapFrom(src => src.PrimaryNumber))
+                .ForMember(dest => dest.SecondaryNumber, opt => opt.MapFrom(src => src.SecondaryNumber))
+                .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName));
+
+            // Mapping between UserWorkshopCreateDto and UserWorkshop
+            CreateMap<UserWorkshopCreateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore()); // Handle manually to avoid duplicates
+
+            // Mapping between Vehicle and VehicleDto with reverse mapping
+            CreateMap<Vehicle, VehicleDto>().ReverseMap();
+
+            // Mapping for creation
+            CreateMap<UserWorkshopCreateDto, UserWorkshop>();
+            CreateMap<VehicleDto, Vehicle>();
+
+            // Mapping for reading
+            CreateMap<UserWorkshop, UserWorkshopReadDto>();
+            CreateMap<Vehicle, VehicleDto>();
+
+            // Mapping for updating
+            CreateMap<UserWorkshopUpdateDto, UserWorkshop>();
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore());
+
+            // Mapping for VehicleSearchDto
+            CreateMap<Vehicle, VehicleSearchDto>()
+                .ForMember(dest => dest.OwnerName, opt => opt.MapFrom(src => $"{src.UserWorkshop.Name} {src.UserWorkshop.LastName}"));
+
+            // Additional mappings for updating UserWorkshop
+            CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore());
+
+            // Mapping for updating UserWorkshop, ignoring Vehicles to handle manually
+            CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
+            // Mapping for updating Vehicles, ignoring UserWorkshop to avoid circular references
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore()) // Ignore UserWorkshop to avoid circular references
+                .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore()); // Ignore UserWorkshopId to avoid circular references
+
+            CreateMap<VehicleDto, Vehicle>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())  // Ignora el Id para no modificarlo
+                .ForMember(dest => dest.UserWorkshop, opt => opt.Ignore())
+                .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore());
+        }
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\VehicleProfile.cs =====
+using AutoMapper;
+using Mechanical_workshop.Models;
+using Mechanical_workshop.Dtos;
+
+public class VehicleProfile : Profile
+{
+    public VehicleProfile()
+    {
+        CreateMap<Vehicle, VehicleReadDto>();
+        CreateMap<VehicleDto, Vehicle>();
+        CreateMap<UserWorkshop, UserWorkshopReadDto>();
+
+        CreateMap<Vehicle, VehicleDto>().ReverseMap();
+
+        CreateMap<UserWorkshopCreateDto, UserWorkshop>()
+            .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
+        CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
+            .ForMember(dest => dest.Vehicles, opt => opt.Ignore());
+
+    }
+}
+
+
+===== C:\Users\ajrui\Desktop\proyectos\Mechanical_workshop\Mechanical_workshop\Profiles\WorkshopSettingsProfile.cs =====
+// MappingProfiles/WorkshopSettingsProfile.cs
+
+using AutoMapper;
+using Mechanical_workshop.DTOs;
+using Mechanical_workshop.Models;
+
+namespace Mechanical_workshop.MappingProfiles
+{
+    /// <summary>
+    /// AutoMapper profile for WorkshopSettings.
+    /// </summary>
+    public class WorkshopSettingsProfile : Profile
+    {
+        public WorkshopSettingsProfile()
+        {
+            // Mapping from WorkshopSettings to WorkshopSettingsReadDto
+            CreateMap<WorkshopSettings, WorkshopSettingsReadDto>();
+
+            // Mapping from WorkshopSettingsCreateDto to WorkshopSettings
+            CreateMap<WorkshopSettingsCreateDto, WorkshopSettings>();
+
+            // Mapping from WorkshopSettingsUpdateDto to WorkshopSettings
+            CreateMap<WorkshopSettingsUpdateDto, WorkshopSettings>();
+        }
+    }
+}
+
+

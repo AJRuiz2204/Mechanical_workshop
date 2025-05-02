@@ -41,6 +41,8 @@ namespace Mechanical_workshop.Models
         // Clave foránea para TechnicianDiagnostic
         public int? TechnicianDiagnosticID { get; set; }
 
+        public int? Mileage { get; set; }
+
         [ForeignKey("VehicleID")]
         public virtual Vehicle Vehicle { get; set; } = null!;
 
@@ -53,11 +55,11 @@ namespace Mechanical_workshop.Models
         [NotMapped]
         public string TechnicianExtendedDiagnostic => TechnicianDiagnostic?.ExtendedDiagnostic ?? string.Empty;
 
-        public virtual ICollection<EstimatePart> Parts { get; set; } = new List<EstimatePart>();
+        public virtual List<EstimatePart> Parts { get; set; } = new();
 
-        public virtual ICollection<EstimateLabor> Labors { get; set; } = new List<EstimateLabor>();
+        public virtual List<EstimateLabor> Labors { get; set; } = new();
 
-        public virtual ICollection<EstimateFlatFee> FlatFees { get; set; } = new List<EstimateFlatFee>();
+        public virtual List<EstimateFlatFee> FlatFees { get; set; } = new();
 
         // Relación 1:1 con AccountReceivable
         public virtual AccountReceivable? AccountReceivable { get; set; }

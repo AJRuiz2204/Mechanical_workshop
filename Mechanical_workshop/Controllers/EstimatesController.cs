@@ -110,6 +110,7 @@ namespace Mechanical_workshop.Controllers
             if (estimateCreateDto.TechnicianDiagnostic != null)
             {
                 var technicianDiagnostic = _mapper.Map<TechnicianDiagnostic>(estimateCreateDto.TechnicianDiagnostic);
+                technicianDiagnostic.Id = 0;
                 estimate.TechnicianDiagnostic = technicianDiagnostic;
             }
 
@@ -156,6 +157,7 @@ namespace Mechanical_workshop.Controllers
             estimate.Tax = dto.Tax;
             estimate.Total = dto.Total;
             estimate.AuthorizationStatus = dto.AuthorizationStatus;
+            estimate.Mileage = dto.Mileage;
 
             // TechnicianDiagnostic
             if (dto.TechnicianDiagnostic == null)

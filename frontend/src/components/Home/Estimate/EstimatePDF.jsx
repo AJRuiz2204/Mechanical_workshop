@@ -207,6 +207,10 @@ const styles = StyleSheet.create({
     borderTopColor: "#e0e0e0",
     paddingTop: 5,
   },
+  mileage: {
+    fontSize: 10,
+    marginVertical: 4,
+  },
 });
 
 /**
@@ -231,6 +235,8 @@ const EstimatePDF = ({ pdfData }) => {
   const totals = pdfData?.totals || {};
   const customerNote = pdfData?.customerNote || "";
   const mileage = pdfData?.mileage || 0; // Obtener mileage del payload
+  // Generar quote plano + hora militar si no viene de pdfData
+  const quoteDateString = dayjs().format("DDMMYYYY,HH:mm");
 
   /**
    * Formats the date string for "Last Updated".
@@ -290,13 +296,10 @@ const EstimatePDF = ({ pdfData }) => {
             {/* Quote Information */}
             <View style={styles.quoteInfo}>
               <Text style={styles.textLine}>
-                Quote # {safeWorkshopData.quoteNumber || ""}
+                Quote # {safeWorkshopData.quoteNumber || quoteDateString}
               </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
-              </Text>
-              <Text style={styles.textLine}>
-                Expires: {safeWorkshopData.expiryDate || ""}
               </Text>
             </View>
           </View>

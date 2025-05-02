@@ -5,6 +5,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RegisterUser.css";
 import { Register } from "../../../services/userService";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 /**
  * RegisterUser Component
@@ -59,7 +61,7 @@ const RegisterUser = () => {
 
     try {
       await Register(userData); // Call the Register function from the userService
-      alert("User registered successfully.");
+      toast.success("User registered successfully.");
 
       // Clear the form fields after successful registration
       setEmail("");
@@ -70,7 +72,7 @@ const RegisterUser = () => {
       setProfile("Manager");
       setShowPassword(false);
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     }
   };
 
@@ -223,6 +225,7 @@ const RegisterUser = () => {
           </div>
         </form>
       </div>
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar />
     </div>
   );
 };

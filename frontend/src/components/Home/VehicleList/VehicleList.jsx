@@ -285,7 +285,7 @@ const VehicleList = () => {
                           className="me-2"
                           onClick={() => handleReception(vehicle.id)}
                         >
-                          Receive Diagnostic
+                          Create Diagnostic
                         </Button>
 
                         <Button
