@@ -1,6 +1,5 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Page,
   Text,
@@ -17,7 +16,7 @@ import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 const formatDate = (date) => dayjs(date).format("MMM-DD-YYYY");
 // Format a number as currency
 const formatCurrency = (amount) =>
-	isNaN(Number(amount)) ? "-" : `$ ${Number(amount).toFixed(2)}`;
+  isNaN(Number(amount)) ? "-" : `$ ${Number(amount).toFixed(2)}`;
 
 // Define PDF styles with very small fonts for an A4 document
 const styles = StyleSheet.create({
@@ -316,9 +315,7 @@ const PaymentPDF = ({ pdfData }) => {
           <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>Bill To:</Text>
             <Text style={styles.infoText}>{customer.fullName || ""}</Text>
-            <Text style={styles.infoText}>
-              {customer.primaryPhone || ""}
-            </Text>
+            <Text style={styles.infoText}>{customer.primaryPhone || ""}</Text>
           </View>
           {/* Columna 2: Información del vehículo (Make, Model, Year) */}
           <View style={{ flex: 1, padding: 5 }}>
@@ -337,7 +334,8 @@ const PaymentPDF = ({ pdfData }) => {
               Engine: {vehicle.engine || estimate.vehicle?.engine || ""}
             </Text>
             <Text style={styles.infoText}>
-              Mileage: {estimate.technicianDiagnostic?.mileage || ""}
+              Mileage:{" "}
+              {estimate.technicianDiagnostic?.mileage ?? estimate.mileage ?? ""}
             </Text>
           </View>
           {/* Columna 4: Fecha */}
@@ -376,8 +374,12 @@ const PaymentPDF = ({ pdfData }) => {
               </Text>
               <Text style={[styles.colQuantityHours, styles.tableText]}>
                 {item.type && item.type.toUpperCase().includes("LABOR")
-                  ? (item.quantity ? `${item.quantity} hrs` : "-")
-                  : (item.quantity ? item.quantity : "-")}
+                  ? item.quantity
+                    ? `${item.quantity} hrs`
+                    : "-"
+                  : item.quantity
+                  ? item.quantity
+                  : "-"}
               </Text>
               <Text style={[styles.colListPrice, styles.tableText]}>
                 {formatCurrency(item.listPrice)}
@@ -475,6 +477,11 @@ const PaymentPDF = ({ pdfData }) => {
       </Page>
     </Document>
   );
+};
+
+// props validation
+PaymentPDF.propTypes = {
+  pdfData: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
 };
 
 export default PaymentPDF;
