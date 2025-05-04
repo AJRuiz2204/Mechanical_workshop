@@ -20,6 +20,7 @@ import {
   Spin,
   Card,
   Descriptions,
+  InputNumber,
 } from "antd";
 import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
@@ -673,8 +674,7 @@ const Estimate = () => {
           <Input.TextArea
             rows={3}
             value={extendedDiagnostic}
-            onChange={(e) => setExtendedDiagnostic(e.target.value)}
-            readOnly={isEditMode}
+            readOnly
           />
         </Form.Item>
 
@@ -737,19 +737,14 @@ const Estimate = () => {
                   onChange={(v) => updatePartField(idx, "partNumber", v)}
                 />
               ) : (
-                <EditableCell
+                <InputNumber
+                  min={1}
                   value={record.quantity}
+                  style={{ width: "100%" }}
                   onChange={(v) => updateLaborField(idx, "duration", v)}
-                  type="number"
                 />
               )
             }
-          />
-          <Column
-            title="NET / RATE"
-            dataIndex="price"
-            key="price"
-            render={(val) => `$${parseFloat(val).toFixed(2)}`}
           />
           <Column
             title="QUANTITY"
@@ -757,10 +752,11 @@ const Estimate = () => {
             key="quantity"
             render={(val, record, idx) =>
               record.type === "Part" ? (
-                <EditableCell
+                <InputNumber
+                  min={1}
                   value={val}
+                  style={{ width: "100%" }}
                   onChange={(v) => updatePartField(idx, "quantity", v)}
-                  type="number"
                 />
               ) : (
                 <span>{val}</span>
@@ -773,10 +769,13 @@ const Estimate = () => {
             key="listPrice"
             render={(val, record, idx) =>
               record.type === "Part" ? (
-                <EditableCell
+                <InputNumber
+                  min={0}
                   value={val}
+                  style={{ width: "100%" }}
+                  formatter={(v) => `$ ${v}`}
+                  parser={(v) => v.replace(/\$\s?/, "")}
                   onChange={(v) => updatePartField(idx, "listPrice", v)}
-                  type="number"
                 />
               ) : (
                 <span>-</span>

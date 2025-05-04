@@ -30,7 +30,8 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee }) =
               });
             }}
             formatter={v => `$ ${v}`}
-            parser={v => v.replace(/\$/g, '')}
+            parser={v => v.replace(/[^\d]/g, '')}
+            onKeyPress={e => { if (!/[0-9]/.test(e.key)) e.preventDefault(); }}
             style={{ width: '100%' }}
           />
         </Form.Item>
@@ -39,7 +40,7 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee }) =
             value={newFlatFee.extendedPrice}
             readOnly
             formatter={v => `$ ${v}`}
-            parser={v => v.replace(/\$/g, '')}
+            parser={v => v.replace(/[^\d]/g, '')}
             style={{ width: '100%' }}
           />
         </Form.Item>

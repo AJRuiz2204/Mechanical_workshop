@@ -22,6 +22,7 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
           <InputNumber
             min={1}
             value={newLabor.duration}
+            onKeyPress={e => (/[0-9]/.test(e.key) ? null : e.preventDefault())}
             onChange={duration => {
               const rate = parseFloat(newLabor.laborRate) || 0;
               setNewLabor({

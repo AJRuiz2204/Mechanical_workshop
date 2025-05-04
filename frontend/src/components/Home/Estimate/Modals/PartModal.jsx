@@ -29,6 +29,7 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
           <InputNumber
             min={1}
             value={newPart.quantity}
+            onKeyPress={e => (/[0-9]/.test(e.key) ? null : e.preventDefault())}
             onChange={qty => {
               const list = parseFloat(newPart.listPrice) || 0;
               setNewPart({
@@ -44,6 +45,7 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
           <InputNumber
             min={1}
             value={newPart.netPrice}
+            onKeyPress={e => (/[0-9]/.test(e.key) ? null : e.preventDefault())}
             onChange={netPrice => setNewPart({ ...newPart, netPrice })}
             formatter={v => `$ ${v}`}
             parser={v => v.replace(/\$/g, '')}
@@ -54,6 +56,7 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
           <InputNumber
             min={1}
             value={newPart.listPrice}
+            onKeyPress={e => (/[0-9]/.test(e.key) ? null : e.preventDefault())}
             onChange={listPrice => {
               const qty = parseFloat(newPart.quantity) || 0;
               setNewPart({
