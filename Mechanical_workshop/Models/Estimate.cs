@@ -43,6 +43,9 @@ namespace Mechanical_workshop.Models
 
         public int? Mileage { get; set; }
 
+        [StringLength(1000)]
+        public string ExtendedDiagnostic { get; set; } = string.Empty;
+
         [ForeignKey("VehicleID")]
         public virtual Vehicle Vehicle { get; set; } = null!;
 

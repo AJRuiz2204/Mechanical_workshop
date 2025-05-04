@@ -50,7 +50,14 @@ const EditableCell = ({
   if (editing) {
     return inputNode;
   }
-  return <div onClick={toggleEdit}>{value}</div>;
+  return (
+    <div
+      onDoubleClick={toggleEdit}
+      style={{ cursor: 'pointer' }}
+    >
+      {value}
+    </div>
+  );
 };
 
 EditableCell.propTypes = {

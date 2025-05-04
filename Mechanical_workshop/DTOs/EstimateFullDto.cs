@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Mechanical_workshop.Dtos
 {
@@ -13,6 +14,9 @@ namespace Mechanical_workshop.Dtos
         public decimal Tax { get; set; }
         public decimal Total { get; set; }
         public int Mileage { get; set; } = 0;
+        
+        [StringLength(1000)]
+        public string? ExtendedDiagnostic { get; set; } = string.Empty;
         public string AuthorizationStatus { get; set; } = "InReview";
         public VehicleDto Vehicle { get; set; } = null!;
         public UserWorkshopReadDto Owner { get; set; } = null!;

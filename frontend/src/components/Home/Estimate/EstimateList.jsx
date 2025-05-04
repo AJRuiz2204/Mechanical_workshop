@@ -36,6 +36,8 @@ const EstimateList = () => {
   const [pendingFilter, setPendingFilter] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchEstimates = async () => {
     setLoading(true);
@@ -54,48 +56,48 @@ const EstimateList = () => {
     fetchEstimates();
   }, [location]);
 
-  const handleGenerateAccount = async (item) => {
+  const handleGenerateAccount = (item) => {
     const estId = item.estimate.id;
-    if (item.accountReceivable && item.accountReceivable.id) {
+    if (item.accountReceivable?.id) {
       setModalAccountId(item.accountReceivable.id);
       setShowPaymentModal(true);
       return;
     }
-    if (
-      !window.confirm(
-        `An account receivable will be generated for estimate ${estId}. Continue?`
-      )
-    )
-      return;
-    try {
-      const newAccount = await createAccountReceivable({ estimateId: estId });
-      setSuccess(
-        `Account receivable successfully created for estimate ${estId}.`
-      );
-      setModalAccountId(newAccount.id);
-      setShowPaymentModal(true);
-      fetchEstimates();
-    } catch (err) {
-      setError(`Error generating account: ${err.message}`);
-    }
+    Modal.confirm({
+      title: "Generate Account Receivable",
+      content: `An account receivable will be generated for estimate ${estId}. Continue?`,
+      onOk: async () => {
+        try {
+          const newAccount = await createAccountReceivable({ estimateId: estId });
+          setSuccess(`Account receivable created for estimate ${estId}.`);
+          setModalAccountId(newAccount.id);
+          setShowPaymentModal(true);
+          fetchEstimates();
+        } catch (err) {
+          setError(`Error generating account: ${err.message}`);
+        }
+      },
+    });
   };
 
   const handleEdit = (item) => {
     console.log("Editing Estimate:", item.estimate);
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this estimate?"
-    );
-    if (!confirmDelete) return;
-    try {
-      await deleteEstimate(id);
-      setSuccess(`Estimate with ID ${id} successfully deleted.`);
-      fetchEstimates();
-    } catch (err) {
-      setError(`Error deleting estimate: ${err.message}`);
-    }
+  const handleDelete = (id) => {
+    Modal.confirm({
+      title: "Delete Estimate",
+      content: `Are you sure you want to delete estimate ${id}?`,
+      onOk: async () => {
+        try {
+          await deleteEstimate(id);
+          setSuccess(`Estimate ${id} successfully deleted.`);
+          fetchEstimates();
+        } catch (err) {
+          setError(`Error deleting estimate: ${err.message}`);
+        }
+      },
+    });
   };
 
   const handleOpenPDF = (id) => {
@@ -282,7 +284,17 @@ const EstimateList = () => {
         columns={columns}
         dataSource={filteredEstimates}
         rowKey={(item) => item.estimate.id}
-        pagination={{ pageSize: 10 }}
+        pagination={{
+          current: currentPage,
+          pageSize,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "20", "50"],
+          showTotal: (total) => `Total ${total} estimates`,
+          onChange: (page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          },
+        }}
       />
 
       <AccountPaymentModal

@@ -1,6 +1,6 @@
 // components/Home/Estimate/EstimateList.js
 import { useState, useEffect } from "react";
-import { Table, Button, Row, Spin, Alert, Empty } from "antd";
+import { Table, Button, Row, Spin, Alert, Empty, Modal } from "antd";
 import { getEstimateData } from "../../../../services/EstimateServiceXslx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -64,6 +64,15 @@ const VehicleXlsx = () => {
     saveAs(blob, "estimates.xlsx");
   };
 
+  // wrap download in confirm dialog
+  const handleDownload = () => {
+    Modal.confirm({
+      title: "Download XLSX",
+      content: "Confirm download of estimates report?",
+      onOk: downloadExcel,
+    });
+  };
+
   // Columns for Antd Table
   const columns = [
     {
@@ -101,7 +110,7 @@ const VehicleXlsx = () => {
       <h3>Vehicle estimates list</h3>
       {error && <Alert message={error} type="error" showIcon />}
       <div style={{ marginBottom: 16, textAlign: "right" }}>
-        <Button type="primary" onClick={downloadExcel}>
+        <Button type="primary" onClick={handleDownload}>
           Download XLSX
         </Button>
       </div>
@@ -112,7 +121,12 @@ const VehicleXlsx = () => {
           columns={columns}
           dataSource={estimates}
           rowKey={(record, idx) => idx}
-          pagination={false}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+            showTotal: total => `Total ${total} records`
+          }}
         />
       )}
     </div>

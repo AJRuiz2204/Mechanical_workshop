@@ -20,7 +20,6 @@ import {
   Spin,
   Card,
   Descriptions,
-  InputNumber,
 } from "antd";
 import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
@@ -126,9 +125,16 @@ const Estimate = () => {
           setOwner(estimateData.owner || null);
           setDiagnostic(estimateData.technicianDiagnostic || null);
           setExtendedDiagnostic(
-            estimateData.technicianDiagnostic?.extendedDiagnostic || ""
+            estimateData.technicianDiagnostic?.extendedDiagnostic ||
+            estimateData.extendedDiagnostic ||
+            ""
           );
-          setMileage(estimateData.technicianDiagnostic?.mileage || 0);
+          setMileage(
+            estimateData.technicianDiagnostic?.mileage ||
+            estimateData.mileage ||
+            0
+          );
+
           setCustomerNote(estimateData.customerNote ?? "");
           setSubtotal(estimateData.subtotal ?? 0);
           setTax(estimateData.tax ?? 0);
@@ -446,6 +452,7 @@ const Estimate = () => {
       Tax: tax,
       Total: total,
       Mileage: mileage,
+      ExtendedDiagnostic: extendedDiagnostic,
       AuthorizationStatus: authorizationStatus,
       TechnicianDiagnostic: extendedDiagnostic
         ? {
@@ -505,41 +512,43 @@ const Estimate = () => {
   };
 
   const combinedItems = useMemo(() => {
-    return [
-      ...parts.map((p, idx) => ({
-        type: "Part",
-        description: p.description,
-        quantity: p.quantity,
-        price: p.netPrice,
-        listPrice: p.listPrice,
-        extendedPrice: p.extendedPrice,
-        taxable: p.applyPartTax,
-        partNumber: p.partNumber,
-        key: `Part-${idx}`,
-      })),
-      ...labors.map((l, idx) => ({
-        type: "Labor",
-        description: l.description,
-        quantity: l.duration,
-        price: l.laborRate,
-        listPrice: "",
-        extendedPrice: l.extendedPrice,
-        taxable: l.applyLaborTax,
-        partNumber: "",
-        key: `Labor-${idx}`,
-      })),
-      ...flatFees.map((f, idx) => ({
-        type: "Flat Fee",
-        description: f.description,
-        quantity: "-",
-        price: f.flatFeePrice,
-        listPrice: "",
-        extendedPrice: f.extendedPrice,
-        taxable: false,
-        partNumber: "",
-        key: `FlatFee-${idx}`,
-      })),
-    ];
+    const partItems = parts.map((p, idx) => ({
+      type: "Part",
+      description: p.description,
+      quantity: p.quantity,
+      price: p.netPrice,
+      listPrice: p.listPrice,
+      extendedPrice: p.extendedPrice,
+      taxable: p.applyPartTax,
+      partNumber: p.partNumber,
+      key: `Part-${idx}`,
+      rowIndex: idx,
+    }));
+    const laborItems = labors.map((l, idx) => ({
+      type: "Labor",
+      description: l.description,
+      quantity: l.duration,
+      price: l.laborRate,
+      listPrice: "",
+      extendedPrice: l.extendedPrice,
+      taxable: l.applyLaborTax,
+      partNumber: "",
+      key: `Labor-${idx}`,
+      rowIndex: idx,
+    }));
+    const flatFeeItems = flatFees.map((f, idx) => ({
+      type: "Flat Fee",
+      description: f.description,
+      quantity: "-",
+      price: f.flatFeePrice,
+      listPrice: "",
+      extendedPrice: f.extendedPrice,
+      taxable: false,
+      partNumber: "",
+      key: `FlatFee-${idx}`,
+      rowIndex: idx,
+    }));
+    return [...partItems, ...laborItems, ...flatFeeItems];
   }, [parts, labors, flatFees]);
 
   if (isLoading) {
@@ -674,6 +683,7 @@ const Estimate = () => {
           <Input.TextArea
             rows={3}
             value={extendedDiagnostic}
+            onChange={(e) => setExtendedDiagnostic(e.target.value)}
             readOnly
           />
         </Form.Item>
@@ -709,20 +719,24 @@ const Estimate = () => {
           rowKey="key"
           scroll={{ x: "max-content" }}
         >
-          <Column title="TYPE" dataIndex="type" key="type" />
+          <Column
+            title="TYPE"
+            dataIndex="type"
+            key="type"
+          />
           <Column
             title="DESCRIPTION"
             dataIndex="description"
             key="description"
-            render={(text, record, idx) => (
+            render={(text, record) => (
               <EditableCell
                 value={text}
                 onChange={(v) => {
                   if (record.type === "Part")
-                    updatePartField(idx, "description", v);
+                    updatePartField(record.rowIndex, "description", v);
                   else if (record.type === "Labor")
-                    updateLaborField(idx, "description", v);
-                  else updateFlatFeeField(idx, "description", v);
+                    updateLaborField(record.rowIndex, "description", v);
+                  else updateFlatFeeField(record.rowIndex, "description", v);
                 }}
               />
             )}
@@ -730,19 +744,24 @@ const Estimate = () => {
           <Column
             title="PART# / HOURS"
             key="partOrHours"
-            render={(_, record, idx) =>
+            render={(_, record) =>
               record.type === "Part" ? (
                 <EditableCell
                   value={record.partNumber}
-                  onChange={(v) => updatePartField(idx, "partNumber", v)}
+                  onChange={(v) =>
+                    updatePartField(record.rowIndex, "partNumber", v)
+                  }
+                />
+              ) : record.type === "Labor" ? (
+                <EditableCell
+                  type="number"
+                  value={record.quantity}
+                  onChange={(v) =>
+                    updateLaborField(record.rowIndex, "duration", v)
+                  }
                 />
               ) : (
-                <InputNumber
-                  min={1}
-                  value={record.quantity}
-                  style={{ width: "100%" }}
-                  onChange={(v) => updateLaborField(idx, "duration", v)}
-                />
+                <span>-</span>
               )
             }
           />
@@ -750,13 +769,14 @@ const Estimate = () => {
             title="QUANTITY"
             dataIndex="quantity"
             key="quantity"
-            render={(val, record, idx) =>
+            render={(val, record) =>
               record.type === "Part" ? (
-                <InputNumber
-                  min={1}
+                <EditableCell
+                  type="number"
                   value={val}
-                  style={{ width: "100%" }}
-                  onChange={(v) => updatePartField(idx, "quantity", v)}
+                  onChange={(v) =>
+                    updatePartField(record.rowIndex, "quantity", v)
+                  }
                 />
               ) : (
                 <span>{val}</span>
@@ -767,15 +787,14 @@ const Estimate = () => {
             title="LIST PRICE"
             dataIndex="listPrice"
             key="listPrice"
-            render={(val, record, idx) =>
+            render={(val, record) =>
               record.type === "Part" ? (
-                <InputNumber
-                  min={0}
+                <EditableCell
+                  type="number"
                   value={val}
-                  style={{ width: "100%" }}
-                  formatter={(v) => `$ ${v}`}
-                  parser={(v) => v.replace(/\$\s?/, "")}
-                  onChange={(v) => updatePartField(idx, "listPrice", v)}
+                  onChange={(v) =>
+                    updatePartField(record.rowIndex, "listPrice", v)
+                  }
                 />
               ) : (
                 <span>-</span>
@@ -786,13 +805,15 @@ const Estimate = () => {
             title="EXTENDED PRICE"
             dataIndex="extendedPrice"
             key="extendedPrice"
-            render={(val) => `$${val.toFixed(2)}`}
+            render={(val) =>
+              val != null ? `$${parseFloat(val).toFixed(2)}` : null
+            }
           />
           <Column
             title="TAX?"
             dataIndex="taxable"
             key="taxable"
-            render={(checked, record, idx) =>
+            render={(checked, record) =>
               record.type !== "Flat Fee" ? (
                 <Form.Item valuePropName="checked">
                   <Input
@@ -801,8 +822,8 @@ const Estimate = () => {
                     onChange={(e) => {
                       const v = e.target.checked;
                       if (record.type === "Part")
-                        updatePartField(idx, "applyPartTax", v);
-                      else updateLaborField(idx, "applyLaborTax", v);
+                        updatePartField(record.rowIndex, "applyPartTax", v);
+                      else updateLaborField(record.rowIndex, "applyLaborTax", v);
                     }}
                   />
                 </Form.Item>
@@ -814,12 +835,12 @@ const Estimate = () => {
           <Column
             title="ACTION"
             key="action"
-            render={(_, __, idx) => (
+            render={(_, record) => (
               <Button
                 type="link"
                 danger
                 onClick={() =>
-                  removeItem(combinedItems[idx].type.toUpperCase(), idx)
+                  removeItem(record.type.toUpperCase(), record.rowIndex)
                 }
               >
                 Remove

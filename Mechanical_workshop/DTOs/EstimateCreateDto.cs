@@ -19,6 +19,9 @@ namespace Mechanical_workshop.Dtos
         public decimal Total { get; set; }
         public int? Mileage { get; set; } = 0;
         [Required]
+        [StringLength(1000)]
+        public string? ExtendedDiagnostic { get; set; } = string.Empty;
+        [Required]
         [StringLength(20)]
         public string AuthorizationStatus { get; set; } = "InReview";
         public List<EstimatePartCreateDto> Parts { get; set; } = new List<EstimatePartCreateDto>();

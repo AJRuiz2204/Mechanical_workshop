@@ -127,7 +127,7 @@ namespace Mechanical_workshop.Controllers
             var estimateFullDto = _mapper.Map<EstimateFullDto>(createdEstimate);
             return CreatedAtAction(nameof(GetEstimate), new { id = estimate.ID }, estimateFullDto);
         }
-        
+
         // PUT: api/Estimates/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEstimate(int id, [FromBody] EstimateUpdateDto dto)

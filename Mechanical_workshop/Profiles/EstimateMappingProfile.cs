@@ -50,13 +50,21 @@ namespace Mechanical_workshop.MappingProfiles
                 .ForMember(dest => dest.ShopSupplies, opt => opt.MapFrom(src => src.ExtendedPrice))
                 .ForMember(dest => dest.Vin, opt => opt.Ignore());
 
-            // Ignorar TechnicianDiagnostic en mapeo de creación y actualización
+            // Ignorar TechnicianDiagnostic y mapear ExtendedDiagnostic
             CreateMap<EstimateCreateDto, Estimate>()
                 .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.Ignore())
-                .ForMember(dest => dest.TechnicianDiagnosticID, opt => opt.Ignore());
+                .ForMember(dest => dest.TechnicianDiagnosticID, opt => opt.Ignore())
+                .ForMember(dest => dest.ExtendedDiagnostic, opt => opt.MapFrom(src => src.ExtendedDiagnostic));
+
+            // Incluir ExtendedDiagnostic también en el Update
             CreateMap<EstimateUpdateDto, Estimate>()
                 .ForMember(dest => dest.TechnicianDiagnostic, opt => opt.Ignore())
-                .ForMember(dest => dest.TechnicianDiagnosticID, opt => opt.Ignore());
+                .ForMember(dest => dest.TechnicianDiagnosticID, opt => opt.Ignore())
+                .ForMember(dest => dest.ExtendedDiagnostic, opt => opt.MapFrom(src => src.ExtendedDiagnostic));
+
+            // Mapeo de Estimate -> EstimateFullDto
+            CreateMap<Estimate, EstimateFullDto>()
+                .ForMember(dest => dest.ExtendedDiagnostic, opt => opt.MapFrom(src => src.ExtendedDiagnostic));
         }
     }
 }
