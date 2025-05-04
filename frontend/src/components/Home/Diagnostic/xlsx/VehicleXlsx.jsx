@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { Table, Button, Row, Spin, Alert, Empty } from "antd";
 import { getEstimateData } from "../../../../services/EstimateServiceXslx";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 const VehicleXlsx = () => {
   const [estimates, setEstimates] = useState([]);
@@ -29,19 +30,38 @@ const VehicleXlsx = () => {
    * downloadExcel - Converts JSON data into a spreadsheet
    * and triggers the download of the XLSX file.
    */
-  const downloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(estimates);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Estimates");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    const url = window.URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "estimates.xlsx");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const downloadExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Estimates");
+
+    // Definir encabezados de columna
+    sheet.columns = [
+      { header: "Creation Date", key: "createTime", width: 20 },
+      { header: "Estimate ID", key: "estimateId", width: 15 },
+      { header: "VIN", key: "vin", width: 20 },
+      { header: "Quantity", key: "quantity", width: 10 },
+      { header: "Description", key: "description", width: 30 },
+      { header: "Net Price", key: "netPrice", width: 12 },
+      { header: "List Price", key: "listPrice", width: 12 },
+      { header: "Total Price", key: "priceTo", width: 12 },
+      { header: "Labor", key: "labor", width: 10 },
+      { header: "Supplies", key: "shopSupplies", width: 12 },
+    ];
+
+    // Agregar filas
+    estimates.forEach(item => {
+      sheet.addRow({
+        ...item,
+        createTime: new Date(item.createTime).toLocaleString(),
+      });
+    });
+
+    // Generar buffer y disparar descarga
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, "estimates.xlsx");
   };
 
   // Columns for Antd Table
