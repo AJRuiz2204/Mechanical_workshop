@@ -168,6 +168,22 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
       const token = getToken();
       let payload = { ...userWorkshop };
 
+      // Validación de campos obligatorios
+      const requiredFields = ["name", "lastName", "primaryNumber"];
+      const missingFields = requiredFields.filter(
+        (field) => !payload[field].trim()
+      );
+
+      // Validar vehículos
+      const invalidVehicles = payload.vehicles.filter(
+        (v) =>
+          !v.vin.trim() || !v.make.trim() || !v.model.trim() || !v.year.trim()
+      );
+
+      if (missingFields.length > 0 || invalidVehicles.length > 0) {
+        throw new Error("Por favor complete todos los campos obligatorios");
+      }
+
       // Ensure username and profile
       if (!payload.username.trim()) payload.username = storedUsername;
       if (!payload.profile.trim()) payload.profile = storedProfile;
@@ -218,7 +234,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         {/* Owner Information */}
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item label="Email" required>
+            <Form.Item label="Email">
               <Input
                 value={userWorkshop.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
@@ -226,7 +242,11 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item label="First Name" required>
+            <Form.Item
+              label="First Name"
+              required
+              rules={[{ required: true, message: "Please enter the first name" }]}
+            >
               <Input
                 value={userWorkshop.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
@@ -234,7 +254,11 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item label="Last Name" required>
+            <Form.Item
+              label="Last Name"
+              required
+              rules={[{ required: true, message: "Please enter the last name" }]}
+            >
               <Input
                 value={userWorkshop.lastName}
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
@@ -246,7 +270,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         {/* Address Information */}
         <Row gutter={[16, 16]}>
           <Col xs={24} md={12}>
-            <Form.Item label="Address" required>
+            <Form.Item label="Address">
               <Input
                 value={userWorkshop.address}
                 onChange={(e) => handleInputChange("address", e.target.value)}
@@ -254,7 +278,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Form.Item label="City" required>
+            <Form.Item label="City">
               <Input
                 value={userWorkshop.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
@@ -262,7 +286,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Form.Item label="State" required>
+            <Form.Item label="State">
               <Input
                 value={userWorkshop.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
@@ -272,7 +296,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         </Row>
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
-            <Form.Item label="Zip Code" required>
+            <Form.Item label="Zip Code">
               <Input
                 value={userWorkshop.zip}
                 onChange={(e) => handleInputChange("zip", e.target.value)}
@@ -284,7 +308,13 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         {/* Phones and Tax Exemption */}
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={8}>
-            <Form.Item label="Primary Number" required>
+            <Form.Item
+              label="Primary Number"
+              required
+              rules={[
+                { required: true, message: "Please enter the primary number" },
+              ]}
+            >
               <Input
                 placeholder="(000) 000 - 0000"
                 value={userWorkshop.primaryNumber}
@@ -330,7 +360,11 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             <div key={i} style={{ marginBottom: 24 }}>
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="VIN" required>
+                  <Form.Item
+                    label="VIN"
+                    required
+                    rules={[{ required: true, message: "Please enter the VIN" }]}
+                  >
                     <Input
                       maxLength={17}
                       disabled={editingId && vehicle.vin}
@@ -342,7 +376,11 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="Make" required>
+                  <Form.Item
+                    label="Make"
+                    required
+                    rules={[{ required: true, message: "Please enter the make" }]}
+                  >
                     <Input
                       value={vehicle.make}
                       onChange={(e) =>
@@ -352,7 +390,13 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="Model" required>
+                  <Form.Item
+                    label="Model"
+                    required
+                    rules={[
+                      { required: true, message: "Please enter the model" },
+                    ]}
+                  >
                     <Input
                       value={vehicle.model}
                       onChange={(e) =>
@@ -374,7 +418,11 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
               </Row>
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="Year" required>
+                  <Form.Item
+                    label="Year"
+                    required
+                    rules={[{ required: true, message: "Please enter the year" }]}
+                  >
                     <Input
                       maxLength={4}
                       value={vehicle.year}
@@ -385,7 +433,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="Engine" required>
+                  <Form.Item label="Engine">
                     <Input
                       value={vehicle.engine}
                       onChange={(e) =>
@@ -395,7 +443,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="Plate" required>
+                  <Form.Item label="Plate">
                     <Input
                       value={vehicle.plate}
                       onChange={(e) =>
@@ -405,7 +453,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                  <Form.Item label="State" required>
+                  <Form.Item label="State">
                     <Input
                       value={vehicle.state}
                       onChange={(e) =>
