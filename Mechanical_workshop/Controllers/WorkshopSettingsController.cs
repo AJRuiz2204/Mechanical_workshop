@@ -26,49 +26,64 @@ namespace Mechanical_workshop.Controllers
         [HttpGet]
         public async Task<ActionResult<WorkshopSettingsReadDto>> GetWorkshopSettings()
         {
-            var settings = await _context.WorkshopSettings
-                .OrderByDescending(ws => ws.LastUpdated)
-                .FirstOrDefaultAsync();
-
-            if (settings == null)
+            try
             {
-                return NotFound(new { message = "Workshop settings not found." });
-            }
+                var settings = await _context.WorkshopSettings
+                    .OrderByDescending(ws => ws.LastUpdated)
+                    .FirstOrDefaultAsync();
 
-            return Ok(_mapper.Map<WorkshopSettingsReadDto>(settings));
+                if (settings == null)
+                {
+                    return NotFound(new { message = "Workshop settings not found." });
+                }
+
+                return Ok(_mapper.Map<WorkshopSettingsReadDto>(settings));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener la configuración del taller: {ex.Message}" });
+            }
         }
 
         [HttpPost]
         public async Task<ActionResult<WorkshopSettingsReadDto>> CreateWorkshopSettings(WorkshopSettingsCreateDto workshopSettingsCreateDto)
         {
-            var workshopSettings = _mapper.Map<WorkshopSettings>(workshopSettingsCreateDto);
-            workshopSettings.LastUpdated = DateTime.UtcNow;
+            try
+            {
+                var workshopSettings = _mapper.Map<WorkshopSettings>(workshopSettingsCreateDto);
+                workshopSettings.LastUpdated = DateTime.UtcNow;
 
-            _context.WorkshopSettings.Add(workshopSettings);
-            await _context.SaveChangesAsync();
+                _context.WorkshopSettings.Add(workshopSettings);
+                await _context.SaveChangesAsync();
 
-            var workshopSettingsReadDto = _mapper.Map<WorkshopSettingsReadDto>(workshopSettings);
+                var workshopSettingsReadDto = _mapper.Map<WorkshopSettingsReadDto>(workshopSettings);
 
-            return CreatedAtAction(nameof(GetWorkshopSettings), new { id = workshopSettings.Id }, workshopSettingsReadDto);
+                return CreatedAtAction(nameof(GetWorkshopSettings), new { id = workshopSettings.Id }, workshopSettingsReadDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al crear la configuración del taller: {ex.Message}" });
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateWorkshopSettings(int id, WorkshopSettingsUpdateDto workshopSettingsUpdateDto)
         {
-            var workshopSettings = await _context.WorkshopSettings.FindAsync(id);
-            if (workshopSettings == null)
-            {
-                return NotFound(new { message = "Workshop settings not found." });
-            }
-
-            _mapper.Map(workshopSettingsUpdateDto, workshopSettings);
-            workshopSettings.LastUpdated = DateTime.UtcNow;
-
-            _context.Entry(workshopSettings).State = EntityState.Modified;
-
             try
             {
+                var workshopSettings = await _context.WorkshopSettings.FindAsync(id);
+                if (workshopSettings == null)
+                {
+                    return NotFound(new { message = "Workshop settings not found." });
+                }
+
+                _mapper.Map(workshopSettingsUpdateDto, workshopSettings);
+                workshopSettings.LastUpdated = DateTime.UtcNow;
+
+                _context.Entry(workshopSettings).State = EntityState.Modified;
+
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -78,26 +93,35 @@ namespace Mechanical_workshop.Controllers
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(500, new { message = "Error de concurrencia al actualizar la configuración del taller." });
                 }
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al actualizar la configuración del taller: {ex.Message}" });
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorkshopSettings(int id)
         {
-            var workshopSettings = await _context.WorkshopSettings.FindAsync(id);
-            if (workshopSettings == null)
+            try
             {
-                return NotFound(new { message = "Workshop settings not found." });
+                var workshopSettings = await _context.WorkshopSettings.FindAsync(id);
+                if (workshopSettings == null)
+                {
+                    return NotFound(new { message = "Workshop settings not found." });
+                }
+
+                _context.WorkshopSettings.Remove(workshopSettings);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.WorkshopSettings.Remove(workshopSettings);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al eliminar la configuración del taller: {ex.Message}" });
+            }
         }
 
         private bool WorkshopSettingsExists(int id)

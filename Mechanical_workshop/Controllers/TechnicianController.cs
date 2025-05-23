@@ -24,13 +24,20 @@ namespace Mechanical_workshop.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TechnicianDtos>>> GetTechnicians()
         {
-            var technicians = await _context.Users
-                .Where(u => u.Profile == "Technician")
-                .ToListAsync();
+            try
+            {
+                var technicians = await _context.Users
+                    .Where(u => u.Profile == "Technician")
+                    .ToListAsync();
 
-            var technicianDtos = _mapper.Map<IEnumerable<TechnicianDtos>>(technicians);
+                var technicianDtos = _mapper.Map<IEnumerable<TechnicianDtos>>(technicians);
 
-            return Ok(technicianDtos);
+                return Ok(technicianDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener los técnicos: {ex.Message}" });
+            }
         }
     }
 }

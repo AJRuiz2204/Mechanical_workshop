@@ -27,217 +27,255 @@ namespace Mechanical_workshop.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EstimateFullDto>>> GetEstimates()
         {
-            var estimates = await _context.Estimates
-                .Include(e => e.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(e => e.TechnicianDiagnostic)
-                    .ThenInclude(td => td.Diagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .ToListAsync();
+            try
+            {
+                var estimates = await _context.Estimates
+                    .Include(e => e.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td.Diagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .ToListAsync();
 
-            var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
-            return Ok(estimateDtos);
+                var estimateDtos = _mapper.Map<IEnumerable<EstimateFullDto>>(estimates);
+                return Ok(estimateDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener los presupuestos: {ex.Message}" });
+            }
         }
 
         // GET: api/Estimates/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<EstimateFullDto>> GetEstimate(int id)
         {
-            var estimate = await _context.Estimates
-                .Include(e => e.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(e => e.TechnicianDiagnostic)
-                    .ThenInclude(td => td.Diagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .FirstOrDefaultAsync(e => e.ID == id);
-
-            if (estimate == null)
+            try
             {
-                return NotFound(new { message = $"Estimate with ID {id} not found." });
-            }
+                var estimate = await _context.Estimates
+                    .Include(e => e.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td.Diagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .FirstOrDefaultAsync(e => e.ID == id);
 
-            var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
-            return Ok(estimateDto);
+                if (estimate == null)
+                {
+                    return NotFound(new { message = $"Estimate with ID {id} not found." });
+                }
+
+                var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
+                return Ok(estimateDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener el presupuesto: {ex.Message}" });
+            }
         }
 
         // GET: api/Estimates/WithUserWorkshop/{id}
         [HttpGet("WithUserWorkshop/{id}")]
         public async Task<ActionResult<EstimateFullDto>> GetEstimateWithUserWorkshop(int id)
         {
-            var estimate = await _context.Estimates
-                .Include(e => e.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(e => e.TechnicianDiagnostic)
-                    .ThenInclude(td => td.Diagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .FirstOrDefaultAsync(e => e.ID == id);
-
-            if (estimate == null)
+            try
             {
-                return NotFound(new { message = $"Estimate with ID {id} not found." });
-            }
+                var estimate = await _context.Estimates
+                    .Include(e => e.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td.Diagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .FirstOrDefaultAsync(e => e.ID == id);
 
-            var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
-            return Ok(estimateDto);
+                if (estimate == null)
+                {
+                    return NotFound(new { message = $"Estimate with ID {id} not found." });
+                }
+
+                var estimateDto = _mapper.Map<EstimateFullDto>(estimate);
+                return Ok(estimateDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener el presupuesto con información del cliente: {ex.Message}" });
+            }
         }
 
         // POST: api/Estimates
         [HttpPost]
         public async Task<ActionResult<EstimateFullDto>> CreateEstimate(EstimateCreateDto estimateCreateDto)
         {
-            // Verificar la existencia del vehículo
-            var vehicle = await _context.Vehicles
-                .Include(v => v.UserWorkshop)
-                .FirstOrDefaultAsync(v => v.Id == estimateCreateDto.VehicleID);
-
-            if (vehicle == null)
+            try
             {
-                return BadRequest(new { message = "Invalid Vehicle ID." });
+                // Verificar la existencia del vehículo
+                var vehicle = await _context.Vehicles
+                    .Include(v => v.UserWorkshop)
+                    .FirstOrDefaultAsync(v => v.Id == estimateCreateDto.VehicleID);
+
+                if (vehicle == null)
+                {
+                    return BadRequest(new { message = "Invalid Vehicle ID." });
+                }
+
+                // Mapear el DTO a la entidad Estimate
+                var estimate = _mapper.Map<Estimate>(estimateCreateDto);
+                estimate.VehicleID = vehicle.Id;
+                estimate.UserWorkshopID = vehicle.UserWorkshopId;
+                // Excluir TechnicianDiagnostic para evitar creación automática
+                estimate.TechnicianDiagnostic = null;
+                // Asegurar que el FK quede NULL y no 0
+                estimate.TechnicianDiagnosticID = null;
+
+                _context.Estimates.Add(estimate);
+                await _context.SaveChangesAsync();
+
+                // Recuperar la estimación completa para la respuesta
+                var createdEstimate = await _context.Estimates
+                    .Include(e => e.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td.Diagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .FirstOrDefaultAsync(e => e.ID == estimate.ID);
+
+                var estimateFullDto = _mapper.Map<EstimateFullDto>(createdEstimate);
+                return CreatedAtAction(nameof(GetEstimate), new { id = estimate.ID }, estimateFullDto);
             }
-
-            // Mapear el DTO a la entidad Estimate
-            var estimate = _mapper.Map<Estimate>(estimateCreateDto);
-            estimate.VehicleID = vehicle.Id;
-            estimate.UserWorkshopID = vehicle.UserWorkshopId;
-            // Excluir TechnicianDiagnostic para evitar creación automática
-            estimate.TechnicianDiagnostic = null;
-            // Asegurar que el FK quede NULL y no 0
-            estimate.TechnicianDiagnosticID = null;
-
-            _context.Estimates.Add(estimate);
-            await _context.SaveChangesAsync();
-
-            // Recuperar la estimación completa para la respuesta
-            var createdEstimate = await _context.Estimates
-                .Include(e => e.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(e => e.TechnicianDiagnostic)
-                    .ThenInclude(td => td.Diagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .FirstOrDefaultAsync(e => e.ID == estimate.ID);
-
-            var estimateFullDto = _mapper.Map<EstimateFullDto>(createdEstimate);
-            return CreatedAtAction(nameof(GetEstimate), new { id = estimate.ID }, estimateFullDto);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al crear el presupuesto: {ex.Message}" });
+            }
         }
 
         // PUT: api/Estimates/{id}
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEstimate(int id, [FromBody] EstimateUpdateDto dto)
         {
-            if (id != dto.ID)
-                return BadRequest(new { message = "ID mismatch." });
-
-            var estimate = await _context.Estimates
-                .Include(e => e.TechnicianDiagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .FirstOrDefaultAsync(e => e.ID == id);
-
-            if (estimate == null)
-            {
-                return NotFound(new { message = $"Estimate with ID {id} not found." });
-            }
-
-            // Actualizar SOLO los campos permitidos
-            estimate.CustomerNote = dto.CustomerNote ?? estimate.CustomerNote;
-            estimate.Subtotal = dto.Subtotal;
-            estimate.Tax = dto.Tax;
-            estimate.Total = dto.Total;
-            estimate.AuthorizationStatus = dto.AuthorizationStatus;
-            estimate.Mileage = dto.Mileage;
-
-            // Reemplazar listas de Parts, Labors, FlatFees
-            _context.EstimateParts.RemoveRange(estimate.Parts);
-            _context.EstimateLabors.RemoveRange(estimate.Labors);
-            _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
-
-            estimate.Parts.Clear();
-            estimate.Labors.Clear();
-            estimate.FlatFees.Clear();
-
-            if (dto.Parts != null)
-            {
-                foreach (var partDto in dto.Parts)
-                {
-                    var partEntity = _mapper.Map<EstimatePart>(partDto);
-                    estimate.Parts.Add(partEntity);
-                }
-            }
-            if (dto.Labors != null)
-            {
-                foreach (var laborDto in dto.Labors)
-                {
-                    var laborEntity = _mapper.Map<EstimateLabor>(laborDto);
-                    estimate.Labors.Add(laborEntity);
-                }
-            }
-            if (dto.FlatFees != null)
-            {
-                foreach (var feeDto in dto.FlatFees)
-                {
-                    var feeEntity = _mapper.Map<EstimateFlatFee>(feeDto);
-                    estimate.FlatFees.Add(feeEntity);
-                }
-            }
-
             try
             {
+                if (id != dto.ID)
+                    return BadRequest(new { message = "ID mismatch." });
+
+                var estimate = await _context.Estimates
+                    .Include(e => e.TechnicianDiagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .FirstOrDefaultAsync(e => e.ID == id);
+
+                if (estimate == null)
+                {
+                    return NotFound(new { message = $"Estimate with ID {id} not found." });
+                }
+
+                // Actualizar SOLO los campos permitidos
+                estimate.CustomerNote = dto.CustomerNote ?? estimate.CustomerNote;
+                estimate.Subtotal = dto.Subtotal;
+                estimate.Tax = dto.Tax;
+                estimate.Total = dto.Total;
+                estimate.AuthorizationStatus = dto.AuthorizationStatus;
+                estimate.Mileage = dto.Mileage;
+
+                // Reemplazar listas de Parts, Labors, FlatFees
+                _context.EstimateParts.RemoveRange(estimate.Parts);
+                _context.EstimateLabors.RemoveRange(estimate.Labors);
+                _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
+
+                estimate.Parts.Clear();
+                estimate.Labors.Clear();
+                estimate.FlatFees.Clear();
+
+                if (dto.Parts != null)
+                {
+                    foreach (var partDto in dto.Parts)
+                    {
+                        var partEntity = _mapper.Map<EstimatePart>(partDto);
+                        estimate.Parts.Add(partEntity);
+                    }
+                }
+                if (dto.Labors != null)
+                {
+                    foreach (var laborDto in dto.Labors)
+                    {
+                        var laborEntity = _mapper.Map<EstimateLabor>(laborDto);
+                        estimate.Labors.Add(laborEntity);
+                    }
+                }
+                if (dto.FlatFees != null)
+                {
+                    foreach (var feeDto in dto.FlatFees)
+                    {
+                        var feeEntity = _mapper.Map<EstimateFlatFee>(feeDto);
+                        estimate.FlatFees.Add(feeEntity);
+                    }
+                }
+
                 await _context.SaveChangesAsync();
+                
+                var updatedDto = _mapper.Map<EstimateFullDto>(estimate);
+                return Ok(updatedDto);
             }
             catch (DbUpdateException ex)
             {
                 return StatusCode(500, new { message = "Error updating the estimate.", details = ex.Message });
             }
-
-            var updatedDto = _mapper.Map<EstimateFullDto>(estimate);
-            return Ok(updatedDto);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al actualizar el presupuesto: {ex.Message}" });
+            }
         }
 
         // DELETE: api/Estimates/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEstimate(int id)
         {
-            var estimate = await _context.Estimates
-                .Include(e => e.TechnicianDiagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .FirstOrDefaultAsync(e => e.ID == id);
-
-            if (estimate == null)
+            try
             {
-                return NotFound(new { message = $"Estimate with ID {id} not found." });
-            }
+                var estimate = await _context.Estimates
+                    .Include(e => e.TechnicianDiagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .FirstOrDefaultAsync(e => e.ID == id);
 
-            // Eliminar TechnicianDiagnostic si existe
-            if (estimate.TechnicianDiagnostic != null)
+                if (estimate == null)
+                {
+                    return NotFound(new { message = $"Estimate with ID {id} not found." });
+                }
+
+                // Eliminar TechnicianDiagnostic si existe
+                if (estimate.TechnicianDiagnostic != null)
+                {
+                    _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
+                }
+
+                // Eliminar Partes, Mano de Obra y Tarifas Planas
+                _context.EstimateParts.RemoveRange(estimate.Parts);
+                _context.EstimateLabors.RemoveRange(estimate.Labors);
+                _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
+                _context.Estimates.Remove(estimate);
+
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                _context.TechnicianDiagnostics.Remove(estimate.TechnicianDiagnostic);
+                return StatusCode(500, new { message = $"Error al eliminar el presupuesto: {ex.Message}" });
             }
-
-            // Eliminar Partes, Mano de Obra y Tarifas Planas
-            _context.EstimateParts.RemoveRange(estimate.Parts);
-            _context.EstimateLabors.RemoveRange(estimate.Labors);
-            _context.EstimateFlatFees.RemoveRange(estimate.FlatFees);
-            _context.Estimates.Remove(estimate);
-
-            await _context.SaveChangesAsync();
-            return NoContent();
         }
 
         private bool EstimateExists(int id)
         {
             return _context.Estimates.Any(e => e.ID == id);
         }
-
     }
 }

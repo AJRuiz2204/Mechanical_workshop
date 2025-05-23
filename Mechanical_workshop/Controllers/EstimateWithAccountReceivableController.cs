@@ -27,42 +27,46 @@ namespace Mechanical_workshop.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EstimateWithAccountReceivableDto>>> GetEstimatesWithAccounts()
         {
-            // Primero obtenemos los Estimates con sus relaciones completas.
-            var estimates = await _context.Estimates
-                .Include(e => e.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(e => e.TechnicianDiagnostic)
-                    .ThenInclude(td => td.Diagnostic)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .ToListAsync();
-
-            // Realizamos el join con AccountsReceivable y mapeamos a nuestro DTO compuesto.
-            var result = (from estimate in estimates
-                          join ar in _context.AccountsReceivable
-                              on estimate.ID equals ar.EstimateId into arGroup
-                          from account in arGroup.DefaultIfEmpty()
-                          select new EstimateWithAccountReceivableDto
-                          {
-                              Estimate = _mapper.Map<EstimateFullDto>(estimate),
-                              AccountReceivable = account == null
-                                  ? null
-                                  : _mapper.Map<AccountReceivableResponseDto>(account),
-                          }).ToList();
-
-            // Aquí removemos la información repetida, asignando null a la propiedad Estimate anidada.
-            result.ForEach(item =>
+            try
             {
-                if (item.AccountReceivable != null)
+
+                var estimates = await _context.Estimates
+                    .Include(e => e.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td.Diagnostic)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .ToListAsync();
+
+
+                var result = (from estimate in estimates
+                              join ar in _context.AccountsReceivable
+                                  on estimate.ID equals ar.EstimateId into arGroup
+                              from account in arGroup.DefaultIfEmpty()
+                              select new EstimateWithAccountReceivableDto
+                              {
+                                  Estimate = _mapper.Map<EstimateFullDto>(estimate),
+                                  AccountReceivable = account == null
+                                      ? null
+                                      : _mapper.Map<AccountReceivableResponseDto>(account),
+                              }).ToList();
+                              
+                result.ForEach(item =>
                 {
-                    item.AccountReceivable.Estimate = null;
-                }
-            });
+                    if (item.AccountReceivable != null)
+                    {
+                        item.AccountReceivable.Estimate = null;
+                    }
+                });
 
-            return Ok(result);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener los presupuestos con cuentas por cobrar: {ex.Message}" });
+            }
         }
-
-
     }
 }

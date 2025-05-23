@@ -21,7 +21,7 @@ namespace Mechanical_workshop.Controllers
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _context;
-                private readonly IMapper _mapper;
+        private readonly IMapper _mapper;
         private readonly IConfiguration _config;
         private readonly ILogger<UsersController> _logger;
 
@@ -37,82 +37,106 @@ namespace Mechanical_workshop.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<User>> Register(UserCreateDto userCreateDto)
         {
-            _logger.LogInformation("Register endpoint llamado.");
+            try
+            {
+                _logger.LogInformation("Register endpoint llamado.");
 
-            if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
-                return BadRequest(new { Message = "Username already exists." });
+                if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
+                    return BadRequest(new { Message = "Username already exists." });
 
-            if (await _context.Users.AnyAsync(u => u.Email == userCreateDto.Email))
-                return BadRequest(new { Message = "Email already exists." });
+                if (await _context.Users.AnyAsync(u => u.Email == userCreateDto.Email))
+                    return BadRequest(new { Message = "Email already exists." });
 
-            var user = _mapper.Map<User>(userCreateDto);
-            user.Password = BCrypt.Net.BCrypt.HashPassword(userCreateDto.Password);
+                var user = _mapper.Map<User>(userCreateDto);
+                user.Password = BCrypt.Net.BCrypt.HashPassword(userCreateDto.Password);
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(Register), new { id = user.ID }, user);
+                return CreatedAtAction(nameof(Register), new { id = user.ID }, user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error durante el registro de usuario");
+                return StatusCode(500, new { message = $"Error al registrar el usuario: {ex.Message}" });
+            }
         }
 
         // 🔹 POST: api/Users/login (Autenticación y generación de JWT)
         [HttpPost("login")]
         public async Task<ActionResult> Login(UserLoginDto userLoginDto)
         {
-            _logger.LogInformation("Login endpoint llamado.");
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
-            if (user == null)
-                return Unauthorized(new { Message = "User not found." });
-
-            if (!BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password))
-                return Unauthorized(new { Message = "Incorrect password." });
-
-            var token = GenerateJwtToken(user);
-            return Ok(new
+            try
             {
-                Token = token,
-                User = new
+                _logger.LogInformation("Login endpoint llamado.");
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
+                if (user == null)
+                    return Unauthorized(new { Message = "User not found." });
+
+                if (!BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password))
+                    return Unauthorized(new { Message = "Incorrect password." });
+
+                var token = GenerateJwtToken(user);
+                return Ok(new
                 {
-                    user.ID,
-                    user.Email,
-                    user.Name,
-                    user.LastName,
-                    user.Username,
-                    user.Profile
-                }
-            });
+                    Token = token,
+                    User = new
+                    {
+                        user.ID,
+                        user.Email,
+                        user.Name,
+                        user.LastName,
+                        user.Username,
+                        user.Profile
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error durante el inicio de sesión");
+                return StatusCode(500, new { message = $"Error al iniciar sesión: {ex.Message}" });
+            }
         }
 
         // 🔹 Método para generar JWT (ahora usa Profile en lugar de Role)
         private string GenerateJwtToken(User user)
         {
-            var jwtSettings = _config.GetSection("JwtSettings");
-            var secretKey = jwtSettings["Secret"];
-
-            if (string.IsNullOrEmpty(secretKey))
+            try
             {
-                throw new InvalidOperationException("JWT Secret Key is missing in appsettings.json");
+                var jwtSettings = _config.GetSection("JwtSettings");
+                var secretKey = jwtSettings["Secret"];
+
+                if (string.IsNullOrEmpty(secretKey))
+                {
+                    throw new InvalidOperationException("JWT Secret Key is missing in appsettings.json");
+                }
+
+                var key = Encoding.UTF8.GetBytes(secretKey);
+
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.Role, user.Profile)
+                };
+
+                var token = new JwtSecurityToken(
+                    issuer: jwtSettings["Issuer"],
+                    audience: jwtSettings["Audience"],
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["TokenExpirationMinutes"])),
+                    signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
+                );
+
+                return new JwtSecurityTokenHandler().WriteToken(token);
             }
-
-            var key = Encoding.UTF8.GetBytes(secretKey);
-
-            var claims = new[]
+            catch (Exception ex)
             {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Profile)
-        };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["TokenExpirationMinutes"])),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                _logger.LogError(ex, "Error al generar token JWT");
+                throw;
+            }
         }
 
 
@@ -121,49 +145,61 @@ namespace Mechanical_workshop.Controllers
         [Authorize]
         public async Task<ActionResult> GetProfile()
         {
-            _logger.LogInformation("GetProfile endpoint llamado.");
-
-            var username = User.Identity.Name;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-
-            if (user == null)
-                return NotFound(new { Message = "User not found." });
-
-            return Ok(new
+            try
             {
-                user.ID,
-                user.Email,
-                user.Name,
-                user.LastName,
-                user.Username,
-                user.Profile
-            });
+                _logger.LogInformation("GetProfile endpoint llamado.");
+
+                var username = User.Identity.Name;
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+
+                if (user == null)
+                    return NotFound(new { Message = "User not found." });
+
+                return Ok(new
+                {
+                    user.ID,
+                    user.Email,
+                    user.Name,
+                    user.LastName,
+                    user.Username,
+                    user.Profile
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el perfil del usuario");
+                return StatusCode(500, new { message = $"Error al obtener el perfil: {ex.Message}" });
+            }
         }
 
         // POST: api/Users/forgot-password
         [HttpPost("forgot-password")]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
         {
-            if (!IsValidEmail(forgotPasswordDto.Email))
-                return BadRequest(new { Message = "Invalid email format." });
+            try
+            {
+                if (!IsValidEmail(forgotPasswordDto.Email))
+                    return BadRequest(new { Message = "Invalid email format." });
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDto.Email);
-            if (user == null)
-                return BadRequest(new { Message = "Email not found." });
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDto.Email);
+                if (user == null)
+                    return BadRequest(new { Message = "Email not found." });
 
-            // Generate a verification code
-            var code = new Random().Next(100000, 999999).ToString();
-            user.ResetCode = code;
-            user.ResetCodeExpiry = DateTime.Now.AddMinutes(5);
+                var code = new Random().Next(100000, 999999).ToString();
+                user.ResetCode = code;
+                user.ResetCodeExpiry = DateTime.Now.AddMinutes(5);
 
-            // Save the code to the database
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-            // Log the generated code in the server console
-            Console.WriteLine($"Generated code for {user.Email}: {code}");
+                Console.WriteLine($"Generated code for {user.Email}: {code}");
 
-            // Return the generated code
-            return Ok(new { Code = code });
+                return Ok(new { Code = code });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al procesar la solicitud de contraseña olvidada");
+                return StatusCode(500, new { message = $"Error al procesar la solicitud: {ex.Message}" });
+            }
         }
 
         private bool IsValidEmail(string email)
@@ -182,13 +218,21 @@ namespace Mechanical_workshop.Controllers
         [HttpPost("verify-code")]
         public async Task<ActionResult> VerifyCode(VerifyCodeDto verifyCodeDto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == verifyCodeDto.Email);
-            if (user == null || user.ResetCode != verifyCodeDto.Code || user.ResetCodeExpiry < DateTime.Now)
+            try
             {
-                return BadRequest(new { Message = "Invalid or expired code." }); // JSON
-            }
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == verifyCodeDto.Email);
+                if (user == null || user.ResetCode != verifyCodeDto.Code || user.ResetCodeExpiry < DateTime.Now)
+                {
+                    return BadRequest(new { Message = "Invalid or expired code." });
+                }
 
-            return Ok(new { Message = "Code verified successfully." }); // JSON
+                return Ok(new { Message = "Code verified successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al verificar el código");
+                return StatusCode(500, new { message = $"Error al verificar el código: {ex.Message}" });
+            }
         }
 
         // 🔹 GET: api/Users/admin (Solo accesible para admins)
@@ -196,9 +240,16 @@ namespace Mechanical_workshop.Controllers
         [Authorize(Roles = "Administrator")]
         public IActionResult GetAdminData()
         {
-            _logger.LogInformation("GetAdminData endpoint llamado.");
-
-            return Ok(new { Message = "This is protected admin data" });
+            try
+            {
+                _logger.LogInformation("GetAdminData endpoint llamado.");
+                return Ok(new { Message = "This is protected admin data" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al acceder a datos de administrador");
+                return StatusCode(500, new { message = $"Error al acceder a datos de administrador: {ex.Message}" });
+            }
         }
     }
 }

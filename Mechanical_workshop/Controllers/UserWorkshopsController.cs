@@ -12,9 +12,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
-    /// <summary>
-    /// Controller for managing UserWorkshops and their Vehicles.
-    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class UserWorkshopsController : ControllerBase
@@ -33,53 +30,55 @@ namespace Mechanical_workshop.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Retrieves all UserWorkshops along with their associated Vehicles.
-        /// </summary>
-        /// <returns>A list of UserWorkshopReadDto objects.</returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserWorkshopReadDto>>> GetUserWorkshops()
         {
-            _logger.LogInformation("GET: Retrieving all UserWorkshops with Vehicles...");
+            try
+            {
+                _logger.LogInformation("GET: Retrieving all UserWorkshops with Vehicles...");
 
-            var userWorkshops = await _context.UserWorkshops
-                .Include(uw => uw.Vehicles)
-                .ToListAsync();
+                var userWorkshops = await _context.UserWorkshops
+                    .Include(uw => uw.Vehicles)
+                    .ToListAsync();
 
-            _logger.LogInformation("GET: Retrieved {Count} UserWorkshops.", userWorkshops.Count);
+                _logger.LogInformation("GET: Retrieved {Count} UserWorkshops.", userWorkshops.Count);
 
-            return Ok(_mapper.Map<IEnumerable<UserWorkshopReadDto>>(userWorkshops));
+                return Ok(_mapper.Map<IEnumerable<UserWorkshopReadDto>>(userWorkshops));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos los talleres de usuario");
+                return StatusCode(500, new { message = $"Error al obtener los talleres de usuario: {ex.Message}" });
+            }
         }
 
-        /// <summary>
-        /// Retrieves a specific UserWorkshop by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the UserWorkshop.</param>
-        /// <returns>The UserWorkshopReadDto object.</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<UserWorkshopReadDto>> GetUserWorkshop(int id)
         {
-            _logger.LogInformation("GET: Retrieving UserWorkshop by ID: {Id}", id);
-
-            var userWorkshop = await _context.UserWorkshops
-                .Include(uw => uw.Vehicles)
-                .FirstOrDefaultAsync(uw => uw.Id == id);
-
-            if (userWorkshop == null)
+            try
             {
-                _logger.LogWarning("GET: UserWorkshop with ID {Id} not found.", id);
-                return NotFound();
-            }
+                _logger.LogInformation("GET: Retrieving UserWorkshop by ID: {Id}", id);
 
-            _logger.LogInformation("GET: Found UserWorkshop with ID {Id}", id);
-            return Ok(_mapper.Map<UserWorkshopReadDto>(userWorkshop));
+                var userWorkshop = await _context.UserWorkshops
+                    .Include(uw => uw.Vehicles)
+                    .FirstOrDefaultAsync(uw => uw.Id == id);
+
+                if (userWorkshop == null)
+                {
+                    _logger.LogWarning("GET: UserWorkshop with ID {Id} not found.", id);
+                    return NotFound();
+                }
+
+                _logger.LogInformation("GET: Found UserWorkshop with ID {Id}", id);
+                return Ok(_mapper.Map<UserWorkshopReadDto>(userWorkshop));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el taller de usuario con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener el taller de usuario: {ex.Message}" });
+            }
         }
 
-        /// <summary>
-        /// Creates a new UserWorkshop.
-        /// </summary>
-        /// <param name="userWorkshopDto">UserWorkshopCreateDto object with workshop and associated vehicle information.</param>
-        /// <returns>The created UserWorkshopReadDto.</returns>
         [HttpPost]
         public async Task<ActionResult<UserWorkshopReadDto>> CreateUserWorkshop(UserWorkshopCreateDto userWorkshopDto)
         {
@@ -93,7 +92,7 @@ namespace Mechanical_workshop.Controllers
 
             try
             {
-                // Map the DTO to the entity
+
                 var userWorkshop = _mapper.Map<UserWorkshop>(userWorkshopDto);
 
                 userWorkshop.Vehicles = new List<Vehicle>();
@@ -138,11 +137,11 @@ namespace Mechanical_workshop.Controllers
                     userWorkshop.Vehicles.Count
                 );
 
-                // Save the UserWorkshop to the database
+
                 _context.UserWorkshops.Add(userWorkshop);
                 await _context.SaveChangesAsync();
 
-                // Map the entity to ReadDto
+
                 var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
 
                 _logger.LogInformation("POST: UserWorkshop created successfully with ID = {Id}.", userWorkshop.Id);
@@ -156,11 +155,6 @@ namespace Mechanical_workshop.Controllers
             }
         }
 
-        /// <summary>
-        /// Creates multiple UserWorkshops.
-        /// </summary>
-        /// <param name="userWorkshopsDto">List of UserWorkshopCreateDto.</param>
-        /// <returns>List of created UserWorkshopReadDto.</returns>
         [HttpPost("bulk")]
         public async Task<ActionResult<IEnumerable<UserWorkshopReadDto>>> CreateUserWorkshops(IEnumerable<UserWorkshopCreateDto> userWorkshopsDto)
         {
@@ -216,11 +210,11 @@ namespace Mechanical_workshop.Controllers
                         userWorkshop.Vehicles.Count
                     );
 
-                    // Save the UserWorkshop
+
                     _context.UserWorkshops.Add(userWorkshop);
                     await _context.SaveChangesAsync();
 
-                    // Map to ReadDto and add to the response list
+
                     var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
                     readDtos.Add(readDto);
 
@@ -229,19 +223,14 @@ namespace Mechanical_workshop.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "POST Bulk: Error creating UserWorkshop.");
-                    // Optional: Decide how to handle individual errors without stopping the entire process
+
                 }
             }
 
             return CreatedAtAction(nameof(GetUserWorkshops), readDtos);
         }
 
-        /// <summary>
-        /// Updates an existing UserWorkshop.
-        /// </summary>
-        /// <param name="id">The ID of the UserWorkshop to update.</param>
-        /// <param name="userWorkshopUpdateDto">The UserWorkshopUpdateDto object containing updated details.</param>
-        /// <returns>No content if successful.</returns>
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUserWorkshop(int id, UserWorkshopUpdateDto userWorkshopUpdateDto)
         {
@@ -256,20 +245,16 @@ namespace Mechanical_workshop.Controllers
             var userWorkshop = await _context.UserWorkshops
                 .Include(uw => uw.Vehicles)
                 .FirstOrDefaultAsync(uw => uw.Id == id);
-
             if (userWorkshop == null)
             {
                 _logger.LogWarning("PUT: UserWorkshop with ID {Id} not found.", id);
                 return NotFound(new { message = $"UserWorkshop with ID {id} not found." });
             }
 
-            // Mapear los campos principales del UserWorkshop (AutoMapper ignorará el Id de los vehículos gracias a la configuración)
             _mapper.Map(userWorkshopUpdateDto, userWorkshop);
 
-            // Manejar vehículos: remover los que ya no estén en el DTO y agregar o actualizar los existentes
             var dtoVins = userWorkshopUpdateDto.Vehicles.Select(v => v.Vin).ToList();
 
-            // Remover vehículos que ya no están presentes en el DTO
             var vehiclesToRemove = userWorkshop.Vehicles.Where(v => !dtoVins.Contains(v.Vin)).ToList();
             if (vehiclesToRemove.Any())
             {
@@ -277,7 +262,7 @@ namespace Mechanical_workshop.Controllers
                 _context.Vehicles.RemoveRange(vehiclesToRemove);
             }
 
-            // Procesar cada vehículo del DTO
+
             foreach (var vehicleDto in userWorkshopUpdateDto.Vehicles)
             {
                 if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
@@ -289,14 +274,14 @@ namespace Mechanical_workshop.Controllers
                 var existingVehicle = userWorkshop.Vehicles.FirstOrDefault(v => v.Vin == vehicleDto.Vin);
                 if (existingVehicle != null)
                 {
-                    // Actualiza los campos del vehículo existente (el Id no se modifica por la configuración de AutoMapper)
+
                     _mapper.Map(vehicleDto, existingVehicle);
                     _logger.LogInformation("PUT: Updated existing vehicle with VIN = {Vin}.", vehicleDto.Vin);
                 }
                 else
                 {
-                    // Si no existe, agrega el vehículo
-                    // Nota: Si se requiere lógica adicional para evitar duplicados en la DB, se puede hacer aquí.
+
+
                     var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
                     userWorkshop.Vehicles.Add(newVehicle);
                     _logger.LogInformation("PUT: Added new vehicle with VIN = {Vin}.", vehicleDto.Vin);
@@ -332,11 +317,6 @@ namespace Mechanical_workshop.Controllers
         }
 
 
-        /// <summary>
-        /// Deletes a UserWorkshop by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the UserWorkshop to delete.</param>
-        /// <returns>No content if successful.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserWorkshop(int id)
         {
@@ -357,21 +337,11 @@ namespace Mechanical_workshop.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Checks if a UserWorkshop exists by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the UserWorkshop.</param>
-        /// <returns>True if it exists, otherwise False.</returns>
         private bool UserWorkshopExists(int id)
         {
             return _context.UserWorkshops.Any(e => e.Id == id);
         }
 
-        /// <summary>
-        /// Searches for vehicles by VIN number or client name in real-time.
-        /// </summary>
-        /// <param name="searchTerm">Search term (VIN or client name)</param>
-        /// <returns>List of VehicleSearchDto that match the search term</returns>
         [HttpGet("searchVehicles")]
         public async Task<ActionResult> SearchVehicles([FromQuery] string searchTerm)
         {
@@ -412,10 +382,6 @@ namespace Mechanical_workshop.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all Vehicles from all UserWorkshops.
-        /// </summary>
-        /// <returns>A list of VehicleSearchDto objects.</returns>
         [HttpGet("vehicles")]
         public async Task<ActionResult<List<VehicleSearchDto>>> GetAllVehicles()
         {
@@ -463,11 +429,6 @@ namespace Mechanical_workshop.Controllers
             }
         }
 
-        /// <summary>
-        /// Deletes a Vehicle by its VIN.
-        /// </summary>
-        /// <param name="vin">The VIN of the Vehicle to delete.</param>
-        /// <returns>No content if successful.</returns>
         [HttpDelete("vehicle/{vin}")]
         public async Task<IActionResult> DeleteVehicleByVin(string vin)
         {
@@ -498,11 +459,6 @@ namespace Mechanical_workshop.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves a Vehicle by its ID.
-        /// </summary>
-        /// <param name="id">The ID of the Vehicle.</param>
-        /// <returns>The VehicleReadDto object.</returns>
         [HttpGet("vehicle/{id}")]
         public async Task<ActionResult<VehicleReadDto>> GetVehicleById(int id)
         {
@@ -523,12 +479,6 @@ namespace Mechanical_workshop.Controllers
             return Ok(vehicleReadDto);
         }
 
-        /// <summary>
-        /// Updates the status of a Vehicle.
-        /// </summary>
-        /// <param name="id">The ID of the Vehicle.</param>
-        /// <param name="newStatus">The new status to set.</param>
-        /// <returns>No content if successful.</returns>
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateVehicleStatus(int id, [FromBody] string newStatus)
         {

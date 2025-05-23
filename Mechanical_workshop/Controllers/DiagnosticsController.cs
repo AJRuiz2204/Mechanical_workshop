@@ -32,125 +32,164 @@ namespace Mechanical_workshop.Controllers
         [HttpPost]
         public async Task<ActionResult<DiagnosticReadDto>> CreateDiagnostic(DiagnosticCreateDto diagnosticCreateDto)
         {
-            // Map DTO to entity
-            var diagnostic = _mapper.Map<Diagnostic>(diagnosticCreateDto);
+            try
+            {
+                // Map DTO to entity
+                var diagnostic = _mapper.Map<Diagnostic>(diagnosticCreateDto);
 
-            // Add to database
-            _context.Diagnostics.Add(diagnostic);
-            await _context.SaveChangesAsync();
+                // Add to database
+                _context.Diagnostics.Add(diagnostic);
+                await _context.SaveChangesAsync();
 
-            // Reconsulta el diagnóstico para incluir Vehicle y UserWorkshop
-            var diagnosticWithRelations = await _context.Diagnostics
-                .Include(d => d.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .FirstOrDefaultAsync(d => d.Id == diagnostic.Id);
+                // Reconsulta el diagnóstico para incluir Vehicle y UserWorkshop
+                var diagnosticWithRelations = await _context.Diagnostics
+                    .Include(d => d.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .FirstOrDefaultAsync(d => d.Id == diagnostic.Id);
 
-            // Map entity to ReadDto
-            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnosticWithRelations);
+                // Map entity to ReadDto
+                var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnosticWithRelations);
 
-            return CreatedAtAction(nameof(GetDiagnostic), new { id = diagnostic.Id }, diagnosticReadDto);
+                return CreatedAtAction(nameof(GetDiagnostic), new { id = diagnostic.Id }, diagnosticReadDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al crear el diagnóstico: {ex.Message}" });
+            }
         }
 
         // GET: api/Diagnostics
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnostics()
         {
-            var diagnostics = await _context.Diagnostics
-                .Include(d => d.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(d => d.TechnicianDiagnostics)
-                .ToListAsync();
+            try
+            {
+                var diagnostics = await _context.Diagnostics
+                    .Include(d => d.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(d => d.TechnicianDiagnostics)
+                    .ToListAsync();
 
-            var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
-            return Ok(diagnosticReadDtos);
+                var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+                return Ok(diagnosticReadDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener los diagnósticos: {ex.Message}" });
+            }
         }
 
         // GET: api/Diagnostics/5
         [HttpGet("{id}")]
         public async Task<ActionResult<DiagnosticReadDto>> GetDiagnostic(int id)
         {
-            var diagnostic = await _context.Diagnostics
-                .Include(d => d.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(d => d.TechnicianDiagnostics)
-                .FirstOrDefaultAsync(d => d.Id == id);
-
-            if (diagnostic == null)
+            try
             {
-                return NotFound(new { message = "Diagnostic not found." });
-            }
+                var diagnostic = await _context.Diagnostics
+                    .Include(d => d.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(d => d.TechnicianDiagnostics)
+                    .FirstOrDefaultAsync(d => d.Id == id);
 
-            var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
-            return Ok(diagnosticReadDto);
+                if (diagnostic == null)
+                {
+                    return NotFound(new { message = "Diagnostic not found." });
+                }
+
+                var diagnosticReadDto = _mapper.Map<DiagnosticReadDto>(diagnostic);
+                return Ok(diagnosticReadDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener el diagnóstico: {ex.Message}" });
+            }
         }
 
         // PUT: api/Diagnostics/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDiagnostic(int id, DiagnosticCreateDto diagnosticUpdateDto)
         {
-            if (id <= 0)
-            {
-                return BadRequest(new { message = "Invalid ID." });
-            }
-
-            var diagnostic = await _context.Diagnostics.FindAsync(id);
-            if (diagnostic == null)
-            {
-                return NotFound(new { message = "Diagnostic to update not found." });
-            }
-
-            // Map updates from DTO
-            _mapper.Map(diagnosticUpdateDto, diagnostic);
-
             try
             {
+                if (id <= 0)
+                {
+                    return BadRequest(new { message = "Invalid ID." });
+                }
+
+                var diagnostic = await _context.Diagnostics.FindAsync(id);
+                if (diagnostic == null)
+                {
+                    return NotFound(new { message = "Diagnostic to update not found." });
+                }
+
+                // Map updates from DTO
+                _mapper.Map(diagnosticUpdateDto, diagnostic);
+
                 await _context.SaveChangesAsync();
+                
+                return NoContent();
             }
             catch (DbUpdateException)
             {
                 return StatusCode(500, new { message = "Error updating the diagnostic." });
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al actualizar el diagnóstico: {ex.Message}" });
+            }
         }
 
         // DELETE: api/Diagnostics/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDiagnostic(int id)
         {
-            var diagnostic = await _context.Diagnostics.FindAsync(id);
-            if (diagnostic == null)
+            try
             {
-                return NotFound(new { message = "Diagnostic to delete not found." });
+                var diagnostic = await _context.Diagnostics.FindAsync(id);
+                if (diagnostic == null)
+                {
+                    return NotFound(new { message = "Diagnostic to delete not found." });
+                }
+
+                _context.Diagnostics.Remove(diagnostic);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Diagnostics.Remove(diagnostic);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al eliminar el diagnóstico: {ex.Message}" });
+            }
         }
 
         // GET: api/Diagnostics/byTechnician?name=John&lastName=Doe
         [HttpGet("byTechnician")]
         public async Task<ActionResult<IEnumerable<DiagnosticReadDto>>> GetDiagnosticsByTechnician([FromQuery] string name, [FromQuery] string lastName)
         {
-            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(lastName))
+            try
             {
-                return BadRequest(new { message = "Query parameters 'name' and 'lastName' are required." });
+                if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(lastName))
+                {
+                    return BadRequest(new { message = "Query parameters 'name' and 'lastName' are required." });
+                }
+
+                var fullName = $"{name} {lastName}";
+
+                var diagnostics = await _context.Diagnostics
+                    .Where(d => d.AssignedTechnician == fullName)
+                    .Include(d => d.Vehicle)
+                        .ThenInclude(v => v.UserWorkshop)
+                    .Include(d => d.TechnicianDiagnostics)
+                    .ToListAsync();
+
+                var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+
+                return Ok(diagnosticReadDtos);
             }
-
-            var fullName = $"{name} {lastName}";
-
-            var diagnostics = await _context.Diagnostics
-                .Where(d => d.AssignedTechnician == fullName)
-                .Include(d => d.Vehicle)
-                    .ThenInclude(v => v.UserWorkshop)
-                .Include(d => d.TechnicianDiagnostics)
-                .ToListAsync();
-
-            var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
-
-            return Ok(diagnosticReadDtos);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener los diagnósticos del técnico: {ex.Message}" });
+            }
         }
     }
 }

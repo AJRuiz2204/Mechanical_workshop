@@ -23,47 +23,54 @@ namespace Mechanical_workshop.Controllers
         [HttpGet("GetEstimateData")]
         public IActionResult GetEstimateData()
         {
-            // Cargamos los Estimates con sus relaciones
-            var estimates = _context.Estimates
-                .Include(e => e.Vehicle)
-                .Include(e => e.Parts)
-                .Include(e => e.Labors)
-                .Include(e => e.FlatFees)
-                .ToList();
-
-            // Lista final de renglones
-            var result = new List<EstimateLineDto>();
-
-            // Recorremos cada Estimate
-            foreach (var estimate in estimates)
+            try
             {
-                // 1) Mapeamos las PARTS a DTO
-                var partDtos = _mapper.Map<List<EstimateLineDto>>(estimate.Parts);
-                // A cada DTO le asignamos el VIN (porque lo ignoramos en el map)
-                foreach (var dto in partDtos)
+
+                var estimates = _context.Estimates
+                    .Include(e => e.Vehicle)
+                    .Include(e => e.Parts)
+                    .Include(e => e.Labors)
+                    .Include(e => e.FlatFees)
+                    .ToList();
+
+
+                var result = new List<EstimateLineDto>();
+
+
+                foreach (var estimate in estimates)
                 {
-                    dto.Vin = estimate.Vehicle.Vin;
-                    result.Add(dto);
+
+                    var partDtos = _mapper.Map<List<EstimateLineDto>>(estimate.Parts);
+
+                    foreach (var dto in partDtos)
+                    {
+                        dto.Vin = estimate.Vehicle.Vin;
+                        result.Add(dto);
+                    }
+
+
+                    var laborDtos = _mapper.Map<List<EstimateLineDto>>(estimate.Labors);
+                    foreach (var dto in laborDtos)
+                    {
+                        dto.Vin = estimate.Vehicle.Vin;
+                        result.Add(dto);
+                    }
+
+
+                    var feeDtos = _mapper.Map<List<EstimateLineDto>>(estimate.FlatFees);
+                    foreach (var dto in feeDtos)
+                    {
+                        dto.Vin = estimate.Vehicle.Vin;
+                        result.Add(dto);
+                    }
                 }
 
-                // 2) Mapeamos las LABORS a DTO
-                var laborDtos = _mapper.Map<List<EstimateLineDto>>(estimate.Labors);
-                foreach (var dto in laborDtos)
-                {
-                    dto.Vin = estimate.Vehicle.Vin;
-                    result.Add(dto);
-                }
-
-                // 3) Mapeamos los FLAT FEES a DTO
-                var feeDtos = _mapper.Map<List<EstimateLineDto>>(estimate.FlatFees);
-                foreach (var dto in feeDtos)
-                {
-                    dto.Vin = estimate.Vehicle.Vin;
-                    result.Add(dto);
-                }
+                return Ok(result);
             }
-
-            return Ok(result);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al obtener los datos del resumen: {ex.Message}" });
+            }
         }
     }
 }
