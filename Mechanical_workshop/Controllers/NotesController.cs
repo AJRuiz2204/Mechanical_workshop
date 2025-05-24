@@ -5,6 +5,7 @@ using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 using AutoMapper;
 using static Mechanical_workshop.Dtos.NoteDto;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -14,11 +15,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<NotesController> _logger;
 
-        public NotesController(AppDbContext context, IMapper mapper)
+        public NotesController(AppDbContext context, IMapper mapper, ILogger<NotesController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: api/notes/diagnostic/5
@@ -35,7 +38,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener las notas del diagnóstico: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener las notas del diagnóstico con ID {DiagId}", diagId);
+                return StatusCode(500, new { message = $"Error al obtener las notas del diagnóstico: {ex.Message.ToString()}" });
             }
         }
 
@@ -53,6 +57,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (!notes.Any())
                 {
+                    _logger.LogWarning("No se encontraron notas para el diagnóstico técnico ID {TechDiagId}", techDiagId);
                     return NotFound(new { message = "No notes found for Technician Diagnostic ID." });
                 }
 
@@ -60,7 +65,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener las notas del diagnóstico técnico: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener las notas del diagnóstico técnico con ID {TechDiagId}", techDiagId);
+                return StatusCode(500, new { message = $"Error al obtener las notas del diagnóstico técnico: {ex.Message.ToString()}" });
             }
         }
 
@@ -72,13 +78,18 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 var note = await _context.Notes.FindAsync(id);
-                if (note == null) return NotFound();
+                if (note == null) 
+                {
+                    _logger.LogWarning("Nota con ID {Id} no encontrada", id);
+                    return NotFound();
+                }
 
                 return Ok(_mapper.Map<NoteReadDto>(note));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener la nota: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener la nota con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener la nota: {ex.Message.ToString()}" });
             }
         }
 
@@ -89,19 +100,25 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 var diagnostic = await _context.Diagnostics.FindAsync(dto.DiagnosticId);
-                if (diagnostic == null) return BadRequest("Invalid Diagnostic ID");
+                if (diagnostic == null)
+                {
+                    _logger.LogWarning("Intento de crear nota con ID de diagnóstico inválido: {DiagnosticId}", dto.DiagnosticId);
+                    return BadRequest("Invalid Diagnostic ID");
+                }
 
                 var note = _mapper.Map<Note>(dto);
                 _context.Notes.Add(note);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Nota creada con ID {Id} para diagnóstico {DiagnosticId}", note.Id, dto.DiagnosticId);
                 return CreatedAtAction(nameof(GetNote),
                     new { id = note.Id },
                     _mapper.Map<NoteReadDto>(note));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear la nota: {ex.Message}" });
+                _logger.LogError(ex, "Error al crear la nota");
+                return StatusCode(500, new { message = $"Error al crear la nota: {ex.Message.ToString()}" });
             }
         }
 
@@ -112,17 +129,23 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 var note = await _context.Notes.FindAsync(id);
-                if (note == null) return NotFound();
+                if (note == null)
+                {
+                    _logger.LogWarning("Intento de actualizar nota inexistente con ID {Id}", id);
+                    return NotFound();
+                }
 
                 _mapper.Map(dto, note);
                 note.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Nota con ID {Id} actualizada correctamente", id);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al actualizar la nota: {ex.Message}" });
+                _logger.LogError(ex, "Error al actualizar la nota con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al actualizar la nota: {ex.Message.ToString()}" });
             }
         }
 
@@ -133,16 +156,22 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 var note = await _context.Notes.FindAsync(id);
-                if (note == null) return NotFound();
+                if (note == null)
+                {
+                    _logger.LogWarning("Intento de eliminar nota inexistente con ID {Id}", id);
+                    return NotFound();
+                }
 
                 _context.Notes.Remove(note);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Nota con ID {Id} eliminada correctamente", id);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al eliminar la nota: {ex.Message}" });
+                _logger.LogError(ex, "Error al eliminar la nota con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al eliminar la nota: {ex.Message.ToString()}" });
             }
         }
     }

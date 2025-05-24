@@ -5,6 +5,7 @@ using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -17,11 +18,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<DiagnosticsController> _logger;
 
-        public DiagnosticsController(AppDbContext context, IMapper mapper)
+        public DiagnosticsController(AppDbContext context, IMapper mapper, ILogger<DiagnosticsController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         /// <summary>
@@ -54,7 +57,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear el diagnóstico: {ex.Message}" });
+                _logger.LogError(ex, "Error creating diagnostic");
+                return StatusCode(500, new { message = $"Error al crear el diagnóstico: {ex.ToString()}" });
             }
         }
 
@@ -75,7 +79,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los diagnósticos: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving diagnostics");
+                return StatusCode(500, new { message = $"Error al obtener los diagnósticos: {ex.ToString()}" });
             }
         }
 
@@ -93,6 +98,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (diagnostic == null)
                 {
+                    _logger.LogWarning("Diagnostic with ID {Id} not found", id);
                     return NotFound(new { message = "Diagnostic not found." });
                 }
 
@@ -101,7 +107,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener el diagnóstico: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving diagnostic with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener el diagnóstico: {ex.ToString()}" });
             }
         }
 
@@ -113,12 +120,14 @@ namespace Mechanical_workshop.Controllers
             {
                 if (id <= 0)
                 {
+                    _logger.LogWarning("Invalid diagnostic ID: {Id}", id);
                     return BadRequest(new { message = "Invalid ID." });
                 }
 
                 var diagnostic = await _context.Diagnostics.FindAsync(id);
                 if (diagnostic == null)
                 {
+                    _logger.LogWarning("Diagnostic to update not found, ID: {Id}", id);
                     return NotFound(new { message = "Diagnostic to update not found." });
                 }
 
@@ -129,13 +138,15 @@ namespace Mechanical_workshop.Controllers
                 
                 return NoContent();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return StatusCode(500, new { message = "Error updating the diagnostic." });
+                _logger.LogError(ex, "Database error updating diagnostic with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error updating the diagnostic: {ex.ToString()}" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al actualizar el diagnóstico: {ex.Message}" });
+                _logger.LogError(ex, "Error updating diagnostic with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al actualizar el diagnóstico: {ex.ToString()}" });
             }
         }
 
@@ -148,6 +159,7 @@ namespace Mechanical_workshop.Controllers
                 var diagnostic = await _context.Diagnostics.FindAsync(id);
                 if (diagnostic == null)
                 {
+                    _logger.LogWarning("Diagnostic to delete not found, ID: {Id}", id);
                     return NotFound(new { message = "Diagnostic to delete not found." });
                 }
 
@@ -158,7 +170,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al eliminar el diagnóstico: {ex.Message}" });
+                _logger.LogError(ex, "Error deleting diagnostic with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al eliminar el diagnóstico: {ex.ToString()}" });
             }
         }
 
@@ -170,6 +183,7 @@ namespace Mechanical_workshop.Controllers
             {
                 if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(lastName))
                 {
+                    _logger.LogWarning("Invalid technician name or lastName parameters");
                     return BadRequest(new { message = "Query parameters 'name' and 'lastName' are required." });
                 }
 
@@ -188,7 +202,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los diagnósticos del técnico: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving diagnostics by technician. Name: {Name}, LastName: {LastName}", name, lastName);
+                return StatusCode(500, new { message = $"Error al obtener los diagnósticos del técnico: {ex.ToString()}" });
             }
         }
     }

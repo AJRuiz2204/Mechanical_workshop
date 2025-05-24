@@ -48,7 +48,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener todos los talleres de usuario");
-                return StatusCode(500, new { message = $"Error al obtener los talleres de usuario: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al obtener los talleres de usuario: {ex.Message.ToString()}" });
             }
         }
 
@@ -75,7 +75,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener el taller de usuario con ID {Id}", id);
-                return StatusCode(500, new { message = $"Error al obtener el taller de usuario: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al obtener el taller de usuario: {ex.Message.ToString()}" });
             }
         }
 

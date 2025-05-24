@@ -87,10 +87,10 @@ export const sendEmailWithCode = async (email, code) => {
 
   try {
     const result = await emailjs.send(
-      "service_9tqk6il", // Your Service ID
-      "template_9uo1y37", // Your Template ID
+      "", // Your Service ID
+      "", // Your Template ID
       templateParams,
-      "FKbbn9NFIEk2ZxxX7" // Your Public Key
+      "" // Your Public Key
     );
 
     console.log("Email sent successfully:", result);

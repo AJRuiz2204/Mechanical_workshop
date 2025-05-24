@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Models;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Data;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -12,10 +13,12 @@ namespace Mechanical_workshop.Controllers
     public class VehicleDiagnosticController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<VehicleDiagnosticController> _logger;
 
-        public VehicleDiagnosticController(AppDbContext context)
+        public VehicleDiagnosticController(AppDbContext context, ILogger<VehicleDiagnosticController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/VehicleDiagnostic
@@ -83,7 +86,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los vehículos con diagnósticos: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener los vehículos con diagnósticos");
+                return StatusCode(500, new { message = $"Error al obtener los vehículos con diagnósticos: {ex.Message.ToString()}" });
             }
         }
     }

@@ -42,10 +42,16 @@ namespace Mechanical_workshop.Controllers
                 _logger.LogInformation("Register endpoint llamado.");
 
                 if (await _context.Users.AnyAsync(u => u.Username == userCreateDto.Username))
+                {
+                    _logger.LogWarning("Intento de registro con nombre de usuario ya existente: {Username}", userCreateDto.Username);
                     return BadRequest(new { Message = "Username already exists." });
+                }
 
                 if (await _context.Users.AnyAsync(u => u.Email == userCreateDto.Email))
+                {
+                    _logger.LogWarning("Intento de registro con correo electrónico ya existente: {Email}", userCreateDto.Email);
                     return BadRequest(new { Message = "Email already exists." });
+                }
 
                 var user = _mapper.Map<User>(userCreateDto);
                 user.Password = BCrypt.Net.BCrypt.HashPassword(userCreateDto.Password);
@@ -53,12 +59,13 @@ namespace Mechanical_workshop.Controllers
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Usuario registrado exitosamente con ID: {Id}", user.ID);
                 return CreatedAtAction(nameof(Register), new { id = user.ID }, user);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error durante el registro de usuario");
-                return StatusCode(500, new { message = $"Error al registrar el usuario: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al registrar el usuario: {ex.Message.ToString()}" });
             }
         }
 
@@ -72,12 +79,19 @@ namespace Mechanical_workshop.Controllers
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
                 if (user == null)
+                {
+                    _logger.LogWarning("Intento de inicio de sesión fallido: usuario no encontrado {Username}", userLoginDto.Username);
                     return Unauthorized(new { Message = "User not found." });
+                }
 
                 if (!BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password))
+                {
+                    _logger.LogWarning("Intento de inicio de sesión fallido: contraseña incorrecta para usuario {Username}", userLoginDto.Username);
                     return Unauthorized(new { Message = "Incorrect password." });
+                }
 
                 var token = GenerateJwtToken(user);
+                _logger.LogInformation("Usuario {Username} ha iniciado sesión exitosamente", user.Username);
                 return Ok(new
                 {
                     Token = token,
@@ -95,7 +109,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error durante el inicio de sesión");
-                return StatusCode(500, new { message = $"Error al iniciar sesión: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al iniciar sesión: {ex.Message.ToString()}" });
             }
         }
 
@@ -153,7 +167,10 @@ namespace Mechanical_workshop.Controllers
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
                 if (user == null)
+                {
+                    _logger.LogWarning("Usuario no encontrado al obtener perfil: {Username}", username);
                     return NotFound(new { Message = "User not found." });
+                }
 
                 return Ok(new
                 {
@@ -168,7 +185,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener el perfil del usuario");
-                return StatusCode(500, new { message = $"Error al obtener el perfil: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al obtener el perfil: {ex.Message.ToString()}" });
             }
         }
 
@@ -179,11 +196,17 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 if (!IsValidEmail(forgotPasswordDto.Email))
+                {
+                    _logger.LogWarning("Formato de correo inválido en solicitud de contraseña olvidada: {Email}", forgotPasswordDto.Email);
                     return BadRequest(new { Message = "Invalid email format." });
+                }
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDto.Email);
                 if (user == null)
+                {
+                    _logger.LogWarning("Correo no encontrado en solicitud de contraseña olvidada: {Email}", forgotPasswordDto.Email);
                     return BadRequest(new { Message = "Email not found." });
+                }
 
                 var code = new Random().Next(100000, 999999).ToString();
                 user.ResetCode = code;
@@ -191,6 +214,7 @@ namespace Mechanical_workshop.Controllers
 
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Código generado para {Email}: {Code}", user.Email, code);
                 Console.WriteLine($"Generated code for {user.Email}: {code}");
 
                 return Ok(new { Code = code });
@@ -198,7 +222,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al procesar la solicitud de contraseña olvidada");
-                return StatusCode(500, new { message = $"Error al procesar la solicitud: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al procesar la solicitud: {ex.Message.ToString()}" });
             }
         }
 
@@ -223,15 +247,17 @@ namespace Mechanical_workshop.Controllers
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == verifyCodeDto.Email);
                 if (user == null || user.ResetCode != verifyCodeDto.Code || user.ResetCodeExpiry < DateTime.Now)
                 {
+                    _logger.LogWarning("Verificación de código fallida para correo: {Email}", verifyCodeDto.Email);
                     return BadRequest(new { Message = "Invalid or expired code." });
                 }
 
+                _logger.LogInformation("Código verificado exitosamente para usuario: {Email}", user.Email);
                 return Ok(new { Message = "Code verified successfully." });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al verificar el código");
-                return StatusCode(500, new { message = $"Error al verificar el código: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al verificar el código: {ex.Message.ToString()}" });
             }
         }
 
@@ -248,7 +274,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al acceder a datos de administrador");
-                return StatusCode(500, new { message = $"Error al acceder a datos de administrador: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al acceder a datos de administrador: {ex.Message.ToString()}" });
             }
         }
     }

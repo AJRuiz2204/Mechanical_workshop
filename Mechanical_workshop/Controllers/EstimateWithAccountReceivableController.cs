@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -16,11 +17,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<EstimateWithAccountReceivableController> _logger;
 
-        public EstimateWithAccountReceivableController(AppDbContext context, IMapper mapper)
+        public EstimateWithAccountReceivableController(AppDbContext context, IMapper mapper, ILogger<EstimateWithAccountReceivableController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: api/EstimateWithAccountReceivable
@@ -65,7 +68,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los presupuestos con cuentas por cobrar: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving estimates with accounts receivable");
+                return StatusCode(500, new { message = $"Error al obtener los presupuestos con cuentas por cobrar: {ex.ToString()}" });
             }
         }
     }

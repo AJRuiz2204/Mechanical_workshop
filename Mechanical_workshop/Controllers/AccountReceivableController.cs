@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -14,11 +15,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<AccountReceivableController> _logger;
 
-        public AccountReceivableController(AppDbContext context, IMapper mapper)
+        public AccountReceivableController(AppDbContext context, IMapper mapper, ILogger<AccountReceivableController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: api/AccountReceivable
@@ -41,7 +44,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener cuentas por cobrar: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving accounts receivable");
+                return StatusCode(500, new { message = $"Error al obtener cuentas por cobrar: {ex.ToString()}" });
             }
         }
 
@@ -62,6 +66,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (account == null)
                 {
+                    _logger.LogWarning("Account receivable with ID {Id} not found", id);
                     return NotFound();
                 }
 
@@ -69,7 +74,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener la cuenta por cobrar: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving account receivable with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener la cuenta por cobrar: {ex.ToString()}" });
             }
         }
 
@@ -97,6 +103,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (estimate == null)
                 {
+                    _logger.LogWarning("Attempt to create account receivable with non-existent estimate ID: {EstimateId}", createDto.EstimateId);
                     return BadRequest("El presupuesto especificado no existe");
                 }
 
@@ -115,7 +122,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear la cuenta por cobrar: {ex.Message}" });
+                _logger.LogError(ex, "Error creating account receivable for estimate ID: {EstimateId}", createDto.EstimateId);
+                return StatusCode(500, new { message = $"Error al crear la cuenta por cobrar: {ex.ToString()}" });
             }
         }
 
@@ -128,6 +136,7 @@ namespace Mechanical_workshop.Controllers
                 var account = await _context.AccountsReceivable.FindAsync(id);
                 if (account == null)
                 {
+                    _logger.LogWarning("Account receivable with ID {Id} not found for update", id);
                     return NotFound();
                 }
 
@@ -145,7 +154,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al actualizar la cuenta por cobrar: {ex.Message}" });
+                _logger.LogError(ex, "Error updating account receivable with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al actualizar la cuenta por cobrar: {ex.ToString()}" });
             }
         }
 
@@ -158,6 +168,7 @@ namespace Mechanical_workshop.Controllers
                 var account = await _context.AccountsReceivable.FindAsync(id);
                 if (account == null)
                 {
+                    _logger.LogWarning("Account receivable with ID {Id} not found for deletion", id);
                     return NotFound();
                 }
 
@@ -168,7 +179,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al eliminar la cuenta por cobrar: {ex.Message}" });
+                _logger.LogError(ex, "Error deleting account receivable with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al eliminar la cuenta por cobrar: {ex.ToString()}" });
             }
         }
 
@@ -184,11 +196,14 @@ namespace Mechanical_workshop.Controllers
 
                 if (account == null)
                 {
+                    _logger.LogWarning("Attempt to create payment for non-existent account receivable ID: {AccountId}", paymentDto.AccountReceivableId);
                     return NotFound("Cuenta por cobrar no encontrada");
                 }
 
                 if (paymentDto.Amount > account.Balance)
                 {
+                    _logger.LogWarning("Payment amount ({Amount}) exceeds balance ({Balance}) for account ID: {AccountId}", 
+                        paymentDto.Amount, account.Balance, paymentDto.AccountReceivableId);
                     return BadRequest("El monto excede el saldo pendiente");
                 }
 
@@ -215,7 +230,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear el pago: {ex.Message}" });
+                _logger.LogError(ex, "Error creating payment for account ID: {AccountId}", paymentDto.AccountReceivableId);
+                return StatusCode(500, new { message = $"Error al crear el pago: {ex.ToString()}" });
             }
         }
 
@@ -233,7 +249,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los pagos: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving payments for account ID: {AccountId}", accountId);
+                return StatusCode(500, new { message = $"Error al obtener los pagos: {ex.ToString()}" });
             }
         }
 
@@ -268,7 +285,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener todos los pagos: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving all payments");
+                return StatusCode(500, new { message = $"Error al obtener todos los pagos: {ex.ToString()}" });
             }
         }
 
@@ -303,7 +321,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los pagos por cliente: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving payments for customer ID: {CustomerId}", customerId);
+                return StatusCode(500, new { message = $"Error al obtener los pagos por cliente: {ex.ToString()}" });
             }
         }
     }

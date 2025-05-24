@@ -6,6 +6,7 @@ using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -15,11 +16,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<TechnicianDiagnosticsController> _logger;
 
-        public TechnicianDiagnosticsController(AppDbContext context, IMapper mapper)
+        public TechnicianDiagnosticsController(AppDbContext context, IMapper mapper, ILogger<TechnicianDiagnosticsController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // POST: api/TechnicianDiagnostics
@@ -30,7 +33,10 @@ namespace Mechanical_workshop.Controllers
             {
                 var diagnostic = await _context.Diagnostics.FindAsync(dto.DiagnosticId);
                 if (diagnostic == null)
+                {
+                    _logger.LogWarning("Diagnóstico no encontrado con ID: {DiagnosticId}", dto.DiagnosticId);
                     return NotFound(new { message = "Diagnostic not found." });
+                }
 
                 var entity = _mapper.Map<TechnicianDiagnostic>(dto);
                 _context.TechnicianDiagnostics.Add(entity);
@@ -43,11 +49,13 @@ namespace Mechanical_workshop.Controllers
                 }
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Diagnóstico técnico creado con ID: {Id}", entity.Id);
                 return CreatedAtAction(nameof(GetTechnicianDiagnostic), new { id = entity.Id }, _mapper.Map<TechnicianDiagnosticReadDto>(entity));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear el diagnóstico del técnico: {ex.Message}" });
+                _logger.LogError(ex, "Error al crear el diagnóstico del técnico");
+                return StatusCode(500, new { message = $"Error al crear el diagnóstico del técnico: {ex.Message.ToString()}" });
             }
         }
 
@@ -58,7 +66,10 @@ namespace Mechanical_workshop.Controllers
             {
                 var existingTd = await _context.TechnicianDiagnostics.FindAsync(id);
                 if (existingTd == null)
+                {
+                    _logger.LogWarning("Diagnóstico técnico no encontrado con ID: {Id}", id);
                     return NotFound(new { message = "Technician Diagnostic to update was not found." });
+                }
 
                 existingTd.Mileage = dto.Mileage;
                 existingTd.ExtendedDiagnostic = dto.ExtendedDiagnostic;
@@ -72,11 +83,13 @@ namespace Mechanical_workshop.Controllers
                 }
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Diagnóstico técnico actualizado con ID: {Id}", id);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al actualizar el diagnóstico del técnico: {ex.Message}" });
+                _logger.LogError(ex, "Error al actualizar el diagnóstico del técnico con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al actualizar el diagnóstico del técnico: {ex.Message.ToString()}" });
             }
         }
 
@@ -91,6 +104,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (td == null)
                 {
+                    _logger.LogWarning("Diagnóstico técnico no encontrado con ID: {Id}", id);
                     return NotFound(new { message = "Technician Diagnostic with that ID was not found." });
                 }
 
@@ -99,7 +113,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener el diagnóstico del técnico: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener el diagnóstico del técnico con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener el diagnóstico del técnico: {ex.Message.ToString()}" });
             }
         }
 
@@ -115,6 +130,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (techDiag == null)
                 {
+                    _logger.LogWarning("No hay diagnóstico técnico para el diagnóstico ID: {DiagnosticId}", diagnosticId);
                     return NotFound(new { message = "There is no TechnicianDiagnostic for that DiagnosticId." });
                 }
 
@@ -123,7 +139,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener el diagnóstico por ID de diagnóstico: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener el diagnóstico por ID de diagnóstico: {DiagnosticId}", diagnosticId);
+                return StatusCode(500, new { message = $"Error al obtener el diagnóstico por ID de diagnóstico: {ex.Message.ToString()}" });
             }
         }
 
@@ -136,16 +153,22 @@ namespace Mechanical_workshop.Controllers
                     .Include(td => td.Notes)
                     .FirstOrDefaultAsync(td => td.Id == id);
 
-                if (td == null) return NotFound();
+                if (td == null)
+                {
+                    _logger.LogWarning("Intento de eliminar un diagnóstico técnico inexistente con ID: {Id}", id);
+                    return NotFound();
+                }
 
                 _context.TechnicianDiagnostics.Remove(td);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Diagnóstico técnico eliminado con ID: {Id}", id);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al eliminar el diagnóstico del técnico: {ex.Message}" });
+                _logger.LogError(ex, "Error al eliminar el diagnóstico del técnico con ID {Id}", id);
+                return StatusCode(500, new { message = $"Error al eliminar el diagnóstico del técnico: {ex.Message.ToString()}" });
             }
         }
 
@@ -160,6 +183,7 @@ namespace Mechanical_workshop.Controllers
                     .FirstOrDefaultAsync(td => td.Diagnostic.VehicleId == vehicleId);
                 if (techDiag == null)
                 {
+                    _logger.LogWarning("No se encontró diagnóstico técnico para el vehículo ID: {VehicleId}", vehicleId);
                     return NotFound(new { message = $"No Technician Diagnostic found for Vehicle ID {vehicleId}." });
                 }
                 var readDto = _mapper.Map<TechnicianDiagnosticReadDto>(techDiag);
@@ -167,7 +191,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener el diagnóstico por ID de vehículo: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener el diagnóstico por ID de vehículo: {VehicleId}", vehicleId);
+                return StatusCode(500, new { message = $"Error al obtener el diagnóstico por ID de vehículo: {ex.Message.ToString()}" });
             }
         }
 
@@ -186,7 +211,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los diagnósticos por IDs: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener los diagnósticos por IDs: {@DiagnosticIds}", diagnosticIds);
+                return StatusCode(500, new { message = $"Error al obtener los diagnósticos por IDs: {ex.Message.ToString()}" });
             }
         }
     }

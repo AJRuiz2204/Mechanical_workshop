@@ -5,6 +5,7 @@ using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -14,11 +15,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<TechnicianController> _logger;
 
-        public TechnicianController(AppDbContext context, IMapper mapper)
+        public TechnicianController(AppDbContext context, IMapper mapper, ILogger<TechnicianController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -36,7 +39,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los técnicos: {ex.Message}" });
+                _logger.LogError(ex, "Error al obtener los técnicos");
+                return StatusCode(500, new { message = $"Error al obtener los técnicos: {ex.Message.ToString()}" });
             }
         }
     }

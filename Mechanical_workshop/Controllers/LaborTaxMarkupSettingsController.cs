@@ -8,6 +8,7 @@ using System.Linq;
 using Mechanical_workshop.Data;
 using Mechanical_workshop.Models;
 using Mechanical_workshop.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -17,11 +18,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<LaborTaxMarkupSettingsController> _logger;
 
-        public LaborTaxMarkupSettingsController(AppDbContext context, IMapper mapper)
+        public LaborTaxMarkupSettingsController(AppDbContext context, IMapper mapper, ILogger<LaborTaxMarkupSettingsController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // POST: api/LaborTaxMarkupSettings
@@ -38,7 +41,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear la configuración: {ex.Message}" });
+                _logger.LogError(ex, "Error creating Labor Tax Markup Setting");
+                return StatusCode(500, new { message = $"Error al crear la configuración: {ex.ToString()}" });
             }
         }
 
@@ -56,7 +60,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener la configuración: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving Labor Tax Markup Setting with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener la configuración: {ex.ToString()}" });
             }
         }
 
@@ -82,7 +87,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al actualizar la configuración: {ex.Message}" });
+                _logger.LogError(ex, "Error updating Labor Tax Markup Setting with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al actualizar la configuración: {ex.ToString()}" });
             }
         }
     }

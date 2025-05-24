@@ -98,7 +98,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generando reporte de ventas");
-                return StatusCode(500, new { message = $"Error al generar el reporte de ventas: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al generar el reporte de ventas: {ex.Message.ToString()}" });
             }
         }
 
@@ -114,6 +114,7 @@ namespace Mechanical_workshop.Controllers
                     .FirstOrDefaultAsync(r => r.SalesReportId == id);
                 if (salesReport == null)
                 {
+                    _logger.LogWarning("Reporte de ventas con ID {Id} no encontrado", id);
                     return NotFound();
                 }
                 var reportDto = _mapper.Map<SalesReportDto>(salesReport);
@@ -122,7 +123,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error obteniendo reporte de ventas con ID {Id}", id);
-                return StatusCode(500, new { message = $"Error al obtener el reporte de ventas: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al obtener el reporte de ventas: {ex.Message.ToString()}" });
             }
         }
 
@@ -134,7 +135,7 @@ namespace Mechanical_workshop.Controllers
             {
                 if (reportDto == null)
                 {
-                    _logger.LogError("No report information provided.");
+                    _logger.LogWarning("No report information provided.");
                     return BadRequest("No report information provided.");
                 }
 
@@ -157,12 +158,13 @@ namespace Mechanical_workshop.Controllers
                 await _context.SaveChangesAsync();
 
                 var createdReportDto = _mapper.Map<SalesReportDto>(salesReport);
+                _logger.LogInformation("Reporte de ventas creado con ID: {Id}", salesReport.SalesReportId);
                 return CreatedAtAction(nameof(GetSalesReportById), new { id = createdReportDto.SalesReportId }, createdReportDto);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear reporte de ventas");
-                return StatusCode(500, new { message = $"Error al crear el reporte de ventas: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al crear el reporte de ventas: {ex.Message.ToString()}" });
             }
         }
 
@@ -181,7 +183,7 @@ namespace Mechanical_workshop.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener todos los reportes de ventas");
-                return StatusCode(500, new { message = $"Error al obtener todos los reportes de ventas: {ex.Message}" });
+                return StatusCode(500, new { message = $"Error al obtener todos los reportes de ventas: {ex.Message.ToString()}" });
             }
         }
     }

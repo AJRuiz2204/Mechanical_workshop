@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -13,11 +14,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<EstimatesSumaryController> _logger;
 
-        public EstimatesSumaryController(AppDbContext context, IMapper mapper)
+        public EstimatesSumaryController(AppDbContext context, IMapper mapper, ILogger<EstimatesSumaryController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet("GetEstimateData")]
@@ -69,7 +72,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los datos del resumen: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving estimate summary data");
+                return StatusCode(500, new { message = $"Error al obtener los datos del resumen: {ex.ToString()}" });
             }
         }
     }

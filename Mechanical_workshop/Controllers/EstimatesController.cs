@@ -7,6 +7,7 @@ using AutoMapper;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
 {
@@ -16,11 +17,13 @@ namespace Mechanical_workshop.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<EstimatesController> _logger;
 
-        public EstimatesController(AppDbContext context, IMapper mapper)
+        public EstimatesController(AppDbContext context, IMapper mapper, ILogger<EstimatesController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // GET: api/Estimates
@@ -44,7 +47,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener los presupuestos: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving estimates");
+                return StatusCode(500, new { message = $"Error al obtener los presupuestos: {ex.ToString()}" });
             }
         }
 
@@ -66,6 +70,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (estimate == null)
                 {
+                    _logger.LogWarning("Estimate with ID {Id} not found", id);
                     return NotFound(new { message = $"Estimate with ID {id} not found." });
                 }
 
@@ -74,7 +79,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener el presupuesto: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving estimate with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener el presupuesto: {ex.ToString()}" });
             }
         }
 
@@ -96,6 +102,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (estimate == null)
                 {
+                    _logger.LogWarning("Estimate with ID {Id} not found when retrieving with user workshop", id);
                     return NotFound(new { message = $"Estimate with ID {id} not found." });
                 }
 
@@ -104,7 +111,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al obtener el presupuesto con información del cliente: {ex.Message}" });
+                _logger.LogError(ex, "Error retrieving estimate with user workshop, ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al obtener el presupuesto con información del cliente: {ex.ToString()}" });
             }
         }
 
@@ -121,6 +129,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (vehicle == null)
                 {
+                    _logger.LogWarning("Attempt to create estimate with invalid Vehicle ID: {VehicleId}", estimateCreateDto.VehicleID);
                     return BadRequest(new { message = "Invalid Vehicle ID." });
                 }
 
@@ -152,7 +161,8 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al crear el presupuesto: {ex.Message}" });
+                _logger.LogError(ex, "Error creating estimate");
+                return StatusCode(500, new { message = $"Error al crear el presupuesto: {ex.ToString()}" });
             }
         }
 
@@ -163,7 +173,10 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 if (id != dto.ID)
+                {
+                    _logger.LogWarning("ID mismatch in update estimate request. Path ID: {PathId}, DTO ID: {DtoId}", id, dto.ID);
                     return BadRequest(new { message = "ID mismatch." });
+                }
 
                 var estimate = await _context.Estimates
                     .Include(e => e.TechnicianDiagnostic)
@@ -174,6 +187,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (estimate == null)
                 {
+                    _logger.LogWarning("Estimate with ID {Id} not found for update", id);
                     return NotFound(new { message = $"Estimate with ID {id} not found." });
                 }
 
@@ -226,11 +240,13 @@ namespace Mechanical_workshop.Controllers
             }
             catch (DbUpdateException ex)
             {
-                return StatusCode(500, new { message = "Error updating the estimate.", details = ex.Message });
+                _logger.LogError(ex, "Database error updating estimate with ID: {Id}", id);
+                return StatusCode(500, new { message = "Error updating the estimate.", details = ex.ToString() });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al actualizar el presupuesto: {ex.Message}" });
+                _logger.LogError(ex, "Error updating estimate with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al actualizar el presupuesto: {ex.ToString()}" });
             }
         }
 
@@ -249,6 +265,7 @@ namespace Mechanical_workshop.Controllers
 
                 if (estimate == null)
                 {
+                    _logger.LogWarning("Attempt to delete non-existent estimate with ID: {Id}", id);
                     return NotFound(new { message = $"Estimate with ID {id} not found." });
                 }
 
@@ -269,13 +286,22 @@ namespace Mechanical_workshop.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Error al eliminar el presupuesto: {ex.Message}" });
+                _logger.LogError(ex, "Error deleting estimate with ID: {Id}", id);
+                return StatusCode(500, new { message = $"Error al eliminar el presupuesto: {ex.ToString()}" });
             }
         }
 
         private bool EstimateExists(int id)
         {
-            return _context.Estimates.Any(e => e.ID == id);
+            try
+            {
+                return _context.Estimates.Any(e => e.ID == id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if estimate exists with ID: {Id}", id);
+                throw;
+            }
         }
     }
 }
