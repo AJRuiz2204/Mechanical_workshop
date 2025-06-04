@@ -7,49 +7,56 @@ namespace Mechanical_workshop.Dtos
     public class VehicleDto
     {
         public int Id { get; set; }
+
         [Required]
         public string Vin { get; set; } = string.Empty;
+
         [Required]
         public string Make { get; set; } = string.Empty;
+
         [Required]
         public string Model { get; set; } = string.Empty;
+
         [Required]
         public string Year { get; set; } = string.Empty;
-        [Required]
-        public string Engine { get; set; } = string.Empty;
-        [Required]
-        public string Plate { get; set; } = string.Empty;
-        [Required]
-        public string State { get; set; } = string.Empty;
-        public string Status { get; set; } = "Visto";
+        public string? Engine { get; set; }
+
+        public string? Plate { get; set; }
+
+        public string? State { get; set; }
+
+        public string? Status { get; set; } = "Visto";
 
     }
 
     public class UserWorkshopCreateDto
     {
-        [Required]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
+
         [Required]
         public string Name { get; set; } = string.Empty;
+
         [Required]
         public string LastName { get; set; } = string.Empty;
-        [Required]
-        public string Profile { get; set; } = string.Empty;
-        [Required]
-        public string Address { get; set; } = string.Empty;
-        [Required]
-        public string City { get; set; } = string.Empty;
-        [Required]
-        public string State { get; set; } = string.Empty;
-        [Required]
-        public string Zip { get; set; } = string.Empty;
+
+        public string? Profile { get; set; }
+
+        public string? Address { get; set; }
+
+        public string? City { get; set; }
+
+        public string? State { get; set; }
+
+        public string? Zip { get; set; }
+
         [Required]
         public string PrimaryNumber { get; set; } = string.Empty;
+
         public string? SecondaryNumber { get; set; }
-        [Required]
-        public bool NoTax { get; set; }
-        [Required]
-        public List<VehicleDto> Vehicles { get; set; } = new();
+
+        public bool? NoTax { get; set; }
+
+        public List<VehicleDto>? Vehicles { get; set; } = new();
     }
 
     public class UserWorkshopReadDto

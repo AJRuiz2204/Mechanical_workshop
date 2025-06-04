@@ -36,7 +36,10 @@ namespace Mechanical_workshop.Profiles
             CreateMap<Vehicle, VehicleDto>();
 
             // Mapping for updating
-            CreateMap<UserWorkshopUpdateDto, UserWorkshop>();
+            CreateMap<UserWorkshopUpdateDto, UserWorkshop>()
+                .ForMember(dest => dest.Vehicles, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
             CreateMap<VehicleDto, Vehicle>()
                 .ForMember(dest => dest.UserWorkshopId, opt => opt.Ignore());
 

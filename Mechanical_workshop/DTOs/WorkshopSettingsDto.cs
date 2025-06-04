@@ -57,7 +57,6 @@ namespace Mechanical_workshop.DTOs
         public string? PrimaryPhone { get; set; }
 
 
-        [Phone]
         [StringLength(50)]
         public string? SecondaryPhone { get; set; }
 
@@ -98,7 +97,6 @@ namespace Mechanical_workshop.DTOs
         public string? PrimaryPhone { get; set; }
 
 
-        [Phone]
         [StringLength(50)]
         public string? SecondaryPhone { get; set; }
 

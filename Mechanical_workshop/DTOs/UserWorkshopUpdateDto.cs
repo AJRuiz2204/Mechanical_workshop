@@ -8,10 +8,7 @@ namespace Mechanical_workshop.Dtos
         [Required]
         public int Id { get; set; }
 
-        [Required]
-        [EmailAddress]
-        [StringLength(100)]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -21,36 +18,23 @@ namespace Mechanical_workshop.Dtos
         [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
 
-        
-        [StringLength(50)]
-        public string Username { get; set; } = string.Empty;
+        public string? Username { get; set; }
 
-        [Required]
-        [StringLength(50)]
-        public string Profile { get; set; } = string.Empty;
+        public string? Profile { get; set; }
 
-        [Required]
-        [StringLength(200)]
-        public string Address { get; set; } = string.Empty;
+        public string? Address { get; set; }
 
-        [Required]
-        [StringLength(100)]
-        public string City { get; set; } = string.Empty;
+        public string? City { get; set; }
 
-        [Required]
-        [StringLength(100)]
-        public string State { get; set; } = string.Empty;
+        public string? State { get; set; }
 
-        [Required]
-        [StringLength(20)]
-        public string Zip { get; set; } = string.Empty;
+        public string? Zip { get; set; }
 
         [Required]
         [Phone]
         [StringLength(20)]
         public string PrimaryNumber { get; set; } = string.Empty;
 
-        [Phone]
         [StringLength(20)]
         public string? SecondaryNumber { get; set; }
 

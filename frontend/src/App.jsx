@@ -88,7 +88,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/:id"
             element={
-              <ProtectedRoute requiredRole={["Technician", "Manager"]}>
+              <ProtectedRoute requiredRoles={["Technician", "Manager"]}>
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }
@@ -96,7 +96,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/edit/:techDiagId"
             element={
-              <ProtectedRoute requiredRole={["Technician", "Manager"]}>
+              <ProtectedRoute requiredRoles={["Technician", "Manager"]}>
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }
@@ -104,7 +104,7 @@ const App = () => {
           <Route
             path="/technicianDiagnostic/create/:diagnosticId"
             element={
-              <ProtectedRoute requiredRole={["Technician", "Manager"]}>
+              <ProtectedRoute requiredRoles={["Technician", "Manager"]}>
                 <TechnicianDiagnostic />
               </ProtectedRoute>
             }

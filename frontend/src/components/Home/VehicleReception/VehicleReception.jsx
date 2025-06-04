@@ -168,20 +168,20 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
       const token = getToken();
       let payload = { ...userWorkshop };
 
-      // Validación de campos obligatorios
+      // Required fields validation
       const requiredFields = ["name", "lastName", "primaryNumber"];
       const missingFields = requiredFields.filter(
         (field) => !payload[field].trim()
       );
 
-      // Validar vehículos
+      // Validate vehicles
       const invalidVehicles = payload.vehicles.filter(
         (v) =>
           !v.vin.trim() || !v.make.trim() || !v.model.trim() || !v.year.trim()
       );
 
       if (missingFields.length > 0 || invalidVehicles.length > 0) {
-        throw new Error("Por favor complete todos los campos obligatorios");
+        throw new Error("Please complete all required fields");
       }
 
       // Ensure username and profile
@@ -190,6 +190,14 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
 
       // Filter vehicles without VIN
       payload.vehicles = payload.vehicles.filter((v) => v.vin.trim());
+
+      // Remove empty secondary number to satisfy backend phone validation
+      if (!payload.secondaryNumber.trim()) {
+        delete payload.secondaryNumber;
+      }
+
+      // Always include address field (never null)
+      payload.address = payload.address || "";
 
       if (editingId) {
         await updateUserWorkshop(editingId, payload, token);
@@ -393,9 +401,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   <Form.Item
                     label="Model"
                     required
-                    rules={[
-                      { required: true, message: "Please enter the model" },
-                    ]}
+                    rules={[{ required: true, message: "Please enter the model" }]}
                   >
                     <Input
                       value={vehicle.model}
