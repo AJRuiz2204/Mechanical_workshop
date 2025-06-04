@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 using System.Text;
 using Mechanical_workshop.MappingProfiles;
 using MechanicalWorkshop.Profiles;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,9 +45,14 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts => {
+        opts.JsonSerializerOptions.NumberHandling =
+            JsonNumberHandling.AllowReadingFromString |
+            JsonNumberHandling.AllowNamedFloatingPointLiterals;
+    });
 
-builder.Services.AddCors(options =>
+builder.Services.AddCors(options => 
 {
     options.AddPolicy("CorsPolicy", policy =>
     {

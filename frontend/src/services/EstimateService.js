@@ -95,10 +95,14 @@ export const getEstimateById = async (id) => {
  */
 export const createEstimate = async (estimateData) => {
   try {
+    console.log("Creating estimate with data:", JSON.stringify(estimateData, null, 2));
     const response = await api.post(API_URL, estimateData);
     return response.data;
   } catch (error) {
     console.error("Error in createEstimate:", error);
+    console.error("Error response data:", error.response?.data);
+    console.error("Error response status:", error.response?.status);
+    console.error("Full error response:", error.response);
     throw error;
   }
 };
@@ -114,10 +118,13 @@ export const createEstimate = async (estimateData) => {
  */
 export const updateEstimate = async (id, estimateData) => {
   try {
+    console.log("Updating estimate with data:", JSON.stringify(estimateData, null, 2));
     const response = await api.put(`${API_URL}/${id}`, estimateData);
     return response.data;
   } catch (error) {
     console.error("Error in updateEstimate:", error);
+    console.error("Error response data:", error.response?.data);
+    console.error("Error response status:", error.response?.status);
     throw error;
   }
 };

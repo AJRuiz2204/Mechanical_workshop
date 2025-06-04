@@ -73,7 +73,7 @@ const Estimate = () => {
   });
   const [newLabor, setNewLabor] = useState({
     description: "",
-    duration: 0,
+    duration: 0.25,
     laborRate: 0,
     extendedPrice: 0,
     applyLaborTax: false,
@@ -264,7 +264,7 @@ const Estimate = () => {
       : settings?.laborTaxByDefault ?? false;
     setNewLabor({
       description: "",
-      duration: 0,
+      duration: 0.25,
       laborRate: settings?.defaultHourlyRate ?? "",
       extendedPrice: 0,
       applyLaborTax: defaultTax,
@@ -275,7 +275,7 @@ const Estimate = () => {
     setShowLaborModal(false);
     setNewLabor({
       description: "",
-      duration: 0,
+      duration: 0.25,
       laborRate: settings?.defaultHourlyRate ?? "",
       extendedPrice: 0,
       applyLaborTax: owner?.noTax
@@ -443,50 +443,122 @@ const Estimate = () => {
       return;
     }
 
+    // Helper function to safely convert and round numbers
+    const safeParseFloat = (value, decimals = 2) => {
+      const num = parseFloat(value) || 0;
+      if (isNaN(num) || !isFinite(num)) return 0;
+      return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    };
+
+    const safeParseInt = (value) => {
+      const num = parseInt(value, 10);
+      if (isNaN(num) || !isFinite(num)) return 0;
+      return Math.max(0, num);
+    };
+
+    // Validate all parts
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (!part.description?.trim()) {
+        setError(`Part ${i + 1}: Description is required.`);
+        return;
+      }
+      if (!part.partNumber?.trim()) {
+        setError(`Part ${i + 1}: Part number is required.`);
+        return;
+      }
+      if (safeParseInt(part.quantity) <= 0) {
+        setError(`Part ${i + 1}: Quantity must be greater than 0.`);
+        return;
+      }
+      if (safeParseFloat(part.netPrice) < 0 || safeParseFloat(part.listPrice) < 0) {
+        setError(`Part ${i + 1}: Prices cannot be negative.`);
+        return;
+      }
+    }
+
+    // Validate all labors
+    for (let i = 0; i < labors.length; i++) {
+      const labor = labors[i];
+      if (!labor.description?.trim()) {
+        setError(`Labor ${i + 1}: Description is required.`);
+        return;
+      }
+      if (safeParseFloat(labor.duration) <= 0) {
+        setError(`Labor ${i + 1}: Duration must be greater than 0.`);
+        return;
+      }
+      if (safeParseFloat(labor.laborRate) < 0) {
+        setError(`Labor ${i + 1}: Labor rate cannot be negative.`);
+        return;
+      }
+    }
+
+    // Validate all flat fees
+    for (let i = 0; i < flatFees.length; i++) {
+      const fee = flatFees[i];
+      if (!fee.description?.trim()) {
+        setError(`Flat Fee ${i + 1}: Description is required.`);
+        return;
+      }
+      if (safeParseFloat(fee.flatFeePrice) < 0) {
+        setError(`Flat Fee ${i + 1}: Price cannot be negative.`);
+        return;
+      }
+    }
+
     const dto = {
       VehicleID: !isEditMode
-        ? parseInt(selectedOption.vehicle.id, 10)
-        : parseInt(selectedVehicle.id, 10) || 0,
-      CustomerNote: customerNote,
-      Subtotal: subtotal,
-      Tax: tax,
-      Total: total,
-      Mileage: mileage,
-      ExtendedDiagnostic: extendedDiagnostic,
-      AuthorizationStatus: authorizationStatus,
+        ? safeParseInt(selectedOption.vehicle.id)
+        : safeParseInt(selectedVehicle.id),
+      CustomerNote: customerNote.trim(),
+      Subtotal: safeParseFloat(subtotal),
+      Tax: safeParseFloat(tax),
+      Total: safeParseFloat(total),
+      Mileage: safeParseInt(mileage),
+      ExtendedDiagnostic: extendedDiagnostic || "",
+      AuthorizationStatus: authorizationStatus || "Pending",
       TechnicianDiagnostic: extendedDiagnostic
         ? {
-            DiagnosticId: diagnostic?.diagnosticId || 0,
-            Mileage: diagnostic?.mileage || 0,
+            DiagnosticId: safeParseInt(diagnostic?.diagnosticId),
+            Mileage: safeParseInt(diagnostic?.mileage || mileage),
             ExtendedDiagnostic: extendedDiagnostic,
           }
         : null,
       Parts: parts.map((p) => ({
-        Description: p.description,
-        PartNumber: p.partNumber,
-        Quantity: p.quantity,
-        NetPrice: p.netPrice,
-        ListPrice: p.listPrice,
-        ExtendedPrice: p.extendedPrice,
-        Taxable: p.applyPartTax,
+        Description: (p.description || "").trim(),
+        PartNumber: (p.partNumber || "").trim(),
+        Quantity: safeParseInt(p.quantity),
+        NetPrice: safeParseFloat(p.netPrice),
+        ListPrice: safeParseFloat(p.listPrice),
+        ExtendedPrice: safeParseFloat(p.extendedPrice),
+        Taxable: Boolean(p.applyPartTax),
       })),
       Labors: labors.map((l) => ({
-        Description: l.description,
-        Duration: l.duration,
-        LaborRate: l.laborRate,
-        ExtendedPrice: l.extendedPrice,
-        Taxable: l.applyLaborTax,
+        Description: (l.description || "").trim(),
+        Duration: safeParseFloat(l.duration),
+        LaborRate: safeParseFloat(l.laborRate),
+        ExtendedPrice: safeParseFloat(l.extendedPrice),
+        Taxable: Boolean(l.applyLaborTax),
       })),
       FlatFees: flatFees.map((f) => ({
-        Description: f.description,
-        FlatFeePrice: f.flatFeePrice,
-        ExtendedPrice: f.extendedPrice,
+        Description: (f.description || "").trim(),
+        FlatFeePrice: safeParseFloat(f.flatFeePrice),
+        ExtendedPrice: safeParseFloat(f.extendedPrice),
         Taxable: false,
       })),
     };
 
+    // Final validation
+    if (dto.VehicleID <= 0) {
+      setError("Invalid vehicle ID.");
+      return;
+    }
+
     try {
       setSaving(true);
+      console.log("Sending estimate data:", dto);
+      
       if (!isEditMode) {
         const created = await createEstimate(dto);
         console.log("Payload createEstimate:", created);
@@ -500,12 +572,22 @@ const Estimate = () => {
         navigate("/estimates");
       }
     } catch (err) {
-      setError(
-        err.message ||
-          (isEditMode
-            ? "Error updating the estimate."
-            : "Error creating the estimate.")
-      );
+      console.error("Save estimate error:", err);
+      
+      // Extract detailed error message
+      let errorMessage = "Error creating the estimate.";
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        errorMessage = Array.isArray(errors) 
+          ? errors.map(e => `${e.Field}: ${e.Errors.join(', ')}`).join('; ')
+          : JSON.stringify(errors);
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -515,7 +597,7 @@ const Estimate = () => {
     const partItems = parts.map((p, idx) => ({
       type: "Part",
       description: p.description,
-      quantity: p.quantity,
+      quantity: p.netPrice,
       price: p.netPrice,
       listPrice: p.listPrice,
       extendedPrice: p.extendedPrice,

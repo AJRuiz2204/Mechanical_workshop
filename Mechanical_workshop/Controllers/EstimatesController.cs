@@ -122,6 +122,20 @@ namespace Mechanical_workshop.Controllers
         {
             try
             {
+                _logger.LogInformation("Received estimate creation request: {@EstimateData}", estimateCreateDto);
+                
+                // Validate model state
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                        .ToList();
+                    
+                    _logger.LogWarning("Model validation failed: {@ValidationErrors}", errors);
+                    return BadRequest(new { message = "Validation failed", errors = errors });
+                }
+
                 // Verificar la existencia del vehículo
                 var vehicle = await _context.Vehicles
                     .Include(v => v.UserWorkshop)
@@ -131,6 +145,49 @@ namespace Mechanical_workshop.Controllers
                 {
                     _logger.LogWarning("Attempt to create estimate with invalid Vehicle ID: {VehicleId}", estimateCreateDto.VehicleID);
                     return BadRequest(new { message = "Invalid Vehicle ID." });
+                }
+
+                // Additional validation for decimal values
+                if (estimateCreateDto.Subtotal < 0 || estimateCreateDto.Tax < 0 || estimateCreateDto.Total < 0)
+                {
+                    _logger.LogWarning("Invalid negative values in estimate: Subtotal={Subtotal}, Tax={Tax}, Total={Total}", 
+                        estimateCreateDto.Subtotal, estimateCreateDto.Tax, estimateCreateDto.Total);
+                    return BadRequest(new { message = "Subtotal, Tax, and Total cannot be negative." });
+                }
+
+                // Validate parts
+                foreach (var part in estimateCreateDto.Parts)
+                {
+                    if (part.Quantity <= 0)
+                    {
+                        return BadRequest(new { message = $"Part '{part.Description}' must have quantity greater than 0." });
+                    }
+                    if (part.NetPrice < 0 || part.ListPrice < 0 || part.ExtendedPrice < 0)
+                    {
+                        return BadRequest(new { message = $"Part '{part.Description}' cannot have negative prices." });
+                    }
+                }
+
+                // Validate labors
+                foreach (var labor in estimateCreateDto.Labors)
+                {
+                    if (labor.Duration <= 0)
+                    {
+                        return BadRequest(new { message = $"Labor '{labor.Description}' must have duration greater than 0." });
+                    }
+                    if (labor.LaborRate < 0 || labor.ExtendedPrice < 0)
+                    {
+                        return BadRequest(new { message = $"Labor '{labor.Description}' cannot have negative rates or prices." });
+                    }
+                }
+
+                // Validate flat fees
+                foreach (var fee in estimateCreateDto.FlatFees)
+                {
+                    if (fee.FlatFeePrice < 0 || fee.ExtendedPrice < 0)
+                    {
+                        return BadRequest(new { message = $"Flat fee '{fee.Description}' cannot have negative prices." });
+                    }
                 }
 
                 // Mapear el DTO a la entidad Estimate
@@ -157,12 +214,18 @@ namespace Mechanical_workshop.Controllers
                     .FirstOrDefaultAsync(e => e.ID == estimate.ID);
 
                 var estimateFullDto = _mapper.Map<EstimateFullDto>(createdEstimate);
+                _logger.LogInformation("Successfully created estimate with ID: {EstimateId}", estimate.ID);
                 return CreatedAtAction(nameof(GetEstimate), new { id = estimate.ID }, estimateFullDto);
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error creating estimate");
+                return StatusCode(500, new { message = "Database error creating estimate", details = dbEx.InnerException?.Message ?? dbEx.Message });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating estimate");
-                return StatusCode(500, new { message = $"Error al crear el presupuesto: {ex.ToString()}" });
+                return StatusCode(500, new { message = $"Error al crear el presupuesto: {ex.Message}" });
             }
         }
 

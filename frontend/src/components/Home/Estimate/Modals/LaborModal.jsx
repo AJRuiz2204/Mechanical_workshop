@@ -20,9 +20,10 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         </Form.Item>
         <Form.Item label="Duration (hours)" required>
           <InputNumber
-            min={1}
+            min={0.01}
+            step={0.01}
+            precision={2}
             value={newLabor.duration}
-            onKeyPress={e => (/[0-9]/.test(e.key) ? null : e.preventDefault())}
             onChange={duration => {
               const rate = parseFloat(newLabor.laborRate) || 0;
               setNewLabor({

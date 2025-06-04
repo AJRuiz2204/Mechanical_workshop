@@ -30,7 +30,7 @@ export function useLaborModal(show, settings, setNewLabor) {
   const clearFields = useCallback(() => {
     setNewLabor({
       description: "",
-      duration: 1,
+      duration: 0.25,
       laborRate: settings?.defaultHourlyRate || 1,
       extendedPrice: 1,
       applyLaborTax: settings?.laborTaxByDefault || false,

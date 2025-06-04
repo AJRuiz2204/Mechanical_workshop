@@ -14,6 +14,7 @@ export const createDiagnostic = async (diagnosticData) => {
     return response.data;
   } catch (error) {
     console.error("Error in createDiagnostic:", error);
+    console.error("Error response data:", error.response?.data);
     throw error;
   }
 };
@@ -67,6 +68,7 @@ export const updateDiagnostic = async (id, diagnosticData) => {
     await api.put(`/Diagnostics/${id}`, diagnosticData);
   } catch (error) {
     console.error("Error in updateDiagnostic:", error);
+    console.error("Error response data:", error.response?.data);
     throw error;
   }
 };
@@ -84,6 +86,7 @@ export const deleteDiagnostic = async (id) => {
     await api.delete(`/Diagnostics/${id}`);
   } catch (error) {
     console.error("Error in deleteDiagnostic:", error);
+    console.error("Error response data:", error.response?.data);
     throw error;
   }
 };
