@@ -91,6 +91,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
           vehicles:
             data.vehicles?.length > 0
               ? data.vehicles.map((v) => ({
+                  id: v.id,
                   vin: v.vin || "",
                   make: v.make || "",
                   model: v.model || "",
@@ -101,6 +102,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                 }))
               : [
                   {
+                    id: null,
                     vin: "",
                     make: "",
                     model: "",
@@ -141,6 +143,7 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
       vehicles: [
         ...prev.vehicles,
         {
+          id: null,
           vin: "",
           make: "",
           model: "",
@@ -167,13 +170,11 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
       const token = getToken();
       let payload = { ...userWorkshop };
 
-      // Required fields validation
       const requiredFields = ["name", "lastName", "primaryNumber"];
       const missingFields = requiredFields.filter(
         (field) => !payload[field].trim()
       );
 
-      // Validate vehicles
       const invalidVehicles = payload.vehicles.filter(
         (v) =>
           !v.vin.trim() || !v.make.trim() || !v.model.trim() || !v.year.trim()
@@ -183,19 +184,15 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         throw new Error("Please complete all required fields");
       }
 
-      // Ensure username and profile
       if (!payload.username.trim()) payload.username = storedUsername;
       if (!payload.profile.trim()) payload.profile = storedProfile;
 
-      // Filter vehicles without VIN
       payload.vehicles = payload.vehicles.filter((v) => v.vin.trim());
 
-      // Remove empty secondary number to satisfy backend phone validation
       if (!payload.secondaryNumber.trim()) {
         delete payload.secondaryNumber;
       }
 
-      // Always include address field (never null)
       payload.address = payload.address || "";
 
       if (editingId) {
@@ -252,7 +249,9 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             <Form.Item
               label="First Name"
               required
-              rules={[{ required: true, message: "Please enter the first name" }]}
+              rules={[
+                { required: true, message: "Please enter the first name" },
+              ]}
             >
               <Input
                 value={userWorkshop.name}
@@ -264,7 +263,9 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
             <Form.Item
               label="Last Name"
               required
-              rules={[{ required: true, message: "Please enter the last name" }]}
+              rules={[
+                { required: true, message: "Please enter the last name" },
+              ]}
             >
               <Input
                 value={userWorkshop.lastName}
@@ -370,11 +371,13 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   <Form.Item
                     label="VIN"
                     required
-                    rules={[{ required: true, message: "Please enter the VIN" }]}
+                    rules={[
+                      { required: true, message: "Please enter the VIN" },
+                    ]}
                   >
                     <Input
                       maxLength={17}
-                      disabled={editingId && vehicle.vin}
+                      disabled={editingId && vehicle.vin && vehicle.id}
                       value={vehicle.vin}
                       onChange={(e) =>
                         handleVehicleChange(i, "vin", e.target.value)
@@ -386,7 +389,9 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   <Form.Item
                     label="Make"
                     required
-                    rules={[{ required: true, message: "Please enter the make" }]}
+                    rules={[
+                      { required: true, message: "Please enter the make" },
+                    ]}
                   >
                     <Input
                       value={vehicle.make}
@@ -400,7 +405,9 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   <Form.Item
                     label="Model"
                     required
-                    rules={[{ required: true, message: "Please enter the model" }]}
+                    rules={[
+                      { required: true, message: "Please enter the model" },
+                    ]}
                   >
                     <Input
                       value={vehicle.model}
@@ -426,7 +433,9 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                   <Form.Item
                     label="Year"
                     required
-                    rules={[{ required: true, message: "Please enter the year" }]}
+                    rules={[
+                      { required: true, message: "Please enter the year" },
+                    ]}
                   >
                     <Input
                       maxLength={4}
