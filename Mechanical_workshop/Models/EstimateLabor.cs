@@ -17,8 +17,8 @@ namespace Mechanical_workshop.Models
         [StringLength(100)]
         public string Description { get; set; } = string.Empty;
 
-        [Range(0, int.MaxValue)]
-        public int Duration { get; set; } // Duración en horas
+        [Range(0, double.MaxValue)]
+        public decimal Duration { get; set; }
 
         [Range(0, double.MaxValue)]
         public decimal LaborRate { get; set; }

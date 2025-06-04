@@ -44,7 +44,7 @@ namespace Mechanical_workshop.Models
 
     
         [StringLength(500)]
-        public string? Disclaimer { get; set; } // More descriptive name, "Warning" could be confusing.
+        public string? Disclaimer { get; set; }
 
     
         [StringLength(255)]

@@ -67,7 +67,7 @@ const Home = () => {
       key: "/technicianDiagnosticList",
       icon: <ProfileOutlined />,
       label: "MY DIAGNOSTICS",
-      roles: ["Technician"],
+      roles: ["Technician", "Manager"],
     },
     {
       key: "/accounts-receivable",

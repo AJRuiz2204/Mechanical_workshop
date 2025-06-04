@@ -116,3 +116,20 @@ export const getDiagnosticsByTechnician = async (name, lastName) => {
     throw error;
   }
 };
+
+/**
+ * Retrieves all diagnostics for manager view (unfiltered).
+ * @async
+ * @function getAllDiagnosticsForManager
+ * @returns {Promise<Array>} A list of all diagnostic objects.
+ * @throws Will throw an error if the request fails.
+ */
+export const getAllDiagnosticsForManager = async () => {
+  try {
+    const response = await api.get('/Diagnostics');
+    return response.data;
+  } catch (error) {
+    console.error("Error in getAllDiagnosticsForManager:", error);
+    throw error;
+  }
+};

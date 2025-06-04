@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Table, Button, Spin, Alert, Badge, Space, Card } from "antd";
 import { useNavigate } from "react-router-dom";
-import { getDiagnosticsByTechnician } from "../../../services/DiagnosticService";
+import {
+  getDiagnosticsByTechnician,
+  getAllDiagnosticsForManager,
+} from "../../../services/DiagnosticService";
 import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
@@ -10,7 +13,8 @@ import {
 /**
  * TechnicianDiagnosticList Component
  * This component displays the list of diagnostics assigned to a technician.
- * The technician can edit or delete assigned diagnostics or create a new one if missing.
+ * For Managers, it shows all diagnostics. For Technicians, it shows only assigned diagnostics.
+ * The user can edit or delete assigned diagnostics or create a new one if missing.
  *
  * @returns {JSX.Element}
  */
@@ -21,6 +25,7 @@ const TechnicianDiagnosticList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [techDiagMap, setTechDiagMap] = useState({});
+  const [userProfile, setUserProfile] = useState("");
 
   // Columns configuration for AntD Table
   const columns = [
@@ -47,6 +52,12 @@ const TechnicianDiagnosticList = () => {
       title: "Customer state",
       dataIndex: "reasonForVisit",
       key: "reasonForVisit",
+    },
+    {
+      title: "Assigned Technician",
+      dataIndex: "assignedTechnician",
+      key: "assignedTechnician",
+      render: (text) => text || "N/A",
     },
     {
       title: "Status",
@@ -114,15 +125,23 @@ const TechnicianDiagnosticList = () => {
 
         const user = JSON.parse(userString);
         const { name, lastName, profile } = user;
+        setUserProfile(profile);
 
-        if (profile !== "Technician") {
+        if (profile !== "Technician" && profile !== "Manager") {
           setError("User is not authorized to view this section.");
           setDiagnostics([]);
           return;
         }
 
-        // Retrieve diagnostics assigned to the technician
-        const data = await getDiagnosticsByTechnician(name, lastName);
+        let data;
+        if (profile === "Manager") {
+          // Manager sees all diagnostics
+          data = await getAllDiagnosticsForManager();
+        } else {
+          // Technician sees only assigned diagnostics
+          data = await getDiagnosticsByTechnician(name, lastName);
+        }
+
         setDiagnostics(data);
 
         // Retrieve TechnicianDiagnostics for each diagnostic
@@ -155,22 +174,35 @@ const TechnicianDiagnosticList = () => {
    */
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
-    if (!techDiagId) return;
+    if (!techDiagId) {
+      alert("No technician diagnostic found to delete.");
+      return;
+    }
 
-    const confirmDelete = window.confirm("Delete this Technician Diagnostic?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this Technician Diagnostic?"
+    );
     if (!confirmDelete) return;
 
     try {
+      setLoading(true);
       await deleteTechnicianDiagnostic(techDiagId);
       setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
-      alert("Successfully deleted!");
+      alert("Technician diagnostic deleted successfully!");
     } catch (error) {
-      alert(`Delete failed: ${error.message}`);
+      console.error("Delete error:", error);
+      alert(`Failed to delete: ${error.message || "Unknown error"}`);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const getTitle = () => {
+    return userProfile === "Manager" ? "All Diagnostics" : "My Diagnostics";
+  };
+
   return (
-    <Card title="My Diagnostics" style={{ margin: 16 }}>
+    <Card title={getTitle()} style={{ margin: 16 }}>
       {/* Error message */}
       {error && (
         <Alert
@@ -185,7 +217,11 @@ const TechnicianDiagnosticList = () => {
       <Spin spinning={loading} tip="Loading...">
         {!loading && diagnostics.length === 0 && (
           <Alert
-            message="You have no assigned diagnostics."
+            message={
+              userProfile === "Manager"
+                ? "No diagnostics available."
+                : "You have no assigned diagnostics."
+            }
             type="info"
             showIcon
           />
