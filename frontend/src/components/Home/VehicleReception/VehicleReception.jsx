@@ -9,7 +9,6 @@ import {
   Alert,
   Checkbox,
   Card,
-  Space,
   Typography,
   message,
 } from "antd";
@@ -486,12 +485,10 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
 
         {/* Action Buttons */}
         <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={isSubmitting}>
-              Save
-            </Button>
-            <Button onClick={onClose}>Cancel</Button>
-          </Space>
+          <Button type="primary" htmlType="submit" loading={isSubmitting}>
+            Save
+          </Button>
+          <Button onClick={onClose}>Cancel</Button>
         </Form.Item>
       </Form>
     </Card>

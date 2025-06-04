@@ -8,6 +8,7 @@ namespace Mechanical_workshop.Dtos
     public string Model { get; set; } = string.Empty;
     public string OwnerName { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public int UserWorkshopId { get; set; }
 }
 
 }

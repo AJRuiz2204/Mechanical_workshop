@@ -403,6 +403,7 @@ namespace Mechanical_workshop.Controllers
                             v.Plate,
                             v.State,
                             v.Status,
+                            UserWorkshopId = uw.Id,
                             OwnerName = $"{uw.Name} {uw.LastName}"
                         }
                     )
@@ -417,7 +418,8 @@ namespace Mechanical_workshop.Controllers
                     Make = v.Make,
                     Model = v.Model,
                     OwnerName = v.OwnerName,
-                    Status = v.Status
+                    Status = v.Status,
+                    UserWorkshopId = v.UserWorkshopId
                 }).ToList();
 
                 return Ok(result);

@@ -30,12 +30,12 @@ namespace Mechanical_workshop.Models
         public string? SecondaryPhone { get; set; }
 
     
-        [StringLength(50)] // Fax is not necessarily a phone number.
+        [StringLength(50)]
         public string? Fax { get; set; }
 
     
         [StringLength(255)]
-        public string? WebsiteUrl { get; set; } // More descriptive name.
+        public string? WebsiteUrl { get; set; }
 
     
         [DataType(DataType.DateTime)]

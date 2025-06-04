@@ -24,6 +24,7 @@ import {
   deleteVehicle,
 } from "../../../services/UserWorkshopService";
 import VehicleReception from "../VehicleReception/VehicleReception";
+import UserWorkshopEditModal from "./UserWorkshopEditModal";
 
 const { Search } = Input;
 const { confirm } = Modal;
@@ -39,7 +40,9 @@ const VehicleList = () => {
   const [searchMessage, setSearchMessage] = useState("");
 
   const [showReceptionModal, setShowReceptionModal] = useState(false);
+  const [showUserWorkshopModal, setShowUserWorkshopModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [editingUserWorkshopId, setEditingUserWorkshopId] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -98,9 +101,28 @@ const VehicleList = () => {
     setShowReceptionModal(true);
   };
 
-  const handleEdit = (id) => {
-    setEditingId(id);
-    setShowReceptionModal(true);
+  const handleEdit = (vehicleId) => {
+    // Find the vehicle to get UserWorkshopId
+    const vehicle = vehicles.find((v) => v.id === vehicleId);
+    if (!vehicle) {
+      message.error("Vehicle not found");
+      return;
+    }
+
+    // Count how many vehicles belong to this UserWorkshop
+    const userWorkshopVehicles = vehicles.filter(
+      (v) => v.userWorkshopId === vehicle.userWorkshopId
+    );
+
+    if (userWorkshopVehicles.length > 1) {
+      // Multiple vehicles - use UserWorkshop edit modal
+      setEditingUserWorkshopId(vehicle.userWorkshopId);
+      setShowUserWorkshopModal(true);
+    } else {
+      // Single vehicle - use existing VehicleReception modal
+      setEditingId(vehicleId);
+      setShowReceptionModal(true);
+    }
   };
 
   const handleReception = (id) => {
@@ -110,6 +132,12 @@ const VehicleList = () => {
   const closeModal = (refresh = false) => {
     setShowReceptionModal(false);
     setEditingId(null);
+    if (refresh) fetchAllVehicles();
+  };
+
+  const closeUserWorkshopModal = (refresh = false) => {
+    setShowUserWorkshopModal(false);
+    setEditingUserWorkshopId(null);
     if (refresh) fetchAllVehicles();
   };
 
@@ -147,6 +175,20 @@ const VehicleList = () => {
       dataIndex: "ownerName",
       key: "ownerName",
       render: (text) => text || "Unknown",
+    },
+    {
+      title: "Type",
+      key: "type",
+      render: (_, record) => {
+        const userWorkshopVehicles = vehicles.filter(
+          (v) => v.userWorkshopId === record.userWorkshopId
+        );
+        return userWorkshopVehicles.length > 1 ? (
+          <Text type="warning">Multi-Vehicle Owner</Text>
+        ) : (
+          <Text>Single Vehicle</Text>
+        );
+      },
     },
     {
       title: "Actions",
@@ -235,18 +277,16 @@ const VehicleList = () => {
       )}
 
       <Modal
-        visible={showReceptionModal}
+        open={showReceptionModal}
         footer={null}
         onCancel={() => closeModal(false)}
         width="80%"
-        style={{
-          top: 20,
-          paddingBottom: 0,
-        }}
-        bodyStyle={{
-          maxHeight: "calc(100vh - 120px)",
-          overflow: "auto",
-          paddingBottom: 24,
+        styles={{
+          body: {
+            maxHeight: "calc(100vh - 120px)",
+            overflow: "auto",
+            paddingBottom: 24,
+          },
         }}
         destroyOnClose
       >
@@ -256,6 +296,13 @@ const VehicleList = () => {
           afterSubmit={() => closeModal(true)}
         />
       </Modal>
+
+      <UserWorkshopEditModal
+        visible={showUserWorkshopModal}
+        onCancel={() => closeUserWorkshopModal(false)}
+        userWorkshopId={editingUserWorkshopId}
+        onSuccess={() => closeUserWorkshopModal(true)}
+      />
     </Card>
   );
 };
