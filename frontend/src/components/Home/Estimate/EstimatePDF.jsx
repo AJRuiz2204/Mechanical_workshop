@@ -409,7 +409,7 @@ const EstimatePDF = ({ pdfData }) => {
                 {item.description || ""}
               </Text>
               <Text style={[styles.tableCol, styles.colPart, styles.tableText]}>
-                {item.type === "Part" ? item.partNumber : "-"}
+                {item.type === "Part" ? (item.partNumber || "N/A") : "-"}
               </Text>
               <Text
                 style={[

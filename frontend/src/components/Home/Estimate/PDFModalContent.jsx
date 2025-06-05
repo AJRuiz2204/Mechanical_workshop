@@ -43,7 +43,7 @@ const PDFModalContent = ({ estimateId }) => {
             listPrice: p.listPrice,
             extendedPrice: p.extendedPrice,
             taxable: p.taxable,
-            partNumber: p.partNumber,
+            partNumber: p.partNumber || "", // Handle empty part numbers
           })),
           ...estimateData.labors.map((l) => ({
             type: "Labor",

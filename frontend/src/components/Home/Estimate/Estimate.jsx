@@ -295,17 +295,20 @@ const Estimate = () => {
       return;
     }
     try {
-      const duplicate = parts.find(
-        (part) => part.partNumber === newPart.partNumber
-      );
-      if (duplicate) {
-        setError(
-          `The part with Part Number ${newPart.partNumber} already exists in this estimate.`
+      // Only check for duplicates if partNumber is provided and not empty
+      if (newPart.partNumber && newPart.partNumber.trim()) {
+        const duplicate = parts.find(
+          (part) => part.partNumber && part.partNumber === newPart.partNumber
         );
-        return;
+        if (duplicate) {
+          setError(
+            `The part with Part Number ${newPart.partNumber} already exists in this estimate.`
+          );
+          return;
+        }
       }
-      if (!newPart.description || !newPart.partNumber) {
-        setError("Description and part number are required.");
+      if (!newPart.description) {
+        setError("Description is required.");
         return;
       }
       setParts([...parts, { ...newPart }]);
@@ -463,10 +466,7 @@ const Estimate = () => {
         setError(`Part ${i + 1}: Description is required.`);
         return;
       }
-      if (!part.partNumber?.trim()) {
-        setError(`Part ${i + 1}: Part number is required.`);
-        return;
-      }
+      // Part number validation removed - it's now optional
       if (safeParseInt(part.quantity) <= 0) {
         setError(`Part ${i + 1}: Quantity must be greater than 0.`);
         return;
@@ -527,7 +527,7 @@ const Estimate = () => {
         : null,
       Parts: parts.map((p) => ({
         Description: (p.description || "").trim(),
-        PartNumber: (p.partNumber || "").trim(),
+        PartNumber: (p.partNumber || "").trim(), // Allow empty string
         Quantity: safeParseInt(p.quantity),
         NetPrice: safeParseFloat(p.netPrice),
         ListPrice: safeParseFloat(p.listPrice),

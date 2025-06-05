@@ -18,7 +18,7 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
             placeholder="Enter part description"
           />
         </Form.Item>
-        <Form.Item label="Part Number" required>
+        <Form.Item label="Part Number">
           <Input
             value={newPart.partNumber}
             onChange={e => setNewPart({ ...newPart, partNumber: e.target.value })}

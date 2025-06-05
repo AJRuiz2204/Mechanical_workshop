@@ -123,7 +123,7 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 _logger.LogInformation("Received estimate creation request: {@EstimateData}", estimateCreateDto);
-                
+
                 // Validate model state
                 if (!ModelState.IsValid)
                 {
@@ -131,7 +131,7 @@ namespace Mechanical_workshop.Controllers
                         .Where(x => x.Value.Errors.Count > 0)
                         .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
                         .ToList();
-                    
+
                     _logger.LogWarning("Model validation failed: {@ValidationErrors}", errors);
                     return BadRequest(new { message = "Validation failed", errors = errors });
                 }
@@ -150,7 +150,7 @@ namespace Mechanical_workshop.Controllers
                 // Additional validation for decimal values
                 if (estimateCreateDto.Subtotal < 0 || estimateCreateDto.Tax < 0 || estimateCreateDto.Total < 0)
                 {
-                    _logger.LogWarning("Invalid negative values in estimate: Subtotal={Subtotal}, Tax={Tax}, Total={Total}", 
+                    _logger.LogWarning("Invalid negative values in estimate: Subtotal={Subtotal}, Tax={Tax}, Total={Total}",
                         estimateCreateDto.Subtotal, estimateCreateDto.Tax, estimateCreateDto.Total);
                     return BadRequest(new { message = "Subtotal, Tax, and Total cannot be negative." });
                 }
@@ -261,6 +261,7 @@ namespace Mechanical_workshop.Controllers
                 estimate.Total = dto.Total;
                 estimate.AuthorizationStatus = dto.AuthorizationStatus;
                 estimate.Mileage = dto.Mileage;
+                estimate.ExtendedDiagnostic = dto.ExtendedDiagnostic ?? estimate.ExtendedDiagnostic;
 
                 // Reemplazar listas de Parts, Labors, FlatFees
                 _context.EstimateParts.RemoveRange(estimate.Parts);
@@ -297,7 +298,7 @@ namespace Mechanical_workshop.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                
+
                 var updatedDto = _mapper.Map<EstimateFullDto>(estimate);
                 return Ok(updatedDto);
             }

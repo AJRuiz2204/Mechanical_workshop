@@ -32,7 +32,7 @@ namespace Mechanical_workshop.Dtos
         public int ID { get; set; }
         public string Type { get; set; } = "[PART]";
         public string Description { get; set; } = string.Empty;
-        public string PartNumber { get; set; } = string.Empty;
+        public string? PartNumber { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal NetPrice { get; set; }
         public decimal ListPrice { get; set; }

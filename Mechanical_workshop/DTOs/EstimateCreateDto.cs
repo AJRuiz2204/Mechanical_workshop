@@ -55,8 +55,7 @@ namespace Mechanical_workshop.Dtos
         [Required]
         public string Description { get; set; } = string.Empty;
 
-        [Required]
-        public string PartNumber { get; set; } = string.Empty;
+        public string? PartNumber { get; set; } = string.Empty;
 
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }

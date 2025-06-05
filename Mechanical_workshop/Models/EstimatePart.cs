@@ -18,7 +18,7 @@ namespace Mechanical_workshop.Models
         public string Description { get; set; } = string.Empty;
 
         [StringLength(50)]
-        public string PartNumber { get; set; } = string.Empty;
+        public string? PartNumber { get; set; } = string.Empty;
 
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }

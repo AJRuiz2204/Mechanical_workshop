@@ -369,7 +369,7 @@ const PaymentPDF = ({ pdfData }) => {
               </Text>
               <Text style={[styles.colPart, styles.tableText]}>
                 {item.type && item.type.toUpperCase().includes("PART")
-                  ? item.partNumber
+                  ? item.partNumber || ""
                   : "-"}
               </Text>
               <Text style={[styles.colQuantityHours, styles.tableText]}>
