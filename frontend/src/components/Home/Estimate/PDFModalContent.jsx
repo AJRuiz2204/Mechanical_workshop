@@ -109,6 +109,7 @@ const PDFModalContent = ({ estimateId }) => {
           totals,
           customerNote: estimateData.customerNote || "",
           mileage: estimateData.mileage ?? estimateData.technicianDiagnostic?.mileage ?? 0,
+          estimateId: estimateData.id, // Add estimate ID
         };
 
         setPdfData(payload);

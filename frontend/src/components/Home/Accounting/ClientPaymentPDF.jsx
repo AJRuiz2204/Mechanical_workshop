@@ -147,8 +147,8 @@ const ClientPaymentPDF = ({ pdfData }) => {
   // Format the current date for the footer
   const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
 
-  // Generate quote date string if not provided in pdfData
-  const quoteDateString = dayjs().format("DDMMYYYY,HH:mm");
+  // Use customer ID or first payment ID for quote number
+  const quoteNumber = customer.id || payments[0]?.id || "N/A";
 
   return (
     <Document>
@@ -187,7 +187,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
             {/* Quote Information Section */}
             <View style={styles.quoteInfo}>
               <Text style={styles.textLine}>
-                Quote # {workshopData.quoteNumber || quoteDateString}
+                Quote # {quoteNumber}
               </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
@@ -210,6 +210,14 @@ const ClientPaymentPDF = ({ pdfData }) => {
           <Text style={styles.sectionTitle}>Client: {customer.fullName}</Text>
           <Text style={{ fontSize: 10 }}>Email: {customer.email}</Text>
           <Text style={{ fontSize: 10 }}>Phone: {customer.primaryPhone}</Text>
+          {customer.address && (
+            <Text style={{ fontSize: 10 }}>Address: {customer.address}</Text>
+          )}
+          {customer.city && customer.state && (
+            <Text style={{ fontSize: 10 }}>
+              {customer.city}, {customer.state} {customer.zip || ""}
+            </Text>
+          )}
         </View>
 
         {/* Vehicle Information Section */}

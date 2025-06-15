@@ -57,8 +57,8 @@ namespace Mechanical_workshop.Dtos
 
         public string? PartNumber { get; set; } = string.Empty;
 
-        [Range(1, int.MaxValue)]
-        public int Quantity { get; set; }
+        [Range(0.01, double.MaxValue)]
+        public decimal Quantity { get; set; }
 
         [Range(0, double.MaxValue)]
         public decimal NetPrice { get; set; }

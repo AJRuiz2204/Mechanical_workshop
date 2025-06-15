@@ -27,7 +27,7 @@ namespace Mechanical_workshop.MappingProfiles
             CreateMap<EstimateLabor, EstimateLineDto>()
                 .ForMember(dest => dest.CreateTime, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.EstimateId, opt => opt.MapFrom(src => src.EstimateID))
-                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => (int?)null))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => (decimal?)null))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 // Normalmente no se maneja net/list price en labor
                 .ForMember(dest => dest.NetPrice, opt => opt.MapFrom(src => (decimal?)0))
@@ -41,7 +41,7 @@ namespace Mechanical_workshop.MappingProfiles
             CreateMap<EstimateFlatFee, EstimateLineDto>()
                 .ForMember(dest => dest.CreateTime, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.EstimateId, opt => opt.MapFrom(src => src.EstimateID))
-                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => (int?)null))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => (decimal?)null))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.NetPrice, opt => opt.MapFrom(src => (decimal?)0))
                 .ForMember(dest => dest.ListPrice, opt => opt.MapFrom(src => (decimal?)0))

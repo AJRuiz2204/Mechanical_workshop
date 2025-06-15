@@ -225,6 +225,7 @@ const PaymentPDF = ({ pdfData }) => {
   const customer = payment.customer || {};
   const vehicle = payment.vehicle || {};
   const estimate = payment.estimate || {};
+  const paymentId = payment.id || payments[0]?.id; // Get payment ID
 
   // Retrieve workshop settings either from wrapper or via service
   const workshopData = wrapper.workshopData || null;
@@ -316,6 +317,20 @@ const PaymentPDF = ({ pdfData }) => {
             <Text style={styles.sectionTitle}>Bill To:</Text>
             <Text style={styles.infoText}>{customer.fullName || ""}</Text>
             <Text style={styles.infoText}>{customer.primaryPhone || ""}</Text>
+            {customer.email && (
+              <Text style={styles.infoText}>{customer.email}</Text>
+            )}
+            {/* Add address information from owner/customer */}
+            {(estimate.owner?.address || customer.address) && (
+              <Text style={styles.infoText}>
+                {estimate.owner?.address || customer.address}
+              </Text>
+            )}
+            {(estimate.owner?.city || customer.city) && (estimate.owner?.state || customer.state) && (
+              <Text style={styles.infoText}>
+                {estimate.owner?.city || customer.city}, {estimate.owner?.state || customer.state} {estimate.owner?.zip || customer.zip || ""}
+              </Text>
+            )}
           </View>
           {/* Columna 2: Información del vehículo (Make, Model, Year) */}
           <View style={{ flex: 1, padding: 5 }}>
@@ -324,10 +339,10 @@ const PaymentPDF = ({ pdfData }) => {
             <Text style={styles.infoText}>Model: {vehicle.model || ""}</Text>
             <Text style={styles.infoText}>Year: {vehicle.year || ""}</Text>
           </View>
-          {/* Columna 3: VIN, Engine, Mileage con encabezado Invoice # */}
+          {/* Columna 3: VIN, Engine, Mileage con encabezado Quote # */}
           <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>
-              Invoice #{estimate.id || ""}
+              Quote #{paymentId || "N/A"}
             </Text>
             <Text style={styles.infoText}>VIN: {vehicle.vin || ""}</Text>
             <Text style={styles.infoText}>

@@ -234,9 +234,8 @@ const EstimatePDF = ({ pdfData }) => {
   const safeItems = pdfData?.items || [];
   const totals = pdfData?.totals || {};
   const customerNote = pdfData?.customerNote || "";
-  const mileage = pdfData?.mileage || 0; // Obtener mileage del payload
-  // Generar quote plano + hora militar si no viene de pdfData
-  const quoteDateString = dayjs().format("DDMMYYYY,HH:mm");
+  const mileage = pdfData?.mileage || 0;
+  const estimateId = pdfData?.estimateId || pdfData?.estimate?.id; // Get estimate ID
 
   /**
    * Formats the date string for "Last Updated".
@@ -296,7 +295,7 @@ const EstimatePDF = ({ pdfData }) => {
             {/* Quote Information */}
             <View style={styles.quoteInfo}>
               <Text style={styles.textLine}>
-                Quote # {safeWorkshopData.quoteNumber || quoteDateString}
+                Quote # {estimateId || "N/A"}
               </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
@@ -329,6 +328,16 @@ const EstimatePDF = ({ pdfData }) => {
               {safeCustomer.primaryNumber || "N/A"}{" "}
               {/* Mostrar primaryNumber */}
             </Text>
+            {safeCustomer.address && (
+              <Text style={styles.textLine}>
+                {safeCustomer.address}
+              </Text>
+            )}
+            {safeCustomer.city && safeCustomer.state && (
+              <Text style={styles.textLine}>
+                {safeCustomer.city}, {safeCustomer.state} {safeCustomer.zip || ""}
+              </Text>
+            )}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>Vehicle</Text>
@@ -418,7 +427,9 @@ const EstimatePDF = ({ pdfData }) => {
                   styles.tableText,
                 ]}
               >
-                {item.type === "Labor" ? `${item.quantity} hrs` : item.quantity}
+                {item.type === "Labor" 
+                  ? `${parseFloat(item.quantity || 0).toFixed(2)} hrs` 
+                  : parseFloat(item.quantity || 0).toFixed(2)}
               </Text>
               <Text
                 style={[

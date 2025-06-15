@@ -20,7 +20,9 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee }) =
         </Form.Item>
         <Form.Item label="Flat Fee Price" required>
           <InputNumber
-            min={1}
+            min={0.01}
+            step={0.01}
+            precision={2}
             value={newFlatFee.flatFeePrice}
             onChange={flatFeePrice => {
               setNewFlatFee({
@@ -30,8 +32,7 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee }) =
               });
             }}
             formatter={v => `$ ${v}`}
-            parser={v => v.replace(/[^\d]/g, '')}
-            onKeyPress={e => { if (!/[0-9]/.test(e.key)) e.preventDefault(); }}
+            parser={v => v.replace(/[^\d.]/g, '')}
             style={{ width: '100%' }}
           />
         </Form.Item>

@@ -65,23 +65,23 @@ const Estimate = () => {
   const [newPart, setNewPart] = useState({
     description: "",
     partNumber: "",
-    quantity: 1,
-    netPrice: 0,
-    listPrice: 0,
-    extendedPrice: 0,
+    quantity: 1.0,
+    netPrice: 0.0,
+    listPrice: 0.0,
+    extendedPrice: 0.0,
     applyPartTax: false,
   });
   const [newLabor, setNewLabor] = useState({
     description: "",
     duration: 0.25,
-    laborRate: 0,
-    extendedPrice: 0,
+    laborRate: 0.0,
+    extendedPrice: 0.0,
     applyLaborTax: false,
   });
   const [newFlatFee, setNewFlatFee] = useState({
     description: "",
-    flatFeePrice: 0,
-    extendedPrice: 0,
+    flatFeePrice: 0.0,
+    extendedPrice: 0.0,
   });
   const [isAddingPart, setIsAddingPart] = useState(false);
 
@@ -237,10 +237,10 @@ const Estimate = () => {
     setNewPart({
       description: "",
       partNumber: "",
-      quantity: 1,
-      netPrice: 0,
-      listPrice: 0,
-      extendedPrice: 0,
+      quantity: 1.0,
+      netPrice: 0.0,
+      listPrice: 0.0,
+      extendedPrice: 0.0,
       applyPartTax: defaultTax,
     });
     setShowPartModal(true);
@@ -250,10 +250,10 @@ const Estimate = () => {
     setNewPart({
       description: "",
       partNumber: "",
-      quantity: 1,
-      netPrice: 0,
-      listPrice: 0,
-      extendedPrice: 0,
+      quantity: 1.0,
+      netPrice: 0.0,
+      listPrice: 0.0,
+      extendedPrice: 0.0,
       applyPartTax: owner?.noTax ? false : settings?.partTaxByDefault ?? false,
     });
   };
@@ -265,8 +265,8 @@ const Estimate = () => {
     setNewLabor({
       description: "",
       duration: 0.25,
-      laborRate: settings?.defaultHourlyRate ?? "",
-      extendedPrice: 0,
+      laborRate: settings?.defaultHourlyRate ?? 0.0,
+      extendedPrice: 0.0,
       applyLaborTax: defaultTax,
     });
     setShowLaborModal(true);
@@ -276,8 +276,8 @@ const Estimate = () => {
     setNewLabor({
       description: "",
       duration: 0.25,
-      laborRate: settings?.defaultHourlyRate ?? "",
-      extendedPrice: 0,
+      laborRate: settings?.defaultHourlyRate ?? 0.0,
+      extendedPrice: 0.0,
       applyLaborTax: owner?.noTax
         ? false
         : settings?.laborTaxByDefault ?? false,
@@ -315,10 +315,10 @@ const Estimate = () => {
       setNewPart({
         description: "",
         partNumber: "",
-        quantity: "",
-        netPrice: "",
-        listPrice: "",
-        extendedPrice: 0,
+        quantity: 1.0,
+        netPrice: 0.0,
+        listPrice: 0.0,
+        extendedPrice: 0.0,
         applyPartTax: noTax ? false : true,
       });
       setSuccess("Part added successfully.");
@@ -467,7 +467,7 @@ const Estimate = () => {
         return;
       }
       // Part number validation removed - it's now optional
-      if (safeParseInt(part.quantity) <= 0) {
+      if (safeParseFloat(part.quantity) <= 0) {
         setError(`Part ${i + 1}: Quantity must be greater than 0.`);
         return;
       }
@@ -528,7 +528,7 @@ const Estimate = () => {
       Parts: parts.map((p) => ({
         Description: (p.description || "").trim(),
         PartNumber: (p.partNumber || "").trim(), // Allow empty string
-        Quantity: safeParseInt(p.quantity),
+        Quantity: safeParseFloat(p.quantity),
         NetPrice: safeParseFloat(p.netPrice),
         ListPrice: safeParseFloat(p.listPrice),
         ExtendedPrice: safeParseFloat(p.extendedPrice),
@@ -597,7 +597,7 @@ const Estimate = () => {
     const partItems = parts.map((p, idx) => ({
       type: "Part",
       description: p.description,
-      quantity: p.netPrice,
+      quantity: p.quantity,
       price: p.netPrice,
       listPrice: p.listPrice,
       extendedPrice: p.extendedPrice,
@@ -861,7 +861,7 @@ const Estimate = () => {
                   }
                 />
               ) : (
-                <span>{val}</span>
+                <span>{parseFloat(val).toFixed(2)}</span>
               )
             }
           />
