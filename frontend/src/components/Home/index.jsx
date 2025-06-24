@@ -35,6 +35,13 @@ const Home = () => {
     }
   }, []);
 
+  // Redirect to vehicle-list if user is manager and on base home route
+  useEffect(() => {
+    if (user && user.profile === "Manager" && location.pathname === "/home") {
+      navigate("/vehicle-list", { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
+
   if (!user) return <div>Loading...</div>;
 
   // Definición de todos los menús con roles e íconos de Antd
@@ -119,8 +126,8 @@ const Home = () => {
           display: "flex",
           flexDirection: "column",
           color: "#fff",
-          height: "100vh", // ensure full‑height
-          overflowY: "auto", // allow its own scrolling if needed
+          height: "100vh",
+          overflowY: "auto",
         }}
       >
         {/* Logo */}

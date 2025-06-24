@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import ManagerProtectedRoute from "./components/ProtectedRoute/ManagerProtectedRoute";
 import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
@@ -35,7 +35,11 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={
+          <ProtectedRoute>
+            <Navigate to="/vehicle-list" replace />
+          </ProtectedRoute>
+        } />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route

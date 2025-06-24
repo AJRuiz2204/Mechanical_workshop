@@ -432,9 +432,13 @@ const Estimate = () => {
       setError("Add at least one item to the Estimate.");
       return;
     }
-    const partNumbers = parts.map((p) => p.partNumber);
-    const hasDuplicates = partNumbers.some(
-      (item, idx) => partNumbers.indexOf(item) !== idx
+    
+    // Only check for duplicates among non-empty part numbers
+    const nonEmptyPartNumbers = parts
+      .map((p) => p.partNumber)
+      .filter((partNum) => partNum && partNum.trim() !== "");
+    const hasDuplicates = nonEmptyPartNumbers.some(
+      (item, idx) => nonEmptyPartNumbers.indexOf(item) !== idx
     );
     if (hasDuplicates) {
       setError("There are duplicate Part Numbers in the estimate.");

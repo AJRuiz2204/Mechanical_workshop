@@ -10,11 +10,7 @@ const MainLayout = () => {
     return <Outlet />;
   }
 
-  return (
-    <div className="app-container" style={{ display: "flex" }}>
-      <Home />
-    </div>
-  );
+  return <Home />;
 };
 
 export default MainLayout;
