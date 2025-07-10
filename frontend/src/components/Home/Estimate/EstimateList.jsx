@@ -151,16 +151,16 @@ const EstimateList = () => {
             {
               approved: "green",
               rejected: "red",
-              "not aproved": "red",
-              inreview: "orange",
-              "in review": "orange",
+              "not approved": "red",
+              pending: "orange",
             }[s.toLowerCase()] || "default"
           }
         >
           {{
-            rejected: "Not aproved",
-            inreview: "pending",
-            "in review": "pending",
+            "not approved": "Not Approved",
+            rejected: "Not Approved",
+            pending: "Pending",
+            approved: "Approved",
           }[s.toLowerCase()] || s}
         </Tag>
       ),

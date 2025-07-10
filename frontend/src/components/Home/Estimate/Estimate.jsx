@@ -33,6 +33,7 @@ const Estimate = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
+  const [form] = Form.useForm();
 
   const [vehicleDiagnosticOptions, setVehicleDiagnosticOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -141,6 +142,11 @@ const Estimate = () => {
           setTotal(estimateData.total ?? 0);
           setAuthorizationStatus(estimateData.authorizationStatus ?? "Pending");
 
+          // Set form fields for edit mode
+          form.setFieldsValue({
+            authorizationStatus: estimateData.authorizationStatus ?? "Pending"
+          });
+
           setParts(
             (estimateData.parts || []).map((part) => ({
               ...part,
@@ -163,7 +169,7 @@ const Estimate = () => {
     };
 
     loadData();
-  }, [isEditMode, id]);
+  }, [isEditMode, id, form]);
 
   useEffect(() => {
     setNoTax(owner?.noTax || false);
@@ -682,7 +688,7 @@ const Estimate = () => {
         </Button>
       </div>
 
-      <Form layout="vertical" onFinish={handleSave}>
+      <Form form={form} layout="vertical" onFinish={handleSave}>
         {!isEditMode && (
           <Row gutter={16}>
             <Col span={12}>
@@ -712,10 +718,34 @@ const Estimate = () => {
                 label="Authorization Status"
                 initialValue="Pending"
               >
-                <Select>
+                <Select
+                  value={authorizationStatus}
+                  onChange={setAuthorizationStatus}
+                >
                   <Option value="Pending">Pending</Option>
                   <Option value="Approved">Approved</Option>
-                  <Option value="Not aproved">Not aproved</Option>
+                  <Option value="Not Approved">Not Approved</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+
+        {/* Authorization Status field for edit mode */}
+        {isEditMode && (
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="authorizationStatus"
+                label="Authorization Status"
+              >
+                <Select
+                  value={authorizationStatus}
+                  onChange={setAuthorizationStatus}
+                >
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Approved">Approved</Option>
+                  <Option value="Not Approved">Not Approved</Option>
                 </Select>
               </Form.Item>
             </Col>

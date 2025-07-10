@@ -14,7 +14,7 @@ import logo from "../../../images/logo.png";
 // Define styles for the PDF document
 const styles = StyleSheet.create({
   page: {
-    padding: 20, //Reduced from 40 to 20 to decrease border space
+    padding: 20,
     fontSize: 10,
     fontFamily: "Helvetica",
     backgroundColor: "#ffffff",
@@ -22,21 +22,23 @@ const styles = StyleSheet.create({
   // Styles for the header container
   headerContainer: {
     flexDirection: "row",
-    justifyContent: "space-between", // Distribute space between logo and headerInfoContainer
-    alignItems: "flex-start", // Align vertically at the start
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 5,
   },
   // Space for the logo on the left
   logoSection: {
-    width: 100, // Adjusted for a more compact size
-    height: 100,
-    marginRight: 10,
+    width: 120,
+    height: 80,
+    marginRight: 15,
+    justifyContent: "center",
+    alignItems: "center",
   },
   // Container for workshop and quote information
   headerInfoContainer: {
     flex: 1,
     flexDirection: "column",
-    alignItems: "flex-end", // Align everything to the right
+    alignItems: "flex-end",
     padding: 0,
   },
   // Workshop information
@@ -90,7 +92,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    marginTop: 5, //Reduced to be closer to the upper container
+    marginTop: 5,
   },
   // Styles for the table header
   tableHeader: {
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
-    minHeight: 20, //Reduced for more compact rows
+    minHeight: 20,
     alignItems: "center",
   },
   // Styles for table header text
@@ -173,7 +175,7 @@ const styles = StyleSheet.create({
   },
   // Total label
   totalLabel: {
-    width: 120, // Adjusted
+    width: 120,
     textAlign: "right",
     marginRight: 5,
     fontSize: 9,
@@ -256,7 +258,14 @@ const EstimatePDF = ({ pdfData }) => {
         <View style={styles.headerContainer}>
           {/* Logo Section */}
           <View style={styles.logoSection}>
-            <Image src={logo} style={{ width: "100%", height: "100%" }} />
+            <Image
+              src={logo}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
           </View>
 
           {/* Container for Workshop and Quote Information */}
