@@ -35,10 +35,14 @@ const Home = () => {
     }
   }, []);
 
-  // Redirect to vehicle-list if user is manager and on base home route
+  // Redirect based on user role if on base home route
   useEffect(() => {
-    if (user && user.profile === "Manager" && location.pathname === "/home") {
-      navigate("/vehicle-list", { replace: true });
+    if (user && location.pathname === "/home") {
+      if (user.profile === "Manager") {
+        navigate("/vehicle-list", { replace: true });
+      } else if (user.profile === "Technician") {
+        navigate("/technicianDiagnosticList", { replace: true });
+      }
     }
   }, [user, location.pathname, navigate]);
 

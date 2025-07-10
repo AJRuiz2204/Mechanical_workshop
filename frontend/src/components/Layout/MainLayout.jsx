@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Home from "../Home/index";
 

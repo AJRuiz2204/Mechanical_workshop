@@ -126,13 +126,13 @@ const Estimate = () => {
           setDiagnostic(estimateData.technicianDiagnostic || null);
           setExtendedDiagnostic(
             estimateData.technicianDiagnostic?.extendedDiagnostic ||
-            estimateData.extendedDiagnostic ||
-            ""
+              estimateData.extendedDiagnostic ||
+              ""
           );
           setMileage(
             estimateData.technicianDiagnostic?.mileage ||
-            estimateData.mileage ||
-            0
+              estimateData.mileage ||
+              0
           );
 
           setCustomerNote(estimateData.customerNote ?? "");
@@ -432,7 +432,7 @@ const Estimate = () => {
       setError("Add at least one item to the Estimate.");
       return;
     }
-    
+
     // Only check for duplicates among non-empty part numbers
     const nonEmptyPartNumbers = parts
       .map((p) => p.partNumber)
@@ -475,7 +475,10 @@ const Estimate = () => {
         setError(`Part ${i + 1}: Quantity must be greater than 0.`);
         return;
       }
-      if (safeParseFloat(part.netPrice) < 0 || safeParseFloat(part.listPrice) < 0) {
+      if (
+        safeParseFloat(part.netPrice) < 0 ||
+        safeParseFloat(part.listPrice) < 0
+      ) {
         setError(`Part ${i + 1}: Prices cannot be negative.`);
         return;
       }
@@ -562,7 +565,7 @@ const Estimate = () => {
     try {
       setSaving(true);
       console.log("Sending estimate data:", dto);
-      
+
       if (!isEditMode) {
         const created = await createEstimate(dto);
         console.log("Payload createEstimate:", created);
@@ -577,20 +580,20 @@ const Estimate = () => {
       }
     } catch (err) {
       console.error("Save estimate error:", err);
-      
+
       // Extract detailed error message
       let errorMessage = "Error creating the estimate.";
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.response?.data?.errors) {
         const errors = err.response.data.errors;
-        errorMessage = Array.isArray(errors) 
-          ? errors.map(e => `${e.Field}: ${e.Errors.join(', ')}`).join('; ')
+        errorMessage = Array.isArray(errors)
+          ? errors.map((e) => `${e.Field}: ${e.Errors.join(", ")}`).join("; ")
           : JSON.stringify(errors);
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setSaving(false);
@@ -805,11 +808,7 @@ const Estimate = () => {
           rowKey="key"
           scroll={{ x: "max-content" }}
         >
-          <Column
-            title="TYPE"
-            dataIndex="type"
-            key="type"
-          />
+          <Column title="TYPE" dataIndex="type" key="type" />
           <Column
             title="DESCRIPTION"
             dataIndex="description"
@@ -909,7 +908,8 @@ const Estimate = () => {
                       const v = e.target.checked;
                       if (record.type === "Part")
                         updatePartField(record.rowIndex, "applyPartTax", v);
-                      else updateLaborField(record.rowIndex, "applyLaborTax", v);
+                      else
+                        updateLaborField(record.rowIndex, "applyLaborTax", v);
                     }}
                   />
                 </Form.Item>

@@ -1,8 +1,5 @@
-/* eslint-disable no-unused-vars */
-// src/components/login/Login.jsx
-
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import loginImage from "../../images/login-image.jpg";
 import { loginUser } from "../../services/UserLoginServices";
@@ -94,8 +91,9 @@ const Login = () => {
           </div>
 
           {/*
-          Uncomment the following lines if you wish to include links
-          for "Forgot Password" or "Register User".*/}
+          To include links for "Forgot Password" or "Register User",
+          uncomment the following lines and import Link from react-router-dom:
+          */}
 
           {/* <div className="text-center mt-3">
             <Link to="/forgot-password" className="forgot-password-link">

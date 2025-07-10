@@ -1,6 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
-import React from "react";
 import {
   Page,
   Text,
@@ -10,6 +7,7 @@ import {
   Image,
   Link,
 } from "@react-pdf/renderer";
+import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
@@ -154,7 +152,7 @@ const SalesReportPDF = ({ pdfData }) => {
     totalOutstanding,
     createdDate,
     details,
-    salesReportId, // Add salesReportId to destructuring
+    salesReportId,
   } = pdfData;
 
   // Format the dates for display
@@ -164,7 +162,6 @@ const SalesReportPDF = ({ pdfData }) => {
 
   // Extract workshop information from pdfData (default to empty object if not provided)
   const workshopData = pdfData?.workshopData || {};
-  const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
 
   return (
     <Document>
@@ -359,6 +356,44 @@ const SalesReportPDF = ({ pdfData }) => {
       </Page>
     </Document>
   );
+};
+
+// PropTypes validation
+SalesReportPDF.propTypes = {
+  pdfData: PropTypes.shape({
+    startDate: PropTypes.string,
+    endDate: PropTypes.string,
+    totalEstimates: PropTypes.number,
+    totalPartsRevenue: PropTypes.number,
+    totalLaborRevenue: PropTypes.number,
+    totalFlatFeeRevenue: PropTypes.number,
+    totalTaxCollected: PropTypes.number,
+    totalPaymentsCollected: PropTypes.number,
+    totalOutstanding: PropTypes.number,
+    createdDate: PropTypes.string,
+    salesReportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    details: PropTypes.arrayOf(
+      PropTypes.shape({
+        estimateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        estimateDate: PropTypes.string,
+        customer: PropTypes.string,
+        vehicle: PropTypes.string,
+        estimateTotal: PropTypes.number,
+        paymentsCollected: PropTypes.number,
+        outstanding: PropTypes.number,
+      })
+    ),
+    workshopData: PropTypes.shape({
+      workshopName: PropTypes.string,
+      address: PropTypes.string,
+      primaryPhone: PropTypes.string,
+      secondaryPhone: PropTypes.string,
+      fax: PropTypes.string,
+      websiteUrl: PropTypes.string,
+      email: PropTypes.string,
+      disclaimer: PropTypes.string,
+    }),
+  }).isRequired,
 };
 
 export default SalesReportPDF;

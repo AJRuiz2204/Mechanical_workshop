@@ -1,7 +1,4 @@
-/* eslint-disable no-unused-vars */
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import ManagerProtectedRoute from "./components/ProtectedRoute/ManagerProtectedRoute";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/login/Login";
 import ForgotPassword from "./components/ForgotPassword/ForgotPassword";
 import RegisterUser from "./components/Home/RegisterUser/RegisterUser";
@@ -28,6 +25,7 @@ import SalesReportView from "./components/Home/Reports/SalesReportsListView";
 import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
 import SalesReportAllPreviewView from "./components/Home/Reports/SalesReportAllPreviewView";
 import VehicleXlsx from "./components/Home/Diagnostic/xlsx/VehicleXlsx";
+import Unauthorized from "./components/Unauthorized/Unauthorized";
 
 const App = () => {
   return (
@@ -35,9 +33,10 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/home" element={
           <ProtectedRoute>
-            <Navigate to="/vehicle-list" replace />
+            <Home />
           </ProtectedRoute>
         } />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -178,7 +177,7 @@ const App = () => {
             }
           />
           <Route
-            path="technicianDiagnosticList"
+            path="/technicianDiagnosticList"
             element={
               <ProtectedRoute requiredRoles={["Technician", "Manager"]}>
                 <TechnicianDiagnosticList />
@@ -188,7 +187,7 @@ const App = () => {
           <Route
             path="/forgot-password"
             element={
-              <ProtectedRoute requiredRoles={"Manager"}>
+              <ProtectedRoute requiredRole="Manager">
                 <ForgotPassword />
               </ProtectedRoute>
             }
@@ -196,15 +195,15 @@ const App = () => {
           <Route
             path="/register-user"
             element={
-              <ManagerProtectedRoute requiredRoles={"Manager"}>
+              <ProtectedRoute requiredRole="Manager">
                 <RegisterUser />
-              </ManagerProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/accounts-receivable"
             element={
-              <ProtectedRoute requiredRoles={"Manager"}>
+              <ProtectedRoute requiredRole="Manager">
                 <AccountsReceivableView />
               </ProtectedRoute>
             }
@@ -212,7 +211,7 @@ const App = () => {
           <Route
             path="/payment-list"
             element={
-              <ProtectedRoute requiredRoles={"Manager"}>
+              <ProtectedRoute requiredRole="Manager">
                 <PaymentList />
               </ProtectedRoute>
             }
@@ -220,7 +219,7 @@ const App = () => {
           <Route
             path="/client-payment-pdf/:customerId"
             element={
-              <ProtectedRoute requiredRoles={"Manager"}>
+              <ProtectedRoute requiredRole="Manager">
                 <ClientPaymentPDFViewer />
               </ProtectedRoute>
             }
@@ -258,6 +257,8 @@ const App = () => {
             }
           />
         </Route>
+        {/* Catch-all route for undefined paths */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </ErrorBoundary>
   );
