@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import {
   Page,
   Text,
@@ -8,6 +7,7 @@ import {
   Link,
   Image,
 } from "@react-pdf/renderer";
+import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
@@ -233,7 +233,7 @@ const EstimatePDF = ({ pdfData }) => {
   const totals = pdfData?.totals || {};
   const customerNote = pdfData?.customerNote || "";
   const mileage = pdfData?.mileage || 0;
-  const estimateId = pdfData?.estimateId || pdfData?.estimate?.id; // Get estimate ID
+  const estimateId = pdfData?.estimateId || pdfData?.estimate?.id;
 
   /**
    * Formats the date string for "Last Updated".
@@ -292,9 +292,7 @@ const EstimatePDF = ({ pdfData }) => {
 
             {/* Quote Information */}
             <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>
-                Quote # {estimateId || "N/A"}
-              </Text>
+              <Text style={styles.textLine}>Quote # {estimateId || "N/A"}</Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
               </Text>
@@ -319,21 +317,20 @@ const EstimatePDF = ({ pdfData }) => {
             <Text style={styles.textLine}>
               {safeCustomer.name} {safeCustomer.lastName}
             </Text>
-            <Text style={styles.textLine}>
-              {safeCustomer.email || "customer@email"}
-            </Text>
+            {safeCustomer.email && (
+              <Text style={styles.textLine}>{safeCustomer.email}</Text>
+            )}
             <Text style={styles.textLine}>
               {safeCustomer.primaryNumber || "N/A"}{" "}
               {/* Mostrar primaryNumber */}
             </Text>
             {safeCustomer.address && (
-              <Text style={styles.textLine}>
-                {safeCustomer.address}
-              </Text>
+              <Text style={styles.textLine}>{safeCustomer.address}</Text>
             )}
             {safeCustomer.city && safeCustomer.state && (
               <Text style={styles.textLine}>
-                {safeCustomer.city}, {safeCustomer.state} {safeCustomer.zip || ""}
+                {safeCustomer.city}, {safeCustomer.state}{" "}
+                {safeCustomer.zip || ""}
               </Text>
             )}
           </View>
@@ -416,7 +413,7 @@ const EstimatePDF = ({ pdfData }) => {
                 {item.description || ""}
               </Text>
               <Text style={[styles.tableCol, styles.colPart, styles.tableText]}>
-                {item.type === "Part" ? (item.partNumber || "N/A") : "-"}
+                {item.type === "Part" ? item.partNumber || "N/A" : "-"}
               </Text>
               <Text
                 style={[
@@ -425,8 +422,8 @@ const EstimatePDF = ({ pdfData }) => {
                   styles.tableText,
                 ]}
               >
-                {item.type === "Labor" 
-                  ? `${parseFloat(item.quantity || 0).toFixed(2)} hrs` 
+                {item.type === "Labor"
+                  ? `${parseFloat(item.quantity || 0).toFixed(2)} hrs`
                   : parseFloat(item.quantity || 0).toFixed(2)}
               </Text>
               <Text
@@ -499,6 +496,61 @@ const EstimatePDF = ({ pdfData }) => {
       </Page>
     </Document>
   );
+};
+
+EstimatePDF.propTypes = {
+  pdfData: PropTypes.shape({
+    workshopData: PropTypes.shape({
+      workshopName: PropTypes.string,
+      address: PropTypes.string,
+      primaryPhone: PropTypes.string,
+      secondaryPhone: PropTypes.string,
+      fax: PropTypes.string,
+      websiteUrl: PropTypes.string,
+      email: PropTypes.string,
+      disclaimer: PropTypes.string,
+    }),
+    customer: PropTypes.shape({
+      firstName: PropTypes.string,
+      lastName: PropTypes.string,
+      email: PropTypes.string,
+      primaryPhone: PropTypes.string,
+      secondaryPhone: PropTypes.string,
+      address: PropTypes.string,
+    }),
+    vehicle: PropTypes.shape({
+      year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      make: PropTypes.string,
+      model: PropTypes.string,
+      color: PropTypes.string,
+      licensePlate: PropTypes.string,
+      vin: PropTypes.string,
+    }),
+    items: PropTypes.arrayOf(
+      PropTypes.shape({
+        type: PropTypes.string,
+        description: PropTypes.string,
+        quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        unitPrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        taxAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      })
+    ),
+    totals: PropTypes.shape({
+      partsTotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      laborTotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      othersTotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      partsTax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      laborTax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    customerNote: PropTypes.string,
+    mileage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    estimateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    estimate: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  }),
 };
 
 export default EstimatePDF;
