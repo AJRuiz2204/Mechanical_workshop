@@ -411,48 +411,85 @@ const PaymentPDF = ({ pdfData }) => {
           </Text>
         </View>
         {/* Items Table: Parts, Labors, FlatFees */}
-        {combinedItems.length > 0 ? (
-          combinedItems.map((item, idx) => (
-            <View key={idx} style={styles.tableRow}>
-              <Text style={[styles.colType, styles.tableText]}>
-                {item.type || "-"}
-              </Text>
-              <Text style={[styles.colDesc, styles.tableText]}>
-                {item.description || ""}
-              </Text>
-              <Text style={[styles.colPart, styles.tableText]}>
-                {item.type && item.type.toUpperCase().includes("PART")
-                  ? item.partNumber || ""
-                  : "-"}
-              </Text>
-              <Text style={[styles.colQuantityHours, styles.tableText]}>
-                {item.type && item.type.toUpperCase().includes("LABOR")
-                  ? item.quantity
-                    ? `${item.quantity} hrs`
-                    : "-"
-                  : item.quantity
-                  ? item.quantity
-                  : "-"}
-              </Text>
-              <Text style={[styles.colListPrice, styles.tableText]}>
-                {formatCurrency(item.listPrice)}
-              </Text>
-              <Text style={[styles.colExtendedPrice, styles.tableText]}>
-                {formatCurrency(item.extendedPrice)}
-              </Text>
-            </View>
-          ))
-        ) : (
-          // Renderiza una fila vacía si no hay items
-          <View style={styles.tableRow}>
-            <Text style={[styles.colType, styles.tableText]}> </Text>
-            <Text style={[styles.colDesc, styles.tableText]}> </Text>
-            <Text style={[styles.colPart, styles.tableText]}> </Text>
-            <Text style={[styles.colQuantityHours, styles.tableText]}> </Text>
-            <Text style={[styles.colListPrice, styles.tableText]}> </Text>
-            <Text style={[styles.colExtendedPrice, styles.tableText]}> </Text>
+        <View style={styles.table}>
+          {/* Table Header */}
+          <View style={styles.tableHeader}>
+            <Text style={[styles.colType, { fontWeight: "bold", fontSize: 8 }]}>
+              Type
+            </Text>
+            <Text style={[styles.colDesc, { fontWeight: "bold", fontSize: 8 }]}>
+              Description
+            </Text>
+            <Text style={[styles.colPart, { fontWeight: "bold", fontSize: 8 }]}>
+              Part #
+            </Text>
+            <Text
+              style={[
+                styles.colQuantityHours,
+                { fontWeight: "bold", fontSize: 8 },
+              ]}
+            >
+              Qty/Hrs
+            </Text>
+            <Text
+              style={[styles.colListPrice, { fontWeight: "bold", fontSize: 8 }]}
+            >
+              Unit Price
+            </Text>
+            <Text
+              style={[
+                styles.colExtendedPrice,
+                { fontWeight: "bold", fontSize: 8 },
+              ]}
+            >
+              Total
+            </Text>
           </View>
-        )}
+
+          {/* Table Rows */}
+          {combinedItems.length > 0 ? (
+            combinedItems.map((item, idx) => (
+              <View key={idx} style={styles.tableRow}>
+                <Text style={[styles.colType, styles.tableText]}>
+                  {item.type || "-"}
+                </Text>
+                <Text style={[styles.colDesc, styles.tableText]}>
+                  {item.description || ""}
+                </Text>
+                <Text style={[styles.colPart, styles.tableText]}>
+                  {item.type && item.type.toUpperCase().includes("PART")
+                    ? item.partNumber || ""
+                    : "-"}
+                </Text>
+                <Text style={[styles.colQuantityHours, styles.tableText]}>
+                  {item.type && item.type.toUpperCase().includes("LABOR")
+                    ? item.quantity
+                      ? `${item.quantity} hrs`
+                      : "-"
+                    : item.quantity
+                    ? item.quantity
+                    : "-"}
+                </Text>
+                <Text style={[styles.colListPrice, styles.tableText]}>
+                  {formatCurrency(item.listPrice)}
+                </Text>
+                <Text style={[styles.colExtendedPrice, styles.tableText]}>
+                  {formatCurrency(item.extendedPrice)}
+                </Text>
+              </View>
+            ))
+          ) : (
+            // Renderiza una fila vacía si no hay items
+            <View style={styles.tableRow}>
+              <Text style={[styles.colType, styles.tableText]}> </Text>
+              <Text style={[styles.colDesc, styles.tableText]}> </Text>
+              <Text style={[styles.colPart, styles.tableText]}> </Text>
+              <Text style={[styles.colQuantityHours, styles.tableText]}> </Text>
+              <Text style={[styles.colListPrice, styles.tableText]}> </Text>
+              <Text style={[styles.colExtendedPrice, styles.tableText]}> </Text>
+            </View>
+          )}
+        </View>
 
         {/* Payment History and Totals Section */}
         {/* Payment History and Totals Section */}
