@@ -199,8 +199,7 @@ const SalesReportPDF = ({ pdfData }) => {
             </View>
             {/* Quote Information Section */}
             <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>
-                Quote # {salesReportId || "N/A"}
+              <Text style={styles.textLine}>{salesReportId || "N/A"}
               </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(workshopData.lastUpdated)}

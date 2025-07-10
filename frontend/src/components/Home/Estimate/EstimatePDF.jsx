@@ -301,7 +301,7 @@ const EstimatePDF = ({ pdfData }) => {
 
             {/* Quote Information */}
             <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>Quote # {estimateId || "N/A"}</Text>
+              <Text style={styles.textLine}>{estimateId || "N/A"}</Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
               </Text>
