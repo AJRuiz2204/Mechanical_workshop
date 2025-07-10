@@ -857,7 +857,7 @@ const Estimate = () => {
             )}
           />
           <Column
-            title="PART# / HOURS"
+            title="PART#"
             key="partOrHours"
             render={(_, record) =>
               record.type === "Part" ? (
@@ -868,13 +868,7 @@ const Estimate = () => {
                   }
                 />
               ) : record.type === "Labor" ? (
-                <EditableCell
-                  type="number"
-                  value={record.quantity}
-                  onChange={(v) =>
-                    updateLaborField(record.rowIndex, "duration", v)
-                  }
-                />
+                <span>-</span>
               ) : (
                 <span>-</span>
               )
@@ -894,7 +888,7 @@ const Estimate = () => {
                   }
                 />
               ) : (
-                <span>{parseFloat(val).toFixed(2)}</span>
+                <span>-</span>
               )
             }
           />

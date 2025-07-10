@@ -16,9 +16,13 @@ import EstimateActions from "./EstimateActions/EstimateActions";
  * This component displays a list of estimates with their associated account receivable data.
  * It provides functionality to:
  * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, or authorization status)
- * - Filter estimates by payment status using two comboboxes (Paid and Pending)
+ * - Filter estimates by payment status using two checkboxes (Paid and Pending)
  * - Edit, delete, or view the PDF for each estimate
  * - Generate or open an account receivable for the estimate
+ * 
+ * IMPORTANT: Paid estimates are considered closed invoices/completed work and are hidden by default.
+ * They only appear when the "Show Paid (Closed Invoices)" filter is explicitly checked.
+ * This prevents the list from being cluttered with completed work orders.
  *
  * @returns {JSX.Element} The EstimateList component.
  */
@@ -214,6 +218,9 @@ const EstimateList = () => {
       : item.isPaid
       ? "Paid"
       : "Pending";
+    
+    // Los estimados pagados son facturas/trabajos cerrados y no se muestran por defecto
+    // Solo se muestran si el filtro "Paid" está activo
     let paymentMatches = true;
     if (paidFilter || pendingFilter) {
       if (paidFilter && !pendingFilter) {
@@ -224,7 +231,11 @@ const EstimateList = () => {
         paymentMatches =
           paymentStatus === "Paid" || paymentStatus === "Pending";
       }
+    } else {
+      // Si no hay filtros activos, excluir los estimados pagados (son facturas cerradas)
+      paymentMatches = paymentStatus !== "Paid";
     }
+    
     return matchesSearch && paymentMatches;
   });
 
@@ -233,7 +244,7 @@ const EstimateList = () => {
   return (
     <div className="estimate-list container-fluid p-4 border rounded">
       <h2 className="mb-4">Estimate List</h2>
-
+      
       {error && (
         <Alert
           message={error}
@@ -264,13 +275,13 @@ const EstimateList = () => {
           onChange={(e) => setPaidFilter(e.target.checked)}
           style={{ marginRight: 12 }}
         >
-          Only Paid
+          Show Paid (Closed Invoices)
         </Checkbox>
         <Checkbox
           checked={pendingFilter}
           onChange={(e) => setPendingFilter(e.target.checked)}
         >
-          Only Pending
+          Show Pending Payments
         </Checkbox>
       </div>
 

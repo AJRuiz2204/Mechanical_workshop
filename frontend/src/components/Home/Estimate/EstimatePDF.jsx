@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   colType: {
-    width: "8%",
+    width: "15%",
     textAlign: "left",
     borderRightWidth: 1,
     borderRightColor: "#e0e0e0",
@@ -394,7 +394,7 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              QTY
+              Qty/Hrs
             </Text>
             <Text
               style={[
@@ -432,7 +432,7 @@ const EstimatePDF = ({ pdfData }) => {
                 ]}
               >
                 {item.type === "Labor"
-                  ? `${parseFloat(item.quantity || 0).toFixed(2)} hrs`
+                  ? "-"
                   : parseFloat(item.quantity || 0).toFixed(2)}
               </Text>
               <Text
