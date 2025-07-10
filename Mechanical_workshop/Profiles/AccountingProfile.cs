@@ -30,7 +30,10 @@ namespace MechanicalWorkshop.Profiles
             CreateMap<PaymentCreateDto, Payment>();
             CreateMap<PaymentUpdateDto, Payment>();
 
-            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>();
+            CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>()
+                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes))
+                .ForMember(dest => dest.ReasonForVisit, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.ReasonForVisit : ""))
+                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.VehicleId : 0));
 
             // Mapeos para los DTOs de soporte
             CreateMap<UserWorkshop, CustomerShortInfoDto>()

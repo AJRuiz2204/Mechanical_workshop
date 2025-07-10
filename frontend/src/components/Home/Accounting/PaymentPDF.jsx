@@ -210,6 +210,27 @@ const styles = StyleSheet.create({
   boldContentText: {
     fontWeight: "bold",
   },
+  // Notes section styles
+  notesSection: {
+    marginTop: 15,
+    marginBottom: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#000",
+  },
+  noteItem: {
+    marginBottom: 8,
+    paddingLeft: 5,
+  },
+  noteDate: {
+    fontSize: 5,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  noteContent: {
+    fontSize: 6,
+    lineHeight: 1.2,
+  },
 });
 
 // PaymentPDF Component
@@ -256,7 +277,18 @@ const PaymentPDF = ({ pdfData }) => {
   const calculatePartsTotal = (parts) =>
     parts?.reduce((total, part) => total + part.extendedPrice, 0) || 0;
   const calculateLaborTotal = (labors) =>
-    labors?.reduce((total, labor) => total + labor.extendedPrice, 0) || 0;
+    labors?.reduce((total, labor) => labor.extendedPrice, 0) || 0;
+
+  // Get the last 3 notes from technician diagnostic
+  const getNotes = () => {
+    const notes = estimate.technicianDiagnostic?.notes || [];
+    // Sort notes by creation date (most recent first) and take the last 3
+    return notes
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3);
+  };
+
+  const notesToDisplay = getNotes();
 
   return (
     <Document>
@@ -326,11 +358,14 @@ const PaymentPDF = ({ pdfData }) => {
                 {estimate.owner?.address || customer.address}
               </Text>
             )}
-            {(estimate.owner?.city || customer.city) && (estimate.owner?.state || customer.state) && (
-              <Text style={styles.infoText}>
-                {estimate.owner?.city || customer.city}, {estimate.owner?.state || customer.state} {estimate.owner?.zip || customer.zip || ""}
-              </Text>
-            )}
+            {(estimate.owner?.city || customer.city) &&
+              (estimate.owner?.state || customer.state) && (
+                <Text style={styles.infoText}>
+                  {estimate.owner?.city || customer.city},{" "}
+                  {estimate.owner?.state || customer.state}{" "}
+                  {estimate.owner?.zip || customer.zip || ""}
+                </Text>
+              )}
           </View>
           {/* Columna 2: Información del vehículo (Make, Model, Year) */}
           <View style={{ flex: 1, padding: 5 }}>
@@ -341,9 +376,7 @@ const PaymentPDF = ({ pdfData }) => {
           </View>
           {/* Columna 3: VIN, Engine, Mileage con encabezado Quote # */}
           <View style={{ flex: 1, padding: 5 }}>
-            <Text style={styles.sectionTitle}>
-              Quote #{paymentId || "N/A"}
-            </Text>
+            <Text style={styles.sectionTitle}>Quote #{paymentId || "N/A"}</Text>
             <Text style={styles.infoText}>VIN: {vehicle.vin || ""}</Text>
             <Text style={styles.infoText}>
               Engine: {vehicle.engine || estimate.vehicle?.engine || ""}
@@ -469,6 +502,21 @@ const PaymentPDF = ({ pdfData }) => {
             </View>
           </View>
         </View>
+
+        {/* Notes Section */}
+        {notesToDisplay.length > 0 && (
+          <View style={styles.notesSection}>
+            <Text style={styles.sectionTitle}>Technician Notes (Last 3):</Text>
+            {notesToDisplay.map((note, index) => (
+              <View key={note.id || index} style={styles.noteItem}>
+                <Text style={styles.noteDate}>
+                  {formatDate(note.createdAt)}
+                </Text>
+                <Text style={styles.noteContent}>{note.content}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Signature Section */}
         <View>

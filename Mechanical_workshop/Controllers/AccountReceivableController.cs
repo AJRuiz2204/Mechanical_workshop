@@ -35,6 +35,13 @@ namespace Mechanical_workshop.Controllers
                                     .ThenInclude(e => e.Vehicle)
                                 .Include(ar => ar.Estimate)
                                     .ThenInclude(e => e.TechnicianDiagnostic)
+                                        .ThenInclude(td => td!.Notes)
+                                .Include(ar => ar.Estimate)
+                                    .ThenInclude(e => e.Parts)
+                                .Include(ar => ar.Estimate)
+                                    .ThenInclude(e => e.Labors)
+                                .Include(ar => ar.Estimate)
+                                    .ThenInclude(e => e.FlatFees)
                                 .Include(ar => ar.Customer)
                                 .Include(ar => ar.Payments)
                                 .ProjectTo<AccountReceivableResponseDto>(_mapper.ConfigurationProvider)
@@ -60,6 +67,13 @@ namespace Mechanical_workshop.Controllers
                         .ThenInclude(e => e.Vehicle)
                     .Include(ar => ar.Estimate)
                         .ThenInclude(e => e.TechnicianDiagnostic)
+                            .ThenInclude(td => td!.Notes)
+                    .Include(ar => ar.Estimate)
+                        .ThenInclude(e => e.Parts)
+                    .Include(ar => ar.Estimate)
+                        .ThenInclude(e => e.Labors)
+                    .Include(ar => ar.Estimate)
+                        .ThenInclude(e => e.FlatFees)
                     .Include(ar => ar.Customer)
                     .Include(ar => ar.Payments)
                     .FirstOrDefaultAsync(ar => ar.Id == id);
@@ -242,6 +256,15 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 var payments = await _context.Payments
+                    .Include(p => p.AccountReceivable)
+                        .ThenInclude(ar => ar.Estimate)
+                            .ThenInclude(e => e!.TechnicianDiagnostic!)
+                                .ThenInclude(td => td.Notes)
+                    .Include(p => p.AccountReceivable)
+                        .ThenInclude(ar => ar.Estimate)
+                            .ThenInclude(e => e!.Vehicle)
+                    .Include(p => p.AccountReceivable)
+                        .ThenInclude(ar => ar.Customer)
                     .Where(p => p.AccountReceivableId == accountId)
                     .ToListAsync();
 
@@ -260,7 +283,6 @@ namespace Mechanical_workshop.Controllers
         {
             try
             {
-                // Incluir AccountReceivable, y dentro de éste, incluir Customer, Estimate con su Vehicle, Parts, Labors, FlatFees y TechnicianDiagnostic
                 var payments = await _context.Payments
                     .Include(p => p.AccountReceivable)
                         .ThenInclude(a => a.Customer)
@@ -278,7 +300,8 @@ namespace Mechanical_workshop.Controllers
                             .ThenInclude(e => e.FlatFees)
                     .Include(p => p.AccountReceivable)
                         .ThenInclude(a => a.Estimate)
-                            .ThenInclude(e => e.TechnicianDiagnostic)
+                            .ThenInclude(e => e.TechnicianDiagnostic!)
+                                .ThenInclude(td => td.Notes)
                     .ToListAsync();
 
                 return _mapper.Map<List<PaymentResponseDto>>(payments);
@@ -313,7 +336,8 @@ namespace Mechanical_workshop.Controllers
                             .ThenInclude(e => e.FlatFees)
                     .Include(p => p.AccountReceivable)
                         .ThenInclude(ar => ar.Estimate)
-                            .ThenInclude(e => e.TechnicianDiagnostic)
+                            .ThenInclude(e => e.TechnicianDiagnostic!)
+                                .ThenInclude(td => td.Notes)
                     .Where(p => p.AccountReceivable.Customer.Id == customerId)
                     .ToListAsync();
 

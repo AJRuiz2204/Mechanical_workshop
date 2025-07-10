@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react"; // Importing React and its hooks
-import { Table, Input, Alert, Button } from "antd"; // Importing components from Ant Design
-import { getAllPayments } from "../../../services/accountReceivableService"; // Service to fetch payments
-import PaymentPDFModal from "./PaymentPDFModal"; // Modal component to display/download PDF
+import React, { useState, useEffect } from "react";
+import { Table, Input, Alert, Button } from "antd";
+import { getAllPayments } from "../../../services/accountReceivableService";
+import PaymentPDFModal from "./PaymentPDFModal";
 
 /**
  * PaymentList Component
@@ -16,12 +16,12 @@ import PaymentPDFModal from "./PaymentPDFModal"; // Modal component to display/d
 const PaymentList = () => {
   // Setting state for payment data, loading status, error messages, search term,
   // modal visibility, and selected account payments.
-  const [payments, setPayments] = useState([]); // Holds the list of payments
-  const [loading, setLoading] = useState(true); // Indicates loading state
-  const [error, setError] = useState(null); // Holds error message if data fetch fails
-  const [searchTerm, setSearchTerm] = useState(""); // Stores the current search query
-  const [showPaymentPDFModal, setShowPaymentPDFModal] = useState(false); // Controls PDF modal visibility
-  const [selectedAccountPayments, setSelectedAccountPayments] = useState(null); // Stores payments for the selected account
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showPaymentPDFModal, setShowPaymentPDFModal] = useState(false);
+  const [selectedAccountPayments, setSelectedAccountPayments] = useState(null);
 
   // useEffect hook to fetch payments when the component mounts.
   useEffect(() => {
@@ -35,13 +35,13 @@ const PaymentList = () => {
   const fetchPayments = async () => {
     try {
       const data = await getAllPayments();
-      console.log("Payments loaded:", data); // Log fetched payments
-      setPayments(data); // Save payments data into state
+      console.log("Payments loaded:", data);
+      setPayments(data);
     } catch (err) {
-      console.error("Error fetching payments:", err); // Log error if fetching fails
-      setError(err.message || "Error fetching payments"); // Set error message in state
+      console.error("Error fetching payments:", err);
+      setError(err.message || "Error fetching payments");
     } finally {
-      setLoading(false); // End loading state regardless of outcome
+      setLoading(false);
     }
   };
 
@@ -155,7 +155,7 @@ const PaymentList = () => {
 
   // Render an error message if fetching failed
   if (error) {
-    return <Alert message={error} type="error" showIcon />; // Display error alert
+    return <Alert message={error} type="error" showIcon />;
   }
 
   return (
@@ -167,7 +167,7 @@ const PaymentList = () => {
         <Input
           placeholder="Search by customer or vehicle"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)} // Update search term on input change
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 

@@ -184,9 +184,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
             </View>
             {/* Quote Information Section */}
             <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>
-                Quote # {quoteNumber}
-              </Text>
+              <Text style={styles.textLine}>Quote # {quoteNumber}</Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
               </Text>
@@ -243,6 +241,39 @@ const ClientPaymentPDF = ({ pdfData }) => {
             Remaining Balance: ${Number(remainingBalance).toFixed(2)}
           </Text>
         </View>
+
+        {/* Notes Section - Show last 3 notes */}
+        {(() => {
+          const allNotes = [];
+          payments.forEach((payment) => {
+            if (payment.estimate?.technicianDiagnostic?.notes) {
+              allNotes.push(...payment.estimate.technicianDiagnostic.notes);
+            }
+            if (payment.technicianDiagnostic?.notes) {
+              allNotes.push(...payment.technicianDiagnostic.notes);
+            }
+          });
+
+          const sortedNotes = allNotes
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 3);
+
+          return sortedNotes.length > 0 ? (
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Recent Notes (Last 3)</Text>
+              {sortedNotes.map((note, index) => (
+                <View key={note.id || index} style={{ marginBottom: 5 }}>
+                  <Text style={{ fontSize: 9, fontWeight: "bold" }}>
+                    {dayjs(note.createdAt).format("YYYY-MM-DD HH:mm")}
+                  </Text>
+                  <Text style={{ fontSize: 9, marginLeft: 10 }}>
+                    {note.content}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null;
+        })()}
 
         {/* Payments Table Section */}
         <View style={styles.table}>
