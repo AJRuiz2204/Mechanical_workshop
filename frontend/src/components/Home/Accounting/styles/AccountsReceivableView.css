@@ -146,3 +146,189 @@
     font-size: 0.85rem;
   }
 }
+
+/* ---------------------------- */
+/* Table Styles                 */
+/* ---------------------------- */
+
+/* Custom table styling with blue theme */
+.ant-table-thead > tr > th {
+  background-color: #0056b3 !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  border-bottom: 2px solid #0056b3 !important;
+}
+
+.ant-table-thead > tr > th::before {
+  background-color: transparent !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background-color: #f0f8ff !important;
+}
+
+.ant-table-row-selected > td {
+  background-color: #e6f7ff !important;
+}
+
+/* Pending payment row highlight */
+.pending-payment-row {
+  background-color: #fff7e6 !important;
+}
+
+.pending-payment-row:hover {
+  background-color: #fff2e6 !important;
+}
+
+/* Search input styling */
+.ant-input-affix-wrapper {
+  border: 2px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
+}
+
+/* ---------------------------- */
+/* Modal Styles                 */
+/* ---------------------------- */
+
+/* Payment modal header */
+.ant-modal-header {
+  background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+  border-bottom: none;
+}
+
+.ant-modal-title {
+  color: #fff !important;
+  font-weight: bold;
+}
+
+.ant-modal-close {
+  color: #fff !important;
+}
+
+.ant-modal-close:hover {
+  color: #f0f0f0 !important;
+}
+
+/* Modal body styling */
+.ant-modal-body {
+  padding: 0;
+}
+
+/* Payment form card in modal */
+.ant-modal-body .ant-card {
+  border: 1px solid #e8f4fd;
+  box-shadow: 0 2px 8px rgba(0, 86, 179, 0.1);
+}
+
+.ant-modal-body .ant-card-head {
+  background-color: #f8fbff;
+  border-bottom: 2px solid #e8f4fd;
+}
+
+.ant-modal-body .ant-card-head-title {
+  color: #0056b3;
+}
+
+/* Form controls in modal */
+.ant-modal-body .ant-form-item-label > label {
+  color: #0056b3;
+  font-weight: 600;
+}
+
+.ant-modal-body .ant-input,
+.ant-modal-body .ant-input-number,
+.ant-modal-body .ant-select-selector {
+  border: 2px solid #e8f4fd;
+  transition: all 0.3s ease;
+}
+
+.ant-modal-body .ant-input:focus,
+.ant-modal-body .ant-input-number:focus,
+.ant-modal-body .ant-select-focused .ant-select-selector {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
+}
+
+/* Payment history cards in modal */
+.ant-modal-body .ant-card-small > .ant-card-body {
+  padding: 12px;
+}
+
+/* ---------------------------- */
+/* Button Styles                */
+/* ---------------------------- */
+
+/* Primary button styling */
+.ant-btn-primary {
+  background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 86, 179, 0.3);
+  transition: all 0.3s ease;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: linear-gradient(135deg, #004499 0%, #0066cc 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 86, 179, 0.4);
+}
+
+/* Action buttons in table */
+.ant-btn-sm {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* ---------------------------- */
+/* Badge and Tag Styles         */
+/* ---------------------------- */
+
+/* Status tags */
+.ant-tag {
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+
+/* Balance text highlighting */
+.balance-highlight {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+/* ---------------------------- */
+/* Responsive Table Styles      */
+/* ---------------------------- */
+
+.ant-table-scroll {
+  border-radius: 8px;
+}
+
+.ant-table-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.ant-table-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.ant-table-scroll::-webkit-scrollbar-thumb {
+  background: #0056b3;
+  border-radius: 4px;
+}
+
+.ant-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #004499;
+}

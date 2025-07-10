@@ -1,8 +1,30 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { Table, Input, Alert, Button } from "antd";
+import { 
+  Table, 
+  Input, 
+  Alert, 
+  Button, 
+  Card, 
+  Typography, 
+  Space, 
+  Row, 
+  Col, 
+  Statistic, 
+  Tag,
+  Tooltip
+} from "antd";
+import { 
+  DownloadOutlined, 
+  SearchOutlined, 
+  DollarOutlined, 
+  FileTextOutlined 
+} from '@ant-design/icons';
 import { getAllPayments } from "../../../services/accountReceivableService";
 import PaymentPDFModal from "./PaymentPDFModal";
+import "./styles/PaymentList.css";
+
+const { Title, Text } = Typography;
 
 /**
  * PaymentList Component
@@ -100,39 +122,88 @@ const PaymentList = () => {
 
   // Columnas Antd
   const columns = [
-    { title: "Customer", dataIndex: "customer", key: "customer" },
-    { title: "Vehicle", dataIndex: "vehicle", key: "vehicle" },
+    { 
+      title: "Customer", 
+      dataIndex: "customer", 
+      key: "customer",
+      sorter: (a, b) => a.customer.localeCompare(b.customer),
+      ellipsis: true,
+    },
+    { 
+      title: "Vehicle", 
+      dataIndex: "vehicle", 
+      key: "vehicle",
+      ellipsis: true,
+      responsive: ['md'],
+    },
     {
       title: "Initial Balance",
       dataIndex: "initialBalance",
       key: "initialBalance",
-      render: (v) => `$${v}`,
+      render: (v) => (
+        <Text strong style={{ color: '#666' }}>
+          ${v}
+        </Text>
+      ),
+      sorter: (a, b) => parseFloat(a.initialBalance) - parseFloat(b.initialBalance),
+      width: 130,
     },
     {
       title: "Total Paid",
       dataIndex: "totalPaid",
       key: "totalPaid",
-      render: (v) => `$${v}`,
+      render: (v) => (
+        <Text strong style={{ color: '#52c41a' }}>
+          ${v}
+        </Text>
+      ),
+      sorter: (a, b) => parseFloat(a.totalPaid) - parseFloat(b.totalPaid),
+      width: 120,
     },
     {
-      title: "Remaining Balance",
+      title: "Remaining",
       dataIndex: "remainingBalance",
       key: "remainingBalance",
-      render: (v) => `$${v}`,
+      render: (v) => {
+        const remaining = parseFloat(v);
+        return (
+          <Tag color={remaining > 0 ? 'orange' : 'green'}>
+            ${v}
+          </Tag>
+        );
+      },
+      sorter: (a, b) => parseFloat(a.remainingBalance) - parseFloat(b.remainingBalance),
+      width: 110,
     },
-    { title: "Number of Payments", dataIndex: "paymentsCount", key: "paymentsCount" },
+    { 
+      title: "Payments", 
+      dataIndex: "paymentsCount", 
+      key: "paymentsCount",
+      render: (count) => (
+        <Tag color="blue" icon={<FileTextOutlined />}>
+          {count}
+        </Tag>
+      ),
+      sorter: (a, b) => a.paymentsCount - b.paymentsCount,
+      width: 100,
+    },
     {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
-        <Button
-          type="primary"
-          size="small"
-          onClick={() => handleOpenPaymentPDF(record.key, record.accountPayments)}
-        >
-          Download PDF
-        </Button>
+        <Tooltip title="Download Payment Report">
+          <Button
+            type="primary"
+            size="small"
+            icon={<DownloadOutlined />}
+            onClick={() => handleOpenPaymentPDF(record.key, record.accountPayments)}
+          >
+            PDF
+          </Button>
+        </Tooltip>
       ),
+      width: 80,
+      fixed: 'right',
     },
   ];
 
@@ -148,35 +219,124 @@ const PaymentList = () => {
     setShowPaymentPDFModal(true); // Open the PDF modal
   };
 
+  // Calculate summary statistics
+  const totalPayments = dataSource.reduce((sum, item) => sum + item.paymentsCount, 0);
+  const totalPaidAmount = dataSource.reduce((sum, item) => sum + parseFloat(item.totalPaid), 0);
+  const totalRemainingAmount = dataSource.reduce((sum, item) => sum + parseFloat(item.remainingBalance), 0);
+  const totalAccounts = dataSource.length;
+
   // Render a loading state if data is still being fetched
   if (loading) {
-    return <div>Loading payments...</div>; // Display loading indicator
+    return (
+      <div className="container-fluid w-100 py-5">
+        <Card>
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <Text>Loading payments...</Text>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   // Render an error message if fetching failed
   if (error) {
-    return <Alert message={error} type="error" showIcon />;
+    return (
+      <div className="container-fluid w-100 py-5">
+        <Alert message={error} type="error" showIcon />
+      </div>
+    );
   }
 
   return (
     <div className="container-fluid w-100 py-5">
-      <h1 className="mb-4">Payment History by Account</h1>
+      <Title level={3} className="text-center mb-4">
+        Payment History Management
+      </Title>
 
-      {/* Search field to filter payments by customer or vehicle */}
-      <div className="mb-3">
-        <Input
-          placeholder="Search by customer or vehicle"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      {/* Summary Statistics */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={12} sm={6}>
+          <Card>
+            <Statistic
+              title="Total Accounts"
+              value={totalAccounts}
+              prefix={<FileTextOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6}>
+          <Card>
+            <Statistic
+              title="Total Payments"
+              value={totalPayments}
+              prefix={<DollarOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6}>
+          <Card>
+            <Statistic
+              title="Total Collected"
+              value={totalPaidAmount}
+              prefix="$"
+              precision={2}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={6}>
+          <Card>
+            <Statistic
+              title="Outstanding"
+              value={totalRemainingAmount}
+              prefix="$"
+              precision={2}
+              valueStyle={{ color: totalRemainingAmount > 0 ? '#faad14' : '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Main Content Card */}
+      <Card>
+        {/* Search and Controls */}
+        <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
+          <Col xs={24} sm={16} md={12}>
+            <Input
+              placeholder="Search by customer or vehicle"
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={8} md={12} style={{ textAlign: 'right' }}>
+            <Space>
+              <Button onClick={fetchPayments} loading={loading}>
+                Refresh
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+
+        {/* Payments Table */}
+        <Table
+          columns={columns}
+          dataSource={dataSource}
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} accounts`,
+          }}
+          locale={{ emptyText: "No payments found." }}
+          scroll={{ x: 800 }}
+          size="middle"
         />
-      </div>
-
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        pagination={{ pageSize: 10 }}
-        locale={{ emptyText: "No payments found." }}
-      />
+      </Card>
 
       {/* Conditionally render the Payment PDF Modal if payments are selected */}
       {selectedAccountPayments && (

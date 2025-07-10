@@ -9,27 +9,37 @@ import {
   Input,
   Select,
   Checkbox,
-  List,
+  Table,
   Tag,
   Typography,
+  Modal,
+  Space,
+  Divider,
+  message,
 } from "antd";
+import {
+  SearchOutlined,
+  DollarCircleOutlined,
+  EyeOutlined,
+  PrinterOutlined,
+  CheckCircleOutlined,
+} from "@ant-design/icons";
 import {
   getAccountsReceivable,
   getAccountReceivableById,
   createPayment,
   getPaymentsByAccount,
 } from "../../../services/accountReceivableService";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./styles/AccountsReceivableView.css";
 
 const { Text, Title } = Typography;
 
 /**
  * AccountsReceivableView component:
- * - Displays a list of accounts receivable as a vertical list on the left.
- * - Provides checkboxes to filter accounts by "Paid" and "Pending" status.
- * - Allows selection of an account to view its details.
- * - Displays a payment form and payment history on the right when an account is selected.
+ * - Displays accounts receivable as a searchable table.
+ * - Allows filtering by "Paid" and "Pending" status.
+ * - Opens a modal for payment registration when clicking on an account.
  */
 const AccountsReceivableView = () => {
   // State for storing the list of accounts receivable.
@@ -40,8 +50,11 @@ const AccountsReceivableView = () => {
   const [payments, setPayments] = useState([]);
   // State for storing the selected account ID.
   const [selectedAccountId, setSelectedAccountId] = useState(null);
-  // State for controlling whether the payment section is shown.
-  const [showPayments, setShowPayments] = useState(false);
+  // State for controlling the payment modal visibility.
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  // State for controlling the payment success modal visibility.
+  const [isPaymentSuccessModalVisible, setIsPaymentSuccessModalVisible] =
+    useState(false);
   // State for storing form data for creating a new payment.
   const [formData, setFormData] = useState({
     amount: "",
@@ -50,11 +63,19 @@ const AccountsReceivableView = () => {
     notes: "",
   });
   // State for filtering accounts by their status.
-  const [filterPaid, setFilterPaid] = useState(true);
+  const [filterPaid, setFilterPaid] = useState(false);
   const [filterPending, setFilterPending] = useState(true);
+  // State for search functionality
+  const [searchText, setSearchText] = useState("");
+  // State for loading indicator
+  const [loading, setLoading] = useState(false);
+  // Form instance for payment form
+  const [paymentForm] = Form.useForm();
 
   // useLocation hook to access the URL query parameters.
   const location = useLocation();
+  // useNavigate hook for programmatic navigation
+  const navigate = useNavigate();
 
   // useEffect to load the list of accounts receivable when the component mounts.
   useEffect(() => {
@@ -67,7 +88,7 @@ const AccountsReceivableView = () => {
     const query = new URLSearchParams(location.search);
     const accountIdQuery = query.get("accountId");
     if (accountIdQuery) {
-      selectAccount(parseInt(accountIdQuery));
+      openPaymentModal(parseInt(accountIdQuery));
     }
   }, [location.search]);
 
@@ -76,6 +97,7 @@ const AccountsReceivableView = () => {
    * Asynchronously fetches the list of accounts receivable and updates state.
    */
   const loadAccounts = async () => {
+    setLoading(true);
     try {
       const data = await getAccountsReceivable();
       console.log("Información recibida por getAccountsReceivable:", data);
@@ -83,19 +105,19 @@ const AccountsReceivableView = () => {
     } catch (error) {
       console.error("Error loading accounts:", error);
       alert("Error loading accounts: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   /**
-   * selectAccount:
-   * Selects an account by its ID, fetches its details and associated payments,
-   * then updates state accordingly.
+   * openPaymentModal:
+   * Opens the payment modal for a specific account and loads its details.
    * @param {number} accountId - The ID of the selected account.
    */
-  const selectAccount = async (accountId) => {
+  const openPaymentModal = async (accountId) => {
     try {
       setSelectedAccountId(accountId);
-      setShowPayments(true);
 
       // Fetch both account details and payments concurrently.
       const [accountDetails, paymentsData] = await Promise.all([
@@ -105,12 +127,31 @@ const AccountsReceivableView = () => {
 
       setSelectedAccount(accountDetails);
       setPayments(paymentsData);
+      setIsPaymentModalVisible(true);
       console.log("Selected account:", accountDetails);
       console.log("Current payments:", paymentsData);
     } catch (error) {
       console.error("Error loading account details:", error);
       alert("Error loading details: " + error.message);
     }
+  };
+
+  /**
+   * closePaymentModal:
+   * Closes the payment modal and resets form data.
+   */
+  const closePaymentModal = () => {
+    setIsPaymentModalVisible(false);
+    setSelectedAccount(null);
+    setPayments([]);
+    setSelectedAccountId(null);
+    paymentForm.resetFields();
+    setFormData({
+      amount: "",
+      method: "Cash",
+      transactionReference: "",
+      notes: "",
+    });
   };
 
   /**
@@ -164,102 +205,394 @@ const AccountsReceivableView = () => {
       console.log("Updated account:", updatedAccount);
 
       // Reset the form data to initial values.
+      paymentForm.resetFields();
       setFormData({
         amount: "",
         method: "Cash",
         transactionReference: "",
         notes: "",
       });
-      alert("Payment successfully registered!");
+
+      // Reload the accounts list to reflect the updated balance
+      await loadAccounts();
+
+      // Show success modal instead of alert
+      setIsPaymentSuccessModalVisible(true);
     } catch (error) {
       console.error("Error in createPayment:", error);
-      alert("Error registering payment: " + error.message);
+      message.error("Error registering payment: " + error.message);
     }
   };
 
-  // Filter the accounts based on the checkbox selections.
+  /**
+   * handlePrintInvoice:
+   * Navigates to the client payment PDF viewer to print the invoice.
+   */
+  const handlePrintInvoice = () => {
+    if (selectedAccount && selectedAccount.customer) {
+      const customerId = selectedAccount.customer.id;
+      navigate(`/client-payment-pdf/${customerId}`);
+      // Close both modals
+      setIsPaymentSuccessModalVisible(false);
+      closePaymentModal();
+    }
+  };
+
+  /**
+   * handleCloseSuccessModal:
+   * Closes the success modal and optionally the payment modal.
+   */
+  const handleCloseSuccessModal = () => {
+    setIsPaymentSuccessModalVisible(false);
+    closePaymentModal();
+  };
+
+  // Filter and search the accounts based on the checkbox selections and search text.
   const filteredAccounts = accounts.filter((account) => {
-    if (account.status === "Paid" && filterPaid) return true;
-    if (account.status !== "Paid" && filterPending) return true;
-    return false;
+    const matchesStatus =
+      (account.status === "Paid" && filterPaid) ||
+      (account.status !== "Paid" && filterPending);
+
+    const matchesSearch =
+      searchText === "" ||
+      account.customer.fullName
+        .toLowerCase()
+        .includes(searchText.toLowerCase()) ||
+      account.vehicle.make.toLowerCase().includes(searchText.toLowerCase()) ||
+      account.vehicle.model.toLowerCase().includes(searchText.toLowerCase()) ||
+      account.id.toString().includes(searchText);
+
+    return matchesStatus && matchesSearch;
   });
+
+  // Define table columns
+  const columns = [
+    {
+      title: "Account #",
+      dataIndex: "id",
+      key: "id",
+      width: 100,
+      sorter: (a, b) => a.id - b.id,
+      render: (id) => (
+        <Text strong style={{ color: "#0056b3" }}>
+          #{id}
+        </Text>
+      ),
+    },
+    {
+      title: "Customer",
+      dataIndex: ["customer", "fullName"],
+      key: "customer",
+      sorter: (a, b) => a.customer.fullName.localeCompare(b.customer.fullName),
+      render: (name) => <Text strong>{name}</Text>,
+    },
+    {
+      title: "Vehicle",
+      key: "vehicle",
+      render: (record) => (
+        <div>
+          <Text>{`${record.vehicle.year} ${record.vehicle.make} ${record.vehicle.model}`}</Text>
+          <br />
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            VIN: {record.vehicle.vin?.slice(-6) || "N/A"}
+          </Text>
+        </div>
+      ),
+      sorter: (a, b) =>
+        `${a.vehicle.make} ${a.vehicle.model}`.localeCompare(
+          `${b.vehicle.make} ${b.vehicle.model}`
+        ),
+    },
+    {
+      title: "Original Amount",
+      dataIndex: "originalAmount",
+      key: "originalAmount",
+      render: (amount) => (
+        <Text strong style={{ color: "#666" }}>
+          ${amount.toFixed(2)}
+        </Text>
+      ),
+      sorter: (a, b) => a.originalAmount - b.originalAmount,
+      width: 150,
+    },
+    {
+      title: "Balance",
+      dataIndex: "balance",
+      key: "balance",
+      render: (balance) => (
+        <Text
+          strong
+          style={{
+            color: balance > 0 ? "#ff4d4f" : "#52c41a",
+            fontSize: "16px",
+          }}
+        >
+          ${balance.toFixed(2)}
+        </Text>
+      ),
+      sorter: (a, b) => a.balance - b.balance,
+      width: 120,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag
+          color={status === "Paid" ? "green" : "orange"}
+          style={{ fontWeight: "bold" }}
+        >
+          {status}
+        </Tag>
+      ),
+      filters: [
+        { text: "Paid", value: "Paid" },
+        { text: "Pending", value: "Pending" },
+      ],
+      onFilter: (value, record) => record.status === value,
+      width: 100,
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (record) => (
+        <Space>
+          <Button
+            type="primary"
+            icon={<DollarCircleOutlined />}
+            size="small"
+            onClick={() => openPaymentModal(record.id)}
+            disabled={record.status === "Paid"}
+          >
+            Pay
+          </Button>
+          <Button
+            type="default"
+            icon={<EyeOutlined />}
+            size="small"
+            onClick={() => openPaymentModal(record.id)}
+          >
+            View
+          </Button>
+        </Space>
+      ),
+      width: 150,
+    },
+  ];
 
   return (
     <div className="container-fluid w-100 py-5">
-      <Title level={3} className="text-center mb-4">
-        Accounts Receivable Management
+      <Title
+        level={2}
+        className="text-center mb-4"
+        style={{ color: "#0056b3" }}
+      >
+        Pending Payments Management
       </Title>
+      <Text
+        className="text-center d-block mb-4"
+        style={{ fontSize: "16px", color: "#666" }}
+      >
+        Manage and process pending customer payments
+      </Text>
 
-      <Row gutter={24}>
-        <Col span={10}>
-          <Card>
-            <Row justify="space-between" align="middle">
-              <Title level={5}>Accounts Receivable</Title>
-              <Button type="primary" onClick={loadAccounts}>
+      <Card style={{ marginBottom: 24 }}>
+        {/* Filters and Search Row */}
+        <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
+          <Col xs={24} sm={12} md={10}>
+            <Input
+              placeholder="Search by customer, vehicle, or account #"
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+              size="large"
+            />
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Space size="large">
+              <Checkbox
+                checked={filterPending}
+                onChange={(e) => setFilterPending(e.target.checked)}
+              >
+                <span style={{ fontWeight: 500 }}>Pending</span>
+              </Checkbox>
+              <Checkbox
+                checked={filterPaid}
+                onChange={(e) => setFilterPaid(e.target.checked)}
+              >
+                <span style={{ fontWeight: 500 }}>Paid</span>
+              </Checkbox>
+            </Space>
+          </Col>
+          <Col xs={24} sm={24} md={8} style={{ textAlign: "right" }}>
+            <Space>
+              <Text strong style={{ color: "#0056b3" }}>
+                Total: {filteredAccounts.length} accounts
+              </Text>
+              <Button
+                type="primary"
+                onClick={loadAccounts}
+                loading={loading}
+                size="large"
+              >
                 Refresh List
               </Button>
-            </Row>
+            </Space>
+          </Col>
+        </Row>
 
-            <Form layout="inline" style={{ margin: "16px 0" }}>
-              <Form.Item>
-                <Checkbox
-                  checked={filterPaid}
-                  onChange={(e) => setFilterPaid(e.target.checked)}
-                >
-                  Paid
-                </Checkbox>
-              </Form.Item>
-              <Form.Item>
-                <Checkbox
-                  checked={filterPending}
-                  onChange={(e) => setFilterPending(e.target.checked)}
-                >
-                  Pending
-                </Checkbox>
-              </Form.Item>
-            </Form>
+        {/* Accounts Table */}
+        <Table
+          columns={columns}
+          dataSource={filteredAccounts}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            pageSize: 15,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} of ${total} accounts`,
+            pageSizeOptions: ["10", "15", "25", "50"],
+          }}
+          scroll={{ x: 800 }}
+          size="middle"
+          bordered
+          rowClassName={(record) =>
+            record.status === "Pending" ? "pending-payment-row" : ""
+          }
+        />
+      </Card>
 
-            <List
-              pagination={{ pageSize: 10 }}
-              dataSource={filteredAccounts}
-              renderItem={(account) => (
-                <List.Item
-                  onClick={() => selectAccount(account.id)}
-                  style={{ cursor: "pointer", padding: 0 }}
-                >
-                  <Card style={{ width: "100%", marginBottom: 8 }} hoverable>
-                    <Title level={5}>Account #{account.id}</Title>
-                    <Text>Customer: {account.customer.fullName}</Text>
-                    <br />
-                    <Text>
-                      Vehicle: {account.vehicle.make} {account.vehicle.model}
-                    </Text>
-                    <br />
-                    <Text>Total: ${account.originalAmount.toFixed(2)}</Text>
-                    <br />
-                    <Text>Balance: ${account.balance.toFixed(2)}</Text>
-                    <br />
-                    <Tag color={account.status === "Paid" ? "green" : "orange"}>
-                      {account.status}
-                    </Tag>
-                  </Card>
-                </List.Item>
-              )}
-            />
-          </Card>
-        </Col>
-
-        <Col span={14}>
-          {showPayments && (
-            <>
-              <Card style={{ marginBottom: 24 }}>
-                <Title level={5}>Payment Record</Title>
-                {selectedAccount && (
-                  <Text type="secondary">
-                    Pending balance: ${selectedAccount.balance.toFixed(2)}
+      {/* Payment Modal */}
+      <Modal
+        title={
+          <div style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: 16 }}>
+            <Title level={4} style={{ margin: 0, color: "#0056b3" }}>
+              Payment Processing - Account #{selectedAccountId}
+            </Title>
+            <Text type="secondary">
+              Process payment and view payment history
+            </Text>
+          </div>
+        }
+        open={isPaymentModalVisible}
+        onCancel={closePaymentModal}
+        footer={null}
+        width={900}
+        destroyOnClose
+        centered
+      >
+        {selectedAccount && (
+          <div style={{ padding: "16px 0" }}>
+            {/* Account Information */}
+            <Card
+              title={
+                <Space>
+                  <Text strong style={{ color: "#0056b3" }}>
+                    Account Information
                   </Text>
-                )}
+                  <Tag
+                    color={
+                      selectedAccount.status === "Paid" ? "green" : "orange"
+                    }
+                    style={{ fontWeight: "bold" }}
+                  >
+                    {selectedAccount.status}
+                  </Tag>
+                </Space>
+              }
+              size="small"
+              style={{ marginBottom: 16 }}
+            >
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Space
+                    direction="vertical"
+                    size="small"
+                    style={{ width: "100%" }}
+                  >
+                    <div>
+                      <Text strong style={{ color: "#0056b3" }}>
+                        Customer:{" "}
+                      </Text>
+                      <Text style={{ fontSize: "16px" }}>
+                        {selectedAccount.customer.fullName}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text strong>Email: </Text>
+                      <Text>{selectedAccount.customer.email}</Text>
+                    </div>
+                    <div>
+                      <Text strong>Phone: </Text>
+                      <Text>{selectedAccount.customer.primaryPhone}</Text>
+                    </div>
+                  </Space>
+                </Col>
+                <Col span={12}>
+                  <Space
+                    direction="vertical"
+                    size="small"
+                    style={{ width: "100%" }}
+                  >
+                    <div>
+                      <Text strong style={{ color: "#0056b3" }}>
+                        Vehicle:{" "}
+                      </Text>
+                      <Text style={{ fontSize: "16px" }}>
+                        {selectedAccount.vehicle.year}{" "}
+                        {selectedAccount.vehicle.make}{" "}
+                        {selectedAccount.vehicle.model}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text strong>VIN: </Text>
+                      <Text>{selectedAccount.vehicle.vin}</Text>
+                    </div>
+                    <div>
+                      <Text strong>Original Amount: </Text>
+                      <Text style={{ fontSize: "16px", fontWeight: 500 }}>
+                        ${selectedAccount.originalAmount.toFixed(2)}
+                      </Text>
+                    </div>
+                    <div>
+                      <Text strong>Pending Balance: </Text>
+                      <Text
+                        style={{
+                          color:
+                            selectedAccount.balance > 0 ? "#ff4d4f" : "#52c41a",
+                          fontWeight: "bold",
+                          fontSize: "18px",
+                        }}
+                      >
+                        ${selectedAccount.balance.toFixed(2)}
+                      </Text>
+                    </div>
+                  </Space>
+                </Col>
+              </Row>
+            </Card>
+
+            <Divider />
+
+            {/* Payment Form */}
+            {selectedAccount.status !== "Paid" && (
+              <Card
+                title={
+                  <Space>
+                    <DollarCircleOutlined style={{ color: "#0056b3" }} />
+                    <Text strong style={{ color: "#0056b3" }}>
+                      Register New Payment
+                    </Text>
+                  </Space>
+                }
+                size="small"
+                style={{ marginBottom: 16 }}
+              >
                 <Form
+                  form={paymentForm}
                   layout="vertical"
                   onFinish={handlePaymentSubmit}
                   initialValues={formData}
@@ -267,105 +600,249 @@ const AccountsReceivableView = () => {
                   <Row gutter={16}>
                     <Col span={12}>
                       <Form.Item
-                        label="Amount"
+                        label={<Text strong>Payment Amount</Text>}
                         name="amount"
-                        rules={[{ required: true }]}
+                        rules={[
+                          { required: true, message: "Please enter an amount" },
+                          {
+                            type: "number",
+                            min: 0.01,
+                            message: "Amount must be greater than 0",
+                          },
+                        ]}
                       >
                         <InputNumber
                           style={{ width: "100%" }}
                           step={0.01}
-                          onChange={(value) =>
-                            setFormData({ ...formData, amount: value })
+                          max={selectedAccount.balance}
+                          placeholder={`Max: $${selectedAccount.balance.toFixed(
+                            2
+                          )}`}
+                          size="large"
+                          formatter={(value) =>
+                            `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                           }
+                          parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
                         />
                       </Form.Item>
                     </Col>
                     <Col span={12}>
                       <Form.Item
-                        label="Payment Method"
+                        label={<Text strong>Payment Method</Text>}
                         name="method"
-                        rules={[{ required: true }]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select a payment method",
+                          },
+                        ]}
                       >
                         <Select
-                          onChange={(value) =>
-                            setFormData({ ...formData, method: value })
-                          }
+                          placeholder="Select payment method"
+                          size="large"
                         >
-                          <Select.Option value="Cash">Cash</Select.Option>
+                          <Select.Option value="Cash">💵 Cash</Select.Option>
                           <Select.Option value="CreditCard">
-                            Credit Card
+                            💳 Credit Card
                           </Select.Option>
-                          <Select.Option value="Transfer">Transfer</Select.Option>
-                          <Select.Option value="Check">Check</Select.Option>
+                          <Select.Option value="Transfer">
+                            🏦 Transfer
+                          </Select.Option>
+                          <Select.Option value="Check">📄 Check</Select.Option>
                         </Select>
                       </Form.Item>
                     </Col>
                     <Col span={24}>
-                      <Form.Item label="Reference" name="transactionReference">
+                      <Form.Item
+                        label={<Text strong>Transaction Reference</Text>}
+                        name="transactionReference"
+                      >
                         <Input
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              transactionReference: e.target.value,
-                            })
-                          }
+                          placeholder="Enter transaction reference (optional)"
+                          size="large"
                         />
                       </Form.Item>
                     </Col>
                     <Col span={24}>
-                      <Form.Item label="Notes" name="notes">
-                        <Input
-                          onChange={(e) =>
-                            setFormData({ ...formData, notes: e.target.value })
-                          }
+                      <Form.Item label={<Text strong>Notes</Text>} name="notes">
+                        <Input.TextArea
+                          rows={3}
+                          placeholder="Enter any additional notes (optional)"
                         />
                       </Form.Item>
                     </Col>
                     <Col span={24}>
                       <Form.Item>
-                        <Button type="primary" htmlType="submit" block>
-                          Register Payment
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          block
+                          size="large"
+                          style={{ height: "50px", fontSize: "16px" }}
+                          icon={<DollarCircleOutlined />}
+                        >
+                          Process Payment
                         </Button>
                       </Form.Item>
                     </Col>
                   </Row>
                 </Form>
               </Card>
+            )}
 
-              <Card>
-                <Title level={5}>Payment History</Title>
-                <div style={{ maxHeight: 400, overflowY: "auto" }}>
-                  {payments.map((payment) => (
+            {/* Payment History */}
+            <Card title="Payment History" size="small">
+              <div style={{ maxHeight: 300, overflowY: "auto" }}>
+                {payments.length > 0 ? (
+                  payments.map((payment) => (
                     <Card
                       key={payment.id}
                       size="small"
                       style={{ marginBottom: 8 }}
+                      bodyStyle={{ padding: 12 }}
                     >
-                      <Row justify="space-between">
-                        <Col>
-                          <Text strong>${payment.amount.toFixed(2)}</Text>
+                      <Row justify="space-between" align="middle">
+                        <Col span={16}>
+                          <Text strong style={{ fontSize: "16px" }}>
+                            ${payment.amount.toFixed(2)}
+                          </Text>
                           <br />
                           <Text type="secondary">
-                            {new Date(payment.paymentDate).toLocaleDateString()}
+                            {new Date(payment.paymentDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </Text>
+                          {payment.transactionReference && (
+                            <>
+                              <br />
+                              <Text type="secondary">
+                                Ref: {payment.transactionReference}
+                              </Text>
+                            </>
+                          )}
+                          {payment.notes && (
+                            <>
+                              <br />
+                              <Text type="secondary">
+                                Notes: {payment.notes}
+                              </Text>
+                            </>
+                          )}
+                        </Col>
+                        <Col span={8} style={{ textAlign: "right" }}>
+                          <Tag color="blue" style={{ marginBottom: 4 }}>
+                            {payment.method}
+                          </Tag>
+                          <br />
+                          <Text type="secondary" style={{ fontSize: "12px" }}>
+                            ID: {payment.id}
                           </Text>
                         </Col>
-                        <Col>
-                          <Tag color="blue">{payment.method}</Tag>
-                        </Col>
                       </Row>
-                      {payment.transactionReference && (
-                        <Text type="secondary">
-                          Ref: {payment.transactionReference}
-                        </Text>
-                      )}
                     </Card>
-                  ))}
-                </div>
-              </Card>
-            </>
-          )}
-        </Col>
-      </Row>
+                  ))
+                ) : (
+                  <Text
+                    type="secondary"
+                    style={{ textAlign: "center", display: "block" }}
+                  >
+                    No payments recorded for this account
+                  </Text>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+      </Modal>
+
+      {/* Payment Success Modal */}
+      <Modal
+        title={
+          <div style={{ textAlign: "center" }}>
+            <CheckCircleOutlined
+              style={{
+                fontSize: "24px",
+                color: "#52c41a",
+                marginRight: "8px",
+              }}
+            />
+            <span style={{ color: "#0056b3", fontSize: "18px" }}>
+              Payment Successful
+            </span>
+          </div>
+        }
+        open={isPaymentSuccessModalVisible}
+        onCancel={handleCloseSuccessModal}
+        footer={null}
+        centered
+        width={500}
+        destroyOnClose
+      >
+        <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <CheckCircleOutlined
+            style={{
+              fontSize: "64px",
+              color: "#52c41a",
+              marginBottom: "16px",
+            }}
+          />
+          <Title
+            level={3}
+            style={{
+              margin: "16px 0",
+              color: "#0056b3",
+            }}
+          >
+            Payment Registered Successfully!
+          </Title>
+          <Text
+            type="secondary"
+            style={{
+              fontSize: "16px",
+              display: "block",
+              marginBottom: "24px",
+            }}
+          >
+            The payment has been processed and the account balance has been
+            updated. Would you like to print the invoice?
+          </Text>
+
+          <Space size="large">
+            <Button
+              type="primary"
+              size="large"
+              icon={<PrinterOutlined />}
+              onClick={handlePrintInvoice}
+              style={{
+                height: "48px",
+                fontSize: "16px",
+                minWidth: "140px",
+              }}
+            >
+              Print Invoice
+            </Button>
+            <Button
+              type="default"
+              size="large"
+              onClick={handleCloseSuccessModal}
+              style={{
+                height: "48px",
+                fontSize: "16px",
+                minWidth: "100px",
+              }}
+            >
+              Close
+            </Button>
+          </Space>
+        </div>
+      </Modal>
     </div>
   );
 };
