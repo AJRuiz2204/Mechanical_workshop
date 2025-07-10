@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   page: {
     padding: 15,
     fontFamily: "Helvetica",
-    fontSize: 6,
+    fontSize: 10,
     backgroundColor: "#ffffff",
   },
   header: {
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   companyText: {
-    fontSize: 8,
+    fontSize: 12,
     marginBottom: 3,
     color: "#000000",
   },
@@ -64,12 +64,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 8,
+    fontSize: 12,
     marginBottom: 4,
     fontWeight: "bold",
   },
   infoText: {
-    fontSize: 8,
+    fontSize: 10,
     marginBottom: 8,
   },
   // Service description with border-bottom; displays extendedDiagnostic if available
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#000000",
     paddingBottom: 10,
     marginBottom: 20,
-    fontSize: 6,
+    fontSize: 10,
     textTransform: "uppercase",
   },
   invoiceHeader: {
@@ -103,6 +103,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomWidth: 0.5,
     borderBottomColor: "#000",
+  },
+  tableText: {
+    fontSize: 9,
   },
   colType: {
     width: "8%",
@@ -154,16 +157,16 @@ const styles = StyleSheet.create({
   },
   colDate: {
     width: "30%",
-    fontSize: 6,
+    fontSize: 10,
   },
   colAmount: {
     width: "25%",
-    fontSize: 6,
+    fontSize: 10,
     textAlign: "right",
   },
   colReference: {
     width: "45%",
-    fontSize: 6,
+    fontSize: 10,
     paddingLeft: 5,
   },
   totalsSection: {
@@ -178,13 +181,13 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   totalLabel: {
-    fontSize: 6,
+    fontSize: 10,
     width: 100,
     textAlign: "right",
     paddingRight: 10,
   },
   totalAmount: {
-    fontSize: 6,
+    fontSize: 10,
     width: 80,
     textAlign: "right",
   },
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
     bottom: 35,
     left: 35,
     right: 35,
-    fontSize: 5,
+    fontSize: 8,
     borderTopWidth: 1,
     borderTopColor: "#000000",
     paddingTop: 10,
@@ -228,12 +231,12 @@ const styles = StyleSheet.create({
     paddingLeft: 5,
   },
   noteDate: {
-    fontSize: 5,
+    fontSize: 8,
     fontWeight: "bold",
     marginBottom: 2,
   },
   noteContent: {
-    fontSize: 6,
+    fontSize: 10,
     lineHeight: 1.2,
   },
 });
@@ -414,32 +417,32 @@ const PaymentPDF = ({ pdfData }) => {
         <View style={styles.table}>
           {/* Table Header */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.colType, { fontWeight: "bold", fontSize: 8 }]}>
+            <Text style={[styles.colType, { fontWeight: "bold", fontSize: 10 }]}>
               Type
             </Text>
-            <Text style={[styles.colDesc, { fontWeight: "bold", fontSize: 8 }]}>
+            <Text style={[styles.colDesc, { fontWeight: "bold", fontSize: 10 }]}>
               Description
             </Text>
-            <Text style={[styles.colPart, { fontWeight: "bold", fontSize: 8 }]}>
+            <Text style={[styles.colPart, { fontWeight: "bold", fontSize: 10 }]}>
               Part #
             </Text>
             <Text
               style={[
                 styles.colQuantityHours,
-                { fontWeight: "bold", fontSize: 8 },
+                { fontWeight: "bold", fontSize: 10 },
               ]}
             >
               Qty/Hrs
             </Text>
             <Text
-              style={[styles.colListPrice, { fontWeight: "bold", fontSize: 8 }]}
+              style={[styles.colListPrice, { fontWeight: "bold", fontSize: 10 }]}
             >
               Unit Price
             </Text>
             <Text
               style={[
                 styles.colExtendedPrice,
-                { fontWeight: "bold", fontSize: 8 },
+                { fontWeight: "bold", fontSize: 10 },
               ]}
             >
               Total
