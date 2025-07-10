@@ -153,13 +153,18 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   colDate: {
-    width: "50%",
+    width: "30%",
     fontSize: 6,
   },
   colAmount: {
-    width: "50%",
+    width: "25%",
     fontSize: 6,
     textAlign: "right",
+  },
+  colReference: {
+    width: "45%",
+    fontSize: 6,
+    paddingLeft: 5,
   },
   totalsSection: {
     marginLeft: "auto",
@@ -458,11 +463,15 @@ const PaymentPDF = ({ pdfData }) => {
             <View style={styles.historyHeader}>
               <Text style={styles.colDate}>Date</Text>
               <Text style={styles.colAmount}>Amount</Text>
+              <Text style={styles.colReference}>Reference</Text>
             </View>
             {payments.map((p, index) => (
               <View key={index} style={styles.historyRow}>
                 <Text style={styles.colDate}>{formatDate(p.paymentDate)}</Text>
                 <Text style={styles.colAmount}>{formatCurrency(p.amount)}</Text>
+                <Text style={styles.colReference}>
+                  {p.transactionReference || "N/A"}
+                </Text>
               </View>
             ))}
           </View>
