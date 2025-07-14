@@ -11,58 +11,255 @@ import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
-// Define styles for the PDF document
+// Define styles for the PDF document - Updated with PaymentPDF styles
 const styles = StyleSheet.create({
   page: {
-    padding: 20,
-    fontSize: 10,
+    padding: 15,
     fontFamily: "Helvetica",
+    fontSize: 10,
     backgroundColor: "#ffffff",
   },
-  // Styles for the header container
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    paddingBottom: 5,
+    borderBottom: "1px solid #000",
+  },
+  logoSection: {
+    width: 150,
+  },
+  companyName: {
+    fontSize: 18,
+    marginBottom: 3,
+    color: "#2596be",
+    textAlign: "right",
+  },
+  companyInfo: {
+    flex: 1,
+    textAlign: "right",
+  },
+  companyText: {
+    fontSize: 12,
+    marginBottom: 3,
+    color: "#000000",
+  },
+  billSection: {
+    flexDirection: "row",
+    marginBottom: 25,
+    paddingBottom: 10,
+  },
+  billTo: {
+    flex: 1,
+    paddingRight: 20,
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: "bold",
+  },
+  infoText: {
+    fontSize: 10,
+    marginBottom: 8,
+  },
+  // Service description with border-bottom; displays extendedDiagnostic if available
+  serviceDescription: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000000",
+    paddingBottom: 10,
+    marginBottom: 20,
+    fontSize: 10,
+    textTransform: "uppercase",
+  },
+  invoiceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  // Table styles for combined items (Parts, Labors, FlatFees)
+  table: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    paddingBottom: 5,
+    marginBottom: 8,
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 4,
+    alignItems: "center",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#000",
+  },
+  tableText: {
+    fontSize: 9,
+  },
+  colType: {
+    width: "8%",
+    textAlign: "left",
+    paddingLeft: 2,
+  },
+  colDesc: {
+    width: "52%",
+    paddingLeft: 2,
+  },
+  colPart: {
+    width: "12%",
+    textAlign: "left",
+    paddingLeft: 2,
+  },
+  colQuantityHours: {
+    width: "12%",
+    textAlign: "center",
+  },
+  colListPrice: {
+    width: "20%",
+    textAlign: "right",
+    paddingRight: 2,
+  },
+  colExtendedPrice: {
+    width: "20%",
+    textAlign: "right",
+    paddingRight: 2,
+  },
+  historyAndTotals: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  paymentHistoryContainer: {
+    width: "45%",
+  },
+  historyHeader: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    paddingBottom: 5,
+    marginBottom: 8,
+  },
+  historyRow: {
+    flexDirection: "row",
+    paddingVertical: 4,
+  },
+  colDate: {
+    width: "30%",
+    fontSize: 10,
+  },
+  colAmount: {
+    width: "25%",
+    fontSize: 10,
+    textAlign: "right",
+  },
+  colReference: {
+    width: "45%",
+    fontSize: 10,
+    paddingLeft: 5,
+  },
+  totalsSection: {
+    marginLeft: "auto",
+    width: "45%",
+    marginTop: 20,
+    alignItems: "flex-end",
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  totalLabel: {
+    fontSize: 10,
+    width: 100,
+    textAlign: "right",
+    paddingRight: 10,
+  },
+  totalAmount: {
+    fontSize: 10,
+    width: 80,
+    textAlign: "right",
+  },
+  separator: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    alignSelf: "flex-end",
+    marginVertical: 4,
+    width: 120,
+  },
+  paymentOptions: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginTop: 10,
+  },
+  // Disclaimer style for footer
+  disclaimer: {
+    position: "absolute",
+    bottom: 35,
+    left: 35,
+    right: 35,
+    fontSize: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#000000",
+    paddingTop: 10,
+  },
+  boldContentText: {
+    fontWeight: "bold",
+  },
+  // Notes section styles
+  notesSection: {
+    marginTop: 15,
+    marginBottom: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#000",
+  },
+  noteItem: {
+    marginBottom: 8,
+    paddingLeft: 5,
+  },
+  noteDate: {
+    fontSize: 8,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  noteContent: {
+    fontSize: 10,
+    lineHeight: 1.2,
+  },
+  // Legacy styles for backward compatibility
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 5,
   },
-  // Space for the logo on the left
-  logoSection: {
-    width: 120,
-    height: 80,
-    marginRight: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  // Container for workshop and quote information
   headerInfoContainer: {
     flex: 1,
     flexDirection: "column",
     alignItems: "flex-end",
     padding: 0,
   },
-  // Workshop information
   workshopInfo: {
     marginBottom: 3,
     alignItems: "flex-end",
   },
-  // Quote information
   quoteInfo: {
     alignItems: "flex-end",
     padding: 0,
   },
-  // Styles for text lines
   textLine: {
     fontSize: 9,
     marginBottom: 1,
   },
-  // Styles for links
   link: {
     textDecoration: "underline",
     color: "blue",
     fontSize: 9,
   },
-  // Information section (Customer and Vehicle)
   infoSection: {
     flexDirection: "row",
     marginTop: 5,
@@ -71,13 +268,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
-  // Section titles
-  sectionTitle: {
-    fontSize: 10,
-    fontWeight: "bold",
-    marginBottom: 2,
-  },
-  // Customer notes section
   noteSection: {
     marginTop: 5,
     marginBottom: 5,
@@ -85,108 +275,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
   },
-  // Styles for the table
-  table: {
-    display: "table",
-    width: "auto",
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    marginTop: 5,
-  },
-  // Styles for the table header
-  tableHeader: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#000000",
-    backgroundColor: "#f5f5f5",
-  },
-  // Styles for table rows
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    minHeight: 20,
-    alignItems: "center",
-  },
-  // Styles for table header text
   tableHeaderText: {
     fontSize: 8,
     fontWeight: "bold",
   },
-  // Styles for table row text
-  tableText: {
-    fontSize: 8,
-  },
-  // Styles for table columns
   tableCol: {
     padding: 2,
-  },
-  colType: {
-    width: "15%",
-    textAlign: "left",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
-  },
-  colDesc: {
-    flex: 2,
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
-    paddingLeft: 2,
-  },
-  colPart: {
-    width: "12%",
-    textAlign: "left",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
-    paddingLeft: 2,
-  },
-  colQuantityHours: {
-    width: "12%",
-    textAlign: "center",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
-  },
-  colListPrice: {
-    width: "12%",
-    textAlign: "right",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
-  },
-  colExtendedPrice: {
-    width: "12%",
-    textAlign: "right",
-    borderRightWidth: 1,
-    borderRightColor: "#e0e0e0",
   },
   colTax: {
     width: "8%",
     textAlign: "center",
   },
-  // Totals section
-  totalsSection: {
-    marginTop: 10,
-    alignItems: "flex-end",
-    paddingRight: 5,
-  },
-  // Individual total rows
-  totalRow: {
-    flexDirection: "row",
-    marginBottom: 2,
-  },
-  // Total label
-  totalLabel: {
-    width: 120,
-    textAlign: "right",
-    marginRight: 5,
-    fontSize: 9,
-  },
-  // Total amount
-  totalAmount: {
-    width: 80,
-    textAlign: "right",
-    fontSize: 9,
-  },
-  // Styles for the grand total
   grandTotal: {
     marginTop: 5,
     paddingTop: 5,
@@ -196,7 +295,6 @@ const styles = StyleSheet.create({
   grandTotalText: {
     fontWeight: "bold",
   },
-  // Styles for the footer
   footer: {
     position: "absolute",
     bottom: 20,
