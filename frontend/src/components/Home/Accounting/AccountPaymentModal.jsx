@@ -82,6 +82,8 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
         notes: "",
       });
       alert("Payment successfully registered!");
+      // Cerrar el modal automáticamente después del registro exitoso
+      onHide();
     } catch (error) {
       console.error("Modal - Error in createPayment:", error);
       alert("Error registering payment: " + error.message);
@@ -95,6 +97,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       width="80%"
       footer={null}
       title={`Account Receivable #${account ? account.id : accountId}`}
+      className="account-payment-modal"
     >
       {account ? (
         <>

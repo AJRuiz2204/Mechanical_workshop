@@ -164,3 +164,34 @@
     font-size: 0.95rem;
   }
 }
+
+/* ---------------------------- */
+/* Modal Close Button Fix       */
+/* ---------------------------- */
+
+/* Estilo para hacer visible el botón de cerrar (X) del modal */
+.account-payment-modal .ant-modal-close {
+  color: #000 !important; /* Color negro para que sea visible */
+  background-color: rgba(255, 255, 255, 0.8) !important; /* Fondo blanco semi-transparente */
+  border-radius: 4px !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.account-payment-modal .ant-modal-close:hover {
+  color: #ff4d4f !important; /* Color rojo al hacer hover */
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.account-payment-modal .ant-modal-close .ant-modal-close-x {
+  font-size: 16px !important;
+  font-weight: bold !important;
+}
+
+/* Asegurar que el ícono dentro del botón sea visible */
+.account-payment-modal .ant-modal-close .anticon {
+  color: inherit !important;
+}
