@@ -3,14 +3,23 @@ import { Modal, Form, Input, InputNumber, Checkbox, Select, Button, Space } from
 import { useLaborModal } from '../hooks/useModalHooks';
 
 /**
- * LaborModal allows adding a new labor item to the estimate
+ * LaborModal allows adding a new labor item to the estimate or editing an existing one
  */
-const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, settings }) => {
-  const clearFields = useLaborModal(show, settings, setNewLabor);
+const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, settings, isEditingItem, updateEditedItem }) => {
+  const clearFields = useLaborModal(show, settings, setNewLabor, isEditingItem);
+
+  const handleSubmit = () => {
+    if (isEditingItem) {
+      updateEditedItem();
+    } else {
+      addLabor();
+    }
+    onHide(); // Close modal after submit
+  };
 
   return (
-    <Modal title="Add Labor" open={show} onCancel={onHide} footer={null} destroyOnClose>
-      <Form layout="vertical" onFinish={addLabor}>
+    <Modal title={isEditingItem ? "Edit Labor" : "Add Labor"} open={show} onCancel={onHide} footer={null} destroyOnClose>
+      <Form layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="Description" required>
           <Input
             value={newLabor.description}
@@ -91,9 +100,11 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         )}
         <Form.Item>
           <Space>
-            <Button onClick={clearFields}>Clear</Button>
+            {!isEditingItem && <Button onClick={clearFields}>Clear</Button>}
             <Button onClick={onHide}>Close</Button>
-            <Button type="primary" htmlType="submit">Add Labor</Button>
+            <Button type="primary" htmlType="submit">
+              {isEditingItem ? "Update Labor" : "Add Labor"}
+            </Button>
           </Space>
         </Form.Item>
       </Form>
@@ -109,6 +120,8 @@ LaborModal.propTypes = {
   addLabor: PropTypes.func.isRequired,
   noTax: PropTypes.bool.isRequired,
   settings: PropTypes.object.isRequired,
+  isEditingItem: PropTypes.bool,
+  updateEditedItem: PropTypes.func,
 };
 
 export default LaborModal;

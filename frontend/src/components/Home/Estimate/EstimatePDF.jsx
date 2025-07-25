@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     paddingLeft: 2,
   },
   colQuantityHours: {
-    width: "12%",
+    width: "8%",
     textAlign: "center",
   },
   colListPrice: {
@@ -124,8 +124,8 @@ const styles = StyleSheet.create({
     paddingRight: 2,
   },
   colExtendedPrice: {
-    width: "20%",
-    textAlign: "right",
+    width: "16%",
+    textAlign: "center",
     paddingRight: 2,
   },
   historyAndTotals: {
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   colTax: {
-    width: "8%",
+    width: "16%",
     textAlign: "center",
   },
   grandTotal: {
@@ -506,7 +506,7 @@ const EstimatePDF = ({ pdfData }) => {
             <Text
               style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
             >
-              extended
+              Extended
             </Text>
           </View>
 

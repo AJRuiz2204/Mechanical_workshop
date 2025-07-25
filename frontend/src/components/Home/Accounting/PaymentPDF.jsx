@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     paddingLeft: 2,
   },
   colDesc: {
-    width: "52%",
+    width: "72%",
     paddingLeft: 2,
   },
   colPart: {
@@ -122,17 +122,17 @@ const styles = StyleSheet.create({
     paddingLeft: 2,
   },
   colQuantityHours: {
-    width: "12%",
+    width: "8%",
     textAlign: "center",
   },
   colListPrice: {
-    width: "20%",
-    textAlign: "right",
+    width: "16%",
+    textAlign: "center",
     paddingRight: 2,
   },
   colExtendedPrice: {
-    width: "20%",
-    textAlign: "right",
+    width: "16%",
+    textAlign: "center",
     paddingRight: 2,
   },
 

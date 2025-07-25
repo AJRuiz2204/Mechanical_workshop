@@ -21,6 +21,7 @@ import {
   Card,
   Descriptions,
 } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
 import LaborModal from "./Modals/LaborModal";
@@ -62,6 +63,16 @@ const Estimate = () => {
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
+
+  // Debug logging for showFlatFeeModal state changes
+  useEffect(() => {
+    console.log('showFlatFeeModal state changed to:', showFlatFeeModal);
+  }, [showFlatFeeModal]);
+
+  // Edit mode states
+  const [editingItemType, setEditingItemType] = useState(null); // 'PART', 'LABOR', 'FLATFEE'
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
+  const [isEditingItem, setIsEditingItem] = useState(false);
 
   const [newPart, setNewPart] = useState({
     description: "",
@@ -251,18 +262,6 @@ const Estimate = () => {
     });
     setShowPartModal(true);
   };
-  const handleClosePartModal = () => {
-    setShowPartModal(false);
-    setNewPart({
-      description: "",
-      partNumber: "",
-      quantity: 1.0,
-      netPrice: 0.0,
-      listPrice: 0.0,
-      extendedPrice: 0.0,
-      applyPartTax: owner?.noTax ? false : settings?.partTaxByDefault ?? false,
-    });
-  };
 
   const handleShowLaborModal = () => {
     const defaultTax = owner?.noTax
@@ -277,17 +276,14 @@ const Estimate = () => {
     });
     setShowLaborModal(true);
   };
-  const handleCloseLaborModal = () => {
-    setShowLaborModal(false);
-    setNewLabor({
+
+  const handleShowFlatFeeModal = () => {
+    setNewFlatFee({
       description: "",
-      duration: 0.25,
-      laborRate: settings?.defaultHourlyRate ?? 0.0,
-      extendedPrice: 0.0,
-      applyLaborTax: owner?.noTax
-        ? false
-        : settings?.laborTaxByDefault ?? false,
+      flatFeePrice: 1.0,
+      extendedPrice: 1.0,
     });
+    setShowFlatFeeModal(true);
   };
 
   const addPart = async () => {
@@ -377,6 +373,169 @@ const Estimate = () => {
     setShowFlatFeeModal(false);
   };
 
+  // Edit item functions - Allow editing parts, labor, and flat fees directly from the table
+  const handleEditItem = (type, index) => {
+    console.log(`Editing ${type} at index ${index}`); // Debug log
+    
+    // Set editing state first
+    setEditingItemType(type);
+    setEditingItemIndex(index);
+    setIsEditingItem(true);
+    
+    if (type === "PART") {
+      const part = parts[index];
+      console.log('Part to edit:', part); // Debug log
+      setNewPart({ ...part });
+      // Use setTimeout to ensure state is set before opening modal
+      setTimeout(() => setShowPartModal(true), 0);
+    } else if (type === "LABOR") {
+      const labor = labors[index];
+      console.log('Labor to edit:', labor); // Debug log
+      setNewLabor({ ...labor });
+      // Use setTimeout to ensure state is set before opening modal
+      setTimeout(() => setShowLaborModal(true), 0);
+    } else if (type === "FLAT FEE") {
+      const flatFee = flatFees[index];
+      console.log('FlatFee to edit:', flatFee); // Debug log
+      console.log('Before setNewFlatFee - current newFlatFee:', newFlatFee);
+      setNewFlatFee({ ...flatFee });
+      console.log('After setNewFlatFee - showFlatFeeModal before setTimeout:', showFlatFeeModal);
+      // Use setTimeout to ensure state is set before opening modal
+      setTimeout(() => {
+        console.log('Setting showFlatFeeModal to true');
+        setShowFlatFeeModal(true);
+      }, 0);
+    }
+  };
+
+  const updateEditedItem = () => {
+    if (editingItemType === "PART") {
+      updatePartAtIndex(editingItemIndex, newPart);
+    } else if (editingItemType === "LABOR") {
+      updateLaborAtIndex(editingItemIndex, newLabor);
+    } else if (editingItemType === "FLAT FEE") {
+      updateFlatFeeAtIndex(editingItemIndex, newFlatFee);
+    }
+    // resetEditState is now called by individual update functions
+  };
+
+  const updatePartAtIndex = (index, updatedPart) => {
+    if (!updatedPart.description) {
+      setError("Description is required.");
+      return;
+    }
+    // Check for duplicates if partNumber is provided and not empty
+    if (updatedPart.partNumber && updatedPart.partNumber.trim()) {
+      const duplicate = parts.find(
+        (part, idx) => idx !== index && part.partNumber && part.partNumber === updatedPart.partNumber
+      );
+      if (duplicate) {
+        setError(`The part with Part Number ${updatedPart.partNumber} already exists in this estimate.`);
+        return;
+      }
+    }
+    
+    const updatedParts = [...parts];
+    updatedParts[index] = { ...updatedPart };
+    setParts(updatedParts);
+    setSuccess("Part updated successfully.");
+    setError(null);
+    resetEditState(); // Reset edit state after successful update
+  };
+
+  const updateLaborAtIndex = (index, updatedLabor) => {
+    if (
+      !updatedLabor.description ||
+      updatedLabor.duration === "" ||
+      parseFloat(updatedLabor.duration) <= 0
+    ) {
+      setError("Please fill out all labor fields correctly.");
+      return;
+    }
+    const dur = parseFloat(updatedLabor.duration) || 0;
+    const rate = parseFloat(updatedLabor.laborRate) || 0;
+    const ext = dur * rate;
+    const updatedItem = {
+      ...updatedLabor,
+      duration: dur,
+      laborRate: rate,
+      extendedPrice: ext,
+    };
+    
+    const updatedLabors = [...labors];
+    updatedLabors[index] = updatedItem;
+    setLabors(updatedLabors);
+    setSuccess("Labor updated successfully.");
+    setError(null);
+    resetEditState(); // Reset edit state after successful update
+  };
+
+  const updateFlatFeeAtIndex = (index, updatedFlatFee) => {
+    if (
+      !updatedFlatFee.description ||
+      updatedFlatFee.flatFeePrice === "" ||
+      parseFloat(updatedFlatFee.flatFeePrice) <= 0
+    ) {
+      setError("Please fill out all flat fee fields correctly.");
+      return;
+    }
+    const price = parseFloat(updatedFlatFee.flatFeePrice) || 0;
+    const updatedItem = { ...updatedFlatFee, extendedPrice: price };
+    
+    const updatedFlatFees = [...flatFees];
+    updatedFlatFees[index] = updatedItem;
+    setFlatFees(updatedFlatFees);
+    setSuccess("Flat fee updated successfully.");
+    setError(null);
+    resetEditState(); // Reset edit state after successful update
+  };
+
+  const resetEditState = () => {
+    setEditingItemType(null);
+    setEditingItemIndex(null);
+    setIsEditingItem(false);
+  };
+
+  const handleCloseModal = (modalType) => {
+    console.log('handleCloseModal called with modalType:', modalType, 'isEditingItem:', isEditingItem);
+    
+    if (modalType === "part") {
+      setShowPartModal(false);
+      if (!isEditingItem) {
+        setNewPart({
+          description: "",
+          partNumber: "",
+          quantity: 1.0,
+          netPrice: 0.0,
+          listPrice: 0.0,
+          extendedPrice: 0.0,
+          applyPartTax: noTax ? false : true,
+        });
+      }
+    } else if (modalType === "labor") {
+      setShowLaborModal(false);
+      if (!isEditingItem) {
+        setNewLabor({
+          description: "",
+          duration: 0.25,
+          laborRate: settings?.defaultHourlyRate || 1.0,
+          extendedPrice: 1.0,
+          applyLaborTax: settings?.laborTaxByDefault || false,
+        });
+      }
+    } else if (modalType === "flatfee") {
+      setShowFlatFeeModal(false);
+      if (!isEditingItem) {
+        setNewFlatFee({
+          description: "",
+          flatFeePrice: 1.0,
+          extendedPrice: 1.0,
+        });
+      }
+    }
+    resetEditState();
+  };
+
   const removeItem = (type, idx) => {
     if (type === "PART") {
       setParts((prev) => {
@@ -390,7 +549,7 @@ const Estimate = () => {
         arr.splice(idx, 1);
         return arr;
       });
-    } else if (type === "FLATFEE") {
+    } else if (type === "FLAT FEE") {
       setFlatFees((prev) => {
         const arr = [...prev];
         arr.splice(idx, 1);
@@ -824,7 +983,7 @@ const Estimate = () => {
             </Button>{" "}
             <Button
               type="dashed"
-              onClick={() => setShowFlatFeeModal(true)}
+              onClick={handleShowFlatFeeModal}
               disabled={!selectedVehicle && !isEditMode}
             >
               Add Flat Fee
@@ -945,16 +1104,33 @@ const Estimate = () => {
           <Column
             title="ACTION"
             key="action"
+            width={140}
             render={(_, record) => (
-              <Button
-                type="link"
-                danger
-                onClick={() =>
-                  removeItem(record.type.toUpperCase(), record.rowIndex)
-                }
-              >
-                Remove
-              </Button>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() =>
+                    handleEditItem(record.type.toUpperCase(), record.rowIndex)
+                  }
+                  title="Edit item"
+                >
+                  Edit
+                </Button>
+                <Button
+                  type="primary"
+                  danger
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  onClick={() =>
+                    removeItem(record.type.toUpperCase(), record.rowIndex)
+                  }
+                  title="Remove item"
+                >
+                  Remove
+                </Button>
+              </div>
             )}
           />
         </Table>
@@ -1039,29 +1215,34 @@ const Estimate = () => {
 
       <PartModal
         show={showPartModal}
-        onHide={handleClosePartModal}
+        onHide={() => handleCloseModal("part")}
         newPart={newPart}
         setNewPart={setNewPart}
         addPart={addPart}
         noTax={noTax}
         settings={settings}
+        isEditingItem={isEditingItem}
+        updateEditedItem={updateEditedItem}
       />
       <LaborModal
         show={showLaborModal}
-        onHide={handleCloseLaborModal}
+        onHide={() => handleCloseModal("labor")}
         newLabor={newLabor}
         setNewLabor={setNewLabor}
         addLabor={addLabor}
         noTax={noTax}
         settings={settings}
+        isEditingItem={isEditingItem}
+        updateEditedItem={updateEditedItem}
       />
       <FlatFeeModal
         show={showFlatFeeModal}
-        onHide={() => setShowFlatFeeModal(false)}
+        onHide={() => handleCloseModal("flatfee")}
         newFlatFee={newFlatFee}
         setNewFlatFee={setNewFlatFee}
         addFlatFee={addFlatFee}
-        settings={settings}
+        isEditingItem={isEditingItem}
+        updateEditedItem={updateEditedItem}
       />
     </div>
   );

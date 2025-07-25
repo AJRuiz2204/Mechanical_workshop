@@ -3,14 +3,23 @@ import { Modal, Form, Input, InputNumber, Checkbox, Button, Space } from 'antd';
 import { usePartModal } from '../hooks/useModalHooks';
 
 /**
- * PartModal allows adding a new part to the estimate
+ * PartModal allows adding a new part to the estimate or editing an existing one
  */
-const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings }) => {
-  const clearFields = usePartModal(show, settings, setNewPart);
+const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings, isEditingItem, updateEditedItem }) => {
+  const clearFields = usePartModal(show, settings, setNewPart, isEditingItem);
+
+  const handleSubmit = () => {
+    if (isEditingItem) {
+      updateEditedItem();
+    } else {
+      addPart();
+    }
+    onHide(); // Close modal after submit
+  };
 
   return (
-    <Modal title="Add Part" open={show} onCancel={onHide} footer={null} destroyOnClose>
-      <Form layout="vertical" onFinish={() => { addPart(); }}>
+    <Modal title={isEditingItem ? "Edit Part" : "Add Part"} open={show} onCancel={onHide} footer={null} destroyOnClose>
+      <Form layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="Description" required>
           <Input
             value={newPart.description}
@@ -103,9 +112,11 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         )}
         <Form.Item>
           <Space>
-            <Button onClick={clearFields}>Clear</Button>
+            {!isEditingItem && <Button onClick={clearFields}>Clear</Button>}
             <Button onClick={onHide}>Close</Button>
-            <Button type="primary" htmlType="submit">Add Part</Button>
+            <Button type="primary" htmlType="submit">
+              {isEditingItem ? "Update Part" : "Add Part"}
+            </Button>
           </Space>
         </Form.Item>
       </Form>
@@ -121,6 +132,8 @@ PartModal.propTypes = {
   addPart: PropTypes.func.isRequired,
   noTax: PropTypes.bool.isRequired,
   settings: PropTypes.object,
+  isEditingItem: PropTypes.bool,
+  updateEditedItem: PropTypes.func,
 };
 
 export default PartModal;
