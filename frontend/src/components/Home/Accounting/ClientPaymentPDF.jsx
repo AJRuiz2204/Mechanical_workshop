@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import {
   Page,
   Text,
@@ -8,34 +7,237 @@ import {
   Image,
   Link,
 } from "@react-pdf/renderer";
+import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
 /**
- * Styles for the document, including a unified header.
+ * Styles for the document, following EstimatePDF structure.
  */
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
-    fontSize: 10,
+    padding: 15,
     fontFamily: "Helvetica",
+    fontSize: 10,
     backgroundColor: "#ffffff",
-    lineHeight: 1.4,
   },
-  // Header Styles
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    paddingBottom: 5,
+    borderBottom: "1px solid #000",
+  },
+  logoSection: {
+    width: 150,
+  },
+  companyName: {
+    fontSize: 18,
+    marginBottom: 3,
+    color: "#2596be",
+    textAlign: "right",
+  },
+  companyInfo: {
+    flex: 1,
+    textAlign: "right",
+  },
+  companyText: {
+    fontSize: 12,
+    marginBottom: 3,
+    color: "#000000",
+  },
+  billSection: {
+    flexDirection: "row",
+    marginBottom: 25,
+    paddingBottom: 10,
+  },
+  billTo: {
+    flex: 1,
+    paddingRight: 20,
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    marginBottom: 4,
+    fontWeight: "bold",
+  },
+  infoText: {
+    fontSize: 10,
+    marginBottom: 8,
+  },
+  // Service description with border-bottom; displays extendedDiagnostic if available
+  serviceDescription: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000000",
+    paddingBottom: 10,
+    marginBottom: 20,
+    fontSize: 10,
+    textTransform: "uppercase",
+  },
+  invoiceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  // Table styles for combined items (Parts, Labors, FlatFees)
+  table: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    paddingBottom: 5,
+    marginBottom: 8,
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 4,
+    alignItems: "center",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#000",
+  },
+  tableText: {
+    fontSize: 9,
+  },
+  colType: {
+    width: "8%",
+    textAlign: "left",
+    paddingLeft: 2,
+  },
+  colDesc: {
+    width: "52%",
+    paddingLeft: 2,
+  },
+  colPart: {
+    width: "12%",
+    textAlign: "left",
+    paddingLeft: 2,
+  },
+  colQuantityHours: {
+    width: "8%",
+    textAlign: "center",
+  },
+  colListPrice: {
+    width: "20%",
+    textAlign: "right",
+    paddingRight: 2,
+  },
+  colExtendedPrice: {
+    width: "16%",
+    textAlign: "center",
+    paddingRight: 2,
+  },
+  historyAndTotals: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  paymentHistoryContainer: {
+    width: "45%",
+  },
+  historyHeader: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    paddingBottom: 5,
+    marginBottom: 8,
+  },
+  historyRow: {
+    flexDirection: "row",
+    paddingVertical: 4,
+  },
+  colDate: {
+    width: "30%",
+    fontSize: 10,
+  },
+  colAmount: {
+    width: "25%",
+    fontSize: 10,
+    textAlign: "right",
+  },
+  colReference: {
+    width: "45%",
+    fontSize: 10,
+    paddingLeft: 5,
+  },
+  totalsSection: {
+    marginLeft: "auto",
+    width: "45%",
+    marginTop: 20,
+    alignItems: "flex-end",
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  totalLabel: {
+    fontSize: 10,
+    width: 100,
+    textAlign: "right",
+    paddingRight: 10,
+  },
+  totalAmount: {
+    fontSize: 10,
+    width: 80,
+    textAlign: "right",
+  },
+  separator: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#000",
+    alignSelf: "flex-end",
+    marginVertical: 4,
+    width: 120,
+  },
+  paymentOptions: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    marginTop: 10,
+  },
+  // Disclaimer style for footer
+  disclaimer: {
+    position: "absolute",
+    bottom: 35,
+    left: 35,
+    right: 35,
+    fontSize: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#000000",
+    paddingTop: 10,
+  },
+  boldContentText: {
+    fontWeight: "bold",
+  },
+  // Notes section styles
+  notesSection: {
+    marginTop: 15,
+    marginBottom: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#000",
+  },
+  noteItem: {
+    marginBottom: 8,
+    paddingLeft: 5,
+  },
+  noteDate: {
+    fontSize: 8,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  noteContent: {
+    fontSize: 10,
+    lineHeight: 1.2,
+  },
+  // Legacy styles for backward compatibility
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 2,
-    borderBottomColor: "#0056b3",
-  },
-  logoSection: {
-    width: 100,
-    height: 100,
-    marginRight: 15,
+    marginBottom: 5,
   },
   headerInfoContainer: {
     flex: 1,
@@ -44,180 +246,70 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   workshopInfo: {
-    marginBottom: 8,
+    marginBottom: 3,
     alignItems: "flex-end",
   },
   quoteInfo: {
     alignItems: "flex-end",
-    backgroundColor: "#f0f8ff",
-    padding: 8,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#0056b3",
+    padding: 0,
   },
   textLine: {
     fontSize: 9,
-    marginBottom: 2,
-    color: "#333",
+    marginBottom: 1,
   },
   link: {
     textDecoration: "underline",
-    color: "#0056b3",
+    color: "blue",
     fontSize: 9,
   },
-  // Document Title
-  documentTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#0056b3",
-    marginBottom: 20,
-    paddingVertical: 10,
-    backgroundColor: "#f0f8ff",
-    borderRadius: 5,
-  },
-  // Section Styles
   infoSection: {
-    marginBottom: 15,
-    backgroundColor: "#fafafa",
-    padding: 12,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0056b3",
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#0056b3",
-    paddingBottom: 3,
-  },
-  infoText: {
-    fontSize: 10,
-    marginBottom: 3,
-    color: "#444",
-  },
-  // Payment Summary Styles
-  summarySection: {
-    marginBottom: 20,
-    backgroundColor: "#e7f3ff",
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "#0056b3",
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#0056b3",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  summaryRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-    paddingHorizontal: 10,
-  },
-  summaryLabel: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  summaryValue: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#0056b3",
-  },
-  summaryTotal: {
-    borderTopWidth: 1,
-    borderTopColor: "#0056b3",
-    paddingTop: 8,
-    marginTop: 8,
-  },
-  // Table Styles
-  tableSection: {
-    marginBottom: 20,
-  },
-  tableTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0056b3",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  table: {
-    borderWidth: 1,
-    borderColor: "#0056b3",
-    borderRadius: 5,
-    overflow: "hidden",
-  },
-  tableRow: {
-    flexDirection: "row",
+    marginTop: 5,
+    marginBottom: 5,
+    padding: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
-    minHeight: 25,
-    alignItems: "center",
   },
-  tableHeader: {
-    backgroundColor: "#0056b3",
-    borderBottomWidth: 2,
-    borderBottomColor: "#003d82",
+  noteSection: {
+    marginTop: 5,
+    marginBottom: 5,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
   },
   tableHeaderText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: "bold",
-    color: "#ffffff",
-    textAlign: "center",
-  },
-  tableText: {
-    fontSize: 9,
-    color: "#333",
-    textAlign: "center",
   },
   tableCol: {
-    padding: 6,
-    justifyContent: "center",
+    padding: 2,
   },
-  // Notes Styles
-  notesSection: {
-    marginBottom: 20,
-    backgroundColor: "#fff9e6",
-    padding: 12,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#f0ad4e",
+  colTax: {
+    width: "16%",
+    textAlign: "center",
   },
-  noteItem: {
-    marginBottom: 8,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: "#f0ad4e",
+  grandTotal: {
+    marginTop: 5,
+    paddingTop: 5,
+    borderTopWidth: 1,
+    borderTopColor: "#000000",
   },
-  noteDate: {
-    fontSize: 8,
+  grandTotalText: {
     fontWeight: "bold",
-    color: "#8a6d3b",
   },
-  noteContent: {
-    fontSize: 9,
-    color: "#444",
-    marginTop: 2,
-  },
-  // Footer Styles
   footer: {
     position: "absolute",
-    bottom: 30,
-    left: 30,
-    right: 30,
+    bottom: 20,
+    left: 20,
+    right: 20,
     fontSize: 8,
     borderTopWidth: 1,
-    borderTopColor: "#0056b3",
-    paddingTop: 8,
-    textAlign: "center",
-    color: "#666",
+    borderTopColor: "#e0e0e0",
+    paddingTop: 5,
+  },
+  mileage: {
+    fontSize: 10,
+    marginVertical: 4,
   },
 });
 
@@ -274,10 +366,19 @@ const ClientPaymentPDF = ({ pdfData }) => {
       <Page size="A4" style={styles.page}>
         {/* Header Section */}
         <View style={styles.headerContainer}>
+          {/* Logo Section */}
           <View style={styles.logoSection}>
-            <Image src={logo} style={{ width: "100%", height: "100%" }} />
+            <Image
+              src={logo}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
           </View>
           <View style={styles.headerInfoContainer}>
+            {/* Workshop Information */}
             <View style={styles.workshopInfo}>
               <Text style={styles.textLine}>
                 {workshopData.workshopName || "Workshop Name"}
@@ -303,101 +404,98 @@ const ClientPaymentPDF = ({ pdfData }) => {
                 </Link>
               )}
             </View>
+
+            {/* Payment Invoice Information */}
             <View style={styles.quoteInfo}>
               <Text style={[styles.textLine, { fontWeight: "bold" }]}>
-                Invoice # {quoteNumber}
+                Payment Statement # {quoteNumber}
               </Text>
               <Text style={styles.textLine}>
-                Date: {dayjs().format("MMM DD, YYYY")}
+                Generated: {dayjs().format("MMM DD, YYYY")}
               </Text>
               <Text style={styles.textLine}>
-                Updated: {formatLastUpdated(workshopData.lastUpdated)}
+                Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Document Title */}
-        <Text style={styles.documentTitle}>PAYMENT STATEMENT</Text>
+        {/* Separator Line */}
+        <View
+          style={{
+            borderBottomWidth: 1,
+            borderBottomColor: "#e0e0e0",
+            marginTop: 5,
+            marginBottom: 5,
+          }}
+        />
 
-        {/* Customer Information */}
+        {/* Customer and Vehicle Information */}
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Customer Information</Text>
-          <Text style={styles.infoText}>
-            <Text style={{ fontWeight: "bold" }}>Name: </Text>
-            {customer.fullName || "N/A"}
-          </Text>
-          <Text style={styles.infoText}>
-            <Text style={{ fontWeight: "bold" }}>Email: </Text>
-            {customer.email || "N/A"}
-          </Text>
-          <Text style={styles.infoText}>
-            <Text style={{ fontWeight: "bold" }}>Phone: </Text>
-            {customer.primaryPhone || "N/A"}
-          </Text>
-          {customer.address && (
-            <Text style={styles.infoText}>
-              <Text style={{ fontWeight: "bold" }}>Address: </Text>
-              {customer.address}
-              {customer.city && customer.state && (
-                <Text>
-                  , {customer.city}, {customer.state} {customer.zip || ""}
+          <View style={{ flex: 1, marginRight: 10 }}>
+            <Text style={styles.sectionTitle}>Customer</Text>
+            <Text style={styles.textLine}>{customer.fullName || "N/A"}</Text>
+            {customer.email && (
+              <Text style={styles.textLine}>{customer.email}</Text>
+            )}
+            <Text style={styles.textLine}>
+              {customer.primaryPhone || "N/A"}
+            </Text>
+            {customer.address && (
+              <Text style={styles.textLine}>{customer.address}</Text>
+            )}
+            {customer.city && customer.state && (
+              <Text style={styles.textLine}>
+                {customer.city}, {customer.state} {customer.zip || ""}
+              </Text>
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>Vehicle</Text>
+            {vehicle &&
+            (vehicle.year || vehicle.make || vehicle.model || vehicle.vin) ? (
+              <>
+                <Text style={styles.textLine}>
+                  {vehicle.year} {vehicle.make} {vehicle.model}
                 </Text>
-              )}
-            </Text>
-          )}
+                <Text style={styles.textLine}>VIN: {vehicle.vin || "N/A"}</Text>
+                {vehicle.color && (
+                  <Text style={styles.textLine}>Color: {vehicle.color}</Text>
+                )}
+                {vehicle.licensePlate && (
+                  <Text style={styles.textLine}>
+                    License: {vehicle.licensePlate}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text style={styles.textLine}>
+                No vehicle information available
+              </Text>
+            )}
+          </View>
         </View>
 
-        {/* Vehicle Information */}
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Vehicle Information</Text>
-          {vehicle &&
-          (vehicle.year || vehicle.make || vehicle.model || vehicle.vin) ? (
-            <>
-              <Text style={styles.infoText}>
-                <Text style={{ fontWeight: "bold" }}>Vehicle: </Text>
-                {vehicle.year} {vehicle.make} {vehicle.model}
-              </Text>
-              <Text style={styles.infoText}>
-                <Text style={{ fontWeight: "bold" }}>VIN: </Text>
-                {vehicle.vin || "N/A"}
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.infoText}>
-              No vehicle information available
-            </Text>
-          )}
-        </View>
-
-        {/* Payment Summary - Enhanced */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summaryTitle}>PAYMENT SUMMARY</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Initial Balance:</Text>
-            <Text style={styles.summaryValue}>
+        {/* Payment Summary */}
+        <View style={styles.totalsSection}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Initial Balance:</Text>
+            <Text style={styles.totalAmount}>
               ${Number(initialBalance).toFixed(2)}
             </Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Payments:</Text>
-            <Text style={[styles.summaryValue, { color: "#28a745" }]}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total Payments:</Text>
+            <Text style={styles.totalAmount}>
               -${totalPaid.toFixed(2)}
             </Text>
           </View>
-          <View style={[styles.summaryRow, styles.summaryTotal]}>
-            <Text style={[styles.summaryLabel, { fontSize: 12 }]}>
+          <View style={styles.separator} />
+          <View style={[styles.totalRow, styles.grandTotal]}>
+            <Text style={[styles.totalLabel, styles.grandTotalText]}>
               Remaining Balance:
             </Text>
-            <Text
-              style={[
-                styles.summaryValue,
-                {
-                  fontSize: 12,
-                  color: Number(remainingBalance) > 0 ? "#dc3545" : "#28a745",
-                },
-              ]}
-            >
+            <Text style={[styles.totalAmount, styles.grandTotalText]}>
               ${Number(remainingBalance).toFixed(2)}
             </Text>
           </View>
@@ -406,9 +504,8 @@ const ClientPaymentPDF = ({ pdfData }) => {
               style={{
                 textAlign: "center",
                 marginTop: 10,
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: "bold",
-                color: "#28a745",
               }}
             >
               ✓ ACCOUNT PAID IN FULL
@@ -417,95 +514,104 @@ const ClientPaymentPDF = ({ pdfData }) => {
         </View>
 
         {/* Payment Details Table */}
-        <View style={styles.tableSection}>
-          <Text style={styles.tableTitle}>PAYMENT DETAILS</Text>
-          <View style={styles.table}>
-            {/* Table Header */}
-            <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text
-                style={[styles.tableCol, styles.tableHeaderText, { flex: 1 }]}
-              >
-                ID
-              </Text>
-              <Text
-                style={[styles.tableCol, styles.tableHeaderText, { flex: 2 }]}
-              >
-                Amount
-              </Text>
-              <Text
-                style={[styles.tableCol, styles.tableHeaderText, { flex: 2.5 }]}
-              >
-                Date
-              </Text>
-              <Text
-                style={[styles.tableCol, styles.tableHeaderText, { flex: 1.5 }]}
-              >
-                Method
-              </Text>
-              <Text
-                style={[styles.tableCol, styles.tableHeaderText, { flex: 2.5 }]}
-              >
-                Reference
-              </Text>
-            </View>
+        <View style={styles.table}>
+          {/* Table Headers */}
+          <View style={[styles.tableRow, styles.tableHeader]}>
+            <Text
+              style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
+            >
+              ID
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
+            >
+              Amount
+            </Text>
+            <Text
+              style={[styles.tableCol, styles.colPart, styles.tableHeaderText]}
+            >
+              Date
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colQuantityHours,
+                styles.tableHeaderText,
+              ]}
+            >
+              Method
+            </Text>
+            <Text
+              style={[
+                styles.tableCol,
+                styles.colExtendedPrice,
+                styles.tableHeaderText,
+              ]}
+            >
+              Reference
+            </Text>
+          </View>
 
-            {/* Table Rows */}
-            {payments.length > 0 ? (
-              payments.map((payment, index) => (
-                <View
-                  key={payment.id || index}
-                  style={[
-                    styles.tableRow,
-                    {
-                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8f9fa",
-                    },
-                  ]}
+          {/* Table Rows */}
+          {payments.length > 0 ? (
+            payments.map((payment, index) => (
+              <View
+                key={payment.id || index}
+                style={styles.tableRow}
+              >
+                <Text
+                  style={[styles.tableCol, styles.colType, styles.tableText]}
                 >
-                  <Text
-                    style={[styles.tableCol, styles.tableText, { flex: 1 }]}
-                  >
-                    {payment.id}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.tableCol,
-                      styles.tableText,
-                      { flex: 2, fontWeight: "bold", color: "#28a745" },
-                    ]}
-                  >
-                    ${Number(payment.amount).toFixed(2)}
-                  </Text>
-                  <Text
-                    style={[styles.tableCol, styles.tableText, { flex: 2.5 }]}
-                  >
-                    {dayjs(payment.paymentDate).format("MMM DD, YYYY")}
-                  </Text>
-                  <Text
-                    style={[styles.tableCol, styles.tableText, { flex: 1.5 }]}
-                  >
-                    {payment.method}
-                  </Text>
-                  <Text
-                    style={[styles.tableCol, styles.tableText, { flex: 2.5 }]}
-                  >
-                    {payment.transactionReference || "No reference"}
-                  </Text>
-                </View>
-              ))
-            ) : (
-              <View style={styles.tableRow}>
+                  {payment.id}
+                </Text>
                 <Text
                   style={[
                     styles.tableCol,
+                    styles.colDesc,
                     styles.tableText,
-                    { flex: 1, textAlign: "center", fontStyle: "italic" },
+                    styles.boldContentText,
                   ]}
                 >
-                  No payments recorded
+                  ${Number(payment.amount).toFixed(2)}
+                </Text>
+                <Text
+                  style={[styles.tableCol, styles.colPart, styles.tableText]}
+                >
+                  {dayjs(payment.paymentDate).format("MMM DD, YYYY")}
+                </Text>
+                <Text
+                  style={[
+                    styles.tableCol,
+                    styles.colQuantityHours,
+                    styles.tableText,
+                  ]}
+                >
+                  {payment.method}
+                </Text>
+                <Text
+                  style={[
+                    styles.tableCol,
+                    styles.colExtendedPrice,
+                    styles.tableText,
+                  ]}
+                >
+                  {payment.transactionReference || "No reference"}
                 </Text>
               </View>
-            )}
-          </View>
+            ))
+          ) : (
+            <View style={styles.tableRow}>
+              <Text
+                style={[
+                  styles.tableCol,
+                  styles.tableText,
+                  { textAlign: "center", fontStyle: "italic", width: "100%" },
+                ]}
+              >
+                No payments recorded
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Recent Notes Section */}
@@ -548,6 +654,56 @@ const ClientPaymentPDF = ({ pdfData }) => {
       </Page>
     </Document>
   );
+};
+
+ClientPaymentPDF.propTypes = {
+  pdfData: PropTypes.shape({
+    workshopData: PropTypes.shape({
+      workshopName: PropTypes.string,
+      address: PropTypes.string,
+      primaryPhone: PropTypes.string,
+      secondaryPhone: PropTypes.string,
+      fax: PropTypes.string,
+      websiteUrl: PropTypes.string,
+      email: PropTypes.string,
+      lastUpdated: PropTypes.string,
+    }),
+    customer: PropTypes.shape({
+      fullName: PropTypes.string,
+      email: PropTypes.string,
+      primaryPhone: PropTypes.string,
+      address: PropTypes.string,
+      city: PropTypes.string,
+      state: PropTypes.string,
+      zip: PropTypes.string,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+    vehicle: PropTypes.shape({
+      year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      make: PropTypes.string,
+      model: PropTypes.string,
+      color: PropTypes.string,
+      licensePlate: PropTypes.string,
+      vin: PropTypes.string,
+    }),
+    payments: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        paymentDate: PropTypes.string,
+        method: PropTypes.string,
+        transactionReference: PropTypes.string,
+        remainingBalance: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number,
+        ]),
+        initialBalance: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number,
+        ]),
+      })
+    ),
+  }),
 };
 
 export default ClientPaymentPDF;

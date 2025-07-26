@@ -64,7 +64,6 @@ const Estimate = () => {
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
 
-  // Debug logging for showFlatFeeModal state changes
   useEffect(() => {
     console.log('showFlatFeeModal state changed to:', showFlatFeeModal);
   }, [showFlatFeeModal]);
@@ -375,7 +374,7 @@ const Estimate = () => {
 
   // Edit item functions - Allow editing parts, labor, and flat fees directly from the table
   const handleEditItem = (type, index) => {
-    console.log(`Editing ${type} at index ${index}`); // Debug log
+    console.log(`Editing ${type} at index ${index}`);
     
     // Set editing state first
     setEditingItemType(type);
@@ -384,19 +383,19 @@ const Estimate = () => {
     
     if (type === "PART") {
       const part = parts[index];
-      console.log('Part to edit:', part); // Debug log
+      console.log('Part to edit:', part);
       setNewPart({ ...part });
       // Use setTimeout to ensure state is set before opening modal
       setTimeout(() => setShowPartModal(true), 0);
     } else if (type === "LABOR") {
       const labor = labors[index];
-      console.log('Labor to edit:', labor); // Debug log
+      console.log('Labor to edit:', labor);
       setNewLabor({ ...labor });
       // Use setTimeout to ensure state is set before opening modal
       setTimeout(() => setShowLaborModal(true), 0);
     } else if (type === "FLAT FEE") {
       const flatFee = flatFees[index];
-      console.log('FlatFee to edit:', flatFee); // Debug log
+      console.log('FlatFee to edit:', flatFee);
       console.log('Before setNewFlatFee - current newFlatFee:', newFlatFee);
       setNewFlatFee({ ...flatFee });
       console.log('After setNewFlatFee - showFlatFeeModal before setTimeout:', showFlatFeeModal);

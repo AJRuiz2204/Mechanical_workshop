@@ -7,7 +7,6 @@ import { useFlatFeeModal } from '../hooks/useModalHooks';
  * FlatFeeModal allows adding a new flat fee to the estimate or editing an existing one
  */
 const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isEditingItem, updateEditedItem }) => {
-  // Debug logging for development
   console.log('FlatFeeModal render - show:', show, 'isEditingItem:', isEditingItem, 'newFlatFee:', newFlatFee);
   
   // Log when show state changes

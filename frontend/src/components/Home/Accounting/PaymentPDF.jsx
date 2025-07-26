@@ -18,7 +18,7 @@ const formatDate = (date) => dayjs(date).format("MMM-DD-YYYY");
 const formatCurrency = (amount) =>
   isNaN(Number(amount)) ? "-" : `$ ${Number(amount).toFixed(2)}`;
 
-// Define PDF styles with very small fonts for an A4 document
+// Define PDF styles with EstimatePDF structure
 const styles = StyleSheet.create({
   page: {
     padding: 15,
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   colType: {
-    width: "8%",
+    width: "12%",
     textAlign: "left",
     paddingLeft: 2,
   },
   colDesc: {
-    width: "72%",
+    width: "48%",
     paddingLeft: 2,
   },
   colPart: {
@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   colListPrice: {
-    width: "16%",
-    textAlign: "center",
+    width: "20%",
+    textAlign: "right",
     paddingRight: 2,
   },
   colExtendedPrice: {
@@ -135,7 +135,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingRight: 2,
   },
-
   historyAndTotals: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -198,7 +197,6 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     width: 120,
   },
-
   paymentOptions: {
     flexDirection: "row",
     justifyContent: "flex-start",
@@ -207,13 +205,14 @@ const styles = StyleSheet.create({
   // Disclaimer style for footer
   disclaimer: {
     position: "absolute",
-    bottom: 35,
-    left: 35,
-    right: 35,
+    bottom: 20,
+    left: 20,
+    right: 20,
     fontSize: 8,
     borderTopWidth: 1,
     borderTopColor: "#000000",
-    paddingTop: 10,
+    paddingTop: 8,
+    backgroundColor: "#ffffff",
   },
   boldContentText: {
     fontWeight: "bold",
@@ -238,6 +237,85 @@ const styles = StyleSheet.create({
   noteContent: {
     fontSize: 10,
     lineHeight: 1.2,
+  },
+  // Legacy styles for backward compatibility
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 5,
+  },
+  headerInfoContainer: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "flex-end",
+    padding: 0,
+  },
+  workshopInfo: {
+    marginBottom: 3,
+    alignItems: "flex-end",
+  },
+  quoteInfo: {
+    alignItems: "flex-end",
+    padding: 0,
+  },
+  textLine: {
+    fontSize: 9,
+    marginBottom: 1,
+  },
+  link: {
+    textDecoration: "underline",
+    color: "blue",
+    fontSize: 9,
+  },
+  infoSection: {
+    flexDirection: "row",
+    marginTop: 5,
+    marginBottom: 5,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  noteSection: {
+    marginTop: 5,
+    marginBottom: 5,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  tableHeaderText: {
+    fontSize: 8,
+    fontWeight: "bold",
+  },
+  tableCol: {
+    padding: 2,
+  },
+  colTax: {
+    width: "16%",
+    textAlign: "center",
+  },
+  grandTotal: {
+    marginTop: 5,
+    paddingTop: 5,
+    borderTopWidth: 1,
+    borderTopColor: "#000000",
+  },
+  grandTotalText: {
+    fontWeight: "bold",
+  },
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    fontSize: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 5,
+  },
+  mileage: {
+    fontSize: 10,
+    marginVertical: 4,
   },
 });
 
@@ -296,7 +374,18 @@ const PaymentPDF = ({ pdfData }) => {
       .slice(0, 3);
   };
 
+  // Get payment notes from all payments
+  const getPaymentNotes = () => {
+    return payments.filter(p => 
+      p.notes && 
+      p.notes.trim() !== "" && 
+      p.notes !== "Sin notas" && 
+      p.notes !== "No notes"
+    );
+  };
+
   const notesToDisplay = getNotes();
+  const paymentNotesToDisplay = getPaymentNotes();
 
   return (
     <Document>
@@ -503,14 +592,14 @@ const PaymentPDF = ({ pdfData }) => {
             <View style={styles.historyHeader}>
               <Text style={styles.colDate}>Date</Text>
               <Text style={styles.colAmount}>Amount</Text>
-              <Text style={styles.colReference}>Reference</Text>
+              <Text style={styles.colReference}>Method</Text>
             </View>
             {payments.map((p, index) => (
               <View key={index} style={styles.historyRow}>
                 <Text style={styles.colDate}>{formatDate(p.paymentDate)}</Text>
                 <Text style={styles.colAmount}>{formatCurrency(p.amount)}</Text>
                 <Text style={styles.colReference}>
-                  {p.transactionReference || "N/A"}
+                  {p.method || "N/A"}
                 </Text>
               </View>
             ))}
@@ -552,7 +641,24 @@ const PaymentPDF = ({ pdfData }) => {
           </View>
         </View>
 
-        {/* Notes Section */}
+        {/* Payment Notes Section */}
+        {paymentNotesToDisplay.length > 0 && (
+          <View style={styles.notesSection}>
+            <Text style={styles.sectionTitle}>Payment Notes:</Text>
+            {paymentNotesToDisplay.map((payment, index) => (
+              <View key={payment.id || index} style={styles.noteItem}>
+                <Text style={styles.noteContent}>
+                  Method: {payment.method} | Reference: {payment.transactionReference || "No reference"}
+                </Text>
+                <Text style={styles.noteContent}>
+                  Notes: {payment.notes}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Technician Notes Section */}
         {notesToDisplay.length > 0 && (
           <View style={styles.notesSection}>
             <Text style={styles.sectionTitle}>Technician Notes (Last 3):</Text>
@@ -568,7 +674,7 @@ const PaymentPDF = ({ pdfData }) => {
         )}
 
         {/* Signature Section */}
-        <View>
+        <View style={{ marginBottom: 80 }}>
           <Text>Signature:</Text>
           <Text style={{ marginTop: 20 }}>
             X _________________________________
@@ -578,8 +684,8 @@ const PaymentPDF = ({ pdfData }) => {
           </Text>
         </View>
 
-        {/* Disclaimer Section */}
-        <View style={styles.disclaimer}>
+        {/* Footer - appears on every page */}
+        <View style={styles.disclaimer} fixed>
           <Text>
             {
               "Not responsible for damage caused by theft, fire or acts of nature. I authorize the above repairs, along with any necessary materials. I authorize you and your employees to operate my vehicle for the purpose of testing, inspection, and delivery at my risk. An express mechanic's lien is hereby acknowledged on the above vehicle to secure the amount of the repairs thereto. If canceled repairs prior to their completion for any reason, a tear-down and reassembly fee of $____ will be applied."

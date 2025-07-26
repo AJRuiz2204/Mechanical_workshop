@@ -13,12 +13,17 @@ import {
   Select,
   Tag,
   Typography,
+  Space,
 } from "antd";
+import { PrinterOutlined } from "@ant-design/icons";
+import { PDFViewer } from "@react-pdf/renderer";
 import {
   getAccountReceivableById,
   createPayment,
   getPaymentsByAccount,
 } from "../../../services/accountReceivableService";
+import PaymentPDF from "./PaymentPDF";
+import { getWorkshopSettings } from "../../../services/workshopSettingsService";
 import "./styles/AccountPaymentModal.css";
 
 const { Text, Title } = Typography;
@@ -26,6 +31,9 @@ const { Text, Title } = Typography;
 const AccountPaymentModal = ({ show, onHide, accountId }) => {
   const [account, setAccount] = useState(null);
   const [payments, setPayments] = useState([]);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [pdfData, setPdfData] = useState(null);
+  const [recentPayment, setRecentPayment] = useState(null);
   const [formData, setFormData] = useState({
     amount: "",
     method: "Cash",
@@ -36,6 +44,12 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
   useEffect(() => {
     if (accountId && show) {
       fetchAccountData(accountId);
+    }
+    // Reset states when modal opens/closes
+    if (!show) {
+      setRecentPayment(null);
+      setShowPrintModal(false);
+      setPdfData(null);
     }
   }, [accountId, show]);
 
@@ -75,6 +89,10 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       const response = await createPayment(payload);
       console.log("Modal - createPayment response:", response);
       await fetchAccountData(accountId);
+      
+      // Store the recent payment for printing
+      setRecentPayment(response);
+      
       setFormData({
         amount: "",
         method: "Cash",
@@ -82,12 +100,38 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
         notes: "",
       });
       alert("Payment successfully registered!");
-      // Cerrar el modal automáticamente después del registro exitoso
-      onHide();
+      // No cerrar el modal automáticamente para permitir la impresión
     } catch (error) {
       console.error("Modal - Error in createPayment:", error);
       alert("Error registering payment: " + error.message);
     }
+  };
+
+  const handlePrintPayment = async () => {
+    try {
+      const workshopData = await getWorkshopSettings();
+      
+      // Get all payments for this account to generate the PDF
+      const allPayments = await getPaymentsByAccount(accountId);
+      
+      const data = {
+        workshopData,
+        customer: account.customer,
+        payments: allPayments,
+      };
+      
+      setPdfData(data);
+      setShowPrintModal(true);
+    } catch (error) {
+      console.error("Error preparing PDF data:", error);
+      alert("Error preparing document for printing: " + error.message);
+    }
+  };
+
+  const handleCloseAll = () => {
+    setShowPrintModal(false);
+    setRecentPayment(null);
+    onHide();
   };
 
   return (
@@ -180,9 +224,20 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
                 </Col>
                 <Col span={24}>
                   <Form.Item>
-                    <Button type="primary" htmlType="submit" block>
-                      Register Payment
-                    </Button>
+                    <Space style={{ width: '100%' }}>
+                      <Button type="primary" htmlType="submit" style={{ flex: 1 }}>
+                        Register Payment
+                      </Button>
+                      {recentPayment && (
+                        <Button 
+                          type="default" 
+                          icon={<PrinterOutlined />}
+                          onClick={handlePrintPayment}
+                        >
+                          Print Receipt
+                        </Button>
+                      )}
+                    </Space>
                   </Form.Item>
                 </Col>
               </Row>
@@ -219,6 +274,30 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       ) : (
         <div>Loading account details...</div>
       )}
+
+      {/* Print Modal */}
+      <Modal
+        visible={showPrintModal}
+        onCancel={() => setShowPrintModal(false)}
+        width="90%"
+        footer={[
+          <Button key="close" onClick={() => setShowPrintModal(false)}>
+            Close
+          </Button>,
+          <Button key="close-main" type="primary" onClick={handleCloseAll}>
+            Close Payment Modal
+          </Button>
+        ]}
+        title="Payment Receipt"
+      >
+        {pdfData && (
+          <div className="payment-modal-content">
+            <PDFViewer width="100%" height="700">
+              <PaymentPDF pdfData={pdfData} />
+            </PDFViewer>
+          </div>
+        )}
+      </Modal>
     </Modal>
   );
 };
