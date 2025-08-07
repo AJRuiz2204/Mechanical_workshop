@@ -441,7 +441,29 @@ const PaymentPDF = ({ pdfData }) => {
             borderBottom: "1px solid #000",
           }}
         >
-          {/* Columna 1: Bill To */}
+          {/* Columna 1: Invoice Info */}
+          <View style={{ flex: 1, padding: 5 }}>
+            <Text style={styles.sectionTitle}>Invoice #{paymentId || "N/A"}</Text>
+            <Text style={styles.infoText}>
+              Date: {formatDate(payment.paymentDate)}
+            </Text>
+            <Text style={styles.infoText}>VIN: {vehicle.vin || ""}</Text>
+            <Text style={styles.infoText}>
+              Engine: {vehicle.engine || estimate.vehicle?.engine || ""}
+            </Text>
+            <Text style={styles.infoText}>
+              Mileage:{" "}
+              {estimate.technicianDiagnostic?.mileage ?? estimate.mileage ?? ""}
+            </Text>
+          </View>
+          {/* Columna 2: Vehicle Info */}
+          <View style={{ flex: 1, padding: 5 }}>
+            <Text style={styles.sectionTitle}>Vehicle</Text>
+            <Text style={styles.infoText}>Make: {vehicle.make || ""}</Text>
+            <Text style={styles.infoText}>Model: {vehicle.model || ""}</Text>
+            <Text style={styles.infoText}>Year: {vehicle.year || ""}</Text>
+          </View>
+          {/* Columna 3: Bill To (Customer Info) */}
           <View style={{ flex: 1, padding: 5 }}>
             <Text style={styles.sectionTitle}>Bill To:</Text>
             <Text style={styles.infoText}>{customer.fullName || ""}</Text>
@@ -463,32 +485,6 @@ const PaymentPDF = ({ pdfData }) => {
                   {estimate.owner?.zip || customer.zip || ""}
                 </Text>
               )}
-          </View>
-          {/* Columna 2: Información del vehículo (Make, Model, Year) */}
-          <View style={{ flex: 1, padding: 5 }}>
-            <Text style={styles.sectionTitle}>Vehicle</Text>
-            <Text style={styles.infoText}>Make: {vehicle.make || ""}</Text>
-            <Text style={styles.infoText}>Model: {vehicle.model || ""}</Text>
-            <Text style={styles.infoText}>Year: {vehicle.year || ""}</Text>
-          </View>
-          {/* Columna 3: VIN, Engine, Mileage con encabezado Quote # */}
-          <View style={{ flex: 1, padding: 5 }}>
-            <Text style={styles.sectionTitle}>Quote #{paymentId || "N/A"}</Text>
-            <Text style={styles.infoText}>VIN: {vehicle.vin || ""}</Text>
-            <Text style={styles.infoText}>
-              Engine: {vehicle.engine || estimate.vehicle?.engine || ""}
-            </Text>
-            <Text style={styles.infoText}>
-              Mileage:{" "}
-              {estimate.technicianDiagnostic?.mileage ?? estimate.mileage ?? ""}
-            </Text>
-          </View>
-          {/* Columna 4: Fecha */}
-          <View style={{ flex: 1, padding: 5 }}>
-            <Text style={styles.sectionTitle}>Date</Text>
-            <Text style={styles.infoText}>
-              {formatDate(payment.paymentDate)}
-            </Text>
           </View>
         </View>
         {/* Service Description */}
