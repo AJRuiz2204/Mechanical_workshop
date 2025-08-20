@@ -1160,7 +1160,7 @@ const Estimate = () => {
               loading={saving}
               disabled={isLoading}
             >
-              {isEditMode ? "Update Estimate" : "Create Estimate"}
+              {isEditMode ? "Update Estimate" : "Save"}
             </Button>{" "}
             <Button onClick={() => navigate("/estimates")}>Cancel</Button>
           </Col>
