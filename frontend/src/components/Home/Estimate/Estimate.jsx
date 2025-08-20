@@ -226,7 +226,7 @@ const Estimate = () => {
   const handleOptionChange = (e) => {
     const optionIndex = e.target.value;
 
-    if (!optionIndex || optionIndex === "") {
+    if (optionIndex === "" || optionIndex === null || optionIndex === undefined) {
       setError("Select a valid option.");
       setSelectedOption(null);
       return;
