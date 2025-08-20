@@ -38,6 +38,9 @@ const EstimateList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [paidFilter, setPaidFilter] = useState(false);
   const [pendingFilter, setPendingFilter] = useState(false);
+  const [approvedStatusFilter, setApprovedStatusFilter] = useState(false);
+  const [rejectedStatusFilter, setRejectedStatusFilter] = useState(false);
+  const [pendingStatusFilter, setPendingStatusFilter] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -235,8 +238,27 @@ const EstimateList = () => {
       // Si no hay filtros activos, excluir los estimados pagados (son facturas cerradas)
       paymentMatches = paymentStatus !== "Paid";
     }
+
+    // Authorization status filtering logic
+    let statusMatches = true;
+    const authStatus = est.authorizationStatus?.toLowerCase();
     
-    return matchesSearch && paymentMatches;
+    // If any authorization status filter is active, apply filtering
+    if (approvedStatusFilter || rejectedStatusFilter || pendingStatusFilter) {
+      statusMatches = false;
+      
+      if (approvedStatusFilter && authStatus === "approved") {
+        statusMatches = true;
+      }
+      if (rejectedStatusFilter && (authStatus === "rejected" || authStatus === "not approved")) {
+        statusMatches = true;
+      }
+      if (pendingStatusFilter && authStatus === "pending") {
+        statusMatches = true;
+      }
+    }
+    
+    return matchesSearch && paymentMatches && statusMatches;
   });
 
   if (loading) return <div>Loading estimates...</div>;
@@ -270,19 +292,50 @@ const EstimateList = () => {
       />
 
       <div style={{ marginBottom: 16 }}>
-        <Checkbox
-          checked={paidFilter}
-          onChange={(e) => setPaidFilter(e.target.checked)}
-          style={{ marginRight: 12 }}
-        >
-          Show Paid (Closed Invoices)
-        </Checkbox>
-        <Checkbox
-          checked={pendingFilter}
-          onChange={(e) => setPendingFilter(e.target.checked)}
-        >
-          Show Pending Payments
-        </Checkbox>
+        <div style={{ marginBottom: 8 }}>
+          <strong>Payment Filters:</strong>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <Checkbox
+            checked={paidFilter}
+            onChange={(e) => setPaidFilter(e.target.checked)}
+            style={{ marginRight: 12 }}
+          >
+            Show Paid (Closed Invoices)
+          </Checkbox>
+          <Checkbox
+            checked={pendingFilter}
+            onChange={(e) => setPendingFilter(e.target.checked)}
+          >
+            Show Pending Payments
+          </Checkbox>
+        </div>
+        
+        <div style={{ marginBottom: 8 }}>
+          <strong>Authorization Status Filters:</strong>
+        </div>
+        <div>
+          <Checkbox
+            checked={approvedStatusFilter}
+            onChange={(e) => setApprovedStatusFilter(e.target.checked)}
+            style={{ marginRight: 12 }}
+          >
+            Show Approved
+          </Checkbox>
+          <Checkbox
+            checked={rejectedStatusFilter}
+            onChange={(e) => setRejectedStatusFilter(e.target.checked)}
+            style={{ marginRight: 12 }}
+          >
+            Show Not Approved
+          </Checkbox>
+          <Checkbox
+            checked={pendingStatusFilter}
+            onChange={(e) => setPendingStatusFilter(e.target.checked)}
+          >
+            Show Pending Status
+          </Checkbox>
+        </div>
       </div>
 
       <div className="mb-3 text-end">
