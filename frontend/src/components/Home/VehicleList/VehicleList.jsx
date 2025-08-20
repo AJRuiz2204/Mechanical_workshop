@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import {
   getAllVehicles,
   deleteVehicle,
+  searchVehicles,
 } from "../../../services/UserWorkshopService";
 import VehicleReception from "../VehicleReception/VehicleReception";
 import UserWorkshopEditModal from "./UserWorkshopEditModal";
@@ -63,25 +64,21 @@ const VehicleList = () => {
     fetchAllVehicles();
   }, []);
 
-  // Local search with debounce
+  // Search with debounce using API
   useEffect(() => {
     const handler = setTimeout(async () => {
-      const term = searchTerm.trim().toLowerCase();
+      const term = searchTerm.trim();
       if (!term) {
         fetchAllVehicles();
         return;
       }
       setLoadingSearch(true);
       try {
-        const all = await getAllVehicles();
-        const filtered = all.filter((v) =>
-          Object.values(v).some((val) =>
-            String(val).toLowerCase().includes(term)
-          )
-        );
-        setVehicles(filtered);
-        setSearchMessage(filtered.length === 0 ? "No vehicles found." : "");
-      } catch {
+        const searchResults = await searchVehicles(term);
+        setVehicles(searchResults);
+        setSearchMessage(searchResults.length === 0 ? "No vehicles found." : "");
+      } catch (err) {
+        console.error("Search error:", err);
         setVehicles([]);
         setSearchMessage("Error searching vehicles.");
       } finally {
@@ -222,7 +219,7 @@ const VehicleList = () => {
 
       <Space style={{ marginBottom: 16 }}>
         <Search
-          placeholder="Search by VIN or Owner"
+          placeholder="Search by VIN, Make, Model or Owner"
           onChange={(e) => onSearchChange(e.target.value)}
           onSearch={onSearchChange}
           loading={loadingSearch}
