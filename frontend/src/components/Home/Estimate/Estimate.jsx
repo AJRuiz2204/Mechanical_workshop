@@ -26,6 +26,7 @@ import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
 import LaborModal from "./Modals/LaborModal";
 import FlatFeeModal from "./Modals/FlatFeeModal";
+import ConfirmationModal from "./Modals/ConfirmationModal";
 
 const { Option } = Select;
 const { Column } = Table;
@@ -63,6 +64,8 @@ const Estimate = () => {
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [validationResults, setValidationResults] = useState(null);
 
   useEffect(() => {
     console.log('showFlatFeeModal state changed to:', showFlatFeeModal);
@@ -586,18 +589,33 @@ const Estimate = () => {
     setFlatFees(arr);
   };
 
-  const handleSave = async () => {
+  // Helper function to safely convert and round numbers
+  const safeParseFloat = (value, decimals = 2) => {
+    const num = parseFloat(value) || 0;
+    if (isNaN(num) || !isFinite(num)) return 0;
+    return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  };
+
+  const safeParseInt = (value) => {
+    const num = parseInt(value, 10);
+    if (isNaN(num) || !isFinite(num)) return 0;
+    return Math.max(0, num);
+  };
+
+  const validateEstimate = () => {
+    const errors = [];
+    const warnings = [];
+    
+    // Basic validation checks
     if (!isEditMode && (!selectedOption || selectedOption === "")) {
-      setError("Please select a vehicle.");
-      return;
+      errors.push("Please select a vehicle.");
     }
 
     if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
-      setError("Add at least one item to the Estimate.");
-      return;
+      errors.push("Add at least one item to the Estimate.");
     }
 
-    // Only check for duplicates among non-empty part numbers
+    // Check for duplicate part numbers
     const nonEmptyPartNumbers = parts
       .map((p) => p.partNumber)
       .filter((partNum) => partNum && partNum.trim() !== "");
@@ -605,46 +623,27 @@ const Estimate = () => {
       (item, idx) => nonEmptyPartNumbers.indexOf(item) !== idx
     );
     if (hasDuplicates) {
-      setError("There are duplicate Part Numbers in the estimate.");
-      return;
+      errors.push("There are duplicate Part Numbers in the estimate.");
     }
 
     if (!customerNote.trim()) {
-      setError("The 'Description of labor or services' field cannot be empty.");
-      return;
+      errors.push("The 'Description of labor or services' field cannot be empty.");
     }
-
-    // Helper function to safely convert and round numbers
-    const safeParseFloat = (value, decimals = 2) => {
-      const num = parseFloat(value) || 0;
-      if (isNaN(num) || !isFinite(num)) return 0;
-      return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
-    };
-
-    const safeParseInt = (value) => {
-      const num = parseInt(value, 10);
-      if (isNaN(num) || !isFinite(num)) return 0;
-      return Math.max(0, num);
-    };
 
     // Validate all parts
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       if (!part.description?.trim()) {
-        setError(`Part ${i + 1}: Description is required.`);
-        return;
+        errors.push(`Part ${i + 1}: Description is required.`);
       }
-      // Part number validation removed - it's now optional
       if (safeParseFloat(part.quantity) <= 0) {
-        setError(`Part ${i + 1}: Quantity must be greater than 0.`);
-        return;
+        errors.push(`Part ${i + 1}: Quantity must be greater than 0.`);
       }
       if (
         safeParseFloat(part.netPrice) < 0 ||
         safeParseFloat(part.listPrice) < 0
       ) {
-        setError(`Part ${i + 1}: Prices cannot be negative.`);
-        return;
+        errors.push(`Part ${i + 1}: Prices cannot be negative.`);
       }
     }
 
@@ -652,16 +651,13 @@ const Estimate = () => {
     for (let i = 0; i < labors.length; i++) {
       const labor = labors[i];
       if (!labor.description?.trim()) {
-        setError(`Labor ${i + 1}: Description is required.`);
-        return;
+        errors.push(`Labor ${i + 1}: Description is required.`);
       }
       if (safeParseFloat(labor.duration) <= 0) {
-        setError(`Labor ${i + 1}: Duration must be greater than 0.`);
-        return;
+        errors.push(`Labor ${i + 1}: Duration must be greater than 0.`);
       }
       if (safeParseFloat(labor.laborRate) < 0) {
-        setError(`Labor ${i + 1}: Labor rate cannot be negative.`);
-        return;
+        errors.push(`Labor ${i + 1}: Labor rate cannot be negative.`);
       }
     }
 
@@ -669,13 +665,68 @@ const Estimate = () => {
     for (let i = 0; i < flatFees.length; i++) {
       const fee = flatFees[i];
       if (!fee.description?.trim()) {
-        setError(`Flat Fee ${i + 1}: Description is required.`);
-        return;
+        errors.push(`Flat Fee ${i + 1}: Description is required.`);
       }
       if (safeParseFloat(fee.flatFeePrice) < 0) {
-        setError(`Flat Fee ${i + 1}: Price cannot be negative.`);
-        return;
+        errors.push(`Flat Fee ${i + 1}: Price cannot be negative.`);
       }
+    }
+
+    // Vehicle ID validation
+    let vehicleId = 0;
+    if (!isEditMode) {
+      vehicleId = safeParseInt(selectedOption?.vehicle?.id);
+    } else {
+      vehicleId = safeParseInt(selectedVehicle?.id);
+    }
+    
+    if (vehicleId <= 0) {
+      errors.push("Invalid vehicle ID.");
+    }
+
+    // Add warnings for optional/missing data
+    if (parts.some(p => !p.partNumber || p.partNumber.trim() === "")) {
+      warnings.push("Some parts don't have part numbers specified.");
+    }
+    
+    if (total <= 0) {
+      warnings.push("The total amount is $0.00.");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      completeness: {
+        partsCount: parts.length,
+        laborsCount: labors.length,
+        flatFeesCount: flatFees.length,
+      }
+    };
+  };
+
+  const handleFormSubmit = () => {
+    // Validate the estimate first
+    const validation = validateEstimate();
+    setValidationResults(validation);
+    setShowConfirmationModal(true);
+    setError(null); // Clear any previous errors
+  };
+
+  const handleConfirmSubmit = async () => {
+    // Close the confirmation modal
+    setShowConfirmationModal(false);
+    
+    // Proceed with the actual save
+    await handleSave();
+  };
+
+  const handleSave = async () => {
+    // Run validation again just to be safe
+    const validation = validateEstimate();
+    if (!validation.isValid) {
+      setError(validation.errors[0]); // Show first error
+      return;
     }
 
     const dto = {
@@ -719,12 +770,6 @@ const Estimate = () => {
         Taxable: false,
       })),
     };
-
-    // Final validation
-    if (dto.VehicleID <= 0) {
-      setError("Invalid vehicle ID.");
-      return;
-    }
 
     try {
       setSaving(true);
@@ -846,7 +891,7 @@ const Estimate = () => {
         </Button>
       </div>
 
-      <Form form={form} layout="vertical" onFinish={handleSave}>
+      <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
         {!isEditMode && (
           <Row gutter={16}>
             <Col span={12}>
@@ -1242,6 +1287,15 @@ const Estimate = () => {
         addFlatFee={addFlatFee}
         isEditingItem={isEditingItem}
         updateEditedItem={updateEditedItem}
+      />
+      
+      <ConfirmationModal
+        show={showConfirmationModal}
+        onHide={() => setShowConfirmationModal(false)}
+        onConfirm={handleConfirmSubmit}
+        validationResults={validationResults}
+        isEditMode={isEditMode}
+        loading={saving}
       />
     </div>
   );
