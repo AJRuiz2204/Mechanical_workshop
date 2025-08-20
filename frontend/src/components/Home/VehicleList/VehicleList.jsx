@@ -120,7 +120,7 @@ const VehicleList = () => {
       setShowUserWorkshopModal(true);
     } else {
       // Single vehicle - use existing VehicleReception modal
-      setEditingId(vehicleId);
+      setEditingId(vehicle.userWorkshopId);
       setShowReceptionModal(true);
     }
   };
