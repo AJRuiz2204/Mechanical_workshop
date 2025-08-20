@@ -39,7 +39,7 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isE
         <Form.Item label="Flat Fee Price" required>
           <InputNumber
             min={0.01}
-            step={0.01}
+            step={10}
             precision={2}
             value={newFlatFee.flatFeePrice}
             onChange={flatFeePrice => {
