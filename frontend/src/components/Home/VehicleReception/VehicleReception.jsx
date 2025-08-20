@@ -10,7 +10,6 @@ import {
   Checkbox,
   Card,
   Typography,
-  message,
 } from "antd";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import {
@@ -18,6 +17,7 @@ import {
   getUserWorkshopByIdWithVehicles,
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
+import { SuccessModal, ErrorModal } from "../../Modals";
 import PropTypes from "prop-types";
 
 const { Title } = Typography;
@@ -63,6 +63,12 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getToken = () => localStorage.getItem("token") || "";
 
@@ -115,7 +121,8 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         });
       } catch (err) {
         setSubmitError(err.message);
-        message.error(err.message);
+        setErrorMessage(err.message);
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -197,16 +204,22 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
 
       if (editingId) {
         await updateUserWorkshop(editingId, payload, token);
-        message.success("Workshop updated.");
+        setSuccessMessage("Workshop updated.");
       } else {
         await createUserWorkshop(payload);
-        message.success("Workshop registered.");
+        setSuccessMessage("Workshop registered.");
       }
-      afterSubmit?.();
-      onClose?.();
+      setShowSuccessModal(true);
+      
+      // Close modal and call callbacks after showing success
+      setTimeout(() => {
+        afterSubmit?.();
+        onClose?.();
+      }, 2000);
     } catch (err) {
       setSubmitError(err.message || "Error submitting the form.");
-      message.error(err.message || "Error submitting.");
+      setErrorMessage(err.message || "Error submitting.");
+      setShowErrorModal(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -500,6 +513,19 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
           <Button onClick={onClose}>Cancel</Button>
         </Form.Item>
       </Form>
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={successMessage}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={errorMessage}
+        onClose={() => setShowErrorModal(false)}
+      />
     </Card>
   );
 };

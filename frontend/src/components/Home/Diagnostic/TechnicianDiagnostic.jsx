@@ -8,8 +8,9 @@ import {
   deleteTechnicianDiagnostic,
 } from "../../../services/TechnicianDiagnosticService";
 import { getDiagnosticById } from "../../../services/DiagnosticService";
-import { Form, Input, Button, Row, Col, Spin, Alert, Modal } from "antd";
+import { Form, Input, Button, Row, Col, Spin, Modal } from "antd";
 import NotesSection from "../../NotesSection/NotesSection";
+import { SuccessModal, ErrorModal } from "../../Modals";
 
 /**
  * TechnicianDiagnostic Component
@@ -55,6 +56,10 @@ const TechnicianDiagnostic = () => {
   // State for error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // Loading indicator
   const [loading, setLoading] = useState(true);
@@ -143,14 +148,17 @@ const TechnicianDiagnostic = () => {
     const mileageNumber = parseMileage(formData.mileage);
     if (!formData.mileage || mileageNumber === 0) {
       setErrorMessage("Mileage is required and cannot be zero.");
+      setShowErrorModal(true);
       return;
     }
     if (!formData.extendedDiagnostic.trim()) {
       setErrorMessage("Extended diagnostic is required.");
+      setShowErrorModal(true);
       return;
     }
     if (mileageNumber < 1 || mileageNumber > 999999) {
       setErrorMessage("Mileage must be between 1 and 999,999.");
+      setShowErrorModal(true);
       return;
     }
 
@@ -173,11 +181,13 @@ const TechnicianDiagnostic = () => {
         await createTechnicianDiagnostic(payload);
         setSuccessMessage("Technician Diagnostic created successfully.");
       }
-      navigate("/technicianDiagnosticList");
+      setShowSuccessModal(true);
+      setTimeout(() => navigate("/technicianDiagnosticList"), 2000);
     } catch (error) {
       setErrorMessage(
         "Error saving the Technician Diagnostic: " + error.message
       );
+      setShowErrorModal(true);
     }
   };
 
@@ -190,11 +200,13 @@ const TechnicianDiagnostic = () => {
     try {
       await deleteTechnicianDiagnostic(technicianDiagnostic.id);
       setSuccessMessage("Technician Diagnostic deleted successfully.");
-      navigate("/technicianDiagnosticList");
+      setShowSuccessModal(true);
+      setTimeout(() => navigate("/technicianDiagnosticList"), 2000);
     } catch (error) {
       setErrorMessage(
         "Error deleting the Technician Diagnostic: " + error.message
       );
+      setShowErrorModal(true);
     }
   };
 
@@ -237,6 +249,7 @@ const TechnicianDiagnostic = () => {
         }
       } catch (error) {
         setErrorMessage(error.message || "Error loading data.");
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -257,7 +270,7 @@ const TechnicianDiagnostic = () => {
   if (!diagnostic) {
     return (
       <div className="diagnostic-container">
-        <Alert type="error" message="Could not load diagnostic information." />
+        <h3>Error Loading Diagnostic</h3>
         <Button onClick={() => navigate("/technicianDiagnosticList")}>
           Back to Diagnostics List
         </Button>
@@ -275,9 +288,6 @@ const TechnicianDiagnostic = () => {
           ? "Edit Technician Diagnostic"
           : "Assign Technician Diagnostic"}
       </h3>
-
-      {errorMessage && <Alert type="error" message={errorMessage} />}
-      {successMessage && <Alert type="success" message={successMessage} />}
 
       <h5>Vehicle Information</h5>
       <Row gutter={[16, 16]}>
@@ -390,6 +400,19 @@ const TechnicianDiagnostic = () => {
       >
         Are you sure you want to delete this Technician Diagnostic?
       </Modal>
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={successMessage}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={errorMessage}
+        onClose={() => setShowErrorModal(false)}
+      />
     </div>
   );
 };

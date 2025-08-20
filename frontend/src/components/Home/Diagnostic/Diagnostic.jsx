@@ -9,13 +9,13 @@ import {
   Row,
   Col,
   Select,
-  Alert,
   Spin,
 } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import { createDiagnostic } from "../../../services/DiagnosticService";
 import { getVehicleById } from "../../../services/VehicleService";
 import technicianService from "../../../services/technicianService";
+import { SuccessModal, ErrorModal } from "../../Modals";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -57,6 +57,10 @@ const Diagnostic = () => {
   // State for storing error and success messages
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // State for loading vehicle data
   const [loading, setLoading] = useState(true);
@@ -69,6 +73,7 @@ const Diagnostic = () => {
       try {
         if (!id) {
           setErrorMessage("No vehicle ID provided.");
+          setShowErrorModal(true);
           setLoading(false);
           return;
         }
@@ -76,6 +81,7 @@ const Diagnostic = () => {
         setVehicle(data);
       } catch (error) {
         setErrorMessage("Error fetching vehicle information: " + error.message);
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -93,6 +99,8 @@ const Diagnostic = () => {
         setTechnicians(data);
       } catch (error) {
         setTechError("Error fetching technicians: " + error.message);
+        setErrorMessage("Error fetching technicians: " + error.message);
+        setShowErrorModal(true);
       } finally {
         setTechLoading(false);
       }
@@ -140,13 +148,16 @@ const Diagnostic = () => {
     try {
       await createDiagnostic(diagnosticData);
       setSuccessMessage("Diagnostic created successfully.");
-      navigate("/diagnostic-list");
+      setShowSuccessModal(true);
+      // Navigate after modal is closed or after a delay
+      setTimeout(() => navigate("/diagnostic-list"), 2000);
     } catch (error) {
       setErrorMessage("Error creating diagnostic: " + error.message);
+      setShowErrorModal(true);
     }
   };
 
-  // Show a spinner while loading data
+  // If there is an error loading initial data, show loading spinner and handle via modal
   if (loading || techLoading) {
     return (
       <div className="p-4 border rounded" style={{ minHeight: 200, textAlign: "center" }}>
@@ -155,25 +166,9 @@ const Diagnostic = () => {
     );
   }
 
-  // If there is an error, display it with a back button
-  if (errorMessage) {
-    return (
-      <div className="p-4 border rounded">
-        <Alert message={errorMessage} type="error" showIcon />
-        <Button onClick={() => navigate("/diagnostic-list")} style={{ marginTop: 16 }}>
-          Back to Diagnostics List
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 border rounded bg-light">
       <h3>Create Diagnostic</h3>
-
-      {/* Display success and technician error messages */}
-      {successMessage && <Alert message={successMessage} type="success" showIcon />}
-      {techError && <Alert message={techError} type="error" showIcon />}
 
       {/* Vehicle Information (read-only) */}
       <h5>Vehicle Information</h5>
@@ -267,6 +262,25 @@ const Diagnostic = () => {
           </Button>
         </Form.Item>
       </Form>
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={successMessage}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={errorMessage}
+        onClose={() => {
+          setShowErrorModal(false);
+          // If error occurred during initial load, navigate back
+          if (errorMessage.includes("fetching vehicle") || errorMessage.includes("No vehicle ID")) {
+            navigate("/diagnostic-list");
+          }
+        }}
+      />
     </div>
   );
 };

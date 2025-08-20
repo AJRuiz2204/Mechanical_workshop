@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Form, Input, Button, Alert, Spin, List, Modal } from "antd";
+import { Form, Input, Button, Spin, List, Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import {
   getNotesByDiagnostic,
@@ -8,6 +8,7 @@ import {
   deleteNote,
   getNotesByTechDiag,
 } from "../../services/NotesService";
+import { SuccessModal, ErrorModal } from "../Modals";
 import "./NotesSection.css";
 
 /**
@@ -35,6 +36,10 @@ const NotesSection = ({ diagId, techDiagId }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   /**
    * useEffect - Loads notes depending on whether techDiagId or diagId exists.
@@ -52,6 +57,7 @@ const NotesSection = ({ diagId, techDiagId }) => {
         setNotes(fetchedNotes);
       } catch (error) {
         setErrorMessage(error.message || "Error fetching notes.");
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -74,6 +80,7 @@ const NotesSection = ({ diagId, techDiagId }) => {
 
     if (!noteText.trim()) {
       setErrorMessage("Note cannot be empty.");
+      setShowErrorModal(true);
       return;
     }
 
@@ -87,9 +94,11 @@ const NotesSection = ({ diagId, techDiagId }) => {
       const newNote = await createNote(payload);
       setNotes((prev) => [...prev, newNote]);
       setSuccessMessage("Note added successfully.");
+      setShowSuccessModal(true);
       setNoteText("");
     } catch (error) {
       setErrorMessage("Error adding note: " + error.message);
+      setShowErrorModal(true);
     }
   };
 
@@ -103,8 +112,10 @@ const NotesSection = ({ diagId, techDiagId }) => {
       await deleteNote(noteToDelete.id);
       setNotes((prev) => prev.filter((note) => note.id !== noteToDelete.id));
       setSuccessMessage("Note deleted successfully.");
+      setShowSuccessModal(true);
     } catch (error) {
       setErrorMessage("Error deleting note: " + error.message);
+      setShowErrorModal(true);
     } finally {
       setShowDeleteModal(false);
       setNoteToDelete(null);
@@ -114,9 +125,6 @@ const NotesSection = ({ diagId, techDiagId }) => {
   return (
     <div className="notes-section-container">
       <h5>Notes</h5>
-
-      {errorMessage && <Alert type="error" message={errorMessage} />}
-      {successMessage && <Alert type="success" message={successMessage} />}
 
       <Form layout="vertical" onFinish={handleAddNote}>
         <Form.Item rules={[{ required: true, message: "Please enter a note" }]}>
@@ -173,6 +181,19 @@ const NotesSection = ({ diagId, techDiagId }) => {
       >
         Are you sure you want to delete this note?
       </Modal>
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={successMessage}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={errorMessage}
+        onClose={() => setShowErrorModal(false)}
+      />
     </div>
   );
 };
