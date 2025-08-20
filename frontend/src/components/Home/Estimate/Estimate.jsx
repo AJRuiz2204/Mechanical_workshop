@@ -226,7 +226,7 @@ const Estimate = () => {
   const handleOptionChange = (e) => {
     const optionIndex = e.target.value;
 
-    if (!optionIndex || optionIndex === "") {
+    if (optionIndex === "" || optionIndex === null || optionIndex === undefined) {
       setError("Select a valid option.");
       setSelectedOption(null);
       return;
@@ -821,7 +821,7 @@ const Estimate = () => {
 
   return (
     <div className="p-4 border rounded mt-4 estimate-container">
-      <h3>{isEditMode ? "Edit Estimate" : "Create Estimate"}</h3>
+      <h3>{isEditMode ? "Edit Estimate" : "Save Estimate"}</h3>
 
       {error && (
         <Alert
@@ -1160,7 +1160,7 @@ const Estimate = () => {
               loading={saving}
               disabled={isLoading}
             >
-              {isEditMode ? "Update Estimate" : "Create Estimate"}
+              {isEditMode ? "Update Estimate" : "Save Estimate"}
             </Button>{" "}
             <Button onClick={() => navigate("/estimates")}>Cancel</Button>
           </Col>
