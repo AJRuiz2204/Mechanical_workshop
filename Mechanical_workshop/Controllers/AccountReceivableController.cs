@@ -121,6 +121,14 @@ namespace Mechanical_workshop.Controllers
                     return BadRequest("El presupuesto especificado no existe");
                 }
 
+                // Validar que el estimado esté aprobado
+                if (estimate.AuthorizationStatus != "Approved")
+                {
+                    _logger.LogWarning("Attempt to create account receivable for non-approved estimate ID: {EstimateId}, Status: {Status}", 
+                        createDto.EstimateId, estimate.AuthorizationStatus);
+                    return BadRequest("Solo se pueden generar cuentas por cobrar para estimados aprobados");
+                }
+
                 // Mapear el DTO a la entidad AccountReceivable
                 var account = _mapper.Map<AccountReceivable>(createDto);
                 account.OriginalAmount = estimate.Total;

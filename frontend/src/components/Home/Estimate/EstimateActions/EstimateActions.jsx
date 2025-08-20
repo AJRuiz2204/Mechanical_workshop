@@ -11,6 +11,7 @@ const EstimateActions = ({
   onGenerateAccount,
 }) => {
   const isPaid = item.isPaid;
+  const isApproved = item.estimate?.authorizationStatus?.toLowerCase() === "approved";
 
   return (
     <>
@@ -48,7 +49,9 @@ const EstimateActions = ({
           <Button
             variant="success"
             size="sm"
+            disabled={!item.accountReceivable && !isApproved}
             onClick={() => onGenerateAccount(item)}
+            title={!item.accountReceivable && !isApproved ? "Estimate must be approved to generate account" : ""}
           >
             {item.accountReceivable ? "Payment" : "Generate Account"}
           </Button>
