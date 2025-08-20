@@ -848,45 +848,50 @@ const Estimate = () => {
 
       <Form form={form} layout="vertical" onFinish={handleSave}>
         {!isEditMode && (
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="vehicleDiagnosticSelect"
-                label="Select Vehicle (only those with TechnicianDiagnostic)"
-                rules={[{ required: true, message: "Select a valid option." }]}
-              >
-                <Select
-                  placeholder="-- Select Option --"
-                  onChange={(value) =>
-                    handleOptionChange({ target: { value } })
-                  }
+          <>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="vehicleDiagnosticSelect"
+                  label="Select Vehicle (only those with TechnicianDiagnostic)"
+                  rules={[{ required: true, message: "Select a valid option." }]}
                 >
-                  <Option value="">-- Select Option --</Option>
-                  {vehicleDiagnosticOptions.map((opt, idx) => (
-                    <Option key={idx} value={idx}>
-                      {`${opt.vehicle.vin} - ${opt.owner.name} ${opt.owner.lastName} - Diagnostic ID: ${opt.diagnostic.diagnosticId} - Extended: ${opt.technicianDiagnostics[0].extendedDiagnostic}`}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="authorizationStatus"
-                label="Authorization Status"
-                initialValue="Pending"
-              >
-                <Select
-                  value={authorizationStatus}
-                  onChange={setAuthorizationStatus}
+                  <Select
+                    placeholder="-- Select Option --"
+                    style={{ width: '100%' }}
+                    onChange={(value) =>
+                      handleOptionChange({ target: { value } })
+                    }
+                  >
+                    <Option value="">-- Select Option --</Option>
+                    {vehicleDiagnosticOptions.map((opt, idx) => (
+                      <Option key={idx} value={idx}>
+                        {`${opt.vehicle.vin} - ${opt.vehicle.make} ${opt.vehicle.model} ${opt.vehicle.year}`}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="authorizationStatus"
+                  label="Authorization Status"
+                  initialValue="Pending"
                 >
-                  <Option value="Pending">Pending</Option>
-                  <Option value="Approved">Approved</Option>
-                  <Option value="Not Approved">Not Approved</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+                  <Select
+                    value={authorizationStatus}
+                    onChange={setAuthorizationStatus}
+                  >
+                    <Option value="Pending">Pending</Option>
+                    <Option value="Approved">Approved</Option>
+                    <Option value="Not Approved">Not Approved</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+          </>
         )}
 
         {/* Authorization Status field for edit mode */}
