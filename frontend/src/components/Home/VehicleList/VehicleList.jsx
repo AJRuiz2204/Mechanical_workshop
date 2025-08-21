@@ -34,6 +34,7 @@ const VehicleList = () => {
   const navigate = useNavigate();
 
   const [vehicles, setVehicles] = useState([]);
+  const [allVehicles, setAllVehicles] = useState([]); // Keep original data for counting
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -51,6 +52,7 @@ const VehicleList = () => {
     try {
       const data = await getAllVehicles();
       setVehicles(data);
+      setAllVehicles(data); // Keep original data for accurate counting
       setSearchMessage("");
     } catch (err) {
       message.error(`Error loading vehicles: ${err.message}`);
@@ -65,16 +67,16 @@ const VehicleList = () => {
 
   // Local search with debounce
   useEffect(() => {
-    const handler = setTimeout(async () => {
+    const handler = setTimeout(() => {
       const term = searchTerm.trim().toLowerCase();
       if (!term) {
-        fetchAllVehicles();
+        setVehicles(allVehicles);
+        setSearchMessage("");
         return;
       }
       setLoadingSearch(true);
       try {
-        const all = await getAllVehicles();
-        const filtered = all.filter((v) =>
+        const filtered = allVehicles.filter((v) =>
           Object.values(v).some((val) =>
             String(val).toLowerCase().includes(term)
           )
@@ -90,7 +92,7 @@ const VehicleList = () => {
     }, 300);
 
     return () => clearTimeout(handler);
-  }, [searchTerm]);
+  }, [searchTerm, allVehicles]);
 
   const onSearchChange = (value) => {
     setSearchTerm(value);
@@ -102,25 +104,25 @@ const VehicleList = () => {
   };
 
   const handleEdit = (vehicleId) => {
-    // Find the vehicle to get UserWorkshopId
     const vehicle = vehicles.find((v) => v.id === vehicleId);
     if (!vehicle) {
       message.error("Vehicle not found");
       return;
     }
 
-    // Count how many vehicles belong to this UserWorkshop
-    const userWorkshopVehicles = vehicles.filter(
+    console.log("Selected vehicle:", vehicle);
+    console.log("UserWorkshopId:", vehicle.userWorkshopId);
+
+    const userWorkshopVehicles = allVehicles.filter(
       (v) => v.userWorkshopId === vehicle.userWorkshopId
     );
 
     if (userWorkshopVehicles.length > 1) {
-      // Multiple vehicles - use UserWorkshop edit modal
       setEditingUserWorkshopId(vehicle.userWorkshopId);
       setShowUserWorkshopModal(true);
     } else {
-      // Single vehicle - use existing VehicleReception modal
-      setEditingId(vehicleId);
+     
+      setEditingId(vehicle.userWorkshopId);
       setShowReceptionModal(true);
     }
   };
@@ -132,13 +134,17 @@ const VehicleList = () => {
   const closeModal = (refresh = false) => {
     setShowReceptionModal(false);
     setEditingId(null);
-    if (refresh) fetchAllVehicles();
+    if (refresh) {
+      fetchAllVehicles();
+    }
   };
 
   const closeUserWorkshopModal = (refresh = false) => {
     setShowUserWorkshopModal(false);
     setEditingUserWorkshopId(null);
-    if (refresh) fetchAllVehicles();
+    if (refresh) {
+      fetchAllVehicles();
+    }
   };
 
   const handleDelete = (vin) => {
@@ -148,7 +154,9 @@ const VehicleList = () => {
       onOk: async () => {
         try {
           await deleteVehicle(vin);
+          // Update both states to keep them synchronized
           setVehicles((prev) => prev.filter((v) => v.vin !== vin));
+          setAllVehicles((prev) => prev.filter((v) => v.vin !== vin));
           message.success("Vehicle deleted successfully.");
         } catch (err) {
           message.error(`Error deleting: ${err.message}`);
@@ -180,7 +188,7 @@ const VehicleList = () => {
       title: "Type",
       key: "type",
       render: (_, record) => {
-        const userWorkshopVehicles = vehicles.filter(
+        const userWorkshopVehicles = allVehicles.filter(
           (v) => v.userWorkshopId === record.userWorkshopId
         );
         return userWorkshopVehicles.length > 1 ? (
