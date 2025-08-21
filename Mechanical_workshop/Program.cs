@@ -81,6 +81,14 @@ builder.Services.AddAutoMapper(typeof(TechnicianProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(AccountingProfile).Assembly);
 builder.Services.AddAutoMapper(typeof(EstimateMappingProfile).Assembly);
 
+// Register Repositories
+builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IWorkshopSettingsRepository, Mechanical_workshop.Repositories.Implementations.WorkshopSettingsRepository>();
+builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IUserWorkshopRepository, Mechanical_workshop.Repositories.Implementations.UserWorkshopRepository>();
+
+// Register Services
+builder.Services.AddScoped<Mechanical_workshop.Services.Interfaces.IWorkshopSettingsService, Mechanical_workshop.Services.Implementations.WorkshopSettingsService>();
+builder.Services.AddScoped<Mechanical_workshop.Services.Interfaces.IUserWorkshopService, Mechanical_workshop.Services.Implementations.UserWorkshopService>();
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
