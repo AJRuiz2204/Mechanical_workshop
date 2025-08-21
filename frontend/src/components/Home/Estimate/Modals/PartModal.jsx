@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { Modal, Form, Input, InputNumber, Checkbox, Button, Space } from 'antd';
 import { usePartModal } from '../hooks/useModalHooks';
+import '../styles/ModalsGeneral.css';
 
 /**
  * PartModal allows adding a new part to the estimate or editing an existing one
@@ -37,15 +38,16 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         <Form.Item label="Quantity" required>
           <InputNumber
             min={0.01}
-            step={0.01}
+            step={1}
             precision={2}
             value={newPart.quantity}
             onChange={qty => {
               const list = parseFloat(newPart.listPrice) || 0;
+              const extendedPrice = parseFloat((qty * list).toFixed(2));
               setNewPart({
                 ...newPart,
                 quantity: qty,
-                extendedPrice: qty * list,
+                extendedPrice,
               });
             }}
             style={{ width: '100%' }}
@@ -54,11 +56,11 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         <Form.Item label="Net Price" required>
           <InputNumber
             min={0.01}
-            step={0.01}
+            step={1}
             precision={2}
             value={newPart.netPrice}
             onChange={netPrice => setNewPart({ ...newPart, netPrice })}
-            formatter={v => `$ ${v}`}
+            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
             parser={v => v.replace(/\$/g, '')}
             style={{ width: '100%' }}
           />
@@ -66,18 +68,19 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         <Form.Item label="List Price" required>
           <InputNumber
             min={0.01}
-            step={0.01}
+            step={1}
             precision={2}
             value={newPart.listPrice}
             onChange={listPrice => {
               const qty = parseFloat(newPart.quantity) || 0;
+              const extendedPrice = parseFloat((qty * listPrice).toFixed(2));
               setNewPart({
                 ...newPart,
                 listPrice,
-                extendedPrice: qty * listPrice,
+                extendedPrice,
               });
             }}
-            formatter={v => `$ ${v}`}
+            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
             parser={v => v.replace(/\$/g, '')}
             style={{ width: '100%' }}
           />
@@ -86,7 +89,8 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
           <InputNumber
             value={newPart.extendedPrice}
             readOnly
-            formatter={v => `$ ${v}`}
+            precision={2}
+            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
             parser={v => v.replace(/\$/g, '')}
             style={{ width: '100%' }}
           />
@@ -102,9 +106,10 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         {settings && newPart.applyPartTax && (
           <Form.Item label="Tax Amount">
             <InputNumber
-              value={((parseFloat(newPart.extendedPrice) || 0) * (settings.partTaxRate / 100)).toFixed(2)}
+              value={parseFloat(((parseFloat(newPart.extendedPrice) || 0) * (settings.partTaxRate / 100)).toFixed(2))}
               readOnly
-              formatter={v => `$ ${v}`}
+              precision={2}
+              formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
               parser={v => v.replace(/\$/g, '')}
               style={{ width: '100%' }}
             />

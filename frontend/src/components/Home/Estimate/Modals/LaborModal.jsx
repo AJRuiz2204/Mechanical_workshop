@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { Modal, Form, Input, InputNumber, Checkbox, Select, Button, Space } from 'antd';
 import { useLaborModal } from '../hooks/useModalHooks';
+import '../styles/ModalsGeneral.css';
 
 /**
  * LaborModal allows adding a new labor item to the estimate or editing an existing one
@@ -30,15 +31,16 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         <Form.Item label="Duration (hours)" required>
           <InputNumber
             min={0.01}
-            step={0.01}
+            step={1}
             precision={2}
             value={newLabor.duration}
             onChange={duration => {
               const rate = parseFloat(newLabor.laborRate) || 0;
+              const extendedPrice = parseFloat((duration * rate).toFixed(2));
               setNewLabor({
                 ...newLabor,
                 duration,
-                extendedPrice: duration * rate,
+                extendedPrice,
               });
             }}
             style={{ width: '100%' }}
@@ -49,10 +51,11 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
             value={newLabor.laborRate}
             onChange={laborRate => {
               const dur = parseFloat(newLabor.duration) || 0;
+              const extendedPrice = parseFloat((dur * laborRate).toFixed(2));
               setNewLabor({
                 ...newLabor,
                 laborRate,
-                extendedPrice: dur * laborRate,
+                extendedPrice,
               });
             }}
           >
@@ -74,7 +77,8 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
           <InputNumber
             value={newLabor.extendedPrice}
             readOnly
-            formatter={v => `$ ${v}`}
+            precision={2}
+            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
             parser={v => v.replace(/\$/g, '')}
             style={{ width: '100%' }}
           />
@@ -90,9 +94,10 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         {settings && newLabor.applyLaborTax && (
           <Form.Item label="Tax Amount">
             <InputNumber
-              value={((parseFloat(newLabor.extendedPrice) || 0) * (settings.laborTaxRate / 100)).toFixed(2)}
+              value={parseFloat(((parseFloat(newLabor.extendedPrice) || 0) * (settings.laborTaxRate / 100)).toFixed(2))}
               readOnly
-              formatter={v => `$ ${v}`}
+              precision={2}
+              formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
               parser={v => v.replace(/\$/g, '')}
               style={{ width: '100%' }}
             />

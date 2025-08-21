@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Form, Input, InputNumber, Button, Space } from 'antd';
 import { useFlatFeeModal } from '../hooks/useModalHooks';
+import '../styles/ModalsGeneral.css';
 
 /**
  * FlatFeeModal allows adding a new flat fee to the estimate or editing an existing one
@@ -39,17 +40,18 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isE
         <Form.Item label="Flat Fee Price" required>
           <InputNumber
             min={0.01}
-            step={0.01}
+            step={1}
             precision={2}
             value={newFlatFee.flatFeePrice}
             onChange={flatFeePrice => {
+              const extendedPrice = parseFloat((flatFeePrice || 0).toFixed(2));
               setNewFlatFee({
                 ...newFlatFee,
                 flatFeePrice,
-                extendedPrice: flatFeePrice,
+                extendedPrice,
               });
             }}
-            formatter={v => `$ ${v}`}
+            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
             parser={v => v.replace(/[^\d.]/g, '')}
             style={{ width: '100%' }}
           />
@@ -58,7 +60,8 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isE
           <InputNumber
             value={newFlatFee.extendedPrice}
             readOnly
-            formatter={v => `$ ${v}`}
+            precision={2}
+            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
             parser={v => v.replace(/[^\d]/g, '')}
             style={{ width: '100%' }}
           />

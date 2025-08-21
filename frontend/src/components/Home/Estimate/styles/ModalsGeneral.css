@@ -1,0 +1,95 @@
+/* General Modal Styles for Part, Labor, and FlatFee Modals */
+
+/* Close button (X) visibility for all modals */
+.ant-modal .ant-modal-close {
+  color: #000000 !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  border: 2px solid #d9d9d9 !important;
+  transition: all 0.3s ease !important;
+  top: 16px !important;
+  right: 16px !important;
+}
+
+.ant-modal .ant-modal-close:hover {
+  color: #ff4d4f !important;
+  background-color: #fff2f0 !important;
+  border-color: #ff4d4f !important;
+  transform: scale(1.1) !important;
+}
+
+.ant-modal .ant-modal-close-x {
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: 1 !important;
+}
+
+/* Modal title styling */
+.ant-modal .ant-modal-title {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+/* Modal body text styling */
+.ant-modal .ant-modal-body {
+  color: #000000 !important;
+}
+
+.ant-modal .ant-modal-body * {
+  color: #000000 !important;
+}
+
+/* Form labels */
+.ant-modal .ant-form-item-label > label {
+  color: #000000 !important;
+  font-weight: 500 !important;
+}
+
+/* Input styling */
+.ant-modal .ant-input,
+.ant-modal .ant-input-number,
+.ant-modal .ant-select-selection-item {
+  color: #000000 !important;
+}
+
+/* Checkbox text */
+.ant-modal .ant-checkbox-wrapper {
+  color: #000000 !important;
+}
+
+.ant-modal .ant-checkbox-wrapper span {
+  color: #000000 !important;
+}
+
+/* Button styling improvements */
+.ant-modal .ant-btn {
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+}
+
+.ant-modal .ant-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Modal header styling */
+.ant-modal .ant-modal-header {
+  border-bottom: 1px solid #e8e8e8 !important;
+  padding: 16px 24px !important;
+}
+
+/* Modal content styling */
+.ant-modal .ant-modal-content {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12) !important;
+}
