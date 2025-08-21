@@ -84,6 +84,7 @@ builder.Services.AddAutoMapper(typeof(EstimateMappingProfile).Assembly);
 // Register Repositories
 builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IWorkshopSettingsRepository, Mechanical_workshop.Repositories.Implementations.WorkshopSettingsRepository>();
 builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IUserWorkshopRepository, Mechanical_workshop.Repositories.Implementations.UserWorkshopRepository>();
+builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IVehicleRepository, Mechanical_workshop.Repositories.Implementations.VehicleRepository>();
 
 // Register Services
 builder.Services.AddScoped<Mechanical_workshop.Services.Interfaces.IWorkshopSettingsService, Mechanical_workshop.Services.Implementations.WorkshopSettingsService>();

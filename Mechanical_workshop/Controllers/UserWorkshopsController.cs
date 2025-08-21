@@ -4,10 +4,7 @@ using Mechanical_workshop.Data;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 using AutoMapper;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using Mechanical_workshop.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Mechanical_workshop.Controllers
@@ -16,15 +13,18 @@ namespace Mechanical_workshop.Controllers
     [Route("api/[controller]")]
     public class UserWorkshopsController : ControllerBase
     {
+        private readonly IUserWorkshopService _userWorkshopService;
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<UserWorkshopsController> _logger;
 
         public UserWorkshopsController(
+            IUserWorkshopService userWorkshopService,
             AppDbContext context,
             IMapper mapper,
             ILogger<UserWorkshopsController> logger)
         {
+            _userWorkshopService = userWorkshopService;
             _context = context;
             _mapper = mapper;
             _logger = logger;
@@ -36,19 +36,13 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 _logger.LogInformation("GET: Retrieving all UserWorkshops with Vehicles...");
-
-                var userWorkshops = await _context.UserWorkshops
-                    .Include(uw => uw.Vehicles)
-                    .ToListAsync();
-
-                _logger.LogInformation("GET: Retrieved {Count} UserWorkshops.", userWorkshops.Count);
-
-                return Ok(_mapper.Map<IEnumerable<UserWorkshopReadDto>>(userWorkshops));
+                var userWorkshops = await _userWorkshopService.GetAllUserWorkshopsAsync();
+                return Ok(userWorkshops);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener todos los talleres de usuario");
-                return StatusCode(500, new { message = $"Error al obtener los talleres de usuario: {ex.Message.ToString()}" });
+                return StatusCode(500, new { message = $"Error al obtener los talleres de usuario: {ex.Message}" });
             }
         }
 
@@ -58,11 +52,8 @@ namespace Mechanical_workshop.Controllers
             try
             {
                 _logger.LogInformation("GET: Retrieving UserWorkshop by ID: {Id}", id);
-
-                var userWorkshop = await _context.UserWorkshops
-                    .Include(uw => uw.Vehicles)
-                    .FirstOrDefaultAsync(uw => uw.Id == id);
-
+                var userWorkshop = await _userWorkshopService.GetUserWorkshopByIdAsync(id);
+                
                 if (userWorkshop == null)
                 {
                     _logger.LogWarning("GET: UserWorkshop with ID {Id} not found.", id);
@@ -70,12 +61,12 @@ namespace Mechanical_workshop.Controllers
                 }
 
                 _logger.LogInformation("GET: Found UserWorkshop with ID {Id}", id);
-                return Ok(_mapper.Map<UserWorkshopReadDto>(userWorkshop));
+                return Ok(userWorkshop);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener el taller de usuario con ID {Id}", id);
-                return StatusCode(500, new { message = $"Error al obtener el taller de usuario: {ex.Message.ToString()}" });
+                return StatusCode(500, new { message = $"Error al obtener el taller de usuario: {ex.Message}" });
             }
         }
 
@@ -92,61 +83,9 @@ namespace Mechanical_workshop.Controllers
 
             try
             {
-
-                var userWorkshop = _mapper.Map<UserWorkshop>(userWorkshopDto);
-
-                userWorkshop.Vehicles = new List<Vehicle>();
-
-                foreach (var vehicleDto in userWorkshopDto.Vehicles)
-                {
-                    if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
-                    {
-                        _logger.LogWarning("POST: A VehicleDto with an empty VIN will be skipped.");
-                        continue;
-                    }
-
-                    _logger.LogInformation(
-                        "VehicleDto => VIN: {Vin}, Make: {Make}, Model: {Model}",
-                        vehicleDto.Vin, vehicleDto.Make, vehicleDto.Model
-                    );
-
-                    var existingVehicle = await _context.Vehicles
-                        .FirstOrDefaultAsync(v => v.Vin == vehicleDto.Vin);
-
-                    if (existingVehicle == null)
-                    {
-                        _logger.LogInformation(
-                            "No existing vehicle found with VIN = {Vin}. Creating a new one...",
-                            vehicleDto.Vin
-                        );
-                        var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
-                        userWorkshop.Vehicles.Add(newVehicle);
-                    }
-                    else
-                    {
-                        _logger.LogInformation(
-                            "Existing vehicle found with VIN = {Vin}. Reusing the same entity.",
-                            vehicleDto.Vin
-                        );
-                        userWorkshop.Vehicles.Add(existingVehicle);
-                    }
-                }
-
-                _logger.LogInformation(
-                    "After manual additions, userWorkshop.Vehicles.Count = {Count}",
-                    userWorkshop.Vehicles.Count
-                );
-
-
-                _context.UserWorkshops.Add(userWorkshop);
-                await _context.SaveChangesAsync();
-
-
-                var readDto = _mapper.Map<UserWorkshopReadDto>(userWorkshop);
-
-                _logger.LogInformation("POST: UserWorkshop created successfully with ID = {Id}.", userWorkshop.Id);
-
-                return CreatedAtAction(nameof(GetUserWorkshop), new { id = readDto.Id }, readDto);
+                var result = await _userWorkshopService.CreateUserWorkshopAsync(userWorkshopDto);
+                _logger.LogInformation("POST: UserWorkshop created successfully with ID = {Id}.", result.Id);
+                return CreatedAtAction(nameof(GetUserWorkshop), new { id = result.Id }, result);
             }
             catch (Exception ex)
             {

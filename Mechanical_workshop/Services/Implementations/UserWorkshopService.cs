@@ -10,15 +10,18 @@ namespace Mechanical_workshop.Services.Implementations
     public class UserWorkshopService : IUserWorkshopService
     {
         private readonly IUserWorkshopRepository _repository;
+        private readonly IVehicleRepository _vehicleRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<UserWorkshopService> _logger;
 
         public UserWorkshopService(
             IUserWorkshopRepository repository,
+            IVehicleRepository vehicleRepository,
             IMapper mapper,
             ILogger<UserWorkshopService> logger)
         {
             _repository = repository;
+            _vehicleRepository = vehicleRepository;
             _mapper = mapper;
             _logger = logger;
         }
@@ -63,6 +66,52 @@ namespace Mechanical_workshop.Services.Implementations
             try
             {
                 var userWorkshop = _mapper.Map<UserWorkshop>(createDto);
+                userWorkshop.Vehicles = new List<Vehicle>();
+
+                // Process each vehicle in the creation DTO
+                if (createDto.Vehicles != null)
+                {
+                    foreach (var vehicleDto in createDto.Vehicles)
+                    {
+                        if (string.IsNullOrWhiteSpace(vehicleDto.Vin))
+                        {
+                            _logger.LogWarning("A VehicleDto with an empty VIN will be skipped.");
+                            continue;
+                        }
+
+                        _logger.LogInformation(
+                            "Processing VehicleDto => VIN: {Vin}, Make: {Make}, Model: {Model}",
+                            vehicleDto.Vin, vehicleDto.Make, vehicleDto.Model
+                        );
+
+                        // Check if vehicle already exists
+                        var existingVehicle = await _vehicleRepository.GetByVinAsync(vehicleDto.Vin);
+
+                        if (existingVehicle == null)
+                        {
+                            _logger.LogInformation(
+                                "No existing vehicle found with VIN = {Vin}. Creating a new one...",
+                                vehicleDto.Vin
+                            );
+                            var newVehicle = _mapper.Map<Vehicle>(vehicleDto);
+                            userWorkshop.Vehicles.Add(newVehicle);
+                        }
+                        else
+                        {
+                            _logger.LogInformation(
+                                "Existing vehicle found with VIN = {Vin}. Reusing the same entity.",
+                                vehicleDto.Vin
+                            );
+                            userWorkshop.Vehicles.Add(existingVehicle);
+                        }
+                    }
+                }
+
+                _logger.LogInformation(
+                    "After processing vehicles, userWorkshop.Vehicles.Count = {Count}",
+                    userWorkshop.Vehicles.Count
+                );
+
                 var createdUserWorkshop = await _repository.CreateAsync(userWorkshop);
                 
                 _logger.LogInformation("Taller de usuario creado con ID: {Id}", createdUserWorkshop.Id);
