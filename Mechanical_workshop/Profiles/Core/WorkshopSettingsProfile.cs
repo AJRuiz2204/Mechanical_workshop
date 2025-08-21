@@ -1,10 +1,10 @@
-// MappingProfiles/WorkshopSettingsProfile.cs
+// Profiles/Core/WorkshopSettingsProfile.cs
 
 using AutoMapper;
 using Mechanical_workshop.DTOs;
 using Mechanical_workshop.Models;
 
-namespace Mechanical_workshop.MappingProfiles
+namespace Mechanical_workshop.Profiles.Core
 {
     /// <summary>
     /// AutoMapper profile for WorkshopSettings.

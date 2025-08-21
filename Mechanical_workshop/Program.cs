@@ -69,26 +69,19 @@ builder.Services.AddControllers()
         options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
     });
 
-builder.Services.AddAutoMapper(typeof(UserWorkshopProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(DiagnosticProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly, typeof(DiagnosticProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(EntityProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(EstimatesProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(WorkshopSettings).Assembly);
-builder.Services.AddAutoMapper(typeof(LaborTaxMarkupSettingsProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(VehicleProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(TechnicianProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(AccountingProfile).Assembly);
-builder.Services.AddAutoMapper(typeof(EstimateMappingProfile).Assembly);
+// Register AutoMapper with all profiles from the assembly
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 // Register Repositories
 builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IWorkshopSettingsRepository, Mechanical_workshop.Repositories.Implementations.WorkshopSettingsRepository>();
 builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IUserWorkshopRepository, Mechanical_workshop.Repositories.Implementations.UserWorkshopRepository>();
 builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IVehicleRepository, Mechanical_workshop.Repositories.Implementations.VehicleRepository>();
+builder.Services.AddScoped<Mechanical_workshop.Repositories.Interfaces.IEstimateRepository, Mechanical_workshop.Repositories.Implementations.EstimateRepository>();
 
 // Register Services
 builder.Services.AddScoped<Mechanical_workshop.Services.Interfaces.IWorkshopSettingsService, Mechanical_workshop.Services.Implementations.WorkshopSettingsService>();
 builder.Services.AddScoped<Mechanical_workshop.Services.Interfaces.IUserWorkshopService, Mechanical_workshop.Services.Implementations.UserWorkshopService>();
+builder.Services.AddScoped<Mechanical_workshop.Services.Interfaces.IEstimateService, Mechanical_workshop.Services.Implementations.EstimateService>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();

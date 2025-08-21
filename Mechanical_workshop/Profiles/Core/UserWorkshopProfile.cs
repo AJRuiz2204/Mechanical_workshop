@@ -2,7 +2,7 @@ using AutoMapper;
 using Mechanical_workshop.Dtos;
 using Mechanical_workshop.Models;
 
-namespace Mechanical_workshop.Profiles
+namespace Mechanical_workshop.Profiles.Core
 {
     public class UserWorkshopProfile : Profile
     {
