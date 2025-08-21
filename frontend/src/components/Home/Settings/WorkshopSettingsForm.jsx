@@ -4,7 +4,6 @@ import {
   Input,
   Button,
   Spin,
-  Alert,
   Card,
   Row,
   Col,
@@ -17,6 +16,7 @@ import {
   updateWorkshopSettings,
 } from '../../../services/workshopSettingsService';
 import WorkshopSettingsPreview from './WorkshopSettingsPreview';
+import { SuccessModal, ErrorModal } from '../../Modals';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -52,6 +52,10 @@ const WorkshopSettingsForm = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const formatPhoneNumber = (value) => {
     if (!value) return value;
@@ -82,6 +86,7 @@ const WorkshopSettingsForm = () => {
           setIsEditMode(false);
         } else {
           setError(err.message || 'Error fetching workshop settings.');
+          setShowErrorModal(true);
         }
       } finally {
         setLoading(false);
@@ -116,9 +121,11 @@ const WorkshopSettingsForm = () => {
         setIsEditMode(true);
         setSuccess('Workshop settings created successfully.');
       }
+      setShowSuccessModal(true);
       form.resetFields();
     } catch (err) {
       setError(err.message || 'Error saving workshop settings.');
+      setShowErrorModal(true);
     } finally {
       setSaving(false);
     }
@@ -140,9 +147,6 @@ const WorkshopSettingsForm = () => {
           <Title level={4}>
             {isEditMode ? 'Edit Workshop Settings' : 'Create Workshop Settings'}
           </Title>
-
-          {error && <Alert type="error" message={error} style={{ marginBottom: 16 }} />}
-          {success && <Alert type="success" message={success} style={{ marginBottom: 16 }} />}
 
           <Form
             form={form}
@@ -247,6 +251,19 @@ const WorkshopSettingsForm = () => {
           <WorkshopSettingsPreview settings={savedSettings} />
         </Col>
       </Row>
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={success}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={error}
+        onClose={() => setShowErrorModal(false)}
+      />
     </Card>
   );
 };

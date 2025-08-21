@@ -10,13 +10,13 @@ import {
   Alert,
   Checkbox,
   Card,
-  message,
 } from "antd";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   getUserWorkshopByIdWithVehicles,
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
+import { SuccessModal, ErrorModal } from "../../Modals";
 import PropTypes from "prop-types";
 
 const formatPhoneNumber = (input) => {
@@ -47,6 +47,12 @@ const UserWorkshopEditModal = ({ visible, onCancel, userWorkshopId, onSuccess })
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getToken = () => localStorage.getItem("token") || "";
 
@@ -89,7 +95,8 @@ const UserWorkshopEditModal = ({ visible, onCancel, userWorkshopId, onSuccess })
         });
       } catch (err) {
         setSubmitError(err.message);
-        message.error(err.message);
+        setErrorMessage(err.message);
+        setShowErrorModal(true);
       } finally {
         setLoading(false);
       }
@@ -175,11 +182,13 @@ const UserWorkshopEditModal = ({ visible, onCancel, userWorkshopId, onSuccess })
       payload.address = payload.address || "";
 
       await updateUserWorkshop(userWorkshopId, payload, token);
-      message.success("Workshop updated successfully.");
-      onSuccess?.();
+      setSuccessMessage("Workshop updated successfully.");
+      setShowSuccessModal(true);
+      setTimeout(() => onSuccess?.(), 2000);
     } catch (err) {
       setSubmitError(err.message || "Error updating the workshop.");
-      message.error(err.message || "Error updating.");
+      setErrorMessage(err.message || "Error updating.");
+      setShowErrorModal(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -434,6 +443,19 @@ const UserWorkshopEditModal = ({ visible, onCancel, userWorkshopId, onSuccess })
           </Form>
         </>
       )}
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={successMessage}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={errorMessage}
+        onClose={() => setShowErrorModal(false)}
+      />
     </Modal>
   );
 };

@@ -9,7 +9,6 @@ import {
   Modal,
   Pagination,
   Space,
-  message,
   Typography,
 } from "antd";
 import {
@@ -25,6 +24,7 @@ import {
 } from "../../../services/UserWorkshopService";
 import VehicleReception from "../VehicleReception/VehicleReception";
 import UserWorkshopEditModal from "./UserWorkshopEditModal";
+import { SuccessModal, ErrorModal } from "../../Modals";
 
 const { Search } = Input;
 const { confirm } = Modal;
@@ -46,6 +46,12 @@ const VehicleList = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  // Modal states for success and error messages
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fetchAllVehicles = async () => {
     try {
@@ -53,7 +59,8 @@ const VehicleList = () => {
       setVehicles(data);
       setSearchMessage("");
     } catch (err) {
-      message.error(`Error loading vehicles: ${err.message}`);
+      setErrorMessage(`Error loading vehicles: ${err.message}`);
+      setShowErrorModal(true);
     } finally {
       setLoadingVehicles(false);
     }
@@ -105,7 +112,8 @@ const VehicleList = () => {
     // Find the vehicle to get UserWorkshopId
     const vehicle = vehicles.find((v) => v.id === vehicleId);
     if (!vehicle) {
-      message.error("Vehicle not found");
+      setErrorMessage("Vehicle not found");
+      setShowErrorModal(true);
       return;
     }
 
@@ -149,9 +157,11 @@ const VehicleList = () => {
         try {
           await deleteVehicle(vin);
           setVehicles((prev) => prev.filter((v) => v.vin !== vin));
-          message.success("Vehicle deleted successfully.");
+          setSuccessMessage("Vehicle deleted successfully.");
+          setShowSuccessModal(true);
         } catch (err) {
-          message.error(`Error deleting: ${err.message}`);
+          setErrorMessage(`Error deleting: ${err.message}`);
+          setShowErrorModal(true);
         }
       },
     });
@@ -302,6 +312,19 @@ const VehicleList = () => {
         onCancel={() => closeUserWorkshopModal(false)}
         userWorkshopId={editingUserWorkshopId}
         onSuccess={() => closeUserWorkshopModal(true)}
+      />
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        open={showSuccessModal}
+        message={successMessage}
+        onClose={() => setShowSuccessModal(false)}
+      />
+      
+      <ErrorModal
+        open={showErrorModal}
+        message={errorMessage}
+        onClose={() => setShowErrorModal(false)}
       />
     </Card>
   );
