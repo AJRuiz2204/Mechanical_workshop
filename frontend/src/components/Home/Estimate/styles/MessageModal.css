@@ -1,0 +1,124 @@
+/* Message Modal Styles */
+.message-modal .ant-modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #f0f2f5 0%, #d9d9d9 100%) border-box;
+}
+
+.message-modal .ant-modal-header {
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+  border-bottom: 1px solid #e8e8e8;
+  padding: 16px 24px;
+  border-radius: 12px 12px 0 0;
+}
+
+.message-modal .ant-modal-body {
+  padding: 20px 24px;
+}
+
+.message-modal .ant-modal-footer {
+  background: #fafafa;
+  border-top: 1px solid #e8e8e8;
+  padding: 12px 24px;
+  border-radius: 0 0 12px 12px;
+}
+
+.message-modal .ant-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000 !important;
+}
+
+/* Message text styling for better visibility */
+.message-modal .ant-alert-message {
+  color: #000000 !important;
+  font-weight: 500;
+}
+
+.message-modal .ant-alert {
+  color: #000000 !important;
+}
+
+.message-modal .ant-alert .ant-alert-message {
+  color: #000000 !important;
+  text-shadow: none;
+}
+
+/* Ensure all text in modal body is black */
+.message-modal .ant-modal-body {
+  color: #000000 !important;
+}
+
+.message-modal .ant-modal-body * {
+  color: #000000 !important;
+}
+
+/* Auto-close text styling */
+.message-modal .ant-modal-body span {
+  color: #595959 !important;
+}
+
+/* Button hover effects */
+.message-modal .ant-btn {
+  transition: all 0.3s ease;
+}
+
+.message-modal .ant-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Progress bar animation */
+.message-modal .ant-progress-line {
+  transition: all 0.3s ease;
+}
+
+.message-modal .ant-progress-bg {
+  transition: all 0.1s linear;
+}
+
+/* Modal entrance animation */
+.message-modal.ant-modal {
+  animation: messageModalSlideIn 0.3s ease-out;
+}
+
+@keyframes messageModalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Success modal styling */
+.message-modal[data-type="success"] .ant-modal-content {
+  border-color: #52c41a;
+}
+
+.message-modal[data-type="success"] .ant-modal-header {
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+}
+
+/* Error modal styling */
+.message-modal[data-type="error"] .ant-modal-content {
+  border-color: #ff4d4f;
+}
+
+.message-modal[data-type="error"] .ant-modal-header {
+  background: linear-gradient(135deg, #fff2f0 0%, #ffccc7 100%);
+}
+
+/* Info modal styling */
+.message-modal[data-type="info"] .ant-modal-content {
+  border-color: #1890ff;
+}
+
+.message-modal[data-type="info"] .ant-modal-header {
+  background: linear-gradient(135deg, #f0f8ff 0%, #bae7ff 100%);
+}

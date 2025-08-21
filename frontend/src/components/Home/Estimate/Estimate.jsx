@@ -26,6 +26,8 @@ import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
 import LaborModal from "./Modals/LaborModal";
 import FlatFeeModal from "./Modals/FlatFeeModal";
+import MessageModal from "./Modals/MessageModal";
+import ConfirmationModal from "./Modals/ConfirmationModal";
 
 const { Option } = Select;
 const { Column } = Table;
@@ -55,14 +57,27 @@ const Estimate = () => {
   const [total, setTotal] = useState(0);
   const [settings, setSettings] = useState(null);
   const [noTax, setNoTax] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Message modal states
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageType, setMessageType] = useState("success");
+  const [messageContent, setMessageContent] = useState("");
+  const [messageTitle, setMessageTitle] = useState("");
 
   const [showTaxSettingsModal, setShowTaxSettingsModal] = useState(false);
   const [showPartModal, setShowPartModal] = useState(false);
   const [showLaborModal, setShowLaborModal] = useState(false);
   const [showFlatFeeModal, setShowFlatFeeModal] = useState(false);
+  
+  // Confirmation modal states
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [validationResult, setValidationResult] = useState({
+    isValid: false,
+    errors: [],
+    warnings: [],
+    summary: {}
+  });
 
   useEffect(() => {
     console.log('showFlatFeeModal state changed to:', showFlatFeeModal);
@@ -96,6 +111,142 @@ const Estimate = () => {
   });
   const [isAddingPart, setIsAddingPart] = useState(false);
 
+  // Helper functions for messages
+  const showSuccessMessage = (message, title = "Success") => {
+    setMessageType("success");
+    setMessageContent(message);
+    setMessageTitle(title);
+    setShowMessageModal(true);
+  };
+
+  const showErrorMessage = (message, title = "Error") => {
+    setMessageType("error");
+    setMessageContent(message);
+    setMessageTitle(title);
+    setShowMessageModal(true);
+  };
+
+  const handleCloseMessageModal = () => {
+    setShowMessageModal(false);
+    setMessageContent("");
+    setMessageTitle("");
+  };
+
+  // Validation function for confirmation modal
+  const validateEstimateData = () => {
+    const errors = [];
+    const warnings = [];
+
+    // Helper function to safely convert and round numbers
+    const safeParseFloat = (value, decimals = 2) => {
+      const num = parseFloat(value) || 0;
+      if (isNaN(num) || !isFinite(num)) return 0;
+      return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    };
+
+    // Check if vehicle is selected (for non-edit mode)
+    if (!isEditMode && (!selectedOption || selectedOption === "")) {
+      errors.push("You must select a vehicle.");
+    }
+
+    // Check if at least one item is added
+    if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
+      errors.push("You must add at least one item to the estimate (part, labor, or flat fee).");
+    }
+
+    // Check for duplicate part numbers
+    const nonEmptyPartNumbers = parts
+      .map((p) => p.partNumber)
+      .filter((partNum) => partNum && partNum.trim() !== "");
+    const hasDuplicates = nonEmptyPartNumbers.some(
+      (item, idx) => nonEmptyPartNumbers.indexOf(item) !== idx
+    );
+    if (hasDuplicates) {
+      errors.push("There are duplicate part numbers in the estimate.");
+    }
+
+    // Check customer note
+    if (!customerNote.trim()) {
+      errors.push("The 'Description of labor or services' field is required.");
+    }
+
+    // Validate all parts
+    parts.forEach((part, i) => {
+      if (!part.description?.trim()) {
+        errors.push(`Part ${i + 1}: Description is required.`);
+      }
+      if (safeParseFloat(part.quantity) <= 0) {
+        errors.push(`Part ${i + 1}: Quantity must be greater than 0.`);
+      }
+      if (safeParseFloat(part.netPrice) < 0 || safeParseFloat(part.listPrice) < 0) {
+        errors.push(`Part ${i + 1}: Prices cannot be negative.`);
+      }
+    });
+
+    // Validate all labors
+    labors.forEach((labor, i) => {
+      if (!labor.description?.trim()) {
+        errors.push(`Labor ${i + 1}: Description is required.`);
+      }
+      if (safeParseFloat(labor.duration) <= 0) {
+        errors.push(`Labor ${i + 1}: Duration must be greater than 0.`);
+      }
+      if (safeParseFloat(labor.laborRate) < 0) {
+        errors.push(`Labor ${i + 1}: Labor rate cannot be negative.`);
+      }
+    });
+
+    // Validate all flat fees
+    flatFees.forEach((fee, i) => {
+      if (!fee.description?.trim()) {
+        errors.push(`Flat Fee ${i + 1}: Description is required.`);
+      }
+      if (safeParseFloat(fee.flatFeePrice) < 0) {
+        errors.push(`Flat Fee ${i + 1}: Price cannot be negative.`);
+      }
+    });
+
+    // Generate warnings
+    if (parts.length === 0) {
+      warnings.push("No parts have been added to the estimate.");
+    }
+    if (labors.length === 0) {
+      warnings.push("No labors have been added to the estimate.");
+    }
+    if (total === 0) {
+      warnings.push("The estimate total is $0.00.");
+    }
+    if (authorizationStatus === "Pending") {
+      warnings.push("The authorization status is pending.");
+    }
+
+    // Generate summary
+    const summary = {
+      vehicleInfo: selectedVehicle ? 
+        `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model} - ${selectedVehicle.vin}` :
+        "Not selected",
+      ownerInfo: owner ? 
+        `${owner.name} ${owner.lastName} - ${owner.email}` :
+        "Not available",
+      authorizationStatus: authorizationStatus,
+      totalItems: parts.length + labors.length + flatFees.length,
+      partsCount: parts.length,
+      laborsCount: labors.length,
+      flatFeesCount: flatFees.length,
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      customerNote: customerNote.trim() || "No description",
+    };
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      summary
+    };
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -128,7 +279,7 @@ const Estimate = () => {
           const estimateData = await getEstimateById(id);
 
           if (!estimateData) {
-            setError("Estimate not found.");
+            showErrorMessage("Estimate not found.");
             return;
           }
 
@@ -170,9 +321,15 @@ const Estimate = () => {
             }))
           );
           setFlatFees(estimateData.flatFees || []);
+        } else {
+          // Initialize form fields for create mode
+          form.setFieldsValue({
+            vehicleDiagnosticSelect: undefined,
+            authorizationStatus: "Pending"
+          });
         }
       } catch (err) {
-        setError("Error loading data: " + (err.message || "Unknown error."));
+        showErrorMessage("Error loading data: " + (err.message || "Unknown error."));
       } finally {
         setIsLoading(false);
       }
@@ -223,14 +380,26 @@ const Estimate = () => {
     setTotal(totalCalc);
   }, [parts, labors, flatFees, settings]);
 
-  const handleOptionChange = (e) => {
-    const optionIndex = e.target.value;
+  const handleOptionChange = (value) => {
+    const optionIndex = value;
 
-    if (optionIndex === "" || optionIndex === null || optionIndex === undefined) {
-      setError("Select a valid option.");
+    if (optionIndex === null || optionIndex === undefined) {
       setSelectedOption(null);
+      setSelectedVehicle(null);
+      setOwner(null);
+      setDiagnostic(null);
+      setExtendedDiagnostic("");
+      setMileage(0);
       return;
     }
+
+    // Clear any previous form validation errors
+    form.setFields([
+      {
+        name: 'vehicleDiagnosticSelect',
+        errors: [],
+      },
+    ]);
 
     const selected = vehicleDiagnosticOptions[optionIndex];
     const selectedTD = selected.technicianDiagnostics[0];
@@ -292,7 +461,7 @@ const Estimate = () => {
       newPart.netPrice === "" ||
       newPart.listPrice === ""
     ) {
-      setError("Quantity, Net Price and List Price are required.");
+      showErrorMessage("Quantity, Net Price and List Price are required.");
       return;
     }
     try {
@@ -302,14 +471,14 @@ const Estimate = () => {
           (part) => part.partNumber && part.partNumber === newPart.partNumber
         );
         if (duplicate) {
-          setError(
+          showErrorMessage(
             `The part with Part Number ${newPart.partNumber} already exists in this estimate.`
           );
           return;
         }
       }
       if (!newPart.description) {
-        setError("Description is required.");
+        showErrorMessage("Description is required.");
         return;
       }
       setParts([...parts, { ...newPart }]);
@@ -322,11 +491,10 @@ const Estimate = () => {
         extendedPrice: 0.0,
         applyPartTax: noTax ? false : true,
       });
-      setSuccess("Part added successfully.");
+      showSuccessMessage("Part added successfully.");
       setShowPartModal(false);
-      setError(null);
     } catch {
-      setError("Error adding the part.");
+      showErrorMessage("Error adding the part.");
     } finally {
       setIsAddingPart(false);
     }
@@ -338,7 +506,7 @@ const Estimate = () => {
       newLabor.duration === "" ||
       parseFloat(newLabor.duration) <= 0
     ) {
-      setError("Please fill out all labor fields correctly.");
+      showErrorMessage("Please fill out all labor fields correctly.");
       return;
     }
     const dur = parseFloat(newLabor.duration) || 0;
@@ -352,7 +520,6 @@ const Estimate = () => {
       applyLaborTax: newLabor.applyLaborTax,
     };
     setLabors([...labors, newItem]);
-    setError(null);
     setShowLaborModal(false);
   };
 
@@ -362,13 +529,12 @@ const Estimate = () => {
       newFlatFee.flatFeePrice === "" ||
       parseFloat(newFlatFee.flatFeePrice) <= 0
     ) {
-      setError("Please fill out all flat fee fields correctly.");
+      showErrorMessage("Please fill out all flat fee fields correctly.");
       return;
     }
     const price = parseFloat(newFlatFee.flatFeePrice) || 0;
     const newItem = { ...newFlatFee, extendedPrice: price };
     setFlatFees([...flatFees, newItem]);
-    setError(null);
     setShowFlatFeeModal(false);
   };
 
@@ -420,7 +586,7 @@ const Estimate = () => {
 
   const updatePartAtIndex = (index, updatedPart) => {
     if (!updatedPart.description) {
-      setError("Description is required.");
+      showErrorMessage("Description is required.");
       return;
     }
     // Check for duplicates if partNumber is provided and not empty
@@ -429,7 +595,7 @@ const Estimate = () => {
         (part, idx) => idx !== index && part.partNumber && part.partNumber === updatedPart.partNumber
       );
       if (duplicate) {
-        setError(`The part with Part Number ${updatedPart.partNumber} already exists in this estimate.`);
+        showErrorMessage(`The part with Part Number ${updatedPart.partNumber} already exists in this estimate.`);
         return;
       }
     }
@@ -437,8 +603,7 @@ const Estimate = () => {
     const updatedParts = [...parts];
     updatedParts[index] = { ...updatedPart };
     setParts(updatedParts);
-    setSuccess("Part updated successfully.");
-    setError(null);
+    showSuccessMessage("Part updated successfully.");
     resetEditState(); // Reset edit state after successful update
   };
 
@@ -448,7 +613,7 @@ const Estimate = () => {
       updatedLabor.duration === "" ||
       parseFloat(updatedLabor.duration) <= 0
     ) {
-      setError("Please fill out all labor fields correctly.");
+      showErrorMessage("Please fill out all labor fields correctly.");
       return;
     }
     const dur = parseFloat(updatedLabor.duration) || 0;
@@ -464,8 +629,7 @@ const Estimate = () => {
     const updatedLabors = [...labors];
     updatedLabors[index] = updatedItem;
     setLabors(updatedLabors);
-    setSuccess("Labor updated successfully.");
-    setError(null);
+    showSuccessMessage("Labor updated successfully.");
     resetEditState(); // Reset edit state after successful update
   };
 
@@ -475,7 +639,7 @@ const Estimate = () => {
       updatedFlatFee.flatFeePrice === "" ||
       parseFloat(updatedFlatFee.flatFeePrice) <= 0
     ) {
-      setError("Please fill out all flat fee fields correctly.");
+      showErrorMessage("Please fill out all flat fee fields correctly.");
       return;
     }
     const price = parseFloat(updatedFlatFee.flatFeePrice) || 0;
@@ -484,8 +648,7 @@ const Estimate = () => {
     const updatedFlatFees = [...flatFees];
     updatedFlatFees[index] = updatedItem;
     setFlatFees(updatedFlatFees);
-    setSuccess("Flat fee updated successfully.");
-    setError(null);
+    showSuccessMessage("Flat fee updated successfully.");
     resetEditState(); // Reset edit state after successful update
   };
 
@@ -587,33 +750,13 @@ const Estimate = () => {
   };
 
   const handleSave = async () => {
-    if (!isEditMode && (!selectedOption || selectedOption === "")) {
-      setError("Please select a vehicle.");
-      return;
-    }
+    // Validate and show confirmation modal
+    const validation = validateEstimateData();
+    setValidationResult(validation);
+    setShowConfirmationModal(true);
+  };
 
-    if (parts.length === 0 && labors.length === 0 && flatFees.length === 0) {
-      setError("Add at least one item to the Estimate.");
-      return;
-    }
-
-    // Only check for duplicates among non-empty part numbers
-    const nonEmptyPartNumbers = parts
-      .map((p) => p.partNumber)
-      .filter((partNum) => partNum && partNum.trim() !== "");
-    const hasDuplicates = nonEmptyPartNumbers.some(
-      (item, idx) => nonEmptyPartNumbers.indexOf(item) !== idx
-    );
-    if (hasDuplicates) {
-      setError("There are duplicate Part Numbers in the estimate.");
-      return;
-    }
-
-    if (!customerNote.trim()) {
-      setError("The 'Description of labor or services' field cannot be empty.");
-      return;
-    }
-
+  const processEstimate = async () => {
     // Helper function to safely convert and round numbers
     const safeParseFloat = (value, decimals = 2) => {
       const num = parseFloat(value) || 0;
@@ -626,57 +769,6 @@ const Estimate = () => {
       if (isNaN(num) || !isFinite(num)) return 0;
       return Math.max(0, num);
     };
-
-    // Validate all parts
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (!part.description?.trim()) {
-        setError(`Part ${i + 1}: Description is required.`);
-        return;
-      }
-      // Part number validation removed - it's now optional
-      if (safeParseFloat(part.quantity) <= 0) {
-        setError(`Part ${i + 1}: Quantity must be greater than 0.`);
-        return;
-      }
-      if (
-        safeParseFloat(part.netPrice) < 0 ||
-        safeParseFloat(part.listPrice) < 0
-      ) {
-        setError(`Part ${i + 1}: Prices cannot be negative.`);
-        return;
-      }
-    }
-
-    // Validate all labors
-    for (let i = 0; i < labors.length; i++) {
-      const labor = labors[i];
-      if (!labor.description?.trim()) {
-        setError(`Labor ${i + 1}: Description is required.`);
-        return;
-      }
-      if (safeParseFloat(labor.duration) <= 0) {
-        setError(`Labor ${i + 1}: Duration must be greater than 0.`);
-        return;
-      }
-      if (safeParseFloat(labor.laborRate) < 0) {
-        setError(`Labor ${i + 1}: Labor rate cannot be negative.`);
-        return;
-      }
-    }
-
-    // Validate all flat fees
-    for (let i = 0; i < flatFees.length; i++) {
-      const fee = flatFees[i];
-      if (!fee.description?.trim()) {
-        setError(`Flat Fee ${i + 1}: Description is required.`);
-        return;
-      }
-      if (safeParseFloat(fee.flatFeePrice) < 0) {
-        setError(`Flat Fee ${i + 1}: Price cannot be negative.`);
-        return;
-      }
-    }
 
     const dto = {
       VehicleID: !isEditMode
@@ -698,7 +790,7 @@ const Estimate = () => {
         : null,
       Parts: parts.map((p) => ({
         Description: (p.description || "").trim(),
-        PartNumber: (p.partNumber || "").trim(), // Allow empty string
+        PartNumber: (p.partNumber || "").trim(),
         Quantity: safeParseFloat(p.quantity),
         NetPrice: safeParseFloat(p.netPrice),
         ListPrice: safeParseFloat(p.listPrice),
@@ -720,12 +812,6 @@ const Estimate = () => {
       })),
     };
 
-    // Final validation
-    if (dto.VehicleID <= 0) {
-      setError("Invalid vehicle ID.");
-      return;
-    }
-
     try {
       setSaving(true);
       console.log("Sending estimate data:", dto);
@@ -733,14 +819,20 @@ const Estimate = () => {
       if (!isEditMode) {
         const created = await createEstimate(dto);
         console.log("Payload createEstimate:", created);
-        setSuccess(`Estimate created successfully with ID: ${created.ID}`);
-        navigate("/estimates");
+        showSuccessMessage(
+          `Estimate created successfully with ID: ${created.ID}`,
+          "Estimate Created"
+        );
+        setTimeout(() => navigate("/estimates"), 1000);
       } else {
         const updateDto = { ID: parseInt(id, 10), ...dto };
         const updated = await updateEstimate(id, updateDto);
         console.log("Payload updateEstimate:", updated);
-        setSuccess(`Estimate with ID ${updated.ID} updated successfully.`);
-        navigate("/estimates");
+        showSuccessMessage(
+          `Estimate with ID ${updated.ID} updated successfully.`,
+          "Estimate Updated"
+        );
+        setTimeout(() => navigate("/estimates"), 1000);
       }
     } catch (err) {
       console.error("Save estimate error:", err);
@@ -758,10 +850,19 @@ const Estimate = () => {
         errorMessage = err.message;
       }
 
-      setError(errorMessage);
+      showErrorMessage(errorMessage, "Save Error");
     } finally {
       setSaving(false);
+      setShowConfirmationModal(false);
     }
+  };
+
+  const handleConfirmSave = () => {
+    processEstimate();
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmationModal(false);
   };
 
   const combinedItems = useMemo(() => {
@@ -823,23 +924,6 @@ const Estimate = () => {
     <div className="p-4 border rounded mt-4 estimate-container">
       <h3>{isEditMode ? "Edit Estimate" : "Save Estimate"}</h3>
 
-      {error && (
-        <Alert
-          type="error"
-          message={error}
-          closable
-          onClose={() => setError(null)}
-        />
-      )}
-      {success && (
-        <Alert
-          type="success"
-          message={success}
-          closable
-          onClose={() => setSuccess(null)}
-        />
-      )}
-
       <div style={{ textAlign: "right", marginBottom: 16 }}>
         <Button onClick={handleShowTaxSettingsModal}>
           View Tax &amp; Markup Settings
@@ -850,31 +934,85 @@ const Estimate = () => {
         {!isEditMode && (
           <>
             <Row gutter={16}>
-              <Col span={24}>
+              <Col span={21}>
                 <Form.Item
                   name="vehicleDiagnosticSelect"
                   label="Select Vehicle (only those with TechnicianDiagnostic)"
-                  rules={[{ required: true, message: "Select a valid option." }]}
+                  rules={[
+                    { 
+                      required: true, 
+                      message: "Please select a vehicle."
+                    }
+                  ]}
                 >
                   <Select
                     placeholder="-- Select Option --"
                     style={{ width: '100%' }}
-                    onChange={(value) =>
-                      handleOptionChange({ target: { value } })
-                    }
+                    onChange={(value) => {
+                      handleOptionChange(value);
+                      form.setFieldValue('vehicleDiagnosticSelect', value);
+                    }}
+                    value={form.getFieldValue('vehicleDiagnosticSelect')}
+                    allowClear
+                    showSearch
+                    filterOption={(input, option) => {
+                      const text = option.title || '';
+                      return text.toLowerCase().includes(input.toLowerCase());
+                    }}
+                    dropdownStyle={{ maxHeight: 400 }}
+                    optionLabelProp="title"
                   >
-                    <Option value="">-- Select Option --</Option>
-                    {vehicleDiagnosticOptions.map((opt, idx) => (
-                      <Option key={idx} value={idx}>
-                        {`${opt.vehicle.vin} - ${opt.vehicle.make} ${opt.vehicle.model} ${opt.vehicle.year}`}
-                      </Option>
-                    ))}
+                    {vehicleDiagnosticOptions.map((opt, idx) => {
+                      const vehicle = opt.vehicle;
+                      const owner = opt.owner;
+                      
+                      // Build comprehensive display text
+                      let displayText = `${vehicle.vin} - ${vehicle.make.trim()} ${vehicle.model} ${vehicle.year}`;
+                      
+                      // Add engine info if available
+                      if (vehicle.engine && vehicle.engine.trim()) {
+                        displayText += ` (${vehicle.engine})`;
+                      }
+                      
+                      // Add plate and state if available
+                      if (vehicle.plate && vehicle.plate.trim()) {
+                        displayText += ` | Plate: ${vehicle.plate}`;
+                        if (vehicle.state && vehicle.state.trim()) {
+                          displayText += `, ${vehicle.state}`;
+                        }
+                      }
+                      
+                      // Add owner info
+                      if (owner) {
+                        displayText += ` | Owner: ${owner.name} ${owner.lastName}`;
+                      }
+                      
+                      return (
+                        <Option key={idx} value={idx} title={displayText}>
+                          <div style={{ lineHeight: '1.4', fontSize: '14px' }}>
+                            {vehicle.vin} - {vehicle.make.trim()} {vehicle.model} {vehicle.year}
+                            {(vehicle.engine?.trim() || vehicle.plate?.trim() || owner) && ' | '}
+                            {vehicle.engine && vehicle.engine.trim() && (
+                              <span>Engine: {vehicle.engine} | </span>
+                            )}
+                            {vehicle.plate && vehicle.plate.trim() && (
+                              <span>Plate: {vehicle.plate}</span>
+                            )}
+                            {vehicle.plate && vehicle.plate.trim() && vehicle.state && vehicle.state.trim() && (
+                              <span>, {vehicle.state}</span>
+                            )}
+                            {vehicle.plate && vehicle.plate.trim() && owner && <span> | </span>}
+                            {owner && (
+                              <span>Owner: {owner.name} {owner.lastName}</span>
+                            )}
+                          </div>
+                        </Option>
+                      );
+                    })}
                   </Select>
                 </Form.Item>
               </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={12}>
+              <Col span={3}>
                 <Form.Item
                   name="authorizationStatus"
                   label="Authorization Status"
@@ -883,6 +1021,7 @@ const Estimate = () => {
                   <Select
                     value={authorizationStatus}
                     onChange={setAuthorizationStatus}
+                    style={{ width: '100%' }}
                   >
                     <Option value="Pending">Pending</Option>
                     <Option value="Approved">Approved</Option>
@@ -897,7 +1036,7 @@ const Estimate = () => {
         {/* Authorization Status field for edit mode */}
         {isEditMode && (
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={6}>
               <Form.Item
                 name="authorizationStatus"
                 label="Authorization Status"
@@ -905,6 +1044,7 @@ const Estimate = () => {
                 <Select
                   value={authorizationStatus}
                   onChange={setAuthorizationStatus}
+                  style={{ width: '100%' }}
                 >
                   <Option value="Pending">Pending</Option>
                   <Option value="Approved">Approved</Option>
@@ -1247,6 +1387,25 @@ const Estimate = () => {
         addFlatFee={addFlatFee}
         isEditingItem={isEditingItem}
         updateEditedItem={updateEditedItem}
+      />
+
+      {/* Message Modal */}
+      <MessageModal
+        show={showMessageModal}
+        onHide={handleCloseMessageModal}
+        type={messageType}
+        message={messageContent}
+        title={messageTitle}
+        autoHideDelay={10000}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        show={showConfirmationModal}
+        onConfirm={handleConfirmSave}
+        onCancel={handleCancelConfirmation}
+        validationResult={validationResult}
+        isEditMode={isEditMode}
       />
     </div>
   );

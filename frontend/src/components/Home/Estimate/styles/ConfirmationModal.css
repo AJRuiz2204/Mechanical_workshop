@@ -1,0 +1,162 @@
+/* Confirmation Modal Styles */
+.confirmation-modal .ant-modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+}
+
+.confirmation-modal .ant-modal-header {
+  background: linear-gradient(135deg, #f6f8fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #e8e8e8;
+  padding: 20px 24px;
+}
+
+.confirmation-modal .ant-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #000000 !important;
+}
+
+/* Ensure all text in the modal is black and visible */
+.confirmation-modal .ant-modal-body {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+  color: #000000 !important;
+}
+
+.confirmation-modal .ant-modal-body * {
+  color: #000000 !important;
+}
+
+/* Specific styling for alert messages */
+.confirmation-modal .ant-alert-message {
+  color: #000000 !important;
+  font-weight: 600;
+}
+
+.confirmation-modal .ant-alert-description {
+  color: #000000 !important;
+}
+
+/* List items text */
+.confirmation-modal .ant-list-item {
+  color: #000000 !important;
+}
+
+.confirmation-modal .ant-list-item * {
+  color: #000000 !important;
+}
+
+/* Typography components */
+.confirmation-modal .ant-typography {
+  color: #000000 !important;
+}
+
+.confirmation-modal .ant-typography * {
+  color: #000000 !important;
+}
+
+/* Override Ant Design text colors globally in modal */
+.confirmation-modal .ant-modal-title {
+  color: #000000 !important;
+}
+
+.confirmation-modal .ant-modal-title * {
+  color: #000000 !important;
+}
+
+/* Ensure span and div text is black */
+.confirmation-modal span {
+  color: #000000 !important;
+}
+
+.confirmation-modal div {
+  color: #000000 !important;
+}
+
+.confirmation-modal p {
+  color: #000000 !important;
+}
+
+/* Specific overrides for any remaining Ant Design components */
+.confirmation-modal .ant-alert-message,
+.confirmation-modal .ant-alert-description,
+.confirmation-modal .ant-alert-description * {
+  color: #000000 !important;
+}
+
+.confirmation-modal .ant-modal-footer {
+  background: #fafafa;
+  border-top: 1px solid #e8e8e8;
+  padding: 16px 24px;
+}
+
+/* Custom scrollbar for modal body */
+.confirmation-modal .ant-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.confirmation-modal .ant-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.confirmation-modal .ant-modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.confirmation-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Error list animations */
+.confirmation-modal .ant-list-item {
+  transition: all 0.3s ease;
+}
+
+.confirmation-modal .ant-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  transform: translateX(2px);
+}
+
+/* Summary cards hover effects */
+.confirmation-modal .summary-card {
+  transition: all 0.3s ease;
+}
+
+.confirmation-modal .summary-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Button animations */
+.confirmation-modal .ant-btn {
+  transition: all 0.3s ease;
+}
+
+.confirmation-modal .ant-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Alert improvements */
+.confirmation-modal .ant-alert {
+  transition: all 0.3s ease;
+}
+
+.confirmation-modal .ant-alert:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Tag animations */
+.confirmation-modal .ant-tag {
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.confirmation-modal .ant-tag:hover {
+  transform: scale(1.05);
+}
