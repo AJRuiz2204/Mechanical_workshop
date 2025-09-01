@@ -11,9 +11,7 @@ import PropTypes from "prop-types";
 import dayjs from "dayjs";
 import logo from "../../../images/logo.png";
 
-/**
- * Styles for the document, following EstimatePDF structure.
- */
+// Define PDF styles with PaymentPDF structure
 const styles = StyleSheet.create({
   page: {
     padding: 15,
@@ -103,12 +101,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   colType: {
-    width: "8%",
+    width: "12%",
     textAlign: "left",
     paddingLeft: 2,
   },
   colDesc: {
-    width: "52%",
+    width: "48%",
     paddingLeft: 2,
   },
   colPart: {
@@ -200,13 +198,14 @@ const styles = StyleSheet.create({
   // Disclaimer style for footer
   disclaimer: {
     position: "absolute",
-    bottom: 35,
-    left: 35,
-    right: 35,
+    bottom: 20,
+    left: 20,
+    right: 20,
     fontSize: 8,
     borderTopWidth: 1,
     borderTopColor: "#000000",
-    paddingTop: 10,
+    paddingTop: 8,
+    backgroundColor: "#ffffff",
   },
   boldContentText: {
     fontWeight: "bold",
