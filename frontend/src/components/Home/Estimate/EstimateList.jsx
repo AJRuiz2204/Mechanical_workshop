@@ -38,6 +38,7 @@ const EstimateList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [paidFilter, setPaidFilter] = useState(false);
   const [pendingFilter, setPendingFilter] = useState(false);
+  const [notApprovedFilter, setNotApprovedFilter] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,33 +112,39 @@ const EstimateList = () => {
 
   const columns = [
     {
-      title: "ID",
+      title: "Estimate ID",
       dataIndex: ["estimate", "id"],
       key: "id",
     },
     {
-      title: "Vehicle VIN",
+      title: "VIN",
       dataIndex: ["estimate", "vehicle", "vin"],
       key: "vin",
       render: (vin) => vin || "No VIN",
+    },
+    {
+      title: "Year",
+      dataIndex: ["estimate", "vehicle", "year"],
+      key: "year",
+      render: (year) => year || "-",
+    },
+    {
+      title: "Make",
+      dataIndex: ["estimate", "vehicle", "make"],
+      key: "make",
+      render: (make) => make || "-",
+    },
+    {
+      title: "Model",
+      dataIndex: ["estimate", "vehicle", "model"],
+      key: "model",
+      render: (model) => model || "-",
     },
     {
       title: "Owner",
       dataIndex: ["estimate", "owner"],
       key: "owner",
       render: (o) => (o ? `${o.name} ${o.lastName}` : "-"),
-    },
-    {
-      title: "Subtotal",
-      dataIndex: ["estimate", "subtotal"],
-      key: "subtotal",
-      render: (v) => `$${v?.toFixed(2)}`,
-    },
-    {
-      title: "Tax",
-      dataIndex: ["estimate", "tax"],
-      key: "tax",
-      render: (v) => `$${v?.toFixed(2)}`,
     },
     {
       title: "Total",
@@ -219,6 +226,14 @@ const EstimateList = () => {
       ? "Paid"
       : "Pending";
     
+    const authorizationStatus = est.authorizationStatus?.toLowerCase() || "";
+    
+    // Check authorization status filter
+    let authorizationMatches = true;
+    if (notApprovedFilter) {
+      authorizationMatches = authorizationStatus === "not approved";
+    }
+    
     // Los estimados pagados son facturas/trabajos cerrados y no se muestran por defecto
     // Solo se muestran si el filtro "Paid" está activo
     let paymentMatches = true;
@@ -236,7 +251,7 @@ const EstimateList = () => {
       paymentMatches = paymentStatus !== "Paid";
     }
     
-    return matchesSearch && paymentMatches;
+    return matchesSearch && paymentMatches && authorizationMatches;
   });
 
   if (loading) return <div>Loading estimates...</div>;
@@ -280,8 +295,15 @@ const EstimateList = () => {
         <Checkbox
           checked={pendingFilter}
           onChange={(e) => setPendingFilter(e.target.checked)}
+          style={{ marginRight: 12 }}
         >
           Show Pending Payments
+        </Checkbox>
+        <Checkbox
+          checked={notApprovedFilter}
+          onChange={(e) => setNotApprovedFilter(e.target.checked)}
+        >
+          Show Not Approved
         </Checkbox>
       </div>
 

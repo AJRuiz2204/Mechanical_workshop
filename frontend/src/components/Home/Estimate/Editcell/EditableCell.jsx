@@ -30,7 +30,7 @@ const EditableCell = ({
       <Input
         ref={inputRef}
         type="number"
-        step="0.01"
+        step="1"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onPressEnter={save}

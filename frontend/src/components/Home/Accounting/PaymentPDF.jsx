@@ -453,7 +453,7 @@ const PaymentPDF = ({ pdfData }) => {
             </Text>
             <Text style={styles.infoText}>
               Mileage:{" "}
-              {estimate.technicianDiagnostic?.mileage ?? estimate.mileage ?? ""}
+              {estimate.technicianDiagnostic?.mileage ?? estimate.mileage ?? ""} miles
             </Text>
           </View>
           {/* Columna 2: Vehicle Info */}

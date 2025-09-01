@@ -108,10 +108,21 @@ const PaymentList = () => {
     const vehicleInfo = accountPayments[0].vehicle
       ? `${accountPayments[0].vehicle.make} ${accountPayments[0].vehicle.model} (${accountPayments[0].vehicle.year}) - ${accountPayments[0].vehicle.vin}`
       : "No vehicle";
+    
+    // Get the latest payment for date and diagnostic detail
+    const latestPayment = accountPayments[0];
+    const paymentDate = latestPayment.paymentDate ? new Date(latestPayment.paymentDate).toLocaleDateString() : "N/A";
+    const diagnosticDetail = latestPayment.estimate?.extendedDiagnostic || 
+                            latestPayment.estimate?.technicianDiagnostic?.extendedDiagnostic || 
+                            "No diagnostic detail";
+    
     return {
       key: accountId,
+      invoiceId: accountId,
       customer: clientName,
       vehicle: vehicleInfo,
+      paymentDate: paymentDate,
+      diagnosticDetail: diagnosticDetail.length > 50 ? diagnosticDetail.substring(0, 50) + "..." : diagnosticDetail,
       initialBalance: initialBalance.toFixed(2),
       totalPaid: totalPaid.toFixed(2),
       remainingBalance: remainingBalance.toFixed(2),
@@ -123,6 +134,12 @@ const PaymentList = () => {
   // Columnas Antd
   const columns = [
     { 
+      title: "Invoice No.", 
+      dataIndex: "invoiceId", 
+      key: "invoiceId",
+      width: 100,
+    },
+    { 
       title: "Customer", 
       dataIndex: "customer", 
       key: "customer",
@@ -130,11 +147,24 @@ const PaymentList = () => {
       ellipsis: true,
     },
     { 
+      title: "Date", 
+      dataIndex: "paymentDate", 
+      key: "paymentDate",
+      width: 100,
+    },
+    { 
+      title: "Diagnostic Detail", 
+      dataIndex: "diagnosticDetail", 
+      key: "diagnosticDetail",
+      ellipsis: true,
+      width: 200,
+    },
+    { 
       title: "Vehicle", 
       dataIndex: "vehicle", 
       key: "vehicle",
       ellipsis: true,
-      responsive: ['md'],
+      responsive: ['lg'],
     },
     {
       title: "Initial Balance",

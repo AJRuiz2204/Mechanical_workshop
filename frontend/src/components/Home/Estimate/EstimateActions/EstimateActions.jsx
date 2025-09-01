@@ -50,7 +50,7 @@ const EstimateActions = ({
             size="sm"
             onClick={() => onGenerateAccount(item)}
           >
-            {item.accountReceivable ? "Payment" : "Generate Account"}
+            {item.accountReceivable ? "Payment" : "Generate Invoice"}
           </Button>
         </>
       )}

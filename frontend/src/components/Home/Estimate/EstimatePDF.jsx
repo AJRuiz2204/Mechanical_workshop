@@ -334,6 +334,7 @@ const EstimatePDF = ({ pdfData }) => {
   const customerNote = pdfData?.customerNote || "";
   const mileage = pdfData?.mileage || 0;
   const estimateId = pdfData?.estimateId || pdfData?.estimate?.id;
+  const isInvoice = pdfData?.isInvoice || false; // Flag to determine if this is an invoice or quote
 
   /**
    * Formats the date string for "Last Updated".
@@ -399,7 +400,12 @@ const EstimatePDF = ({ pdfData }) => {
 
             {/* Quote Information */}
             <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>{estimateId || "N/A"}</Text>
+              <Text style={[styles.textLine, { fontWeight: "bold" }]}>
+                {isInvoice ? "Invoice" : "Quote"} # {estimateId || "N/A"}
+              </Text>
+              <Text style={styles.textLine}>
+                Date: {dayjs().format("MMM DD, YYYY")}
+              </Text>
               <Text style={styles.textLine}>
                 Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
               </Text>
@@ -451,7 +457,7 @@ const EstimatePDF = ({ pdfData }) => {
             </Text>
             <Text style={styles.textLine}>VIN: {safeVehicle.vin || "N/A"}</Text>
             <Text style={styles.textLine}>
-              Mileage: {mileage.toLocaleString()} {/* Mostrar mileage */}
+              Mileage: {mileage.toLocaleString()} miles {/* Mostrar mileage */}
             </Text>
           </View>
         </View>
@@ -654,6 +660,7 @@ EstimatePDF.propTypes = {
     customerNote: PropTypes.string,
     mileage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     estimateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    isInvoice: PropTypes.bool,
     estimate: PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     }),

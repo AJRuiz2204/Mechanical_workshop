@@ -5,6 +5,7 @@ import {
   getEstimateById,
   updateEstimate,
   getVehicleDiagnostics,
+  getEstimatesWithAccounts,
 } from "../../../services/EstimateService";
 import { getSettingsById } from "../../../services/laborTaxMarkupSettingsService";
 import {
@@ -253,6 +254,15 @@ const Estimate = () => {
         const cfg = await getSettingsById(1);
         setSettings(cfg);
 
+        // Get existing estimates to filter out diagnostics that already have estimates
+        const existingEstimates = await getEstimatesWithAccounts();
+        const estimatesByDiagnosticId = new Set();
+        existingEstimates.forEach(estimate => {
+          if (estimate.estimate.technicianDiagnosticID) {
+            estimatesByDiagnosticId.add(estimate.estimate.technicianDiagnosticID);
+          }
+        });
+
         const vDiagnostics = await getVehicleDiagnostics();
         const options = [];
         vDiagnostics.forEach((vd) => {
@@ -260,7 +270,9 @@ const Estimate = () => {
             vd.diagnostics.forEach((diag) => {
               const validTechs = diag.technicianDiagnostics.filter(
                 (td) =>
-                  td.extendedDiagnostic && td.extendedDiagnostic.trim() !== ""
+                  td.extendedDiagnostic && 
+                  td.extendedDiagnostic.trim() !== "" &&
+                  !estimatesByDiagnosticId.has(td.id) // Filter out diagnostics that already have estimates
               );
               if (validTechs.length > 0) {
                 options.push({
@@ -922,7 +934,7 @@ const Estimate = () => {
 
   return (
     <div className="p-4 border rounded mt-4 estimate-container">
-      <h3>{isEditMode ? "Edit Estimate" : "Save Estimate"}</h3>
+      <h3>{isEditMode ? "Edit Estimate" : "Create Estimate"}</h3>
 
       <div style={{ textAlign: "right", marginBottom: 16 }}>
         <Button onClick={handleShowTaxSettingsModal}>
@@ -1085,7 +1097,7 @@ const Estimate = () => {
                     {selectedVehicle.status}
                   </Descriptions.Item>
                   <Descriptions.Item label="Mileage">
-                    {mileage} km
+                    {mileage} miles
                   </Descriptions.Item>
                   <Descriptions.Item label="Extended Diagnostic">
                     {extendedDiagnostic}
@@ -1305,7 +1317,7 @@ const Estimate = () => {
               loading={saving}
               disabled={isLoading}
             >
-              {isEditMode ? "Update Estimate" : "Save Estimate"}
+              {isEditMode ? "Update Estimate" : "Save"}
             </Button>{" "}
             <Button onClick={() => navigate("/estimates")}>Cancel</Button>
           </Col>

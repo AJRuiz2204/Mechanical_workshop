@@ -72,6 +72,7 @@ const VehicleList = () => {
       if (!term) {
         setVehicles(allVehicles);
         setSearchMessage("");
+        setCurrentPage(1); // Reset to first page when clearing search
         return;
       }
       setLoadingSearch(true);
@@ -83,9 +84,11 @@ const VehicleList = () => {
         );
         setVehicles(filtered);
         setSearchMessage(filtered.length === 0 ? "No vehicles found." : "");
+        setCurrentPage(1); // Reset to first page when searching
       } catch {
         setVehicles([]);
         setSearchMessage("Error searching vehicles.");
+        setCurrentPage(1); // Reset to first page on error
       } finally {
         setLoadingSearch(false);
       }
@@ -104,7 +107,7 @@ const VehicleList = () => {
   };
 
   const handleEdit = (vehicleId) => {
-    const vehicle = vehicles.find((v) => v.id === vehicleId);
+    const vehicle = allVehicles.find((v) => v.id === vehicleId);
     if (!vehicle) {
       message.error("Vehicle not found");
       return;

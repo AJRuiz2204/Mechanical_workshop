@@ -98,11 +98,11 @@ const DiagnosticList = () => {
   });
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id" },
     { title: "VIN", dataIndex: "vin", key: "vin" },
-    { title: "Owner", dataIndex: "owner", key: "owner" },
+    { title: "Year", dataIndex: "year", key: "year" },
     { title: "Make", dataIndex: "make", key: "make" },
     { title: "Model", dataIndex: "model", key: "model" },
+    { title: "Owner", dataIndex: "owner", key: "owner" },
     { title: "Reason", dataIndex: "reason", key: "reason" },
     { title: "Assigned Technician", dataIndex: "technician", key: "technician" },
     {
@@ -144,6 +144,7 @@ const DiagnosticList = () => {
   const dataSource = filteredDiagnostics.map((diag) => ({
     id: diag.id,
     vin: diag.vehicle?.vin || "N/A",
+    year: diag.vehicle?.year || "N/A",
     owner: diag.vehicle?.userWorkshop
       ? `${diag.vehicle.userWorkshop.name} ${diag.vehicle.userWorkshop.lastName}`
       : "N/A",

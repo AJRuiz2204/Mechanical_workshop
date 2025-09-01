@@ -110,6 +110,7 @@ const PDFModalContent = ({ estimateId }) => {
           customerNote: estimateData.customerNote || "",
           mileage: estimateData.mileage ?? estimateData.technicianDiagnostic?.mileage ?? 0,
           estimateId: estimateData.id, // Add estimate ID
+          isInvoice: false, // This is an estimate, so it's a quote, not an invoice
         };
 
         setPdfData(payload);
