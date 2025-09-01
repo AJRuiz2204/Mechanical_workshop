@@ -15,7 +15,9 @@ import {
   Typography,
   Space,
 } from "antd";
-import { PrinterOutlined } from "@ant-design/icons";
+import { 
+  PrinterOutlined 
+} from "@ant-design/icons";
 import { PDFViewer } from "@react-pdf/renderer";
 import {
   getAccountReceivableById,
@@ -24,6 +26,7 @@ import {
 } from "../../../services/accountReceivableService";
 import PaymentPDF from "./PaymentPDF";
 import { getWorkshopSettings } from "../../../services/workshopSettingsService";
+import NotificationService from "../../../services/notificationService.jsx";
 import "./styles/AccountPaymentModal.css";
 
 const { Text, Title } = Typography;
@@ -63,20 +66,25 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       console.log("Modal - Payments loaded:", paymentsData);
     } catch (error) {
       console.error("Modal - Error loading account:", error);
-      alert("Error loading account data: " + error.message);
+      NotificationService.operationError('load', error.message || 'Failed to load account data');
     }
   };
 
   const handlePaymentSubmit = async (values) => {
     const paymentAmount = parseFloat(values.amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      alert("Please enter a valid amount");
+      NotificationService.validationError('Payment Amount', 'Please enter a valid payment amount greater than zero.');
       return;
     }
+    
     if (account && paymentAmount > account.balance) {
-      alert("The entered amount exceeds the pending balance");
+      NotificationService.warning(
+        'Amount Exceeds Balance',
+        `The entered amount ($${paymentAmount.toFixed(2)}) exceeds the pending balance ($${account.balance.toFixed(2)}).`
+      );
       return;
     }
+    
     const payload = {
       AccountReceivableId: accountId,
       Amount: paymentAmount,
@@ -84,7 +92,9 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       TransactionReference: values.transactionReference,
       Notes: values.notes,
     };
+    
     console.log("Modal - Payload to send:", payload);
+    
     try {
       const response = await createPayment(payload);
       console.log("Modal - createPayment response:", response);
@@ -99,11 +109,12 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
         transactionReference: "",
         notes: "",
       });
-      alert("Payment successfully registered!");
-      // No cerrar el modal automáticamente para permitir la impresión
+      
+      NotificationService.operationSuccess('process', `Payment of $${paymentAmount.toFixed(2)}`);
+      
     } catch (error) {
-      console.error("Modal - Error in createPayment:", error);
-      alert("Error registering payment: " + error.message);
+      console.error("Modal - Error creating payment:", error);
+      NotificationService.operationError('process', error.message || 'An error occurred while processing the payment.');
     }
   };
 
@@ -122,9 +133,12 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
       
       setPdfData(data);
       setShowPrintModal(true);
+      
+      NotificationService.success('Document Ready', 'Payment receipt is ready for printing.');
+      
     } catch (error) {
       console.error("Error preparing PDF data:", error);
-      alert("Error preparing document for printing: " + error.message);
+      NotificationService.operationError('print', error.message || 'Failed to prepare document for printing.');
     }
   };
 

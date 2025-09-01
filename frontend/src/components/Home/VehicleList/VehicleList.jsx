@@ -9,9 +9,10 @@ import {
   Modal,
   Pagination,
   Space,
-  message,
   Typography,
 } from "antd";
+import NotificationService from "../../../services/notificationService.jsx";
+import ConfirmationDialog from "../../common/ConfirmationDialog";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -27,14 +28,13 @@ import VehicleReception from "../VehicleReception/VehicleReception";
 import UserWorkshopEditModal from "./UserWorkshopEditModal";
 
 const { Search } = Input;
-const { confirm } = Modal;
 const { Title, Text } = Typography;
 
 const VehicleList = () => {
   const navigate = useNavigate();
 
   const [vehicles, setVehicles] = useState([]);
-  const [allVehicles, setAllVehicles] = useState([]); // Keep original data for counting
+  const [allVehicles, setAllVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -52,10 +52,11 @@ const VehicleList = () => {
     try {
       const data = await getAllVehicles();
       setVehicles(data);
-      setAllVehicles(data); // Keep original data for accurate counting
+      setAllVehicles(data);
       setSearchMessage("");
     } catch (err) {
-      message.error(`Error loading vehicles: ${err.message}`);
+      const errorMsg = err.message || "Failed to load vehicles";
+      NotificationService.operationError("load", errorMsg);
     } finally {
       setLoadingVehicles(false);
     }
@@ -72,7 +73,7 @@ const VehicleList = () => {
       if (!term) {
         setVehicles(allVehicles);
         setSearchMessage("");
-        setCurrentPage(1); // Reset to first page when clearing search
+        setCurrentPage(1);
         return;
       }
       setLoadingSearch(true);
@@ -84,11 +85,11 @@ const VehicleList = () => {
         );
         setVehicles(filtered);
         setSearchMessage(filtered.length === 0 ? "No vehicles found." : "");
-        setCurrentPage(1); // Reset to first page when searching
+        setCurrentPage(1);
       } catch {
         setVehicles([]);
         setSearchMessage("Error searching vehicles.");
-        setCurrentPage(1); // Reset to first page on error
+        setCurrentPage(1);
       } finally {
         setLoadingSearch(false);
       }
@@ -109,7 +110,7 @@ const VehicleList = () => {
   const handleEdit = (vehicleId) => {
     const vehicle = allVehicles.find((v) => v.id === vehicleId);
     if (!vehicle) {
-      message.error("Vehicle not found");
+      NotificationService.error("Vehicle Not Found", "Vehicle not found");
       return;
     }
 
@@ -124,7 +125,6 @@ const VehicleList = () => {
       setEditingUserWorkshopId(vehicle.userWorkshopId);
       setShowUserWorkshopModal(true);
     } else {
-     
       setEditingId(vehicle.userWorkshopId);
       setShowReceptionModal(true);
     }
@@ -151,18 +151,25 @@ const VehicleList = () => {
   };
 
   const handleDelete = (vin) => {
-    confirm({
+    ConfirmationDialog.show({
       title: "Delete Vehicle?",
-      content: `Are you sure you want to delete the vehicle with VIN "${vin}"?`,
-      onOk: async () => {
+      content: `Are you sure you want to delete the vehicle with VIN "${vin}"? This action cannot be undone.`,
+      type: "danger",
+      onConfirm: async () => {
         try {
           await deleteVehicle(vin);
-          // Update both states to keep them synchronized
           setVehicles((prev) => prev.filter((v) => v.vin !== vin));
           setAllVehicles((prev) => prev.filter((v) => v.vin !== vin));
-          message.success("Vehicle deleted successfully.");
+
+          NotificationService.operationSuccess(
+            "delete",
+            `Vehicle with VIN "${vin}"`
+          );
         } catch (err) {
-          message.error(`Error deleting: ${err.message}`);
+          NotificationService.operationError(
+            "delete",
+            err.message || "An error occurred while deleting the vehicle."
+          );
         }
       },
     });

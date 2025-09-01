@@ -15,8 +15,8 @@ import {
   Modal,
   Space,
   Divider,
-  message,
 } from "antd";
+import NotificationService from "../../../services/notificationService.jsx";
 import {
   SearchOutlined,
   DollarCircleOutlined,
@@ -104,7 +104,7 @@ const AccountsReceivableView = () => {
       setAccounts(data);
     } catch (error) {
       console.error("Error loading accounts:", error);
-      alert("Error loading accounts: " + error.message);
+      NotificationService.operationError('load', error.message);
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ const AccountsReceivableView = () => {
       console.log("Current payments:", paymentsData);
     } catch (error) {
       console.error("Error loading account details:", error);
-      alert("Error loading details: " + error.message);
+      NotificationService.operationError('load', error.message);
     }
   };
 
@@ -166,7 +166,7 @@ const AccountsReceivableView = () => {
     const paymentAmount = parseFloat(values.amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
       console.log("Invalid amount entered:", values.amount);
-      alert("Please enter a valid amount");
+      NotificationService.validationError('Payment Amount', 'Please enter a valid amount');
       return;
     }
 
@@ -174,7 +174,7 @@ const AccountsReceivableView = () => {
       console.log("Account balance:", selectedAccount.balance);
       console.log("Amount entered:", paymentAmount);
       if (paymentAmount > selectedAccount.balance) {
-        alert("The entered amount exceeds the pending balance of the account");
+        NotificationService.warning('Amount Exceeds Balance', 'The entered amount exceeds the pending balance of the account');
         return;
       }
     }
@@ -220,7 +220,7 @@ const AccountsReceivableView = () => {
       setIsPaymentSuccessModalVisible(true);
     } catch (error) {
       console.error("Error in createPayment:", error);
-      message.error("Error registering payment: " + error.message);
+      NotificationService.operationError('process', error.message);
     }
   };
 

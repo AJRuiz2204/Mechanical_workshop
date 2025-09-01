@@ -11,13 +11,22 @@ import {
   Card,
   Typography,
   message,
+  Space,
+  Divider,
 } from "antd";
-import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import { 
+  MinusCircleOutlined, 
+  PlusOutlined, 
+  SaveOutlined, 
+  CloseOutlined,
+} from "@ant-design/icons";
 import {
   createUserWorkshop,
   getUserWorkshopByIdWithVehicles,
   updateUserWorkshop,
 } from "../../../services/UserWorkshopService";
+import NotificationService from "../../../services/notificationService.jsx";
+import ConfirmationDialog from "../../common/ConfirmationDialog";
 import PropTypes from "prop-types";
 
 const { Title } = Typography;
@@ -114,8 +123,9 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
                 ],
         });
       } catch (err) {
-        setSubmitError(err.message);
-        message.error(err.message);
+        const errorMsg = err.message || "Failed to load workshop data";
+        setSubmitError(errorMsg);
+        NotificationService.operationError('load', errorMsg);
       } finally {
         setLoading(false);
       }
@@ -157,10 +167,17 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
   };
 
   const removeVehicle = (index) => {
-    setUserWorkshop((prev) => ({
-      ...prev,
-      vehicles: prev.vehicles.filter((_, i) => i !== index),
-    }));
+    ConfirmationDialog.delete({
+      title: 'Remove Vehicle',
+      content: 'Are you sure you want to remove this vehicle from the list?',
+      onConfirm: () => {
+        setUserWorkshop((prev) => ({
+          ...prev,
+          vehicles: prev.vehicles.filter((_, i) => i !== index),
+        }));
+        message.success('Vehicle removed successfully');
+      },
+    });
   };
 
   const handleSubmit = async () => {
@@ -180,8 +197,12 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
           !v.vin.trim() || !v.make.trim() || !v.model.trim() || !v.year.trim()
       );
 
+      // Validation
       if (missingFields.length > 0 || invalidVehicles.length > 0) {
-        throw new Error("Please complete all required fields");
+        const errorMsg = "Please complete all required fields";
+        setSubmitError(errorMsg);
+        NotificationService.validationError('Required fields', errorMsg);
+        return;
       }
 
       if (!payload.username.trim()) payload.username = storedUsername;
@@ -197,16 +218,17 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
 
       if (editingId) {
         await updateUserWorkshop(editingId, payload, token);
-        message.success("Workshop updated.");
+        NotificationService.operationSuccess('update', 'Workshop information');
       } else {
         await createUserWorkshop(payload);
-        message.success("Workshop registered.");
+        NotificationService.operationSuccess('create', 'Workshop');
       }
       afterSubmit?.();
       onClose?.();
     } catch (err) {
-      setSubmitError(err.message || "Error submitting the form.");
-      message.error(err.message || "Error submitting.");
+      const errorMsg = err.message || "Error submitting the form.";
+      setSubmitError(errorMsg);
+      NotificationService.operationError('save', errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -493,12 +515,34 @@ const VehicleReception = ({ onClose, afterSubmit, editingId }) => {
         </Card>
 
         {/* Action Buttons */}
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={isSubmitting}>
-            Save
-          </Button>
-          <Button onClick={onClose}>Cancel</Button>
-        </Form.Item>
+        <Divider />
+        <Row justify="end">
+          <Col>
+            <Space size="middle">
+              <Button 
+                onClick={() => {
+                  ConfirmationDialog.discardChanges({
+                    onConfirm: () => onClose?.(),
+                  });
+                }}
+                size="large"
+              >
+                <CloseOutlined />
+                Cancel
+              </Button>
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                loading={isSubmitting}
+                size="large"
+                disabled={isSubmitting}
+              >
+                <SaveOutlined />
+                {editingId ? 'Update Workshop' : 'Save Workshop'}
+              </Button>
+            </Space>
+          </Col>
+        </Row>
       </Form>
     </Card>
   );

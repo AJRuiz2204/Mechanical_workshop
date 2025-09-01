@@ -6,6 +6,7 @@ import {
   sendEmailWithCode,
   verifyCode,
 } from "../../services/UserLoginServices";
+import NotificationService from "../../services/notificationService.jsx";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -42,7 +43,7 @@ const ForgotPassword = () => {
     try {
       // Verify the code entered by the user
       await verifyCode(email, verificationCode);
-      alert("Code verified successfully.");
+      NotificationService.success("Code Verified", "Code verified successfully.");
 
       // Redirect to the ChangePassword component
       navigate("/change-password", { state: { email } });

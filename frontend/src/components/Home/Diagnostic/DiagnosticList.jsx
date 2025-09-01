@@ -6,6 +6,8 @@ import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
 } from "../../../services/TechnicianDiagnosticService";
+import NotificationService from "../../../services/notificationService.jsx";
+import ConfirmationDialog from "../../common/ConfirmationDialog";
 
 const DiagnosticList = () => {
   const navigate = useNavigate();
@@ -37,7 +39,9 @@ const DiagnosticList = () => {
       );
       setTechDiagMap(newTechDiagMap);
     } catch (error) {
-      setError(error.message || "Error loading data");
+      const errorMsg = error.message || "Error loading data";
+      setError(errorMsg);
+      NotificationService.operationError('load', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -49,38 +53,51 @@ const DiagnosticList = () => {
 
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
-    if (!techDiagId) return;
-
-    const confirmDelete = window.confirm("Delete this Technician Diagnostic?");
-    if (!confirmDelete) return;
-
-    try {
-      await deleteTechnicianDiagnostic(techDiagId);
-      setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
-      alert("Successfully deleted Technician Diagnostic!");
-    } catch (error) {
-      alert(`Delete failed: ${error.message}`);
+    if (!techDiagId) {
+      NotificationService.warning('No Technician Diagnostic', 'No technician diagnostic found for this record.');
+      return;
     }
+
+    ConfirmationDialog.show({
+      title: 'Delete Technician Diagnostic',
+      content: 'Are you sure you want to delete this technician diagnostic? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteTechnicianDiagnostic(techDiagId);
+          setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
+          NotificationService.operationSuccess('delete', 'Technician diagnostic');
+        } catch (error) {
+          console.error("Error deleting technician diagnostic:", error);
+          NotificationService.operationError('delete', error.message || 'An error occurred while deleting the technician diagnostic.');
+        }
+      }
+    });
   };
 
   const handleDeleteDiagnostic = async (diagnosticId) => {
-    const confirmDelete = window.confirm("Delete this Diagnostic?");
-    if (!confirmDelete) return;
-
-    try {
-      await deleteDiagnostic(diagnosticId);
-      setDiagnostics((prevDiagnostics) =>
-        prevDiagnostics.filter((diag) => diag.id !== diagnosticId)
-      );
-      setTechDiagMap((prev) => {
-        const newMap = { ...prev };
-        delete newMap[diagnosticId];
-        return newMap;
-      });
-      alert("Successfully deleted Diagnostic!");
-    } catch (error) {
-      alert(`Delete failed: ${error.message}`);
-    }
+    ConfirmationDialog.show({
+      title: 'Delete Diagnostic',
+      content: 'Are you sure you want to delete this diagnostic? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteDiagnostic(diagnosticId);
+          setDiagnostics((prevDiagnostics) =>
+            prevDiagnostics.filter((diag) => diag.id !== diagnosticId)
+          );
+          setTechDiagMap((prev) => {
+            const newMap = { ...prev };
+            delete newMap[diagnosticId];
+            return newMap;
+          });
+          NotificationService.operationSuccess('delete', 'Diagnostic');
+        } catch (error) {
+          console.error("Error deleting diagnostic:", error);
+          NotificationService.operationError('delete', error.message || 'An error occurred while deleting the diagnostic.');
+        }
+      }
+    });
   };
 
   const filteredDiagnostics = diagnostics.filter((diag) => {

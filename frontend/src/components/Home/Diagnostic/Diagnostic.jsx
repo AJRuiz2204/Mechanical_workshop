@@ -16,6 +16,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { createDiagnostic } from "../../../services/DiagnosticService";
 import { getVehicleById } from "../../../services/VehicleService";
 import technicianService from "../../../services/technicianService";
+import NotificationService from "../../../services/notificationService.jsx";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -68,14 +69,18 @@ const Diagnostic = () => {
     const fetchVehicle = async () => {
       try {
         if (!id) {
-          setErrorMessage("No vehicle ID provided.");
+          const errorMsg = "No vehicle ID provided.";
+          setErrorMessage(errorMsg);
+          NotificationService.error('Invalid Request', errorMsg);
           setLoading(false);
           return;
         }
         const data = await getVehicleById(id);
         setVehicle(data);
       } catch (error) {
-        setErrorMessage("Error fetching vehicle information: " + error.message);
+        const errorMsg = error.message || "Failed to fetch vehicle information";
+        setErrorMessage("Error fetching vehicle information: " + errorMsg);
+        NotificationService.operationError('load', errorMsg);
       } finally {
         setLoading(false);
       }
@@ -92,7 +97,9 @@ const Diagnostic = () => {
         const data = await technicianService.getTechnicians();
         setTechnicians(data);
       } catch (error) {
-        setTechError("Error fetching technicians: " + error.message);
+        const errorMsg = error.message || "Failed to fetch technicians";
+        setTechError("Error fetching technicians: " + errorMsg);
+        NotificationService.operationError('load', errorMsg);
       } finally {
         setTechLoading(false);
       }
@@ -119,15 +126,22 @@ const Diagnostic = () => {
    * @param {Event} e - The form submission event.
    */
   const handleSubmit = async () => {
+    // Clear previous messages
     setErrorMessage("");
     setSuccessMessage("");
 
+    // Validation
     if (!formData.assignedTechnician.trim()) {
-      setErrorMessage("You must assign a technician.");
+      const errorMsg = "You must assign a technician.";
+      setErrorMessage(errorMsg);
+      NotificationService.validationError('Assigned Technician', errorMsg);
       return;
     }
+    
     if (!formData.reasonForVisit.trim()) {
-      setErrorMessage("Customer state is required.");
+      const errorMsg = "Customer state is required.";
+      setErrorMessage(errorMsg);
+      NotificationService.validationError('Customer State', errorMsg);
       return;
     }
 
@@ -139,10 +153,19 @@ const Diagnostic = () => {
 
     try {
       await createDiagnostic(diagnosticData);
+      
+      NotificationService.operationSuccess('create', 'Diagnostic');
       setSuccessMessage("Diagnostic created successfully.");
-      navigate("/diagnostic-list");
+      
+      // Delay navigation to show the success message
+      setTimeout(() => {
+        navigate("/diagnostic-list");
+      }, 1500);
+      
     } catch (error) {
-      setErrorMessage("Error creating diagnostic: " + error.message);
+      const errorMsg = error.message || "Failed to create diagnostic";
+      setErrorMessage("Error creating diagnostic: " + errorMsg);
+      NotificationService.operationError('create', errorMsg);
     }
   };
 

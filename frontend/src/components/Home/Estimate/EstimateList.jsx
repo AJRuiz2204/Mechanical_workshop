@@ -9,6 +9,8 @@ import { createAccountReceivable } from "../../../services/accountReceivableServ
 import AccountPaymentModal from "../../Home/Accounting/AccountPaymentModal";
 import PDFModalContent from "./PDFModalContent";
 import EstimateActions from "./EstimateActions/EstimateActions";
+import NotificationService from "../../../services/notificationService.jsx";
+import ConfirmationDialog from "../../common/ConfirmationDialog";
 
 /**
  * EstimateList Component
@@ -28,7 +30,7 @@ import EstimateActions from "./EstimateActions/EstimateActions";
  */
 
 const EstimateList = () => {
-  const location = useLocation(); // ← track route changes
+  const location = useLocation();
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,7 +53,9 @@ const EstimateList = () => {
       setEstimates(data);
       setError(null);
     } catch (err) {
-      setError(`Error loading estimates: ${err.message}`);
+      const errorMsg = err.message || 'Failed to load estimates';
+      setError(`Error loading estimates: ${errorMsg}`);
+      NotificationService.operationError('load', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -68,20 +72,24 @@ const EstimateList = () => {
       setShowPaymentModal(true);
       return;
     }
-    Modal.confirm({
+    
+    ConfirmationDialog.show({
       title: "Generate Account Receivable",
-      content: `An account receivable will be generated for estimate ${estId}. Continue?`,
-      onOk: async () => {
+      content: `An account receivable will be generated for estimate #${estId}. Continue?`,
+      onConfirm: async () => {
         try {
           const newAccount = await createAccountReceivable({ estimateId: estId });
+          NotificationService.operationSuccess('create', 'Account receivable');
           setSuccess(`Account receivable created for estimate ${estId}.`);
           setModalAccountId(newAccount.id);
           setShowPaymentModal(true);
           fetchEstimates();
         } catch (err) {
-          setError(`Error generating account: ${err.message}`);
+          const errorMsg = err.message || 'Failed to generate account receivable';
+          setError(`Error generating account: ${errorMsg}`);
+          NotificationService.operationError('create', errorMsg);
         }
-      },
+      }
     });
   };
 
@@ -90,18 +98,22 @@ const EstimateList = () => {
   };
 
   const handleDelete = (id) => {
-    Modal.confirm({
+    ConfirmationDialog.delete({
       title: "Delete Estimate",
-      content: `Are you sure you want to delete estimate ${id}?`,
-      onOk: async () => {
+      content: `Are you sure you want to delete estimate #${id}? This action cannot be undone.`,
+      itemName: `Estimate #${id}`,
+      onConfirm: async () => {
         try {
           await deleteEstimate(id);
+          NotificationService.operationSuccess('delete', `Estimate #${id}`);
           setSuccess(`Estimate ${id} successfully deleted.`);
           fetchEstimates();
         } catch (err) {
-          setError(`Error deleting estimate: ${err.message}`);
+          const errorMsg = err.message || 'An error occurred while deleting the estimate';
+          setError(`Error deleting estimate: ${errorMsg}`);
+          NotificationService.operationError('delete', errorMsg);
         }
-      },
+      }
     });
   };
 

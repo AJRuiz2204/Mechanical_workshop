@@ -9,6 +9,8 @@ import {
   deleteTechnicianDiagnostic,
   getTechnicianDiagnosticByDiagId,
 } from "../../../services/TechnicianDiagnosticService";
+import NotificationService from "../../../services/notificationService.jsx";
+import ConfirmationDialog from "../../common/ConfirmationDialog";
 
 /**
  * TechnicianDiagnosticList Component
@@ -175,26 +177,28 @@ const TechnicianDiagnosticList = () => {
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
     if (!techDiagId) {
-      alert("No technician diagnostic found to delete.");
+      NotificationService.warning("No Diagnostic Found", "No technician diagnostic found to delete.");
       return;
     }
 
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this Technician Diagnostic?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      setLoading(true);
-      await deleteTechnicianDiagnostic(techDiagId);
-      setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
-      alert("Technician diagnostic deleted successfully!");
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert(`Failed to delete: ${error.message || "Unknown error"}`);
-    } finally {
-      setLoading(false);
-    }
+    ConfirmationDialog.show({
+      title: 'Delete Technician Diagnostic',
+      content: 'Are you sure you want to delete this Technician Diagnostic?',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await deleteTechnicianDiagnostic(techDiagId);
+          setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
+          NotificationService.operationSuccess('delete', 'Technician diagnostic');
+        } catch (error) {
+          console.error("Delete error:", error);
+          NotificationService.operationError('delete', error.message || "Unknown error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const getTitle = () => {

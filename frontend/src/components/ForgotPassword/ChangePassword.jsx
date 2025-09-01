@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { changePassword } from "../../services/UserLoginServices";
+import NotificationService from "../../services/notificationService.jsx";
 
 const ChangePassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -31,7 +32,7 @@ const ChangePassword = () => {
 
     try {
       await changePassword(email, newPassword);
-      alert("Password changed successfully.");
+      NotificationService.operationSuccess('update', 'Password');
       navigate("/");
     } catch (err) {
       setError(err.message || "Error changing the password.");
