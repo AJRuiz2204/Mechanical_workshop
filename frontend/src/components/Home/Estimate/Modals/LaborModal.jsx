@@ -31,7 +31,7 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         <Form.Item label="Duration (hours)" required>
           <InputNumber
             min={0.01}
-            step={1}
+            step={0.25}
             precision={2}
             value={newLabor.duration}
             onChange={duration => {

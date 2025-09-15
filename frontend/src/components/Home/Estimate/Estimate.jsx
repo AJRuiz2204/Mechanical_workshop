@@ -21,13 +21,13 @@ import {
   Spin,
   Card,
   Descriptions,
+  notification,
 } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import EditableCell from "./Editcell/EditableCell";
 import PartModal from "./Modals/PartModal";
 import LaborModal from "./Modals/LaborModal";
 import FlatFeeModal from "./Modals/FlatFeeModal";
-import MessageModal from "./Modals/MessageModal";
 import ConfirmationModal from "./Modals/ConfirmationModal";
 
 const { Option } = Select;
@@ -59,12 +59,6 @@ const Estimate = () => {
   const [settings, setSettings] = useState(null);
   const [noTax, setNoTax] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  // Message modal states
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageType, setMessageType] = useState("success");
-  const [messageContent, setMessageContent] = useState("");
-  const [messageTitle, setMessageTitle] = useState("");
 
   const [showTaxSettingsModal, setShowTaxSettingsModal] = useState(false);
   const [showPartModal, setShowPartModal] = useState(false);
@@ -114,23 +108,21 @@ const Estimate = () => {
 
   // Helper functions for messages
   const showSuccessMessage = (message, title = "Success") => {
-    setMessageType("success");
-    setMessageContent(message);
-    setMessageTitle(title);
-    setShowMessageModal(true);
+    notification.success({
+      message: title,
+      description: message,
+      placement: 'topRight',
+      duration: 4.5,
+    });
   };
 
   const showErrorMessage = (message, title = "Error") => {
-    setMessageType("error");
-    setMessageContent(message);
-    setMessageTitle(title);
-    setShowMessageModal(true);
-  };
-
-  const handleCloseMessageModal = () => {
-    setShowMessageModal(false);
-    setMessageContent("");
-    setMessageTitle("");
+    notification.error({
+      message: title,
+      description: message,
+      placement: 'topRight',
+      duration: 4.5,
+    });
   };
 
   // Validation function for confirmation modal
@@ -532,6 +524,7 @@ const Estimate = () => {
       applyLaborTax: newLabor.applyLaborTax,
     };
     setLabors([...labors, newItem]);
+    showSuccessMessage("Labor added successfully.");
     setShowLaborModal(false);
   };
 
@@ -547,6 +540,7 @@ const Estimate = () => {
     const price = parseFloat(newFlatFee.flatFeePrice) || 0;
     const newItem = { ...newFlatFee, extendedPrice: price };
     setFlatFees([...flatFees, newItem]);
+    showSuccessMessage("Flat fee added successfully.");
     setShowFlatFeeModal(false);
   };
 
@@ -1399,16 +1393,6 @@ const Estimate = () => {
         addFlatFee={addFlatFee}
         isEditingItem={isEditingItem}
         updateEditedItem={updateEditedItem}
-      />
-
-      {/* Message Modal */}
-      <MessageModal
-        show={showMessageModal}
-        onHide={handleCloseMessageModal}
-        type={messageType}
-        message={messageContent}
-        title={messageTitle}
-        autoHideDelay={10000}
       />
 
       {/* Confirmation Modal */}

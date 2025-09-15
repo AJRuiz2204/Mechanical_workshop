@@ -1,4 +1,3 @@
-import React from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Form, Input, InputNumber, Button, Space } from 'antd';
 import { useFlatFeeModal } from '../hooks/useModalHooks';
@@ -8,17 +7,9 @@ import '../styles/ModalsGeneral.css';
  * FlatFeeModal allows adding a new flat fee to the estimate or editing an existing one
  */
 const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isEditingItem, updateEditedItem }) => {
-  console.log('FlatFeeModal render - show:', show, 'isEditingItem:', isEditingItem, 'newFlatFee:', newFlatFee);
-  
-  // Log when show state changes
-  React.useEffect(() => {
-    console.log('FlatFeeModal show state changed to:', show);
-  }, [show]);
-  
   const clearFields = useFlatFeeModal(show, setNewFlatFee, isEditingItem);
 
   const handleSubmit = () => {
-    console.log('FlatFeeModal handleSubmit - isEditingItem:', isEditingItem);
     if (isEditingItem) {
       updateEditedItem();
     } else {
