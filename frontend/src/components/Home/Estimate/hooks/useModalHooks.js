@@ -8,10 +8,10 @@ export function usePartModal(show, settings, setNewPart, isEditingItem) {
     setNewPart({
       description: "",
       partNumber: "",
-      quantity: 1.0,
-      netPrice: 1.0,
-      listPrice: 1.0,
-      extendedPrice: 1.0,
+      quantity: null,
+      netPrice: null,
+      listPrice: null,
+      extendedPrice: null,
       applyPartTax: settings?.partTaxByDefault || false,
     });
   }, [settings, setNewPart]);
@@ -30,9 +30,9 @@ export function useLaborModal(show, settings, setNewLabor, isEditingItem) {
   const clearFields = useCallback(() => {
     setNewLabor({
       description: "",
-      duration: 0.25,
-      laborRate: settings?.defaultHourlyRate || 1.0,
-      extendedPrice: 1.0,
+      duration: null,
+      laborRate: settings?.defaultHourlyRate || null,
+      extendedPrice: null,
       applyLaborTax: settings?.laborTaxByDefault || false,
     });
   }, [settings, setNewLabor]);
@@ -52,8 +52,8 @@ export function useFlatFeeModal(show, setNewFlatFee, isEditingItem) {
     console.log('useFlatFeeModal clearFields called');
     setNewFlatFee({
       description: "",
-      flatFeePrice: 1.0,
-      extendedPrice: 1.0,
+      flatFeePrice: null,
+      extendedPrice: null,
     });
   }, [setNewFlatFee]);
 

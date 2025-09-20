@@ -31,19 +31,21 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isE
         <Form.Item label="Flat Fee Price" required>
           <InputNumber
             min={0.01}
-            step={1}
+            step={0.01}
             precision={2}
             value={newFlatFee.flatFeePrice}
+            placeholder="0.00"
             onChange={flatFeePrice => {
-              const extendedPrice = parseFloat((flatFeePrice || 0).toFixed(2));
+              // Ensure only 2 decimal places
+              const roundedPrice = flatFeePrice ? Math.round(flatFeePrice * 100) / 100 : flatFeePrice;
+              const extendedPrice = roundedPrice ? parseFloat(roundedPrice.toFixed(2)) : null;
               setNewFlatFee({
                 ...newFlatFee,
-                flatFeePrice,
+                flatFeePrice: roundedPrice,
                 extendedPrice,
               });
             }}
-            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
-            parser={v => v.replace(/[^\d.]/g, '')}
+            addonBefore="$"
             style={{ width: '100%' }}
           />
         </Form.Item>
@@ -52,8 +54,9 @@ const FlatFeeModal = ({ show, onHide, newFlatFee, setNewFlatFee, addFlatFee, isE
             value={newFlatFee.extendedPrice}
             readOnly
             precision={2}
-            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
-            parser={v => v.replace(/[^\d]/g, '')}
+            placeholder="$ 0.00"
+            formatter={v => v ? `$ ${parseFloat(v).toFixed(2)}` : ''}
+            parser={v => v.replace(/\$/g, '')}
             style={{ width: '100%' }}
           />
         </Form.Item>

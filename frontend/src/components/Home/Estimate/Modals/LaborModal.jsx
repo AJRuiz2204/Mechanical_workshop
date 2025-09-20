@@ -31,12 +31,13 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         <Form.Item label="Duration (hours)" required>
           <InputNumber
             min={0.01}
-            step={0.25}
+            step={0.01}
             precision={2}
             value={newLabor.duration}
+            placeholder="0.00"
             onChange={duration => {
               const rate = parseFloat(newLabor.laborRate) || 0;
-              const extendedPrice = parseFloat((duration * rate).toFixed(2));
+              const extendedPrice = duration && rate ? parseFloat((duration * rate).toFixed(2)) : null;
               setNewLabor({
                 ...newLabor,
                 duration,
@@ -49,9 +50,10 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         <Form.Item label="Labor Rate" required>
           <Select
             value={newLabor.laborRate}
+            placeholder="Select labor rate"
             onChange={laborRate => {
               const dur = parseFloat(newLabor.duration) || 0;
-              const extendedPrice = parseFloat((dur * laborRate).toFixed(2));
+              const extendedPrice = laborRate && dur ? parseFloat((dur * laborRate).toFixed(2)) : null;
               setNewLabor({
                 ...newLabor,
                 laborRate,
@@ -78,7 +80,8 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
             value={newLabor.extendedPrice}
             readOnly
             precision={2}
-            formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
+            placeholder="$ 0.00"
+            formatter={v => v ? `$ ${parseFloat(v).toFixed(2)}` : ''}
             parser={v => v.replace(/\$/g, '')}
             style={{ width: '100%' }}
           />
@@ -94,10 +97,11 @@ const LaborModal = ({ show, onHide, newLabor, setNewLabor, addLabor, noTax, sett
         {settings && newLabor.applyLaborTax && (
           <Form.Item label="Tax Amount">
             <InputNumber
-              value={parseFloat(((parseFloat(newLabor.extendedPrice) || 0) * (settings.laborTaxRate / 100)).toFixed(2))}
+              value={newLabor.extendedPrice ? parseFloat(((parseFloat(newLabor.extendedPrice) * (settings.laborTaxRate / 100)).toFixed(2))) : null}
               readOnly
               precision={2}
-              formatter={v => `$ ${parseFloat(v || 0).toFixed(2)}`}
+              placeholder="$ 0.00"
+              formatter={v => v ? `$ ${parseFloat(v).toFixed(2)}` : ''}
               parser={v => v.replace(/\$/g, '')}
               style={{ width: '100%' }}
             />
