@@ -1,0 +1,163 @@
+gantt
+    title Cronograma de Commits (por meses)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %Y
+
+    section Dic 2024
+    Se agg README.md :done, 2024-12-12, 1d
+    Se cambia por React + Vite :done, 2024-12-12, 1d
+    Se configura App.jsx y agg login :done, 2024-12-12, 1d
+    Se agg forgotPassword :done, 2024-12-12, 1d
+    Se agrega Home y RegisterUser :done, 2024-12-12, 1d
+    Se agregan unicamente las views sin funcionabilidad :done, 2024-12-13, 1d
+    Se conecta back con front, funciona create user :done, 2024-12-16, 1d
+    se configura el add user y login :done, 2024-12-16, 1d
+    Se configura login, recuperacion de usuarios y agregar nuevos usuarios :done, 2024-12-16, 1d
+    Se agrega Vehicles Reception :done, 2024-12-16, 1d
+    Se modifica al ingles :done, 2024-12-17, 1d
+    Se corrige state vacio :done, 2024-12-20, 1d
+    Se corrige duplicidad de vehiculos en base de datos :done, 2024-12-20, 1d
+    Se corrige view vehicleList & VechicleReception :done, 2024-12-23, 1d
+    Se agg diagnostic :done, 2024-12-23, 1d
+    Se agg Vehicle list :done, 2024-12-23, 1d
+    Traslato to english :done, 2024-12-23, 1d
+    Se corrige view de Diagnostics :done, 2024-12-28, 1d
+    se agg Estimates :done, 2024-12-28, 1d
+    traslate to english :done, 2024-12-30, 1d
+
+    section Ene 2025
+    Se agg EstimatesList :done, 2025-01-06, 1d
+    add modal, tax check & delete diferect Diagnosticts :done, 2025-01-06, 1d
+    Fixed add Part :done, 2025-01-06, 1d
+    Min conf :done, 2025-01-07, 1d
+    Se agg workshop settings :done, 2025-01-10, 1d
+    Se modifica hora y fecha en settings :done, 2025-01-10, 1d
+    se agg part labor settings :done, 2025-01-11, 1d
+    add taxes :done, 2025-01-12, 1d
+    Se modifica ExtendedDiag en view de TechnicianDiag :done, 2025-01-15, 1d
+    Se agg extendedDiag a Estimates :done, 2025-01-15, 1d
+    Se deja readonly en ExtendedDiag :done, 2025-01-15, 1d
+    Se modifica Estimates :done, 2025-01-16, 1d
+    se corrigen problemas menores :done, 2025-01-17, 1d
+    Pruebas con PDF :done, 2025-01-17, 1d
+    Modificacion en estimates :done, 2025-01-17, 1d
+    Se configura Estimates Edit :done, 2025-01-17, 1d
+    se modifica invoice :done, 2025-01-18, 1d
+    se modifica el PDF :done, 2025-01-18, 1d
+    Cambios en Estimates :done, 2025-01-18, 1d
+    Se modifica Vehiclereception :done, 2025-01-19, 1d
+    SE agregan niveles de usuario :done, 2025-01-19, 1d
+    Se modifica VehicleReception con LocalStorage :done, 2025-01-19, 1d
+    Se agg Technician a Diagnostic :done, 2025-01-19, 1d
+    Se agg niveles de usuarios :done, 2025-01-20, 1d
+    Se corrige Technician List :done, 2025-01-20, 1d
+    Se modifica VehicleReception :done, 2025-01-21, 1d
+    Se modifica para editar :done, 2025-01-21, 1d
+    Se corrige Edit :done, 2025-01-21, 1d
+    Cambios minimos :done, 2025-01-21, 1d
+    Se modifica el PDF, problemas con carga :done, 2025-01-22, 1d
+    Se modifica PDF y duplicidad en AddPart, Labor y FlatFee :done, 2025-01-22, 1d
+    Se genera logo en PDF :done, 2025-01-22, 1d
+    Se modifica PDF :done, 2025-01-22, 1d
+    Se modifican carpetas, se deshabilidan Tabs por userLevel :done, 2025-01-22, 1d
+    Se modifica Login, se quitan botones :done, 2025-01-22, 1d
+    SE modifica PDF c traduce al ingles :done, 2025-01-23, 1d
+    Se quita listPrice del PDF :done, 2025-01-23, 1d
+    Se traduce comenta :done, 2025-01-24, 1d
+    Se modifica PDF :done, 2025-01-24, 1d
+    Se arregla Buscar :done, 2025-01-24, 1d
+    Se agg search funcional a VehicleList :done, 2025-01-27, 1d
+    Se agg Notes en Backend y Edit en TechnicianDiag :done, 2025-01-28, 1d
+    Se agg notes a TechnicianDiagnostic.jsx :done, 2025-01-28, 1d
+    Se agg Payments & PDFs :done, 2025-01-31, 1d
+
+    section Feb 2025
+    Se agg SalesReports :done, 2025-02-01, 1d
+    Se traduce codigo y correcciones, notas, y estimates :done, 2025-02-02, 1d
+    Se corrige SalesReports :done, 2025-02-02, 1d
+    Se corrige PDFs :done, 2025-02-02, 1d
+    Se agg Styles :done, 2025-02-02, 1d
+    Se corrigen Pdf, traduce a ingles, y Estimates :done, 2025-02-09, 1d
+    add svg images to Home :done, 2025-02-09, 1d
+    Se agg svg images :done, 2025-02-09, 1d
+    Se modifica Estimates PDf, se quitan taxes y se reorganiza encabezados :done, 2025-02-09, 1d
+    Se hacen cambios minimos requeridos :done, 2025-02-11, 1d
+    Se genera cambios con PDf a preview sobre view :done, 2025-02-12, 1d
+    Se genera cambios con PDf a PaymentPDF :done, 2025-02-13, 1d
+    Se configura el PaymentPDF :done, 2025-02-13, 1d
+    Se agg Owner a Estimate list y Diagnostic List :done, 2025-02-18, 1d
+    Se cambia delete para ambos states en Diagnostics :done, 2025-02-18, 1d
+    Se agg el Asigned Technician a DiagnosticsList :done, 2025-02-18, 1d
+    Se cambia nombre de status :done, 2025-02-18, 1d
+    Se hace nuevo DTO para VehiclesWithTechnicianDiag :done, 2025-02-20, 1d
+    Se modifica Estimate List pata agg paid status :done, 2025-02-21, 1d
+    Se modifica PaymentPDF :done, 2025-02-21, 1d
+    Se modificar PaymentPDF :done, 2025-03-03, 1d
+
+    section Mar 2025
+    Add Se agg View VehicleXlsx :done, 2025-03-10, 1d
+    Fix Se corrige encabezado de view VehicleXlsx :done, 2025-03-10, 1d
+    Se traduce al ingles :done, 2025-03-11, 1d
+    Se modificaa services, para alimentarse de vite.config.js :done, 2025-03-19, 1d
+    Se agg conexion con el backend https :done, 2025-03-27, 1d
+    Se corrigen conexion con backend y jwt para la peticion :done, 2025-03-30, 1d
+    Se configuran cors :done, 2025-03-30, 1d
+    Se agg web.config y configuracion vite.config.js :done, 2025-03-31, 1d
+    Se genera version :done, 2025-03-31, 1d
+    Se agg linea de conexion a api externa :done, 2025-04-06, 1d
+
+    section Abr 2025
+    Se hacen tareas asignadas en Jira :done, 2025-05-01, 1d
+
+    section May 2025
+    Se modifica UI :done, 2025-05-02, 1d
+    Se modifica XSLX para uno sin vulnerabilidad :done, 2025-05-04, 1d
+    se modifican campos para modales flatfee, parts and labors, solo admitan numeros :done, 2025-05-04, 1d
+    Se genera nuevo campo ExtendedDiag en edicion, mensajes de confirmacion con antd, y nuevo campo a Estimates: ExtendedDiagnostic :done, 2025-05-04, 1d
+    se agg mileage en Payments PDF :done, 2025-05-04, 1d
+    Se agg Admin a panel TechnicianDiagnostic :done, 2025-05-09, 1d
+    Se actualiza a try/catch los controladores :done, 2025-05-22, 1d
+    Se modifica por ILogger para ver problemas en servidor :done, 2025-05-23, 1d
+
+    section Jun 2025
+    Refactorizar los DTO para hacer que los campos sean nulos y actualizar la lógica de validación; ajustar la URL base de la API y mejorar las verificaciones de roles de ruta en el frontend. :done, 2025-06-03, 1d
+    Add UserWorkshopEditModal for editing workshops with multiple vehicles; update VehicleList to handle modal visibility and user workshop ID. :done, 2025-06-04, 1d
+    Add vehicle ID handling and improve validation for user workshop form :done, 2025-06-04, 1d
+    Refactor diagnostic handling to support manager view; update duration type to decimal and improve error handling in TechnicianDiagnosticList. :done, 2025-06-04, 1d
+    Enhance estimate creation process with improved validation and logging; update duration type to decimal for consistency across DTOs and frontend components. :done, 2025-06-04, 1d
+    Refactor estimate part number handling to make it optional; update related components for improved validation and display. :done, 2025-06-05, 1d
+    Refactor quantity fields to use decimal type for improved precision; update related components and validations across estimates and PDFs. :done, 2025-06-14, 1d
+    Enhance routing and user experience: add manager redirect from home to vehicle list, improve duplicate part number validation in estimates, and streamline MainLayout component structure. :done, 2025-06-23, 1d
+
+    section Jul 2025
+    Refactor components to remove unused imports and improve role-based routing; add Unauthorized component for access control. :done, 2025-07-10, 1d
+    Add PropTypes validation to EstimatePDF component for improved type safety and documentation :done, 2025-07-10, 1d
+    Refactor Estimate component to integrate form handling for edit mode; update authorization status field and improve PDF styles for better layout and responsiveness. :done, 2025-07-10, 1d
+    Enhance AccountReceivable and TechnicianDiagnostic profiles to include notes and reason for visit; update ClientPaymentPDF to display recent technician notes in the PDF output. :done, 2025-07-10, 1d
+    Add transaction reference column to PaymentPDF; adjust column widths for better layout :done, 2025-07-10, 1d
+    Refactor PaymentPDF to enhance table layout with a header and improve readability; adjust font sizes for better presentation. :done, 2025-07-10, 1d
+    Increase font sizes in PaymentPDF for improved readability and presentation. :done, 2025-07-10, 1d
+    Refactor EstimatePDF and SalesReportPDF to streamline quote information display by removing unnecessary line breaks for improved readability. :done, 2025-07-10, 1d
+    Refactor Estimate components to improve readability and presentation by updating column titles, adjusting widths, and modifying quantity display logic in the PDF output. :done, 2025-07-10, 1d
+    Enhance Client Payment PDF and Payment List UI :done, 2025-07-10, 1d
+    Refactor EstimatePDF styles to enhance layout and readability; incorporate PaymentPDF styles for consistency. :done, 2025-07-13, 1d
+    Refactor estimate modals to support editing existing items :done, 2025-07-25, 1d
+    Enhance AccountPaymentModal: auto-close on successful payment registration and improve close button visibility :done, 2025-07-25, 1d
+    Refactor code structure for improved readability and maintainability :done, 2025-07-25, 1d
+
+    section Ago 2025
+    Refactor PaymentPDF layout: update invoice and vehicle information sections for clarity :done, 2025-08-06, 1d
+    Initial plan :done, 2025-08-20, 1d
+    Initial analysis and plan for dropdown modification :done, 2025-08-20, 1d
+    Modify dropdown to show only vehicle information and expand width :done, 2025-08-20, 1d
+    Fix option validation and update button labels in Estimate component :done, 2025-08-20, 1d
+    feat Add ConfirmationModal and MessageModal components with styles :done, 2025-08-20, 1d
+    feat Enhance modal styles and functionality across FlatFee, Labor, and Part modals :done, 2025-08-20, 1d
+    feat Improve vehicle data handling by maintaining original vehicle list for accurate search and counting :done, 2025-08-20, 1d
+    feat Enhance payment and estimate components with additional details and filters :done, 2025-08-31, 1d
+
+    section Sep 2025
+    Refactor notification handling and confirmation dialogs across components :done, 2025-09-01, 1d
+    feat Update PDF styles in ClientPaymentPDF and EstimatePDF for consistency and improved layout :done, 2025-09-01, 1d
+    feat Update dependencies and improve notification handling in Estimate component :done, 2025-09-14, 1d
+    feat Update input handling in modals for improved precision and user experience :done, 2025-09-19, 1d
