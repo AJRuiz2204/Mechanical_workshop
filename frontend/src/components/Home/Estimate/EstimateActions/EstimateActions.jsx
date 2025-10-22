@@ -11,7 +11,9 @@ const EstimateActions = ({
   onGenerateAccount,
 }) => {
   const isPaid = item.isPaid;
-
+  const authorizationStatus = item.estimate.authorizationStatus?.toLowerCase() || "";
+  const isApproved = authorizationStatus === "approved";
+  
   return (
     <>
       <Button
@@ -48,7 +50,9 @@ const EstimateActions = ({
           <Button
             variant="success"
             size="sm"
+            disabled={!isApproved}
             onClick={() => onGenerateAccount(item)}
+            title={!isApproved ? "Estimate must be approved to generate invoice" : ""}
           >
             {item.accountReceivable ? "Payment" : "Generate Invoice"}
           </Button>
@@ -62,6 +66,7 @@ EstimateActions.propTypes = {
   item: PropTypes.shape({
     estimate: PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      authorizationStatus: PropTypes.string,
     }).isRequired,
     isPaid: PropTypes.bool.isRequired,
     accountReceivable: PropTypes.object,
