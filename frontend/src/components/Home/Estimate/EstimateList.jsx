@@ -38,9 +38,9 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalAccountId, setModalAccountId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [paidFilter, setPaidFilter] = useState(false);
-  const [pendingFilter, setPendingFilter] = useState(true);
+  const [approvedFilter, setApprovedFilter] = useState(false);
   const [notApprovedFilter, setNotApprovedFilter] = useState(false);
+  const [pendingFilter, setPendingFilter] = useState(true);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -268,38 +268,28 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
     const matchesSearch =
       est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term);
 
-    const paymentStatus = !item.accountReceivable
-      ? "No Account"
-      : item.isPaid
-      ? "Paid"
-      : "Pending";
-
     const authorizationStatus = est.authorizationStatus?.toLowerCase() || "";
 
     // Check authorization status filter
     let authorizationMatches = true;
-    if (notApprovedFilter) {
-      authorizationMatches = authorizationStatus === "not approved";
-    }
-
-    // Los estimados pagados son facturas/trabajos cerrados y no se muestran por defecto
-    // Solo se muestran si el filtro "Paid" está activo
-    let paymentMatches = true;
-    if (paidFilter || pendingFilter) {
-      if (paidFilter && !pendingFilter) {
-        paymentMatches = paymentStatus === "Paid";
-      } else if (pendingFilter && !paidFilter) {
-        paymentMatches = paymentStatus === "Pending";
-      } else if (paidFilter && pendingFilter) {
-        paymentMatches =
-          paymentStatus === "Paid" || paymentStatus === "Pending";
+    if (approvedFilter || notApprovedFilter || pendingFilter) {
+      authorizationMatches = false;
+      
+      if (approvedFilter && authorizationStatus === "approved") {
+        authorizationMatches = true;
+      }
+      if (notApprovedFilter && (authorizationStatus === "not approved" || authorizationStatus === "rejected")) {
+        authorizationMatches = true;
+      }
+      if (pendingFilter && authorizationStatus === "pending") {
+        authorizationMatches = true;
       }
     } else {
-      // Si no hay filtros activos, excluir los estimados pagados (son facturas cerradas)
-      paymentMatches = paymentStatus !== "Paid";
+      // Si no hay filtros activos, mostrar todos
+      authorizationMatches = true;
     }
 
-    return matchesSearch && paymentMatches && authorizationMatches;
+    return matchesSearch && authorizationMatches;
   });
 
   if (loading) return <div>Loading estimates...</div>;
@@ -334,24 +324,24 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
 
       <div style={{ marginBottom: 16 }}>
         <Checkbox
-          checked={paidFilter}
-          onChange={(e) => setPaidFilter(e.target.checked)}
+          checked={approvedFilter}
+          onChange={(e) => setApprovedFilter(e.target.checked)}
           style={{ marginRight: 12 }}
         >
-          Show Paid (Closed Invoices)
-        </Checkbox>
-        <Checkbox
-          checked={pendingFilter}
-          onChange={(e) => setPendingFilter(e.target.checked)}
-          style={{ marginRight: 12 }}
-        >
-          Show Pending Payments
+          Show Approved
         </Checkbox>
         <Checkbox
           checked={notApprovedFilter}
           onChange={(e) => setNotApprovedFilter(e.target.checked)}
+          style={{ marginRight: 12 }}
         >
           Show Not Approved
+        </Checkbox>
+        <Checkbox
+          checked={pendingFilter}
+          onChange={(e) => setPendingFilter(e.target.checked)}
+        >
+          Show Pending
         </Checkbox>
       </div>
 
