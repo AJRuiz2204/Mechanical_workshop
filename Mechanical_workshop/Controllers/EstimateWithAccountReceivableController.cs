@@ -37,7 +37,9 @@ namespace Mechanical_workshop.Controllers
                     .Include(e => e.Vehicle)
                         .ThenInclude(v => v.UserWorkshop)
                     .Include(e => e.TechnicianDiagnostic)
-                        .ThenInclude(td => td.Diagnostic)
+                        .ThenInclude(td => td!.Diagnostic)
+                    .Include(e => e.TechnicianDiagnostic)
+                        .ThenInclude(td => td!.Notes)
                     .Include(e => e.Parts)
                     .Include(e => e.Labors)
                     .Include(e => e.FlatFees)
@@ -55,7 +57,7 @@ namespace Mechanical_workshop.Controllers
                                       ? null
                                       : _mapper.Map<AccountReceivableResponseDto>(account),
                               }).ToList();
-                              
+
                 result.ForEach(item =>
                 {
                     if (item.AccountReceivable != null)

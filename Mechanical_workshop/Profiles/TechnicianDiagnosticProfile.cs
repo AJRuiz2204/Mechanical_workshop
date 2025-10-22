@@ -13,7 +13,10 @@ namespace Mechanical_workshop.Profiles
             CreateMap<TechnicianDiagnostic, TechnicianDiagnosticReadDto>()
                 .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes))
                 .ForMember(dest => dest.ReasonForVisit, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.ReasonForVisit : ""))
-                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.VehicleId : 0));
+                .ForMember(dest => dest.AssignedTechnician, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.AssignedTechnician : ""))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.CreatedAt : (DateTime?)null))
+                .ForMember(dest => dest.VehicleId, opt => opt.MapFrom(src => src.Diagnostic != null ? src.Diagnostic.VehicleId : 0))
+                .ForMember(dest => dest.Diagnostic, opt => opt.MapFrom(src => src.Diagnostic));
             CreateMap<TechnicianDiagnosticCreateDto, TechnicianDiagnostic>();
 
 

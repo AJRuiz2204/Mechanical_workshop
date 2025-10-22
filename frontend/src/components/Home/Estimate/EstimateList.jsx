@@ -15,21 +15,21 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
 /**
  * EstimateList Component
  *
- * This component displays a list of estimates with their associated account receivable data.
+ * This component displays a list of estimates with their associated account receivable data and technician diagnostic information.
  * It provides functionality to:
- * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, owner name, or authorization status)
+ * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, owner name, authorization status, or diagnostic information)
  * - Filter estimates by payment status using two checkboxes (Paid and Pending)
+ * - Filter estimates by authorization status (Not Approved)
  * - Edit, delete, or view the PDF for each estimate
  * - Generate or open an account receivable for the estimate
+ * - View diagnostic preview information including reason for visit, assigned technician, and extended diagnostic notes
  * 
  * IMPORTANT: Paid estimates are considered closed invoices/completed work and are hidden by default.
  * They only appear when the "Show Paid (Closed Invoices)" filter is explicitly checked.
  * This prevents the list from being cluttered with completed work orders.
  *
  * @returns {JSX.Element} The EstimateList component.
- */
-
-const EstimateList = () => {
+ */const EstimateList = () => {
   const location = useLocation();
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,9 +53,9 @@ const EstimateList = () => {
       setEstimates(data);
       setError(null);
     } catch (err) {
-      const errorMsg = err.message || 'Failed to load estimates';
+      const errorMsg = err.message || "Failed to load estimates";
       setError(`Error loading estimates: ${errorMsg}`);
-      NotificationService.operationError('load', errorMsg);
+      NotificationService.operationError("load", errorMsg);
     } finally {
       setLoading(false);
     }
@@ -72,24 +72,27 @@ const EstimateList = () => {
       setShowPaymentModal(true);
       return;
     }
-    
+
     ConfirmationDialog.show({
       title: "Generate Account Receivable",
       content: `An account receivable will be generated for estimate #${estId}. Continue?`,
       onConfirm: async () => {
         try {
-          const newAccount = await createAccountReceivable({ estimateId: estId });
-          NotificationService.operationSuccess('create', 'Account receivable');
+          const newAccount = await createAccountReceivable({
+            estimateId: estId,
+          });
+          NotificationService.operationSuccess("create", "Account receivable");
           setSuccess(`Account receivable created for estimate ${estId}.`);
           setModalAccountId(newAccount.id);
           setShowPaymentModal(true);
           fetchEstimates();
         } catch (err) {
-          const errorMsg = err.message || 'Failed to generate account receivable';
+          const errorMsg =
+            err.message || "Failed to generate account receivable";
           setError(`Error generating account: ${errorMsg}`);
-          NotificationService.operationError('create', errorMsg);
+          NotificationService.operationError("create", errorMsg);
         }
-      }
+      },
     });
   };
 
@@ -105,15 +108,16 @@ const EstimateList = () => {
       onConfirm: async () => {
         try {
           await deleteEstimate(id);
-          NotificationService.operationSuccess('delete', `Estimate #${id}`);
+          NotificationService.operationSuccess("delete", `Estimate #${id}`);
           setSuccess(`Estimate ${id} successfully deleted.`);
           fetchEstimates();
         } catch (err) {
-          const errorMsg = err.message || 'An error occurred while deleting the estimate';
+          const errorMsg =
+            err.message || "An error occurred while deleting the estimate";
           setError(`Error deleting estimate: ${errorMsg}`);
-          NotificationService.operationError('delete', errorMsg);
+          NotificationService.operationError("delete", errorMsg);
         }
-      }
+      },
     });
   };
 
@@ -157,6 +161,42 @@ const EstimateList = () => {
       dataIndex: ["estimate", "owner"],
       key: "owner",
       render: (o) => (o ? `${o.name} ${o.lastName}` : "-"),
+    },
+    {
+      title: "Diagnostic",
+      key: "diagnostic",
+      render: (_, item) => {
+        const techDiagnostic = item.estimate?.technicianDiagnostic;
+        if (!techDiagnostic) return "-";
+
+        const reasonForVisit = techDiagnostic.reasonForVisit || "-";
+        const technician = techDiagnostic.assignedTechnician || "-";
+        const extendedDiag = techDiagnostic.extendedDiagnostic;
+
+        return (
+          <div style={{ maxWidth: "200px" }}>
+            <div>
+              <strong>Reason:</strong> {reasonForVisit}
+            </div>
+            <div>
+              <strong>Tech:</strong> {technician}
+            </div>
+            {extendedDiag && (
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#666",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <strong>Notes:</strong> {extendedDiag}
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Total",
@@ -223,10 +263,20 @@ const EstimateList = () => {
   const filteredEstimates = estimates.filter((item) => {
     const term = searchTerm.toLowerCase();
     const est = item.estimate;
-    
+
     // Búsqueda por owner (nombre y apellido)
-    const ownerName = est.owner ? `${est.owner.name || ''} ${est.owner.lastName || ''}`.toLowerCase() : '';
-    
+    const ownerName = est.owner
+      ? `${est.owner.name || ""} ${est.owner.lastName || ""}`.toLowerCase()
+      : "";
+
+    // Búsqueda por technician diagnostic
+    const techDiagnostic = est.technicianDiagnostic;
+    const reasonForVisit = techDiagnostic?.reasonForVisit?.toLowerCase() || "";
+    const assignedTechnician =
+      techDiagnostic?.assignedTechnician?.toLowerCase() || "";
+    const extendedDiagnostic =
+      techDiagnostic?.extendedDiagnostic?.toLowerCase() || "";
+
     const matchesSearch =
       String(est.id).toLowerCase().includes(term) ||
       (est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term)) ||
@@ -235,22 +285,25 @@ const EstimateList = () => {
       (est.total && String(est.total).toLowerCase().includes(term)) ||
       (est.authorizationStatus &&
         est.authorizationStatus.toLowerCase().includes(term)) ||
-      ownerName.includes(term);
+      ownerName.includes(term) ||
+      reasonForVisit.includes(term) ||
+      assignedTechnician.includes(term) ||
+      extendedDiagnostic.includes(term);
 
     const paymentStatus = !item.accountReceivable
       ? "No Account"
       : item.isPaid
       ? "Paid"
       : "Pending";
-    
+
     const authorizationStatus = est.authorizationStatus?.toLowerCase() || "";
-    
+
     // Check authorization status filter
     let authorizationMatches = true;
     if (notApprovedFilter) {
       authorizationMatches = authorizationStatus === "not approved";
     }
-    
+
     // Los estimados pagados son facturas/trabajos cerrados y no se muestran por defecto
     // Solo se muestran si el filtro "Paid" está activo
     let paymentMatches = true;
@@ -267,7 +320,7 @@ const EstimateList = () => {
       // Si no hay filtros activos, excluir los estimados pagados (son facturas cerradas)
       paymentMatches = paymentStatus !== "Paid";
     }
-    
+
     return matchesSearch && paymentMatches && authorizationMatches;
   });
 
@@ -276,7 +329,7 @@ const EstimateList = () => {
   return (
     <div className="estimate-list container-fluid p-4 border rounded">
       <h2 className="mb-4">Estimate List</h2>
-      
+
       {error && (
         <Alert
           message={error}
@@ -295,7 +348,7 @@ const EstimateList = () => {
       )}
 
       <Input.Search
-        placeholder="Search by ID, VIN, owner name, total, or status..."
+        placeholder="Search by ID, VIN, owner name, total, status, or diagnostic info..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         style={{ marginBottom: 16 }}
