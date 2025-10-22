@@ -264,31 +264,8 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
     const term = searchTerm.toLowerCase();
     const est = item.estimate;
 
-    // Búsqueda por owner (nombre y apellido)
-    const ownerName = est.owner
-      ? `${est.owner.name || ""} ${est.owner.lastName || ""}`.toLowerCase()
-      : "";
-
-    // Búsqueda por technician diagnostic
-    const techDiagnostic = est.technicianDiagnostic;
-    const reasonForVisit = techDiagnostic?.reasonForVisit?.toLowerCase() || "";
-    const assignedTechnician =
-      techDiagnostic?.assignedTechnician?.toLowerCase() || "";
-    const extendedDiagnostic =
-      techDiagnostic?.extendedDiagnostic?.toLowerCase() || "";
-
-    const matchesSearch =
-      String(est.id).toLowerCase().includes(term) ||
-      (est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term)) ||
-      (est.subtotal && String(est.subtotal).toLowerCase().includes(term)) ||
-      (est.tax && String(est.tax).toLowerCase().includes(term)) ||
-      (est.total && String(est.total).toLowerCase().includes(term)) ||
-      (est.authorizationStatus &&
-        est.authorizationStatus.toLowerCase().includes(term)) ||
-      ownerName.includes(term) ||
-      reasonForVisit.includes(term) ||
-      assignedTechnician.includes(term) ||
-      extendedDiagnostic.includes(term);
+    // Búsqueda solo por VIN
+    const matchesSearch = est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term);
 
     const paymentStatus = !item.accountReceivable
       ? "No Account"
@@ -348,7 +325,7 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
       )}
 
       <Input.Search
-        placeholder="Search by ID, VIN, owner name, total, status, or diagnostic info..."
+        placeholder="Search by VIN..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         style={{ marginBottom: 16 }}
