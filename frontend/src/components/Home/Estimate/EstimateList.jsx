@@ -17,7 +17,7 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
  *
  * This component displays a list of estimates with their associated account receivable data.
  * It provides functionality to:
- * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, or authorization status)
+ * - Search estimates by various fields (ID, vehicle VIN, subtotal, tax, total, owner name, or authorization status)
  * - Filter estimates by payment status using two checkboxes (Paid and Pending)
  * - Edit, delete, or view the PDF for each estimate
  * - Generate or open an account receivable for the estimate
@@ -223,6 +223,10 @@ const EstimateList = () => {
   const filteredEstimates = estimates.filter((item) => {
     const term = searchTerm.toLowerCase();
     const est = item.estimate;
+    
+    // Búsqueda por owner (nombre y apellido)
+    const ownerName = est.owner ? `${est.owner.name || ''} ${est.owner.lastName || ''}`.toLowerCase() : '';
+    
     const matchesSearch =
       String(est.id).toLowerCase().includes(term) ||
       (est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term)) ||
@@ -230,7 +234,8 @@ const EstimateList = () => {
       (est.tax && String(est.tax).toLowerCase().includes(term)) ||
       (est.total && String(est.total).toLowerCase().includes(term)) ||
       (est.authorizationStatus &&
-        est.authorizationStatus.toLowerCase().includes(term));
+        est.authorizationStatus.toLowerCase().includes(term)) ||
+      ownerName.includes(term);
 
     const paymentStatus = !item.accountReceivable
       ? "No Account"
@@ -290,7 +295,7 @@ const EstimateList = () => {
       )}
 
       <Input.Search
-        placeholder="Search..."
+        placeholder="Search by ID, VIN, owner name, total, or status..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         style={{ marginBottom: 16 }}
