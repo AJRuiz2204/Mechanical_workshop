@@ -480,17 +480,17 @@ const EstimatePDF = ({ pdfData }) => {
             <Text
               style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
             >
-              Item
+              ITEM
             </Text>
             <Text
               style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
             >
-              description
+              DESCRIPTION
             </Text>
             <Text
               style={[styles.tableCol, styles.colPart, styles.tableHeaderText]}
             >
-              Part#
+              PART#
             </Text>
             <Text
               style={[
@@ -499,7 +499,7 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              Qty/Hrs
+              QTY/HRS
             </Text>
             <Text
               style={[
@@ -508,12 +508,12 @@ const EstimatePDF = ({ pdfData }) => {
                 styles.tableHeaderText,
               ]}
             >
-              Price
+              PRICE
             </Text>
             <Text
               style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
             >
-              Extended
+              EXTENDED
             </Text>
           </View>
 

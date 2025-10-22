@@ -299,11 +299,11 @@ const SalesReportPDF = ({ pdfData }) => {
                       detail.Estimate.parts.length > 0 && (
                         <View style={styles.subSection}>
                           <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            Parts:
+                            PARTS:
                           </Text>
                           {detail.Estimate.parts.map((part) => (
                             <Text key={part.id} style={{ fontSize: 9 }}>
-                              - {part.description} (Quantity: {part.quantity}) -
+                              - {part.description} (QUANTITY: {part.quantity}) -
                               ${Number(part.extendedPrice).toFixed(2)}
                             </Text>
                           ))}
@@ -314,12 +314,12 @@ const SalesReportPDF = ({ pdfData }) => {
                       detail.Estimate.labors.length > 0 && (
                         <View style={styles.subSection}>
                           <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            Labor:
+                            LABOR:
                           </Text>
                           {detail.Estimate.labors.map((labor) => (
                             <Text key={labor.id} style={{ fontSize: 9 }}>
-                              - {labor.description} (Duration: {labor.duration}{" "}
-                              hrs) - ${Number(labor.extendedPrice).toFixed(2)}
+                              - {labor.description} (DURATION: {labor.duration}{" "}
+                              HRS) - ${Number(labor.extendedPrice).toFixed(2)}
                             </Text>
                           ))}
                         </View>
@@ -329,7 +329,7 @@ const SalesReportPDF = ({ pdfData }) => {
                       detail.Estimate.flatFees.length > 0 && (
                         <View style={styles.subSection}>
                           <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            Flat Fees:
+                            FLAT FEES:
                           </Text>
                           {detail.Estimate.flatFees.map((fee) => (
                             <Text key={fee.id} style={{ fontSize: 9 }}>

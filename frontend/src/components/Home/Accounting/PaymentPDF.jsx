@@ -503,13 +503,13 @@ const PaymentPDF = ({ pdfData }) => {
           {/* Table Header */}
           <View style={styles.tableHeader}>
             <Text style={[styles.colType, { fontWeight: "bold", fontSize: 10 }]}>
-              Type
+              TYPE
             </Text>
             <Text style={[styles.colDesc, { fontWeight: "bold", fontSize: 10 }]}>
-              Description
+              DESCRIPTION
             </Text>
             <Text style={[styles.colPart, { fontWeight: "bold", fontSize: 10 }]}>
-              Part #
+              PART #
             </Text>
             <Text
               style={[
@@ -517,12 +517,12 @@ const PaymentPDF = ({ pdfData }) => {
                 { fontWeight: "bold", fontSize: 10 },
               ]}
             >
-              Qty/Hrs
+              QTY/HRS
             </Text>
             <Text
               style={[styles.colListPrice, { fontWeight: "bold", fontSize: 10 }]}
             >
-              Unit Price
+              UNIT PRICE
             </Text>
             <Text
               style={[
@@ -530,7 +530,7 @@ const PaymentPDF = ({ pdfData }) => {
                 { fontWeight: "bold", fontSize: 10 },
               ]}
             >
-              Total
+              TOTAL
             </Text>
           </View>
 
