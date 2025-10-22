@@ -23,13 +23,13 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
  * - Edit, delete, or view the PDF for each estimate
  * - Generate or open an account receivable for the estimate
  * - View diagnostic preview information including reason for visit, assigned technician, and extended diagnostic notes
- * 
+ *
  * IMPORTANT: Paid estimates are considered closed invoices/completed work and are hidden by default.
  * They only appear when the "Show Paid (Closed Invoices)" filter is explicitly checked.
  * This prevents the list from being cluttered with completed work orders.
  *
  * @returns {JSX.Element} The EstimateList component.
- */const EstimateList = () => {
+ */ const EstimateList = () => {
   const location = useLocation();
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
   const [modalAccountId, setModalAccountId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [paidFilter, setPaidFilter] = useState(false);
-  const [pendingFilter, setPendingFilter] = useState(false);
+  const [pendingFilter, setPendingFilter] = useState(true);
   const [notApprovedFilter, setNotApprovedFilter] = useState(false);
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [selectedEstimateId, setSelectedEstimateId] = useState(null);
@@ -73,7 +73,7 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
       return;
     }
 
-    ConfirmationDialog.show({
+    ConfirmationDialog.confirm({
       title: "Generate Account Receivable",
       content: `An account receivable will be generated for estimate #${estId}. Continue?`,
       onConfirm: async () => {
@@ -265,7 +265,8 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
     const est = item.estimate;
 
     // Búsqueda solo por VIN
-    const matchesSearch = est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term);
+    const matchesSearch =
+      est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term);
 
     const paymentStatus = !item.accountReceivable
       ? "No Account"
