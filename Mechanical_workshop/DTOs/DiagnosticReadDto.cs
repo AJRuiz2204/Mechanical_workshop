@@ -9,4 +9,5 @@ public class DiagnosticReadDto
     public int? TechDiagnosticId { get; set; }
     public UserWorkshopReadDto? UserWorkshop { get; set; }
     public string AssignedTechnician { get; set; } = string.Empty;
+    public string? AccountReceivableStatus { get; set; }
 }

@@ -47,7 +47,7 @@ namespace Mechanical_workshop.Controllers
                 // Reconsulta el diagnóstico para incluir Vehicle y UserWorkshop
                 var diagnosticWithRelations = await _context.Diagnostics
                     .Include(d => d.Vehicle)
-                        .ThenInclude(v => v.UserWorkshop)
+                        .ThenInclude(v => v!.UserWorkshop)
                     .FirstOrDefaultAsync(d => d.Id == diagnostic.Id);
 
                 // Map entity to ReadDto
@@ -70,7 +70,7 @@ namespace Mechanical_workshop.Controllers
             {
                 var diagnostics = await _context.Diagnostics
                     .Include(d => d.Vehicle)
-                        .ThenInclude(v => v.UserWorkshop)
+                        .ThenInclude(v => v!.UserWorkshop)
                     .Include(d => d.TechnicianDiagnostics)
                     .ToListAsync();
 
@@ -92,7 +92,7 @@ namespace Mechanical_workshop.Controllers
             {
                 var diagnostic = await _context.Diagnostics
                     .Include(d => d.Vehicle)
-                        .ThenInclude(v => v.UserWorkshop)
+                        .ThenInclude(v => v!.UserWorkshop)
                     .Include(d => d.TechnicianDiagnostics)
                     .FirstOrDefaultAsync(d => d.Id == id);
 
@@ -189,14 +189,38 @@ namespace Mechanical_workshop.Controllers
 
                 var fullName = $"{name} {lastName}";
 
+                // Consulta optimizada con join para obtener el status de AccountReceivable
+                var diagnosticsWithAccountStatus = await (from d in _context.Diagnostics
+                    where d.AssignedTechnician == fullName
+                    select new
+                    {
+                        Diagnostic = d,
+                        AccountReceivableStatus = (from td in _context.TechnicianDiagnostics
+                            join e in _context.Estimates on td.Id equals e.TechnicianDiagnosticID into estimates
+                            from estimate in estimates.DefaultIfEmpty()
+                            join ar in _context.AccountsReceivable on estimate.ID equals ar.EstimateId into accountReceivables
+                            from accountReceivable in accountReceivables.DefaultIfEmpty()
+                            where td.DiagnosticId == d.Id
+                            select accountReceivable.Status).FirstOrDefault()
+                    }).ToListAsync();
+
+                // Cargar las relaciones necesarias para los diagnósticos
+                var diagnosticIds = diagnosticsWithAccountStatus.Select(x => x.Diagnostic.Id).ToList();
                 var diagnostics = await _context.Diagnostics
-                    .Where(d => d.AssignedTechnician == fullName)
+                    .Where(d => diagnosticIds.Contains(d.Id))
                     .Include(d => d.Vehicle)
-                        .ThenInclude(v => v.UserWorkshop)
+                        .ThenInclude(v => v!.UserWorkshop)
                     .Include(d => d.TechnicianDiagnostics)
                     .ToListAsync();
 
-                var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics);
+                var diagnosticReadDtos = _mapper.Map<IEnumerable<DiagnosticReadDto>>(diagnostics).ToList();
+
+                // Asignar el status de AccountReceivable a cada DTO
+                foreach (var dto in diagnosticReadDtos)
+                {
+                    var matchingResult = diagnosticsWithAccountStatus.FirstOrDefault(x => x.Diagnostic.Id == dto.Id);
+                    dto.AccountReceivableStatus = matchingResult?.AccountReceivableStatus;
+                }
 
                 return Ok(diagnosticReadDtos);
             }

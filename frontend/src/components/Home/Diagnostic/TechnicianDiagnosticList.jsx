@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spin, Alert, Badge, Space, Card } from "antd";
+import { Table, Button, Spin, Alert, Badge, Space, Card, Input } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import {
   getDiagnosticsByTechnician,
@@ -28,6 +29,7 @@ const TechnicianDiagnosticList = () => {
   const [error, setError] = useState("");
   const [techDiagMap, setTechDiagMap] = useState({});
   const [userProfile, setUserProfile] = useState("");
+  const [filteredDiagnostics, setFilteredDiagnostics] = useState([]);
 
   // Columns configuration for AntD Table
   const columns = [
@@ -142,9 +144,12 @@ const TechnicianDiagnosticList = () => {
         } else {
           // Technician sees only assigned diagnostics
           data = await getDiagnosticsByTechnician(name, lastName);
+          // Filter out diagnostics with accountReceivableStatus "Paid"
+          data = data.filter(diagnostic => diagnostic.accountReceivableStatus !== "Paid");
         }
 
         setDiagnostics(data);
+        setFilteredDiagnostics(data);
 
         // Retrieve TechnicianDiagnostics for each diagnostic
         const newTechDiagMap = {};
@@ -169,6 +174,34 @@ const TechnicianDiagnosticList = () => {
 
     fetchTechnicianDiagnostics();
   }, []);
+
+  /**
+   * Handles search functionality across VIN, Make, Model, and Customer state
+   * @param {string} value - Search term
+   */
+  const handleSearch = (value) => {
+    if (!value.trim()) {
+      setFilteredDiagnostics(diagnostics);
+      return;
+    }
+
+    const searchLower = value.toLowerCase();
+    const filtered = diagnostics.filter((diagnostic) => {
+      const vin = diagnostic.vehicle?.vin?.toLowerCase() || "";
+      const make = diagnostic.vehicle?.make?.toLowerCase() || "";
+      const model = diagnostic.vehicle?.model?.toLowerCase() || "";
+      const customerState = diagnostic.reasonForVisit?.toLowerCase() || "";
+
+      return (
+        vin.includes(searchLower) ||
+        make.includes(searchLower) ||
+        model.includes(searchLower) ||
+        customerState.includes(searchLower)
+      );
+    });
+
+    setFilteredDiagnostics(filtered);
+  };
 
   /**
    * Handles the deletion of a technician diagnostic.
@@ -207,6 +240,17 @@ const TechnicianDiagnosticList = () => {
 
   return (
     <Card title={getTitle()} style={{ margin: 16 }}>
+      {/* Search Input */}
+      <div style={{ marginBottom: 16 }}>
+        <Input
+          placeholder="Search by VIN, Make, Model, or Customer state..."
+          prefix={<SearchOutlined />}
+          onChange={(e) => handleSearch(e.target.value)}
+          style={{ maxWidth: 400 }}
+          allowClear
+        />
+      </div>
+
       {/* Error message */}
       {error && (
         <Alert
@@ -219,6 +263,13 @@ const TechnicianDiagnosticList = () => {
 
       {/* Loading and content */}
       <Spin spinning={loading} tip="Loading...">
+        {!loading && filteredDiagnostics.length === 0 && diagnostics.length > 0 && (
+          <Alert
+            message="No diagnostics found matching your search criteria."
+            type="info"
+            showIcon
+          />
+        )}
         {!loading && diagnostics.length === 0 && (
           <Alert
             message={
@@ -231,7 +282,7 @@ const TechnicianDiagnosticList = () => {
           />
         )}
         <Table
-          dataSource={diagnostics}
+          dataSource={filteredDiagnostics}
           columns={columns}
           rowKey="id"
           pagination={{ pageSize: 10 }}
