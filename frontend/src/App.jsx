@@ -21,6 +21,7 @@ import TechnicianDiagnosticList from "./components/Home/Diagnostic/TechnicianDia
 import AccountsReceivableView from "./components/Home/Accounting/AccountsReceivableView";
 import PaymentList from "./components/Home/Accounting/PaymentList";
 import ClientPaymentPDFViewer from "./components/Home/Accounting/ClientPaymentPDFViewer";
+import AccountPaymentPDFViewer from "./components/Home/Accounting/AccountPaymentPDFViewer";
 import SalesReportView from "./components/Home/Reports/SalesReportsListView";
 import SalesReportPDFViewer from "./components/Home/Reports/SalesReportPDFViewer";
 import SalesReportAllPreviewView from "./components/Home/Reports/SalesReportAllPreviewView";
@@ -221,6 +222,14 @@ const App = () => {
             element={
               <ProtectedRoute requiredRole="Manager">
                 <ClientPaymentPDFViewer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account-payment-pdf/:accountId"
+            element={
+              <ProtectedRoute requiredRole="Manager">
+                <AccountPaymentPDFViewer />
               </ProtectedRoute>
             }
           />

@@ -125,13 +125,35 @@ const AccountsReceivableView = () => {
         getPaymentsByAccount(accountId),
       ]);
 
+      // Sort payments by payment date (most recent first) as an additional safety measure
+      const sortedPayments = [...paymentsData].sort((a, b) => {
+        const dateA = new Date(a.paymentDate);
+        const dateB = new Date(b.paymentDate);
+        return dateB - dateA; // Descending order (most recent first)
+      });
+
       setSelectedAccount(accountDetails);
-      setPayments(paymentsData);
+      setPayments(sortedPayments);
       setIsPaymentModalVisible(true);
       console.log("Selected account:", accountDetails);
-      console.log("Current payments:", paymentsData);
+      console.log("Current payments:", sortedPayments);
     } catch (error) {
       console.error("Error loading account details:", error);
+      NotificationService.operationError('load', error.message);
+    }
+  };
+
+  /**
+   * handleViewPDF:
+   * Navigates to the client payment PDF viewer to show the PDF.
+   * @param {number} accountId - The ID of the selected account.
+   */
+  const handleViewPDF = async (accountId) => {
+    try {
+      // Navigate directly with accountId to avoid mixing accounts
+      navigate(`/account-payment-pdf/${accountId}`);
+    } catch (error) {
+      console.error("Error navigating to PDF view:", error);
       NotificationService.operationError('load', error.message);
     }
   };
@@ -197,8 +219,16 @@ const AccountsReceivableView = () => {
 
       // After successful payment creation, update the payment history and account details.
       const updatedPayments = await getPaymentsByAccount(selectedAccountId);
-      setPayments(updatedPayments);
-      console.log("Updated payments:", updatedPayments);
+      
+      // Sort payments by payment date (most recent first) as an additional safety measure
+      const sortedUpdatedPayments = [...updatedPayments].sort((a, b) => {
+        const dateA = new Date(a.paymentDate);
+        const dateB = new Date(b.paymentDate);
+        return dateB - dateA; // Descending order (most recent first)
+      });
+      
+      setPayments(sortedUpdatedPayments);
+      console.log("Updated payments:", sortedUpdatedPayments);
 
       const updatedAccount = await getAccountReceivableById(selectedAccountId);
       setSelectedAccount(updatedAccount);
@@ -226,12 +256,11 @@ const AccountsReceivableView = () => {
 
   /**
    * handlePrintInvoice:
-   * Navigates to the client payment PDF viewer to print the invoice.
+   * Navigates to the account payment PDF viewer to print the invoice.
    */
   const handlePrintInvoice = () => {
-    if (selectedAccount && selectedAccount.customer) {
-      const customerId = selectedAccount.customer.id;
-      navigate(`/client-payment-pdf/${customerId}`);
+    if (selectedAccountId) {
+      navigate(`/account-payment-pdf/${selectedAccountId}`);
       // Close both modals
       setIsPaymentSuccessModalVisible(false);
       closePaymentModal();
@@ -370,9 +399,9 @@ const AccountsReceivableView = () => {
             type="default"
             icon={<EyeOutlined />}
             size="small"
-            onClick={() => openPaymentModal(record.id)}
+            onClick={() => handleViewPDF(record.id)}
           >
-            View
+            View PDF
           </Button>
         </Space>
       ),

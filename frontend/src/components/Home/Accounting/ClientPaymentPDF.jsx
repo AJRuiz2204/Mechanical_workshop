@@ -348,17 +348,26 @@ const ClientPaymentPDF = ({ pdfData }) => {
   const workshopData = pdfData?.workshopData || {};
   const customer = pdfData?.customer || {};
   const vehicle = pdfData?.vehicle || {};
-  const payments = pdfData?.payments || [];
+  const rawPayments = pdfData?.payments || [];
+  const account = pdfData?.account || {};
 
-  // Calculate totals
+  // Sort payments by payment date (most recent first) as an additional safety measure
+  const payments = [...rawPayments].sort((a, b) => {
+    const dateA = new Date(a.paymentDate);
+    const dateB = new Date(b.paymentDate);
+    return dateB - dateA; // Descending order (most recent first)
+  });
+
+  // Calculate totals - use account data as primary source, fallback to payment data
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const remainingBalance = payments[0]?.remainingBalance || 0;
-  const initialBalance = payments[0]?.initialBalance || 0;
+  const remainingBalance = account.balance ?? (payments[0]?.remainingBalance || 0);
+  const initialBalance = account.originalAmount ?? (payments[0]?.initialBalance || 0);
+  
   // Format the current date for the footer
   const formattedDate = dayjs().format("YYYY-MM-DD HH:mm:ss");
 
-  // Use customer ID or first payment ID for quote number
-  const quoteNumber = customer.id || payments[0]?.id || "N/A";
+  // Use account ID or customer ID for quote number
+  const quoteNumber = account.id || customer.id || payments[0]?.id || "N/A";
 
   return (
     <Document>
@@ -489,7 +498,6 @@ const ClientPaymentPDF = ({ pdfData }) => {
               -${totalPaid.toFixed(2)}
             </Text>
           </View>
-          <View style={styles.separator} />
           <View style={[styles.totalRow, styles.grandTotal]}>
             <Text style={[styles.totalLabel, styles.grandTotalText]}>
               Remaining Balance:
@@ -551,7 +559,7 @@ const ClientPaymentPDF = ({ pdfData }) => {
             </Text>
           </View>
 
-          {/* Table Rows */}
+          {/* Table Rows - Payments are sorted by date (most recent first) */}
           {payments.length > 0 ? (
             payments.map((payment, index) => (
               <View
@@ -684,6 +692,13 @@ ClientPaymentPDF.propTypes = {
       color: PropTypes.string,
       licensePlate: PropTypes.string,
       vin: PropTypes.string,
+    }),
+    account: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      originalAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      balance: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      status: PropTypes.string,
+      createdDate: PropTypes.string,
     }),
     payments: PropTypes.arrayOf(
       PropTypes.shape({

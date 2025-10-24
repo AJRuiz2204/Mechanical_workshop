@@ -26,7 +26,7 @@ export const getAllPayments = async () => {
  * @async
  * @function getPaymentsByCustomer
  * @param {number|string} customerId - The ID of the customer.
- * @returns {Promise<Array>} An array of payments for the specified customer.
+ * @returns {Promise<Array>} An array of payments for the specified customer, sorted by payment date (most recent first).
  * @throws Will throw an error if the request fails.
  */
 export const getPaymentsByCustomer = async (customerId) => {
@@ -34,7 +34,15 @@ export const getPaymentsByCustomer = async (customerId) => {
     const response = await api.get(
       `${ACCOUNT_RECEIVABLE_API_URL}/Payment/Client/${customerId}`
     );
-    return response.data;
+    
+    // Sort payments by payment date (most recent first)
+    const sortedPayments = response.data.sort((a, b) => {
+      const dateA = new Date(a.paymentDate);
+      const dateB = new Date(b.paymentDate);
+      return dateB - dateA; // Descending order (most recent first)
+    });
+    
+    return sortedPayments;
   } catch (error) {
     console.error("Error in getPaymentsByCustomer:", error);
     throw error;
@@ -154,13 +162,21 @@ export const createPayment = async (paymentData) => {
  * @async
  * @function getPaymentsByAccount
  * @param {number|string} accountId - The ID of the account.
- * @returns {Promise<Array>} An array of payments for the specified account.
+ * @returns {Promise<Array>} An array of payments for the specified account, sorted by payment date (most recent first).
  * @throws Will throw an error if the request fails.
  */
 export const getPaymentsByAccount = async (accountId) => {
   try {
     const response = await api.get(PAYMENT_API_URL(accountId));
-    return response.data;
+    
+    // Sort payments by payment date (most recent first)
+    const sortedPayments = response.data.sort((a, b) => {
+      const dateA = new Date(a.paymentDate);
+      const dateB = new Date(b.paymentDate);
+      return dateB - dateA; // Descending order (most recent first)
+    });
+    
+    return sortedPayments;
   } catch (error) {
     console.error("Error in getPaymentsByAccount:", error);
     throw error;
