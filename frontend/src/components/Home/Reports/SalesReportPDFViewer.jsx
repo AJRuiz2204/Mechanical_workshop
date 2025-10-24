@@ -74,6 +74,7 @@ const SalesReportPDFViewer = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          
         }}
       >
         <Space>
@@ -85,7 +86,7 @@ const SalesReportPDFViewer = () => {
             Volver
           </Button>
           <Typography.Title level={4} style={{ margin: 0 }}>
-            Reporte de Ventas - ID: {salesReportId}
+            Reporte de Ventas
           </Typography.Title>
         </Space>
         <Button
