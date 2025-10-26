@@ -635,14 +635,14 @@ const AccountsReceivableView = () => {
                           { required: true, message: "Please enter an amount" },
                           {
                             type: "number",
-                            min: 0.01,
+                            min: 0.00,
                             message: "Amount must be greater than 0",
                           },
                         ]}
                       >
                         <InputNumber
                           style={{ width: "100%" }}
-                          step={0.01}
+                          step={0.00}
                           max={selectedAccount.balance}
                           placeholder={`Max: $${selectedAccount.balance.toFixed(
                             2

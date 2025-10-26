@@ -37,8 +37,8 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         </Form.Item>
         <Form.Item label="Quantity" required>
           <InputNumber
-            min={0.01}
-            step={0.01}
+            min={0.00}
+            step={1}
             precision={2}
             value={newPart.quantity}
             placeholder="0.00"
@@ -56,8 +56,8 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         </Form.Item>
         <Form.Item label="Net Price" required>
           <InputNumber
-            min={0.01}
-            step={0.01}
+            min={0.00}
+            step={1}
             precision={2}
             value={newPart.netPrice}
             placeholder="0.00"
@@ -72,8 +72,8 @@ const PartModal = ({ show, onHide, newPart, setNewPart, addPart, noTax, settings
         </Form.Item>
         <Form.Item label="List Price" required>
           <InputNumber
-            min={0.01}
-            step={0.01}
+            min={0.00}
+            step={1}
             precision={2}
             value={newPart.listPrice}
             placeholder="0.00"

@@ -190,7 +190,7 @@ const AccountPaymentModal = ({ show, onHide, accountId }) => {
                   >
                     <InputNumber
                       style={{ width: "100%" }}
-                      step={0.01}
+                      step={0.00}
                       onChange={(value) =>
                         setFormData({ ...formData, amount: value })
                       }

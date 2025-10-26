@@ -239,7 +239,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.hourlyRate1}
                 onChange={(v) => handleChange("hourlyRate1", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
@@ -248,7 +248,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.hourlyRate2}
                 onChange={(v) => handleChange("hourlyRate2", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
@@ -257,7 +257,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.hourlyRate3}
                 onChange={(v) => handleChange("hourlyRate3", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
@@ -266,7 +266,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.defaultHourlyRate}
                 onChange={(v) => handleChange("defaultHourlyRate", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
@@ -275,7 +275,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.partTaxRate}
                 onChange={(v) => handleChange("partTaxRate", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
@@ -295,7 +295,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.laborTaxRate}
                 onChange={(v) => handleChange("laborTaxRate", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
@@ -315,7 +315,7 @@ const LaborTaxMarkupSettingsForm = () => {
                 style={{ width: "100%" }}
                 value={formData.partMarkup}
                 onChange={(v) => handleChange("partMarkup", v)}
-                step={0.01}
+                step={0.00}
               />
             </Form.Item>
 
