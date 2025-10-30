@@ -1,332 +1,174 @@
+import PropTypes from "prop-types";
+import dayjs from "dayjs";
 import {
   Page,
   Text,
   View,
   Document,
   StyleSheet,
-  Link,
   Image,
 } from "@react-pdf/renderer";
-import PropTypes from "prop-types";
-import dayjs from "dayjs";
-import logo from "../../../images/logo.png";
+import logo from "../../../images/logo.png"; // Asegúrate que la ruta sea correcta
 
-// Define PDF styles - Updated with PaymentPDF styles
 const styles = StyleSheet.create({
   page: {
-    padding: 15,
-    fontFamily: "Helvetica",
-    fontSize: 10,
+    padding: 20,
+    fontFamily: "Courier", // Usamos Courier para el look 'font-mono'
+    fontSize: 9,
     backgroundColor: "#ffffff",
+    color: "#000000",
   },
+
+  // --- Encabezado (Simula row 2-8) ---
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    alignItems: "center",
     paddingBottom: 5,
-    borderBottom: "1px solid #000",
+    borderBottom: "2px solid #eeeeee",
+    backgroundColor: "#f9f9f9",
+    minHeight: 60, // Altura para el logo
   },
-  logoSection: {
-    width: 150,
+  headerInfoLeft: {
+    width: "30%",
+    padding: 5,
   },
-  companyName: {
-    fontSize: 18,
-    marginBottom: 3,
-    color: "#2596be",
+  headerLogo: {
+    width: "40%",
+    padding: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoImage: {
+    maxHeight: 50,
+    objectFit: "contain",
+  },
+  headerInfoRight: {
+    width: "30%",
+    padding: 5,
     textAlign: "right",
   },
-  companyInfo: {
-    flex: 1,
-    textAlign: "right",
+  boldText: {
+    fontFamily: "Courier-Bold",
   },
-  companyText: {
-    fontSize: 12,
-    marginBottom: 3,
-    color: "#000000",
-  },
-  billSection: {
+
+  // --- Info Cliente/Vehículo (Simula row 9-15) ---
+  infoSection: {
     flexDirection: "row",
-    marginBottom: 25,
-    paddingBottom: 10,
-  },
-  billTo: {
-    flex: 1,
-    paddingRight: 20,
-  },
-  vehicleInfo: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    marginBottom: 4,
-    fontWeight: "bold",
-  },
-  infoText: {
-    fontSize: 10,
-    marginBottom: 8,
-  },
-  // Service description with border-bottom; displays extendedDiagnostic if available
-  serviceDescription: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#000000",
-    paddingBottom: 10,
-    marginBottom: 20,
-    fontSize: 10,
-    textTransform: "uppercase",
-  },
-  invoiceHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  // Table styles for combined items (Parts, Labors, FlatFees)
-  table: {
     marginTop: 10,
     marginBottom: 10,
   },
+  infoBoxLeft: {
+    width: "50%",
+    padding: 5,
+    borderRight: "1px solid #eeeeee",
+  },
+  infoBoxRight: {
+    width: "50%",
+    padding: 5,
+    paddingLeft: 10,
+  },
+  mileage: {
+    position: "absolute", // 'float-right' no existe, usamos posición
+    right: 5,
+    top: 28,
+  },
+
+  // --- Tabla de Items ---
   tableHeader: {
     flexDirection: "row",
-    paddingBottom: 5,
-    marginBottom: 8,
+    alignItems: "center",
+    backgroundColor: "#eeeeee",
+    borderTop: "2px solid black",
+    borderBottom: "2px solid black",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    fontFamily: "Courier-Bold",
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 4,
     alignItems: "center",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#000",
+    borderBottom: "1px solid #cccccc",
+    paddingVertical: 3,
+    paddingHorizontal: 2,
   },
-  tableText: {
-    fontSize: 9,
+  // Anchos de columna para la tabla
+  colItem: { width: "10%" },
+  colDesc: { width: "35%" },
+  colPart: { width: "15%" },
+  colQty: { width: "10%", textAlign: "center" },
+  colPrice: { width: "15%", textAlign: "right" },
+  colExt: { width: "15%", textAlign: "right", paddingRight: 2 },
+
+  // Contenedor para las filas (para que el fondo no se rompa)
+  tableRowsContainer: {
+    minHeight: 250, // Simula row-[16_/_45]
   },
-  colType: {
-    width: "12%",
-    textAlign: "left",
-    paddingLeft: 2,
-  },
-  colDesc: {
-    width: "48%",
-    paddingLeft: 2,
-  },
-  colPart: {
-    width: "12%",
-    textAlign: "left",
-    paddingLeft: 2,
-  },
-  colQuantityHours: {
-    width: "8%",
-    textAlign: "center",
-  },
-  colListPrice: {
-    width: "20%",
-    textAlign: "right",
-    paddingRight: 2,
-  },
-  colExtendedPrice: {
-    width: "16%",
-    textAlign: "center",
-    paddingRight: 2,
-  },
-  historyAndTotals: {
+
+  // --- Footer (Disclaimer y Totales) ---
+  footerSection: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    marginTop: 15,
   },
-  paymentHistoryContainer: {
-    width: "45%",
+  footerLeft: {
+    width: "60%",
   },
-  historyHeader: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#000",
-    paddingBottom: 5,
-    marginBottom: 8,
+  footerRight: {
+    width: "40%",
+    paddingLeft: 10,
   },
-  historyRow: {
-    flexDirection: "row",
-    paddingVertical: 4,
-  },
-  colDate: {
-    width: "30%",
-    fontSize: 10,
-  },
-  colAmount: {
-    width: "25%",
-    fontSize: 10,
-    textAlign: "right",
-  },
-  colReference: {
-    width: "45%",
-    fontSize: 10,
-    paddingLeft: 5,
-  },
-  totalsSection: {
-    marginLeft: "auto",
-    width: "45%",
-    marginTop: 20,
-    alignItems: "flex-end",
+  disclaimer: {
+    paddingTop: 5,
+    borderTop: "1px solid #eeeeee",
+    marginTop: 10,
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  totalLabel: {
-    fontSize: 10,
-    width: 100,
-    textAlign: "right",
-    paddingRight: 10,
-  },
-  totalAmount: {
-    fontSize: 10,
-    width: 80,
-    textAlign: "right",
-  },
-  separator: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#000",
-    alignSelf: "flex-end",
-    marginVertical: 4,
-    width: 120,
-  },
-  paymentOptions: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    marginTop: 10,
-  },
-  // Disclaimer style for footer
-  disclaimer: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    fontSize: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#000000",
-    paddingTop: 8,
-    backgroundColor: "#ffffff",
-  },
-  boldContentText: {
-    fontWeight: "bold",
-  },
-  // Notes section styles
-  notesSection: {
-    marginTop: 15,
-    marginBottom: 15,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#000",
-  },
-  noteItem: {
-    marginBottom: 8,
-    paddingLeft: 5,
-  },
-  noteDate: {
-    fontSize: 8,
-    fontWeight: "bold",
     marginBottom: 2,
   },
-  noteContent: {
-    fontSize: 10,
-    lineHeight: 1.2,
-  },
-  // Legacy styles for backward compatibility
-  headerContainer: {
+  totalFinal: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 5,
-  },
-  headerInfoContainer: {
-    flex: 1,
-    flexDirection: "column",
-    alignItems: "flex-end",
-    padding: 0,
-  },
-  workshopInfo: {
-    marginBottom: 3,
-    alignItems: "flex-end",
-  },
-  quoteInfo: {
-    alignItems: "flex-end",
-    padding: 0,
-  },
-  textLine: {
-    fontSize: 9,
-    marginBottom: 1,
-  },
-  link: {
-    textDecoration: "underline",
-    color: "blue",
-    fontSize: 9,
-  },
-  infoSection: {
-    flexDirection: "row",
-    marginTop: 5,
-    marginBottom: 5,
-    padding: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  noteSection: {
-    marginTop: 5,
-    marginBottom: 5,
-    padding: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  tableHeaderText: {
-    fontSize: 8,
-    fontWeight: "bold",
-  },
-  tableCol: {
-    padding: 2,
-  },
-  colTax: {
-    width: "16%",
-    textAlign: "center",
-  },
-  grandTotal: {
     marginTop: 5,
     paddingTop: 5,
-    borderTopWidth: 1,
-    borderTopColor: "#000000",
-  },
-  grandTotalText: {
-    fontWeight: "bold",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    fontSize: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    paddingTop: 5,
-  },
-  mileage: {
+    borderTop: "1px solid #cccccc",
+    fontFamily: "Courier-Bold",
     fontSize: 10,
-    marginVertical: 4,
+  },
+
+  // --- Firma ---
+  signatureSection: {
+    flexDirection: "row",
+    marginTop: "auto", // Empuja esto al fondo de la página
+    paddingTop: 20,
+    alignItems: "flex-end",
+  },
+  signatureX: {
+    fontSize: 14,
+    fontFamily: "Courier-Bold",
+  },
+  signatureLine: {
+    flexGrow: 1,
+    borderBottom: "1px solid black",
+    marginHorizontal: 10,
+    height: 10,
+  },
+  signatureDate: {
+    width: 80,
+  },
+  signatureLabel: {
+    fontSize: 8,
+    textAlign: "center",
+    position: "absolute",
+    bottom: -10, // Posiciona debajo
+    left: 40,
+    width: 150,
   },
 });
 
-/**
- * EstimatePDF Component
- *
- * Description:
- * This component generates a PDF document for an estimate using the @react-pdf/renderer library.
- * It shows workshop information, customer and vehicle details, a list of items (parts, labor, flat rates),
- * calculated totals, and customer notes. The PDF also includes a header with the workshop logo
- * and a footer with disclaimers.
- *
- * Props:
- * - pdfData: An object containing all necessary data to populate the PDF, including workshopData,
- *   customer, vehicle, items, totals, and customerNote.
- */
 const EstimatePDF = ({ pdfData }) => {
-  // Handle data safely with default values to avoid undefined errors
+  // 1. Extraemos los datos de forma segura (igual que en tu código)
   const safeWorkshopData = pdfData?.workshopData || {};
   const safeCustomer = pdfData?.customer || {};
   const safeVehicle = pdfData?.vehicle || {};
@@ -335,283 +177,170 @@ const EstimatePDF = ({ pdfData }) => {
   const customerNote = pdfData?.customerNote || "";
   const mileage = pdfData?.mileage || 0;
   const estimateId = pdfData?.estimateId || pdfData?.estimate?.id;
-  const isInvoice = pdfData?.isInvoice || false; // Flag to determine if this is an invoice or quote
+  const isInvoice = pdfData?.isInvoice || false;
 
-  /**
-   * Formats the date string for "Last Updated".
-   * Adjusts the time according to the time zone if necessary.
-   *
-   * @param {string} dateString - The date string to format.
-   * @returns {string} - The formatted date string.
-   */
-  const formatLastUpdated = (dateString) => {
-    if (!dateString) return "";
-    return dayjs(dateString)
-      .subtract(6, "hour") // Adjust according to your time zone
-      .format("YYYY-MM-DD HH:mm:ss");
+  // 2. Formateamos los números (una función de ayuda)
+  const formatCurrency = (num) => {
+    return parseFloat(num || 0).toFixed(2);
   };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header Section */}
-        <View style={styles.headerContainer}>
-          {/* Logo Section */}
-          <View style={styles.logoSection}>
-            <Image
-              src={logo}
-              style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain",
-              }}
-            />
+        {/* ===== SECCIÓN DE ENCABEZADO ===== */}
+        <View style={styles.header} fixed>
+          <View style={styles.headerInfoLeft}>
+            <Text style={styles.boldText}>{safeWorkshopData.workshopName}</Text>
+            <Text>{safeWorkshopData.address || ""}</Text>
+            <Text>Ph: {safeWorkshopData.primaryPhone || ""}</Text>
+            {safeWorkshopData.secondaryPhone && (
+              <Text>Ph2: {safeWorkshopData.secondaryPhone}</Text>
+            )}
+            {safeWorkshopData.email && <Text>{safeWorkshopData.email}</Text>}
           </View>
 
-          {/* Container for Workshop and Quote Information */}
-          <View style={styles.headerInfoContainer}>
-            {/* Workshop Information */}
-            <View style={styles.workshopInfo}>
-              <Text style={styles.textLine}>
-                {safeWorkshopData.workshopName}
-              </Text>
-              <Text style={styles.textLine}>
-                {safeWorkshopData.address || ""}
-              </Text>
-              <Text style={styles.textLine}>
-                {safeWorkshopData.primaryPhone || ""}
-              </Text>
-              {safeWorkshopData.secondaryPhone && (
-                <Text style={styles.textLine}>
-                  {safeWorkshopData.secondaryPhone}
-                </Text>
-              )}
-              <Text style={styles.textLine}>
-                Fax: {safeWorkshopData.fax || ""}
-              </Text>
-              <Text style={styles.textLine}>
-                {safeWorkshopData.email || ""}
-              </Text>
-              {safeWorkshopData.websiteUrl && (
-                <Link src={safeWorkshopData.websiteUrl} style={styles.link}>
-                  {safeWorkshopData.websiteUrl}
-                </Link>
-              )}
-            </View>
+          <View style={styles.headerLogo}>
+            <Image src={logo} style={styles.logoImage} />
+          </View>
 
-            {/* Quote Information */}
-            <View style={styles.quoteInfo}>
-              <Text style={[styles.textLine, { fontWeight: "bold" }]}>
-                {isInvoice ? "Invoice" : "Quote"} # {estimateId || "N/A"}
-              </Text>
-              <Text style={styles.textLine}>
-                Date: {dayjs().format("MMM DD, YYYY")}
-              </Text>
-              <Text style={styles.textLine}>
-                Last Updated: {formatLastUpdated(safeWorkshopData.lastUpdated)}
-              </Text>
-            </View>
+          <View style={styles.headerInfoRight}>
+            <Text style={styles.boldText}>
+              {isInvoice ? "Invoice" : "Quote"} #: {estimateId || "N/A"}
+            </Text>
+            <Text>Date: {dayjs().format("MM/DD/YY hh:mm A")}</Text>
+            <Text>Page 1 of 1</Text>
           </View>
         </View>
 
-        {/* Separator Line */}
-        <View
-          style={{
-            borderBottomWidth: 1,
-            borderBottomColor: "#e0e0e0",
-            marginTop: 5,
-            marginBottom: 5,
-          }}
-        />
-
-        {/* Customer and Vehicle Information */}
+        {/* ===== INFO CLIENTE Y VEHÍCULO ===== */}
         <View style={styles.infoSection}>
-          <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.sectionTitle}>Customer</Text>
-            <Text style={styles.textLine}>
-              {safeCustomer.name} {safeCustomer.lastName}
+          <View style={styles.infoBoxLeft}>
+            <Text style={styles.boldText}>
+              {safeCustomer.name} {safeCustomer.lastName} (Authorizer)
             </Text>
-            {safeCustomer.email && (
-              <Text style={styles.textLine}>{safeCustomer.email}</Text>
-            )}
-            <Text style={styles.textLine}>
-              {safeCustomer.primaryNumber || "N/A"}{" "}
-              {/* Mostrar primaryNumber */}
-            </Text>
-            {safeCustomer.address && (
-              <Text style={styles.textLine}>{safeCustomer.address}</Text>
-            )}
-            {safeCustomer.city && safeCustomer.state && (
-              <Text style={styles.textLine}>
+            <Text>{safeCustomer.address || ""}</Text>
+            {safeCustomer.city && (
+              <Text>
                 {safeCustomer.city}, {safeCustomer.state}{" "}
                 {safeCustomer.zip || ""}
               </Text>
             )}
+            <Text>M: {safeCustomer.primaryNumber || "N/A"}</Text>
+            {safeCustomer.email && <Text>{safeCustomer.email}</Text>}
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>Vehicle</Text>
-            <Text style={styles.textLine}>
+
+          <View style={styles.infoBoxRight}>
+            <Text style={styles.boldText}>
               {safeVehicle.year} {safeVehicle.make} {safeVehicle.model}
             </Text>
-            <Text style={styles.textLine}>
-              Engine: {safeVehicle.engine || "N/A"}
-            </Text>
-            <Text style={styles.textLine}>VIN: {safeVehicle.vin || "N/A"}</Text>
-            <Text style={styles.textLine}>
-              Mileage: {mileage.toLocaleString()} miles {/* Mostrar mileage */}
+            <Text>Engine: {safeVehicle.engine || "N/A"}</Text>
+            <Text>VIN: {safeVehicle.vin || "N/A"}</Text>
+            <Text style={styles.mileage}>
+              Mileage: In {mileage.toLocaleString()} | Out 0
             </Text>
           </View>
         </View>
 
-        {/* Customer Notes Section */}
-        {customerNote && (
-          <View style={styles.noteSection}>
-            <Text style={styles.sectionTitle}>
-              Description of labor or services:
-            </Text>
-            <Text>{customerNote}</Text>
-          </View>
-        )}
+        {/* ===== TABLA DE ITEMS (ENCABEZADO) ===== */}
+        <View style={styles.tableHeader} fixed>
+          <Text style={styles.colItem}>ITEM</Text>
+          <Text style={styles.colDesc}>DESCRIPTION</Text>
+          <Text style={styles.colPart}>PART#</Text>
+          <Text style={styles.colQty}>QTY/HRS</Text>
+          <Text style={styles.colPrice}>PRICE</Text>
+          <Text style={styles.colExt}>EXTENDED</Text>
+        </View>
 
-        {/* Items Table */}
-        <View style={styles.table}>
-          {/* Table Headers */}
-          <View style={[styles.tableRow, styles.tableHeader]}>
-            <Text
-              style={[styles.tableCol, styles.colType, styles.tableHeaderText]}
-            >
-              ITEM
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.colDesc, styles.tableHeaderText]}
-            >
-              DESCRIPTION
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.colPart, styles.tableHeaderText]}
-            >
-              PART#
-            </Text>
-            <Text
-              style={[
-                styles.tableCol,
-                styles.colQuantityHours,
-                styles.tableHeaderText,
-              ]}
-            >
-              QTY/HRS
-            </Text>
-            <Text
-              style={[
-                styles.tableCol,
-                styles.colExtendedPrice,
-                styles.tableHeaderText,
-              ]}
-            >
-              PRICE
-            </Text>
-            <Text
-              style={[styles.tableCol, styles.colTax, styles.tableHeaderText]}
-            >
-              EXTENDED
-            </Text>
-          </View>
-
-          {/* Table Rows */}
-          {safeItems.map((item, idx) => (
-            <View key={idx} style={styles.tableRow}>
-              <Text style={[styles.tableCol, styles.colType, styles.tableText]}>
-                {item.type || "N/A"}
-              </Text>
-              <Text style={[styles.tableCol, styles.colDesc, styles.tableText]}>
-                {item.description || ""}
-              </Text>
-              <Text style={[styles.tableCol, styles.colPart, styles.tableText]}>
+        {/* ===== TABLA DE ITEMS (CONTENIDO) ===== */}
+        <View style={styles.tableRowsContainer}>
+          {safeItems.map((item, i) => (
+            <View key={i} style={styles.tableRow} wrap={false}>
+              <Text style={styles.colItem}>{item.type || "N/A"}</Text>
+              <Text style={styles.colDesc}>{item.description || ""}</Text>
+              <Text style={styles.colPart}>
                 {item.type === "Part" ? item.partNumber || "N/A" : "-"}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colQuantityHours,
-                  styles.tableText,
-                ]}
-              >
-                {item.type === "Labor"
-                  ? "-"
-                  : parseFloat(item.quantity || 0).toFixed(2)}
+              <Text style={styles.colQty}>
+                {item.type === "Labor" ? "-" : formatCurrency(item.quantity)}
               </Text>
-              <Text
-                style={[
-                  styles.tableCol,
-                  styles.colExtendedPrice,
-                  styles.tableText,
-                ]}
-              >
-                ${parseFloat(item.listPrice || 0).toFixed(2)}
+              <Text style={styles.colPrice}>
+                ${formatCurrency(item.listPrice)}
               </Text>
-              <Text style={[styles.tableCol, styles.colTax, styles.tableText]}>
-                ${parseFloat(item.extendedPrice || 0).toFixed(2)}
+              <Text style={styles.colExt}>
+                ${formatCurrency(item.extendedPrice)}
               </Text>
             </View>
           ))}
         </View>
 
-        {/* Totals Section */}
-        <View style={styles.totalsSection}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Parts Total:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.partsTotal || 0).toFixed(2)}
+        {/* ===== DISCLAIMER SECTION ===== */}
+        <View style={{ marginTop: 15, marginBottom: 10, padding: 8, backgroundColor: "#f8f9fa", border: "1px solid #dee2e6" }}>
+          <Text style={[styles.boldText, { fontSize: 8, textAlign: "center", marginBottom: 5 }]}>
+            ESTIMATES ARE VALID FOR 14 DAYS.
+          </Text>
+          <Text style={{ fontSize: 7, textAlign: "justify", lineHeight: 1.2 }}>
+            Warranty Disclaimer: All parts and labor provided under this invoice are warranted for twelve (12) months, from the date of service. This warranty covers defects in materials or workmanship under normal use and service. It does not cover damage caused by misuse, neglect, accidents, alterations, or repairs performed by any party Other than the original service provider.
+          </Text>
+        </View>
+
+        {/* ===== FOOTER (DISCLAIMER Y TOTALES) ===== */}
+        <View style={styles.footerSection}>
+          <View style={styles.footerLeft}>
+            <Text style={styles.boldText}>
+              Description of labor or services:
             </Text>
+            <Text>{customerNote || "N/A"}</Text>
+            <View style={styles.disclaimer}>
+              <Text>
+                {safeWorkshopData.disclaimer || "Warranty Disclaimer..."}
+              </Text>
+            </View>
           </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Labor Total:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.laborTotal || 0).toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Others Total:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.othersTotal || 0).toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Parts Tax:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.partsTax || 0).toFixed(2)}
-            </Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Labor Tax:</Text>
-            <Text style={styles.totalAmount}>
-              ${(totals?.laborTax || 0).toFixed(2)}
-            </Text>
-          </View>
-          <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={[styles.totalLabel, styles.grandTotalText]}>
-              Total:
-            </Text>
-            <Text style={[styles.totalAmount, styles.grandTotalText]}>
-              ${(totals?.total || 0).toFixed(2)}
-            </Text>
+
+          <View style={styles.footerRight}>
+            <View style={styles.totalRow}>
+              <Text>Parts Total:</Text>
+              <Text>${formatCurrency(totals.partsTotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text>Labor Total:</Text>
+              <Text>${formatCurrency(totals.laborTotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text>Others Total:</Text>
+              <Text>${formatCurrency(totals.othersTotal)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text>Parts Tax:</Text>
+              <Text>${formatCurrency(totals.partsTax)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text>Labor Tax:</Text>
+              <Text>${formatCurrency(totals.laborTax)}</Text>
+            </View>
+
+            <View style={styles.totalFinal}>
+              <Text>Total:</Text>
+              <Text>${formatCurrency(totals.total)}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Footer Section */}
-        <View style={styles.footer}>
-          {safeWorkshopData.disclaimer && (
-            <Text style={{ marginBottom: 5 }}>
-              {safeWorkshopData.disclaimer}
-            </Text>
-          )}
-          <Text style={{ textAlign: "right" }}>Page 1/1</Text>
+        {/* ===== FIRMA ===== */}
+        <View style={styles.signatureSection} fixed>
+          <Text style={styles.signatureX}>X</Text>
+          <View style={styles.signatureLine}></View>
+          <Text style={styles.signatureDate}>
+            Date {dayjs().format("MM/DD/YYYY")}
+          </Text>
+          <Text style={styles.signatureLabel}>Customer Signature</Text>
         </View>
       </Page>
     </Document>
   );
 };
 
+// ... tus PropTypes se mantienen exactamente igual ...
 EstimatePDF.propTypes = {
   pdfData: PropTypes.shape({
     workshopData: PropTypes.shape({
@@ -625,17 +354,21 @@ EstimatePDF.propTypes = {
       disclaimer: PropTypes.string,
     }),
     customer: PropTypes.shape({
-      firstName: PropTypes.string,
+      name: PropTypes.string,
       lastName: PropTypes.string,
       email: PropTypes.string,
-      primaryPhone: PropTypes.string,
+      primaryNumber: PropTypes.string,
       secondaryPhone: PropTypes.string,
       address: PropTypes.string,
+      city: PropTypes.string,
+      state: PropTypes.string,
+      zip: PropTypes.string,
     }),
     vehicle: PropTypes.shape({
       year: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       make: PropTypes.string,
       model: PropTypes.string,
+      engine: PropTypes.string,
       color: PropTypes.string,
       licensePlate: PropTypes.string,
       vin: PropTypes.string,
@@ -644,9 +377,13 @@ EstimatePDF.propTypes = {
       PropTypes.shape({
         type: PropTypes.string,
         description: PropTypes.string,
+        partNumber: PropTypes.string,
         quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        unitPrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        listPrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        extendedPrice: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number,
+        ]),
         taxAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       })
     ),
