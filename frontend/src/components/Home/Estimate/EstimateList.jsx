@@ -264,9 +264,14 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
     const term = searchTerm.toLowerCase();
     const est = item.estimate;
 
-    // Búsqueda solo por VIN
-    const matchesSearch =
-      est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term);
+    // Búsqueda por VIN y Owner
+    const vinMatch = est.vehicle?.vin && est.vehicle.vin.toLowerCase().includes(term);
+    const ownerMatch = est.owner && 
+      (`${est.owner.name} ${est.owner.lastName}`.toLowerCase().includes(term) ||
+       est.owner.name.toLowerCase().includes(term) ||
+       est.owner.lastName.toLowerCase().includes(term));
+    
+    const matchesSearch = vinMatch || ownerMatch;
 
     const authorizationStatus = est.authorizationStatus?.toLowerCase() || "";
 
@@ -316,7 +321,7 @@ import ConfirmationDialog from "../../common/ConfirmationDialog";
       )}
 
       <Input.Search
-        placeholder="Search by VIN..."
+        placeholder="Search by VIN or Owner name..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         style={{ marginBottom: 16 }}
