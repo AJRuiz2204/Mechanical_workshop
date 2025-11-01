@@ -9,137 +9,123 @@ import {
 } from "@react-pdf/renderer";
 import PropTypes from "prop-types";
 import dayjs from "dayjs";
-import logo from "../../../images/logo.png";
+import logo from "../../../images/logo.png"; // Asegúrate que la ruta sea correcta
 
-/**
- * Define the styles for the Sales Report PDF document.
- * This includes styles for the page layout, header, tables, footer, and other sections.
- */
+// --- Funciones Helper ---
+const formatCurrency = (amount) =>
+  isNaN(Number(amount)) ? "$0.00" : `$${Number(amount).toFixed(2)}`;
+
+
+// --- Estilos para @react-pdf/renderer (Formato "J BENZ") ---
 const styles = StyleSheet.create({
   page: {
     padding: 20,
-    fontSize: 10,
-    fontFamily: "Helvetica",
+    fontFamily: "Courier",
+    fontSize: 9,
     backgroundColor: "#ffffff",
+    color: "#000000",
   },
-  headerContainer: {
+  // --- Encabezado ---
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 5,
+    alignItems: "center",
+    paddingBottom: 5,
+    borderBottom: "2px solid #eeeeee",
+    backgroundColor: "#f9f9f9",
+    minHeight: 60,
   },
-  logoSection: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
+  headerInfoLeft: {
+    width: "30%",
+    padding: 5,
   },
-  headerInfoContainer: {
-    flex: 1,
-    flexDirection: "column",
-    alignItems: "flex-end",
-    padding: 0,
+  headerLogo: {
+    width: "40%",
+    padding: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  workshopInfo: {
-    marginBottom: 3,
-    alignItems: "flex-end",
+  logoImage: {
+    maxHeight: 50,
+    objectFit: "contain",
   },
-  quoteInfo: {
-    alignItems: "flex-end",
-    padding: 0,
+  headerInfoRight: {
+    width: "30%",
+    padding: 5,
+    textAlign: "right",
   },
-  textLine: {
-    fontSize: 9,
-    marginBottom: 1,
+  boldText: {
+    fontFamily: "Courier-Bold",
   },
   link: {
     textDecoration: "underline",
     color: "blue",
-    fontSize: 9,
   },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginVertical: 5,
+  // --- Sección de Resumen del Reporte ---
+  summarySection: {
+    flexDirection: "row",
+    marginTop: 10,
+    marginBottom: 10,
+    borderBottom: "2px solid #000000",
+    paddingBottom: 10,
   },
-  table: {
-    display: "table",
-    width: "100%",
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
+  summaryBox: {
+    width: "50%",
+    padding: 5,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  // --- Sección de Detalles ---
+  detailsContainer: {
+    paddingTop: 10,
+  },
+  estimateDetailBlock: {
+    borderBottom: "1px solid #cccccc",
+    paddingVertical: 10,
+    // Evita que un bloque se parta entre páginas si es posible
+    breakInside: "avoid",
+  },
+  estimateHeader: {
+    fontFamily: "Courier-Bold",
+    fontSize: 10,
+    marginBottom: 5,
+  },
+  estimateRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  estimateSubSection: {
+    marginLeft: 10,
     marginTop: 5,
   },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    minHeight: 20,
-    alignItems: "center",
+  subSectionTitle: {
+    fontFamily: "Courier-Bold",
+    marginTop: 3,
   },
-  tableHeaderText: {
-    fontSize: 8,
-    fontWeight: "bold",
+  itemRow: {
+    marginLeft: 5,
   },
-  tableText: {
-    fontSize: 8,
-  },
-  tableCol: {
-    padding: 2,
-  },
+  // --- Footer ---
   footer: {
     position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
     fontSize: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    paddingTop: 5,
-  },
-  detailSection: {
-    marginBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    paddingBottom: 4,
-  },
-  subSection: {
-    marginTop: 4,
-    marginLeft: 10,
+    textAlign: "center",
   },
 });
 
 /**
- * Formats the "Last Updated" date string.
- *
- * If the provided date string is empty, returns an empty string.
- * Otherwise, subtracts 6 hours from the date and formats it as "YYYY-MM-DD HH:mm:ss".
- *
- * @param {string} dateString - The original date string.
- * @returns {string} The formatted date string.
- */
-const formatLastUpdated = (dateString) => {
-  if (!dateString) return "";
-  return dayjs(dateString).subtract(6, "hour").format("YYYY-MM-DD HH:mm:ss");
-};
-
-/**
  * SalesReportPDF component.
  *
- * Generates a PDF document for a sales report using the provided pdfData.
- * Expected pdfData includes:
- * - startDate, endDate, totalEstimates, totalPartsRevenue, totalLaborRevenue,
- *   totalFlatFeeRevenue, totalTaxCollected, totalPaymentsCollected, totalOutstanding,
- *   createdDate, details, and workshopData.
- *
- * The component builds a unified header with workshop information,
- * displays overall totals and detailed estimate information, and adds a footer.
- *
- * @param {Object} props - Component props.
- * @param {Object} props.pdfData - The sales report data.
- * @returns {JSX.Element} The generated PDF document.
+ * Genera un PDF de Reporte de Ventas con el nuevo estilo J BENZ.
  */
 const SalesReportPDF = ({ pdfData }) => {
-  // Destructure sales report summary data from pdfData
+  // --- 1. Extracción de Datos ---
   const {
     startDate,
     endDate,
@@ -155,186 +141,170 @@ const SalesReportPDF = ({ pdfData }) => {
     salesReportId,
   } = pdfData;
 
-  // Format the dates for display
   const formattedStartDate = dayjs(startDate).format("YYYY-MM-DD");
   const formattedEndDate = dayjs(endDate).format("YYYY-MM-DD");
   const formattedCreatedDate = dayjs(createdDate).format("YYYY-MM-DD HH:mm:ss");
 
-  // Extract workshop information from pdfData (default to empty object if not provided)
   const workshopData = pdfData?.workshopData || {};
 
+  // --- 2. Renderizado del PDF ---
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Unified Header */}
-        <View style={styles.headerContainer}>
-          <View style={styles.logoSection}>
-            {/* Render the logo image */}
-            <Image src={logo} style={{ width: "100%", height: "100%" }} />
+        {/* ===== SECCIÓN DE ENCABEZADO ===== */}
+        <View style={styles.header} fixed>
+          <View style={styles.headerInfoLeft}>
+            <Text style={styles.boldText}>{workshopData.workshopName}</Text>
+            <Text>{workshopData.address || ""}</Text>
+            <Text>Ph: {workshopData.primaryPhone || ""}</Text>
+            {workshopData.secondaryPhone && (
+              <Text>Ph2: {workshopData.secondaryPhone}</Text>
+            )}
+            {workshopData.email && <Text>{workshopData.email}</Text>}
+            {workshopData.websiteUrl && (
+              <Link src={workshopData.websiteUrl} style={styles.link}>
+                {workshopData.websiteUrl}
+              </Link>
+            )}
           </View>
-          <View style={styles.headerInfoContainer}>
-            {/* Workshop Information Section */}
-            <View style={styles.workshopInfo}>
-              <Text style={styles.textLine}>
-                {workshopData.workshopName || "Nombre del Taller"}
-              </Text>
-              <Text style={styles.textLine}>
-                {workshopData.address || "Dirección del Taller"}
-              </Text>
-              <Text style={styles.textLine}>
-                {workshopData.primaryPhone || "Teléfono Principal"}
-              </Text>
-              {workshopData.secondaryPhone && (
-                <Text style={styles.textLine}>
-                  {workshopData.secondaryPhone}
-                </Text>
-              )}
-              <Text style={styles.textLine}>Fax: {workshopData.fax || ""}</Text>
-              <Text style={styles.textLine}>{workshopData.email || ""}</Text>
-              {workshopData.websiteUrl && (
-                <Link src={workshopData.websiteUrl} style={styles.link}>
-                  {workshopData.websiteUrl}
-                </Link>
-              )}
+
+          <View style={styles.headerLogo}>
+            <Image src={logo} style={styles.logoImage} />
+          </View>
+
+          <View style={styles.headerInfoRight}>
+            <Text style={styles.boldText}>Sales Report</Text>
+            <Text>ID: {salesReportId || "N/A"}</Text>
+            <Text>Generated: {formattedCreatedDate}</Text>
+          </View>
+        </View>
+
+        {/* ===== SECCIÓN DE RESUMEN DEL REPORTE ===== */}
+        <View style={styles.summarySection}>
+          <View style={styles.summaryBox}>
+            <Text style={styles.boldText}>Period:</Text>
+            <Text>
+              {formattedStartDate} to {formattedEndDate}
+            </Text>
+            <View style={{ marginTop: 10 }}>
+              <View style={styles.summaryRow}>
+                <Text>Total Estimates:</Text>
+                <Text>{formatCurrency(totalEstimates)}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text>Parts Revenue:</Text>
+                <Text>{formatCurrency(totalPartsRevenue)}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text>Labor Revenue:</Text>
+                <Text>{formatCurrency(totalLaborRevenue)}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text>Flat Fee Revenue:</Text>
+                <Text>{formatCurrency(totalFlatFeeRevenue)}</Text>
+              </View>
             </View>
-            {/* Quote Information Section */}
-            <View style={styles.quoteInfo}>
-              <Text style={styles.textLine}>{salesReportId || "N/A"}
-              </Text>
-              <Text style={styles.textLine}>
-                Last Updated: {formatLastUpdated(workshopData.lastUpdated)}
-              </Text>
+          </View>
+
+          <View style={styles.summaryBox}>
+            <Text style={styles.boldText}>Financial Summary:</Text>
+            <View style={{ marginTop: 10 }}>
+              <View style={styles.summaryRow}>
+                <Text>Tax Collected:</Text>
+                <Text>{formatCurrency(totalTaxCollected)}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text>Payments Collected:</Text>
+                <Text>{formatCurrency(totalPaymentsCollected)}</Text>
+              </View>
+              <View
+                style={[
+                  styles.summaryRow,
+                  styles.boldText,
+                  { marginTop: 5, paddingTop: 5, borderTop: "1px solid #eee" },
+                ]}
+              >
+                <Text>Total Outstanding:</Text>
+                <Text>{formatCurrency(totalOutstanding)}</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Divider */}
-        <View
-          style={{
-            borderBottomWidth: 1,
-            borderBottomColor: "#e0e0e0",
-            marginBottom: 5,
-          }}
-        />
+        {/* ===== SECCIÓN DE DETALLES DEL REPORTE ===== */}
+        <View style={styles.detailsContainer}>
+          <Text style={[styles.boldText, { fontSize: 12, marginBottom: 5 }]}>
+            Estimate Details
+          </Text>
 
-        {/* Title and Period */}
-        <Text style={styles.sectionTitle}>Sales Report</Text>
-        <Text style={{ fontSize: 9 }}>
-          Period: {formattedStartDate} - {formattedEndDate}
-        </Text>
-
-        {/* General Totals Section */}
-        <View style={{ marginVertical: 10 }}>
-          <Text style={{ fontSize: 9 }}>
-            Total Estimates: ${Number(totalEstimates).toFixed(2)}
-          </Text>
-          <Text style={{ fontSize: 9 }}>
-            Total Parts Revenue: ${Number(totalPartsRevenue).toFixed(2)}
-          </Text>
-          <Text style={{ fontSize: 9 }}>
-            Total Labor Revenue: ${Number(totalLaborRevenue).toFixed(2)}
-          </Text>
-          <Text style={{ fontSize: 9 }}>
-            Total Flat Fee Revenue: ${Number(totalFlatFeeRevenue).toFixed(2)}
-          </Text>
-          <Text style={{ fontSize: 9 }}>
-            Total Tax Collected: ${Number(totalTaxCollected).toFixed(2)}
-          </Text>
-          <Text style={{ fontSize: 9 }}>
-            Total Payments: ${Number(totalPaymentsCollected).toFixed(2)}
-          </Text>
-          <Text style={{ fontSize: 9 }}>
-            Total Outstanding: ${Number(totalOutstanding).toFixed(2)}
-          </Text>
-        </View>
-
-        {/* Details Section */}
-        {details && details.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>Estimate Details</Text>
-            {details.map((detail) => (
+          {details && details.length > 0 ? (
+            details.map((detail) => (
               <View
                 key={detail.salesReportDetailId}
-                style={styles.detailSection}
+                style={styles.estimateDetailBlock}
               >
-                {/* Basic Estimate Information */}
-                <Text style={{ fontSize: 9, fontWeight: "bold" }}>
+                {/* Info Principal del Estimado */}
+                <Text style={styles.estimateHeader}>
                   Estimate #{detail.estimateId} -{" "}
-                  {new Date(detail.estimateDate).toLocaleDateString()}
+                  {dayjs(detail.estimateDate).format("YYYY-MM-DD")}
                 </Text>
-                <Text style={{ fontSize: 9 }}>
-                  Subtotal: ${Number(detail.subtotal).toFixed(2)} | Tax: $
-                  {Number(detail.tax).toFixed(2)} | Total: $
-                  {Number(detail.total).toFixed(2)}
-                </Text>
-                <Text style={{ fontSize: 9 }}>
-                  Account: Initial Balance: $
-                  {Number(detail.originalAmount).toFixed(2)} - Total Paid: $
-                  {Number(detail.totalPayments).toFixed(2)} - Remaining Balance:
-                  ${Number(detail.remainingBalance).toFixed(2)}
-                </Text>
-                <Text style={{ fontSize: 9 }}>
-                  Customer: {detail.customerName} | Vehicle:{" "}
-                  {detail.vehicleInfo}
-                </Text>
+                <View style={styles.estimateRow}>
+                  <Text>Customer: {detail.customerName}</Text>
+                  <Text>Vehicle: {detail.vehicleInfo}</Text>
+                </View>
+                <View style={styles.estimateRow}>
+                  <Text>Subtotal: {formatCurrency(detail.subtotal)}</Text>
+                  <Text>Tax: {formatCurrency(detail.tax)}</Text>
+                  <Text style={styles.boldText}>
+                    Total: {formatCurrency(detail.total)}
+                  </Text>
+                </View>
+                <View style={styles.estimateRow}>
+                  <Text>Initial: {formatCurrency(detail.originalAmount)}</Text>
+                  <Text>Paid: {formatCurrency(detail.totalPayments)}</Text>
+                  <Text style={styles.boldText}>
+                    Balance: {formatCurrency(detail.remainingBalance)}
+                  </Text>
+                </View>
 
-                {/* Optional Complete Estimate Details */}
+                {/* Detalles de Items (Parts, Labors, etc.) */}
                 {detail.Estimate && (
-                  <View style={styles.subSection}>
-                    <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                      Complete Estimate Details
-                    </Text>
-                    <Text style={{ fontSize: 9 }}>
-                      Customer Note: {detail.Estimate.customerNote}
-                    </Text>
-                    <Text style={{ fontSize: 9 }}>
-                      Status: {detail.Estimate.authorizationStatus}
-                    </Text>
-                    <Text style={{ fontSize: 9 }}>
-                      Estimate Date:{" "}
-                      {new Date(detail.Estimate.date).toLocaleDateString()}
-                    </Text>
-                    {/* Parts Details */}
+                  <View style={styles.estimateSubSection}>
+                    {/* Parts */}
                     {detail.Estimate.parts &&
                       detail.Estimate.parts.length > 0 && (
-                        <View style={styles.subSection}>
-                          <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            PARTS:
-                          </Text>
+                        <View>
+                          <Text style={styles.subSectionTitle}>PARTS:</Text>
                           {detail.Estimate.parts.map((part) => (
-                            <Text key={part.id} style={{ fontSize: 9 }}>
-                              - {part.description} (QUANTITY: {part.quantity}) -
-                              ${Number(part.extendedPrice).toFixed(2)}
+                            <Text key={part.id} style={styles.itemRow}>
+                              - {part.description} (Qty: {part.quantity}) -{" "}
+                              {formatCurrency(part.extendedPrice)}
                             </Text>
                           ))}
                         </View>
                       )}
-                    {/* Labor Details */}
+                    {/* Labors */}
                     {detail.Estimate.labors &&
                       detail.Estimate.labors.length > 0 && (
-                        <View style={styles.subSection}>
-                          <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            LABOR:
-                          </Text>
+                        <View>
+                          <Text style={styles.subSectionTitle}>LABOR:</Text>
                           {detail.Estimate.labors.map((labor) => (
-                            <Text key={labor.id} style={{ fontSize: 9 }}>
-                              - {labor.description} (DURATION: {labor.duration}{" "}
-                              HRS) - ${Number(labor.extendedPrice).toFixed(2)}
+                            <Text key={labor.id} style={styles.itemRow}>
+                              - {labor.description} (Hrs: {labor.duration}) -{" "}
+                              {formatCurrency(labor.extendedPrice)}
                             </Text>
                           ))}
                         </View>
                       )}
-                    {/* Flat Fees Details */}
+                    {/* Flat Fees */}
                     {detail.Estimate.flatFees &&
                       detail.Estimate.flatFees.length > 0 && (
-                        <View style={styles.subSection}>
-                          <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                            FLAT FEES:
-                          </Text>
+                        <View>
+                          <Text style={styles.subSectionTitle}>FLAT FEES:</Text>
                           {detail.Estimate.flatFees.map((fee) => (
-                            <Text key={fee.id} style={{ fontSize: 9 }}>
-                              - {fee.description} - $
-                              {Number(fee.extendedPrice).toFixed(2)}
+                            <Text key={fee.id} style={styles.itemRow}>
+                              - {fee.description} -{" "}
+                              {formatCurrency(fee.extendedPrice)}
                             </Text>
                           ))}
                         </View>
@@ -342,22 +312,22 @@ const SalesReportPDF = ({ pdfData }) => {
                   </View>
                 )}
               </View>
-            ))}
-          </View>
-        )}
+            ))
+          ) : (
+            <Text>No details available for this period.</Text>
+          )}
+        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={{ textAlign: "center" }}>
-            Report generated on {formattedCreatedDate}
-          </Text>
+        {/* ===== FOOTER ===== */}
+        <View style={styles.footer} fixed>
+          <Text>Page 1 of 1</Text>
         </View>
       </Page>
     </Document>
   );
 };
 
-// PropTypes validation
+// --- PropTypes ---
 SalesReportPDF.propTypes = {
   pdfData: PropTypes.shape({
     startDate: PropTypes.string,
@@ -373,13 +343,21 @@ SalesReportPDF.propTypes = {
     salesReportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     details: PropTypes.arrayOf(
       PropTypes.shape({
+        salesReportDetailId: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number,
+        ]),
         estimateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         estimateDate: PropTypes.string,
-        customer: PropTypes.string,
-        vehicle: PropTypes.string,
-        estimateTotal: PropTypes.number,
-        paymentsCollected: PropTypes.number,
-        outstanding: PropTypes.number,
+        customerName: PropTypes.string, // Tu proptype decía 'customer'
+        vehicleInfo: PropTypes.string, // Tu proptype decía 'vehicle'
+        subtotal: PropTypes.number, // No estaba en los proptypes
+        tax: PropTypes.number, // No estaba en los proptypes
+        total: PropTypes.number, // Tu proptype decía 'estimateTotal'
+        totalPayments: PropTypes.number, // Tu proptype decía 'paymentsCollected'
+        remainingBalance: PropTypes.number, // Tu proptype decía 'outstanding'
+        originalAmount: PropTypes.number, // No estaba en los proptypes
+        Estimate: PropTypes.object, // Para los detalles anidados
       })
     ),
     workshopData: PropTypes.shape({
