@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spin, Alert, Badge, Space, Card, Input } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Table, Button, Spin, Alert, Badge, Space, Card, Input, Select, Row, Col } from "antd";
+import { SearchOutlined, FilterOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import {
   getDiagnosticsByTechnician,
@@ -30,6 +30,12 @@ const TechnicianDiagnosticList = () => {
   const [techDiagMap, setTechDiagMap] = useState({});
   const [userProfile, setUserProfile] = useState("");
   const [filteredDiagnostics, setFilteredDiagnostics] = useState([]);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [makeFilter, setMakeFilter] = useState("all");
+  const [technicianFilter, setTechnicianFilter] = useState("all");
 
   // Columns configuration for AntD Table
   const columns = [
@@ -180,27 +186,41 @@ const TechnicianDiagnosticList = () => {
    * @param {string} value - Search term
    */
   const handleSearch = (value) => {
-    if (!value.trim()) {
-      setFilteredDiagnostics(diagnostics);
-      return;
-    }
+    setSearchTerm(value);
+  };
 
-    const searchLower = value.toLowerCase();
-    const filtered = diagnostics.filter((diagnostic) => {
-      const vin = diagnostic.vehicle?.vin?.toLowerCase() || "";
-      const make = diagnostic.vehicle?.make?.toLowerCase() || "";
-      const model = diagnostic.vehicle?.model?.toLowerCase() || "";
-      const customerState = diagnostic.reasonForVisit?.toLowerCase() || "";
+  /**
+   * Resets all filters to their default values
+   */
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setMakeFilter("all");
+    setTechnicianFilter("all");
+  };
 
-      return (
-        vin.includes(searchLower) ||
-        make.includes(searchLower) ||
-        model.includes(searchLower) ||
-        customerState.includes(searchLower)
-      );
-    });
+  /**
+   * Gets unique makes from the diagnostics for the filter dropdown
+   */
+  const getUniqueMakes = () => {
+    const makes = diagnostics
+      .map(diagnostic => diagnostic.vehicle?.make)
+      .filter(make => make && make.trim())
+      .filter((make, index, array) => array.indexOf(make) === index)
+      .sort();
+    return makes;
+  };
 
-    setFilteredDiagnostics(filtered);
+  /**
+   * Gets unique technicians from the diagnostics for the filter dropdown
+   */
+  const getUniqueTechnicians = () => {
+    const technicians = diagnostics
+      .map(diagnostic => diagnostic.assignedTechnician)
+      .filter(tech => tech && tech.trim())
+      .filter((tech, index, array) => array.indexOf(tech) === index)
+      .sort();
+    return technicians;
   };
 
   /**
@@ -240,16 +260,91 @@ const TechnicianDiagnosticList = () => {
 
   return (
     <Card title={getTitle()} style={{ margin: 16 }}>
-      {/* Search Input */}
-      <div style={{ marginBottom: 16 }}>
-        <Input
-          placeholder="Search by VIN, Make, Model, or Customer state..."
-          prefix={<SearchOutlined />}
-          onChange={(e) => handleSearch(e.target.value)}
-          style={{ maxWidth: 400 }}
-          allowClear
-        />
-      </div>
+      {/* Filters Section */}
+      <Card 
+        title={
+          <Space>
+            <FilterOutlined />
+            Filtros
+          </Space>
+        }
+        size="small" 
+        style={{ marginBottom: 16 }}
+      >
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
+              Búsqueda:
+            </label>
+            <Input
+              placeholder="VIN, Marca, Modelo, Estado..."
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              allowClear
+            />
+          </Col>
+          
+          <Col xs={24} sm={12} md={6}>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
+              Estado del Diagnóstico:
+            </label>
+            <Select
+              value={statusFilter}
+              onChange={setStatusFilter}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'all', label: 'Todos' },
+                { value: 'with-diagnostic', label: 'Con Diagnóstico' },
+                { value: 'without-diagnostic', label: 'Sin Diagnóstico' }
+              ]}
+            />
+          </Col>
+          
+          <Col xs={24} sm={12} md={6}>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
+              Marca:
+            </label>
+            <Select
+              value={makeFilter}
+              onChange={setMakeFilter}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'all', label: 'Todas las marcas' },
+                ...getUniqueMakes().map(make => ({ value: make, label: make }))
+              ]}
+            />
+          </Col>
+          
+          <Col xs={24} sm={12} md={6}>
+            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
+              Técnico Asignado:
+            </label>
+            <Select
+              value={technicianFilter}
+              onChange={setTechnicianFilter}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'all', label: 'Todos los técnicos' },
+                ...getUniqueTechnicians().map(tech => ({ value: tech, label: tech }))
+              ]}
+            />
+          </Col>
+        </Row>
+        
+        <Row style={{ marginTop: 16 }}>
+          <Col>
+            <Space>
+              <Button onClick={resetFilters}>
+                Limpiar Filtros
+              </Button>
+              <span style={{ color: '#666', fontSize: '14px' }}>
+                Mostrando {filteredDiagnostics.length} de {diagnostics.length} diagnósticos
+              </span>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
       {/* Error message */}
       {error && (
