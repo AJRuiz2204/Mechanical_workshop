@@ -1,5 +1,17 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spin, Alert, Badge, Space, Card, Input, Select, Row, Col } from "antd";
+import {
+  Table,
+  Button,
+  Spin,
+  Alert,
+  Badge,
+  Space,
+  Card,
+  Input,
+  Select,
+  Row,
+  Col,
+} from "antd";
 import { SearchOutlined, FilterOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import {
@@ -30,7 +42,7 @@ const TechnicianDiagnosticList = () => {
   const [techDiagMap, setTechDiagMap] = useState({});
   const [userProfile, setUserProfile] = useState("");
   const [filteredDiagnostics, setFilteredDiagnostics] = useState([]);
-  
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -151,7 +163,9 @@ const TechnicianDiagnosticList = () => {
           // Technician sees only assigned diagnostics
           data = await getDiagnosticsByTechnician(name, lastName);
           // Filter out diagnostics with accountReceivableStatus "Paid"
-          data = data.filter(diagnostic => diagnostic.accountReceivableStatus !== "Paid");
+          data = data.filter(
+            (diagnostic) => diagnostic.accountReceivableStatus !== "Paid"
+          );
         }
 
         setDiagnostics(data);
@@ -181,6 +195,62 @@ const TechnicianDiagnosticList = () => {
     fetchTechnicianDiagnostics();
   }, []);
 
+  // Apply filters whenever any filter state changes
+  useEffect(() => {
+    let filtered = [...diagnostics];
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((diagnostic) => {
+        const vin = diagnostic.vehicle?.vin?.toLowerCase() || "";
+        const make = diagnostic.vehicle?.make?.toLowerCase() || "";
+        const model = diagnostic.vehicle?.model?.toLowerCase() || "";
+        const customerState = diagnostic.reasonForVisit?.toLowerCase() || "";
+
+        return (
+          vin.includes(searchLower) ||
+          make.includes(searchLower) ||
+          model.includes(searchLower) ||
+          customerState.includes(searchLower)
+        );
+      });
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((diagnostic) => {
+        const hasTechDiag = !!techDiagMap[diagnostic.id];
+        if (statusFilter === "with-diagnostic") return hasTechDiag;
+        if (statusFilter === "without-diagnostic") return !hasTechDiag;
+        return true;
+      });
+    }
+
+    // Make filter
+    if (makeFilter !== "all") {
+      filtered = filtered.filter(
+        (diagnostic) => diagnostic.vehicle?.make === makeFilter
+      );
+    }
+
+    // Technician filter
+    if (technicianFilter !== "all") {
+      filtered = filtered.filter(
+        (diagnostic) => diagnostic.assignedTechnician === technicianFilter
+      );
+    }
+
+    setFilteredDiagnostics(filtered);
+  }, [
+    diagnostics,
+    techDiagMap,
+    searchTerm,
+    statusFilter,
+    makeFilter,
+    technicianFilter,
+  ]);
+
   /**
    * Handles search functionality across VIN, Make, Model, and Customer state
    * @param {string} value - Search term
@@ -204,8 +274,8 @@ const TechnicianDiagnosticList = () => {
    */
   const getUniqueMakes = () => {
     const makes = diagnostics
-      .map(diagnostic => diagnostic.vehicle?.make)
-      .filter(make => make && make.trim())
+      .map((diagnostic) => diagnostic.vehicle?.make)
+      .filter((make) => make && make.trim())
       .filter((make, index, array) => array.indexOf(make) === index)
       .sort();
     return makes;
@@ -216,8 +286,8 @@ const TechnicianDiagnosticList = () => {
    */
   const getUniqueTechnicians = () => {
     const technicians = diagnostics
-      .map(diagnostic => diagnostic.assignedTechnician)
-      .filter(tech => tech && tech.trim())
+      .map((diagnostic) => diagnostic.assignedTechnician)
+      .filter((tech) => tech && tech.trim())
       .filter((tech, index, array) => array.indexOf(tech) === index)
       .sort();
     return technicians;
@@ -230,27 +300,36 @@ const TechnicianDiagnosticList = () => {
   const handleDelete = async (diagnosticId) => {
     const techDiagId = techDiagMap[diagnosticId];
     if (!techDiagId) {
-      NotificationService.warning("No Diagnostic Found", "No technician diagnostic found to delete.");
+      NotificationService.warning(
+        "No Diagnostic Found",
+        "No technician diagnostic found to delete."
+      );
       return;
     }
 
     ConfirmationDialog.show({
-      title: 'Delete Technician Diagnostic',
-      content: 'Are you sure you want to delete this Technician Diagnostic?',
-      type: 'danger',
+      title: "Delete Technician Diagnostic",
+      content: "Are you sure you want to delete this Technician Diagnostic?",
+      type: "danger",
       onConfirm: async () => {
         try {
           setLoading(true);
           await deleteTechnicianDiagnostic(techDiagId);
           setTechDiagMap((prev) => ({ ...prev, [diagnosticId]: null }));
-          NotificationService.operationSuccess('delete', 'Technician diagnostic');
+          NotificationService.operationSuccess(
+            "delete",
+            "Technician diagnostic"
+          );
         } catch (error) {
           console.error("Delete error:", error);
-          NotificationService.operationError('delete', error.message || "Unknown error");
+          NotificationService.operationError(
+            "delete",
+            error.message || "Unknown error"
+          );
         } finally {
           setLoading(false);
         }
-      }
+      },
     });
   };
 
@@ -261,85 +340,98 @@ const TechnicianDiagnosticList = () => {
   return (
     <Card title={getTitle()} style={{ margin: 16 }}>
       {/* Filters Section */}
-      <Card 
+      <Card
         title={
           <Space>
             <FilterOutlined />
-            Filtros
+            Filters
           </Space>
         }
-        size="small" 
+        size="small"
         style={{ marginBottom: 16 }}
       >
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
-            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
-              Búsqueda:
+            <label
+              style={{ display: "block", marginBottom: 4, fontWeight: "bold" }}
+            >
+              Search:
             </label>
             <Input
-              placeholder="VIN, Marca, Modelo, Estado..."
+              placeholder="VIN, Make, Model, State..."
               prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               allowClear
             />
           </Col>
-          
+
           <Col xs={24} sm={12} md={6}>
-            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
-              Estado del Diagnóstico:
+            <label
+              style={{ display: "block", marginBottom: 4, fontWeight: "bold" }}
+            >
+              Diagnostic Status:
             </label>
             <Select
               value={statusFilter}
               onChange={setStatusFilter}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               options={[
-                { value: 'all', label: 'Todos' },
-                { value: 'with-diagnostic', label: 'Con Diagnóstico' },
-                { value: 'without-diagnostic', label: 'Sin Diagnóstico' }
+                { value: "all", label: "All" },
+                { value: "with-diagnostic", label: "With Diagnostic" },
+                { value: "without-diagnostic", label: "Without Diagnostic" },
               ]}
             />
           </Col>
-          
+
           <Col xs={24} sm={12} md={6}>
-            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
-              Marca:
+            <label
+              style={{ display: "block", marginBottom: 4, fontWeight: "bold" }}
+            >
+              Make:
             </label>
             <Select
               value={makeFilter}
               onChange={setMakeFilter}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               options={[
-                { value: 'all', label: 'Todas las marcas' },
-                ...getUniqueMakes().map(make => ({ value: make, label: make }))
+                { value: "all", label: "All makes" },
+                ...getUniqueMakes().map((make) => ({
+                  value: make,
+                  label: make,
+                })),
               ]}
             />
           </Col>
-          
+
           <Col xs={24} sm={12} md={6}>
-            <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
-              Técnico Asignado:
+            <label
+              style={{ display: "block", marginBottom: 4, fontWeight: "bold" }}
+            >
+              Assigned Technician:
             </label>
             <Select
               value={technicianFilter}
               onChange={setTechnicianFilter}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               options={[
-                { value: 'all', label: 'Todos los técnicos' },
-                ...getUniqueTechnicians().map(tech => ({ value: tech, label: tech }))
+                { value: "all", label: "All technicians" },
+                ...getUniqueTechnicians().map((tech) => ({
+                  value: tech,
+                  label: tech,
+                })),
               ]}
             />
           </Col>
         </Row>
-        
+
         <Row style={{ marginTop: 16 }}>
           <Col>
             <Space>
-              <Button onClick={resetFilters}>
-                Limpiar Filtros
-              </Button>
-              <span style={{ color: '#666', fontSize: '14px' }}>
-                Mostrando {filteredDiagnostics.length} de {diagnostics.length} diagnósticos
+              <Button onClick={resetFilters}>Clear Filters</Button>
+              <span style={{ color: "#666", fontSize: "14px" }}>
+                Showing {filteredDiagnostics.length} of {diagnostics.length}{" "}
+                diagnostics
               </span>
             </Space>
           </Col>
@@ -358,13 +450,15 @@ const TechnicianDiagnosticList = () => {
 
       {/* Loading and content */}
       <Spin spinning={loading} tip="Loading...">
-        {!loading && filteredDiagnostics.length === 0 && diagnostics.length > 0 && (
-          <Alert
-            message="No diagnostics found matching your search criteria."
-            type="info"
-            showIcon
-          />
-        )}
+        {!loading &&
+          filteredDiagnostics.length === 0 &&
+          diagnostics.length > 0 && (
+            <Alert
+              message="No diagnostics found matching your search criteria."
+              type="info"
+              showIcon
+            />
+          )}
         {!loading && diagnostics.length === 0 && (
           <Alert
             message={
